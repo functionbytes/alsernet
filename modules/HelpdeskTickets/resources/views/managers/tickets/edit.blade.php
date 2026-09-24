@@ -277,7 +277,7 @@
                         <li class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i> El cliente recibirá notificación si cambias el estado</li>
                         <li class="mb-2"><i class="fas fa-info-circle text-primary me-2"></i> Cambiar categoría puede alterar el SLA aplicable</li>
                         @if($ticket->isClosed())
-                            <li class="mb-0"><i class="fas fa-lock text-warning me-2"></i> Ticket cerrado: algunos campos están bloqueados</li>
+                            <li class="mb-0"><i class="fas fa-lock text-muted me-2"></i> Ticket cerrado: algunos campos están bloqueados</li>
                         @endif
                     </ul>
                 </div>

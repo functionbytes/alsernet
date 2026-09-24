@@ -6,9 +6,9 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <h4 class="card-title mb-1">
-                        <i class="fas fa-sign-in-alt me-2 text-primary"></i>Log in to support portal
+                        <i class="fas fa-sign-in-alt me-2 text-primary"></i>Acceder al portal de soporte
                     </h4>
-                    <p class="text-muted mb-4">Enter your email and we'll send you a login link.</p>
+                    <p class="text-muted mb-4">Escribe tu correo electrónico y te enviaremos un enlace de acceso.</p>
 
                     @if (session('status'))
                         <div class="alert alert-success">
@@ -31,7 +31,7 @@
                     <form action="{{ route('portal.login.submit') }}" method="POST">
                         @csrf
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email address</label>
+                            <label for="email" class="form-label">Correo electrónico</label>
                             <input
                                 type="email"
                                 id="email"
@@ -40,11 +40,11 @@
                                 value="{{ old('email') }}"
                                 required
                                 autofocus
-                                placeholder="you@example.com"
+                                placeholder="tu@ejemplo.com"
                             >
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-paper-plane me-1"></i>Send login link
+                            Enviar enlace de acceso
                         </button>
                     </form>
                 </div>

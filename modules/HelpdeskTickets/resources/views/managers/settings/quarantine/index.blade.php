@@ -71,7 +71,7 @@
                                     <td class="text-end">
                                         @if($item->status === \Modules\HelpdeskTickets\Models\TicketQuarantine::STATUS_PENDING)
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más acciones">
                                                     <i class="fas fa-ellipsis-vertical"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">

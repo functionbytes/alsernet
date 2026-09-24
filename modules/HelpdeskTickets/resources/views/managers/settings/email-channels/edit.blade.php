@@ -25,7 +25,7 @@
 
                     <div class="card-header border-bottom p-3">
                         <h5 class="mb-0 fw-bold">Editar: {{ $channel['name'] }}</h5>
-                        <small class="text-muted">Modifica la conexion y el comportamiento de este canal</small>
+                        <small class="text-muted">Modifica la conexión y el comportamiento de este canal</small>
                     </div>
 
                     <div class="card-body">
@@ -60,7 +60,7 @@
                         @if($neverChecked)
                             <span class="badge bg-secondary-subtle text-secondary">Nunca sincronizado</span>
                         @elseif($hasError)
-                            <span class="badge bg-warning-subtle text-warning">Error</span>
+                            <span class="badge bg-brand-subtle text-brand">Error</span>
                         @else
                             <span class="badge bg-success-subtle text-success">OK</span>
                         @endif
@@ -68,11 +68,11 @@
 
                     <ul class="list-unstyled mb-3">
                         <li class="mb-2">
-                            <span class="fw-semibold">Ultima revision:</span>
+                            <span class="fw-semibold">Última revisión:</span>
                             {{ $neverChecked ? 'Nunca' : \Illuminate\Support\Carbon::parse($channel['last_checked_at'])->format('d/m/Y H:i') }}
                         </li>
                         <li class="mb-2">
-                            <span class="fw-semibold">Ultimo exito:</span>
+                            <span class="fw-semibold">Último éxito:</span>
                             {{ empty($channel['last_success_at']) ? 'Nunca' : \Illuminate\Support\Carbon::parse($channel['last_success_at'])->format('d/m/Y H:i') }}
                         </li>
                         <li class="mb-0">
@@ -92,12 +92,12 @@
                          <form> no les afecta: el JS vive en _form.blade.php y
                          sigue encontrandolos en el mismo documento. --}}
                     <button type="button" class="btn btn-light w-100 mb-2" id="btn-test-channel">
-                        Probar conexion IMAP
+                        Probar conexión IMAP
                     </button>
                     <div id="channelTestResult" class="d-none mb-2"></div>
 
                     <button type="button" class="btn btn-light w-100 mb-2" id="btn-test-smtp-channel">
-                        Probar conexion SMTP
+                        Probar conexión SMTP
                     </button>
                     <div id="channelSmtpTestResult" class="d-none mb-2"></div>
 
@@ -106,7 +106,7 @@
                     </button>
 
                     <form action="{{ route('manager.helpdesk.settings.email-channels.destroy', $channel['id']) }}" method="POST"
-                          class="needs-confirm" data-confirm-msg="Eliminar este canal de correo?">
+                          class="needs-confirm" data-confirm-msg="¿Eliminar este canal de correo?">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-light w-100">Eliminar canal</button>

@@ -28,7 +28,7 @@
 
                     <div class="card-header border-bottom p-3">
                         <h5 class="mb-0 fw-bold">{{ $isEdit ? 'Editar ticket recurrente' : 'Nuevo ticket recurrente' }}</h5>
-                        <small class="text-muted">{{ $isEdit ? 'Modifica la configuración del schedule' : 'Configura un nuevo ticket que se generará automáticamente' }}</small>
+                        <small class="text-muted">{{ $isEdit ? 'Modifica la configuración de la programación' : 'Configura un nuevo ticket que se generará automáticamente' }}</small>
                     </div>
 
                     <div class="card-body">
@@ -229,7 +229,7 @@
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres descriptivos que identifiquen claramente el propósito del ticket</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Asigna categoría y prioridad para que los tickets se clasifiquen automáticamente</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa expresión cron solo si necesitas una frecuencia personalizada</li>
-                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Desactiva el schedule en lugar de eliminarlo si es temporal</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Desactiva la programación en lugar de eliminarla si es temporal</li>
                     </ul>
                 </div>
             </div>

@@ -64,7 +64,7 @@
                         </td>
                         <td class="text-center">
                             <div class="dropdown">
-                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" aria-label="Más acciones">
                                     <i class="fas fa-ellipsis-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -115,10 +115,10 @@
 @else
     <div class="text-center py-5">
         <i class="fas fa-file-alt fa-3x mb-3 text-muted opacity-50"></i>
-        <h5 class="fw-bold mb-2">No hay plantillas aqui</h5>
-        <p class="text-muted mb-4">Crea una plantilla para agilizar la creacion de tickets</p>
+        <h5 class="fw-bold mb-2">No hay plantillas aquí</h5>
+        <p class="text-muted mb-4">Crea una plantilla para agilizar la creación de tickets</p>
         <a href="{{ route('manager.helpdesk.ticket-templates.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> Nueva plantilla
+            Nueva plantilla
         </a>
     </div>
 @endif

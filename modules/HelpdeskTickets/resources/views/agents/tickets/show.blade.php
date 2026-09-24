@@ -11,7 +11,7 @@
 
 @section('content')
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('agent.helpdesk.tickets.index') }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('agent.helpdesk.tickets.index') }}" class="btn btn-sm btn-outline-secondary" aria-label="Volver">
             <i class="fas fa-arrow-left"></i>
         </a>
         <h5 class="mb-0 fw-bold">{{ $ticket->ticket_number }} — {{ $ticket->subject }}</h5>
@@ -23,7 +23,7 @@
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
     @endif
 
@@ -70,7 +70,7 @@
                             <label class="form-check-label" for="is_internal">Nota interna (solo agentes)</label>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-paper-plane me-1"></i>Enviar
+                            Enviar
                         </button>
                     </form>
                 </div>
@@ -101,15 +101,15 @@
                     @if($ticket->isOpen())
                         <form action="{{ route('agent.helpdesk.tickets.close', $ticket) }}" method="POST">
                             @csrf
-                            <button class="btn btn-sm btn-outline-danger w-100">
-                                <i class="fas fa-lock me-1"></i>Cerrar ticket
+                            <button class="btn btn-sm btn-outline-secondary w-100">
+                                Cerrar ticket
                             </button>
                         </form>
                     @else
                         <form action="{{ route('agent.helpdesk.tickets.reopen', $ticket) }}" method="POST">
                             @csrf
                             <button class="btn btn-sm btn-outline-success w-100">
-                                <i class="fas fa-lock-open me-1"></i>Reabrir ticket
+                                Reabrir ticket
                             </button>
                         </form>
                     @endif

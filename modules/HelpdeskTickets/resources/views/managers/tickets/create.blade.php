@@ -34,7 +34,7 @@
                                             <option value="{{ $template->id }}">{{ $template->name }}</option>
                                         @endforeach
                                     </select>
-                                    <small class="text-muted">Autorrellena asunto, descripcion, categoria y prioridad. Puedes editar todo despues. Variables como @{{ticket_number}} o @{{customer_name}} se rellenan solas al crear el ticket.</small>
+                                    <small class="text-muted">Autorrellena asunto, descripción, categoría y prioridad. Puedes editar todo después. Variables como @{{ticket_number}} o @{{customer_name}} se rellenan solas al crear el ticket.</small>
                                 </div>
                             </div>
                         @endif

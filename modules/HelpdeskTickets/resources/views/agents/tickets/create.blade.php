@@ -12,12 +12,12 @@
 
 @section('content')
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('agent.helpdesk.tickets.index') }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('agent.helpdesk.tickets.index') }}" class="btn btn-sm btn-outline-secondary" aria-label="Volver">
             <i class="fas fa-arrow-left"></i>
         </a>
         <h5 class="mb-0 fw-bold flex-grow-1">Nuevo ticket</h5>
         <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-file-lines me-1"></i> Mis plantillas
+            Mis plantillas
         </a>
     </div>
 
@@ -35,7 +35,7 @@
                                 <option value="{{ $template->id }}">{{ $template->name }}</option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Autorrellena asunto, descripcion, categoria y prioridad. Variables como @{{ticket_number}} o @{{customer_name}} se rellenan solas al crear el ticket.</small>
+                        <small class="text-muted">Autorrellena asunto, descripción, categoría y prioridad. Variables como @{{ticket_number}} o @{{customer_name}} se rellenan solas al crear el ticket.</small>
                     </div>
                 @endif
 
@@ -87,7 +87,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i>Crear ticket
+                    Crear ticket
                 </button>
             </form>
         </div>

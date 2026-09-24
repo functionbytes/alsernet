@@ -3,6 +3,11 @@
  * layout autocontenido (no extiende layouts.theme, carga Bootstrap/FA por
  * CDN). Vivía como <style> suelto en portal/layout.blade.php.
  *
+ * El Bootstrap de esta pantalla es el de stock (CDN, sin el theme-overrides
+ * de la app), así que btn-primary/text-primary salen azules y navbar-dark
+ * bg-dark sale negro por defecto. Las reglas de abajo los llevan a la
+ * paleta de marca (verde) — regla de la casa: nada de rojos ni azules.
+ *
  * Tras editar, copiar a public/modules/helpdesktickets/css/portal.css.
  */
 
@@ -10,9 +15,40 @@ body { background-color: #f5f6f8; }
 .navbar-brand { font-weight: 600; }
 .ticket-message { border-left: 4px solid #dee2e6; padding-left: 1rem; margin-bottom: 1rem; }
 .ticket-message.from-customer { border-color: #90bb13; }
-.ticket-message.from-agent { border-color: #0d6efd; }
+.ticket-message.from-agent { border-color: #5b7a0d; }
 
 /* Color de estado que viene de BD (badge del ticket) — mismo patrón que
    .hdt-dyn-bg de helpdesktickets-ui.css, duplicado aquí porque el portal es
    un layout autocontenido que no carga ese archivo (ni layouts.theme). */
 .hdt-dyn-bg { background-color: var(--hdt-color, #6c757d); }
+
+/* ── Marca (verde) sobre el Bootstrap de stock del portal ──────────────── */
+
+.navbar-dark.bg-dark { background-color: #4f6b0a !important; }
+
+.btn-primary {
+    background-color: #90bb13;
+    border-color: #90bb13;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #5b7a0d !important;
+    border-color: #5b7a0d !important;
+}
+
+.text-primary,
+.text-brand { color: #5b7a0d !important; }
+
+a { color: #5b7a0d; }
+a:hover { color: #4f6b0a; }
+
+/* Alertas de error: mismo look que el resto (icono + texto), pero en verde
+   oscuro/gris en vez del rojo por defecto de Bootstrap — no se distinguen
+   por color de las de éxito (bg-success ya es verde claro), sino por ser
+   más oscuras y neutras. */
+.alert-danger {
+    background-color: #eef5d9;
+    border-color: #c8d69a;
+    color: #4f6b0a;
+}

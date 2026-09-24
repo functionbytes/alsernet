@@ -3,10 +3,10 @@
 @push('css')
     <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
 @endpush
-@section('title', 'Busqueda avanzada - Helpdesk')
+@section('title', 'Búsqueda avanzada - Helpdesk')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Busqueda avanzada'])
+    @include('core::components.card', ['title' => 'Búsqueda avanzada'])
 @endsection
 
 @section('content')
@@ -23,7 +23,7 @@
                         <div class="mb-3">
                             <label class="form-label">Texto libre</label>
                             <input type="text" name="q" class="form-control"
-                                   placeholder="Titulo, asunto, descripcion, #numero..."
+                                   placeholder="Título, asunto, descripción, #número..."
                                    value="{{ $filters['q'] ?? '' }}">
                         </div>
 
@@ -40,9 +40,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Categoria</label>
+                            <label class="form-label">Categoría</label>
                             <select name="category_id" class="form-select select2">
-                                <option value="">Todas las categorias</option>
+                                <option value="">Todas las categorías</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat->id }}" {{ ($filters['category_id'] ?? '') == $cat->id ? 'selected' : '' }}>
                                         {{ $cat->name }}
@@ -92,7 +92,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="fas fa-search me-1"></i> Buscar
+                            Buscar
                         </button>
                         <a href="{{ route('manager.helpdesk.search') }}" class="btn btn-light w-100">
                             Limpiar filtros
@@ -119,7 +119,7 @@
                             @if(array_filter($filters))
                                 No se encontraron tickets con los filtros aplicados.
                             @else
-                                Usa los filtros para realizar una busqueda avanzada.
+                                Usa los filtros para realizar una búsqueda avanzada.
                             @endif
                         </p>
                     </div>
@@ -129,13 +129,13 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>#</th>
-                                    <th>Titulo</th>
+                                    <th>Título</th>
                                     <th>Estado</th>
                                     <th>Prioridad</th>
                                     <th>Cliente</th>
                                     <th>Agente</th>
                                     <th>Creado</th>
-                                    <th></th>
+                                    <th><span class="visually-hidden">Acciones</span></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -173,8 +173,8 @@
                                             @php
                                                 $priorityClasses = [
                                                     'urgent' => 'bg-brand-subtle text-brand',
-                                                    'high' => 'bg-warning-subtle text-warning',
-                                                    'normal' => 'bg-info-subtle text-info',
+                                                    'high' => 'bg-primary-subtle text-primary',
+                                                    'normal' => 'bg-success-subtle text-success',
                                                     'low' => 'bg-secondary-subtle text-secondary',
                                                 ];
                                                 $priorityLabels = [
@@ -195,7 +195,7 @@
                                         </td>
                                         <td>
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" aria-label="Más acciones">
                                                     <i class="fas fa-ellipsis-vertical"></i>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">

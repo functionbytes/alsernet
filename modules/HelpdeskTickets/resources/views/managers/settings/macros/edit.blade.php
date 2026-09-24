@@ -15,8 +15,8 @@
                 <div class="card-body">
                     @include('core::components.alerts')
 
-                    <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                    <p class="text-muted small mb-3">El nombre es lo que el agente ve en el selector de macros de la ficha del ticket; la descripcion le ayuda a elegir la correcta.</p>
+                    <h6 class="fw-semibold mb-1">Información básica</h6>
+                    <p class="text-muted small mb-3">El nombre es lo que el agente ve en el selector de macros de la ficha del ticket; la descripción le ayuda a elegir la correcta.</p>
 
                     <div class="mb-3">
                         <label class="form-label">Nombre <span class="text-brand">*</span></label>
@@ -26,7 +26,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Descripcion</label>
+                        <label class="form-label">Descripción</label>
                         <textarea name="description" class="form-control @error('description') is-invalid @enderror"
                                   rows="2">{{ old('description', $macro->description) }}</textarea>
                         @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -35,7 +35,7 @@
                     <h6 class="fw-semibold mb-1 mt-4">Acciones</h6>
                     <p class="text-muted small mb-3">
                         Lista JSON de acciones. Se ejecutan en orden, de arriba abajo, y todas dentro de la misma
-                        operacion: si una falla no se aplica ninguna, asi el ticket nunca queda a medias.
+                        operación: si una falla no se aplica ninguna, así el ticket nunca queda a medias.
                     </p>
 
                     <div class="mb-3">
@@ -43,13 +43,13 @@
                                   rows="6" required>{{ old('actions', json_encode($macro->actions ?? [], JSON_PRETTY_PRINT)) }}</textarea>
                         @error('actions')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         <small class="form-text text-muted">
-                            Cada accion es un objeto con su <code>type</code> y el dato que necesite. Tienes los tipos
+                            Cada acción es un objeto con su <code>type</code> y el dato que necesite. Tienes los tipos
                             disponibles y las variables <code>@{{...}}</code> en el panel de la derecha.
                         </small>
                     </div>
 
-                    <h6 class="fw-semibold mb-1 mt-4">Configuracion</h6>
-                    <p class="text-muted small mb-3">Una macro compartida esta disponible para todo el equipo; una personal, solo para ti. Las inactivas no aparecen en la ficha del ticket.</p>
+                    <h6 class="fw-semibold mb-1 mt-4">Configuración</h6>
+                    <p class="text-muted small mb-3">Una macro compartida está disponible para todo el equipo; una personal, solo para ti. Las inactivas no aparecen en la ficha del ticket.</p>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -73,7 +73,7 @@
                             <i class="fas fa-chart-bar me-1"></i>
                             Usada {{ $macro->usage_count }} veces.
                             @if($macro->last_used_at)
-                                Ultimo uso: {{ $macro->last_used_at->diffForHumans() }}.
+                                Último uso: {{ $macro->last_used_at->diffForHumans() }}.
                             @endif
                         </small>
                     </div>
@@ -93,17 +93,17 @@
             <div class="card-body">
                 <p class="text-muted small mb-0">
                     Una macro encadena varias acciones sobre un ticket para aplicarlas de un clic desde la
-                    ficha del ticket. Se definen como una lista JSON: cada elemento es una accion con su
+                    ficha del ticket. Se definen como una lista JSON: cada elemento es una acción con su
                     <code>type</code> y el dato que necesite.
                 </p>
             </div>
         </div>
         <div class="card mb-3">
             <div class="card-header border-bottom">
-                <h6 class="mb-0 fw-bold">Tipos de accion</h6>
+                <h6 class="mb-0 fw-bold">Tipos de acción</h6>
             </div>
             <div class="card-body">
-                <p class="small text-muted mb-3">Que espera cada accion ademas de su <code>type</code>.</p>
+                <p class="small text-muted mb-3">Qué espera cada acción además de su <code>type</code>.</p>
                 @foreach($actionTypes as $key => $label)
                     @php($spec = \Modules\HelpdeskTickets\Models\Macro::actionSpecs()[$key] ?? null)
                     <div class="d-flex justify-content-between small mb-1">
@@ -128,7 +128,7 @@
                 <h6 class="mb-0 fw-bold">Variables disponibles</h6>
             </div>
             <div class="card-body">
-                <p class="small text-muted mb-3">Se sustituyen al aplicar la macro, dentro de <code>body</code> (y de <code>subject</code> en la accion <code>reply</code>).</p>
+                <p class="small text-muted mb-3">Se sustituyen al aplicar la macro, dentro de <code>body</code> (y de <code>subject</code> en la acción <code>reply</code>).</p>
                 @foreach(\Modules\HelpdeskTickets\Services\TicketVariableInterpolator::availableVariables() as $group => $vars)
                     <div class="mb-3">
                         <div class="small fw-semibold mb-1">{{ $group }}</div>
@@ -149,7 +149,7 @@
             <div class="card-body">
                 <p class="small text-muted mb-2">Responder al cliente, asignar el ticket y cerrarlo.</p>
                                 <pre class="small bg-light p-2 rounded mb-0 overflow-auto">[
-                  {"type": "reply", "subject": "Re: @{{ticket_subject}}", "body": "Hola @{{customer_name}}, ya esta resuelto."},
+                  {"type": "reply", "subject": "Re: @{{ticket_subject}}", "body": "Hola @{{customer_name}}, ya está resuelto."},
                   {"type": "assign_user", "value": 5},
                   {"type": "close"}
                 ]</pre>

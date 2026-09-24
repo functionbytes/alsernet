@@ -19,7 +19,7 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Estado</th>
                 <th>Prioridad</th>
                 <th>Cliente</th>

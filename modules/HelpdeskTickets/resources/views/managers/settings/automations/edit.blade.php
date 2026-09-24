@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Editar automatizacion')
+@section('title', 'Editar automatización')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Editar automatizacion'])
+    @include('core::components.card', ['title' => 'Editar automatización'])
 @endsection
 
 @section('content')
@@ -15,8 +15,8 @@
                 <div class="card-body">
                     @include('core::components.alerts')
 
-                    <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                    <p class="text-muted small mb-3">Nombre y descripcion de la automatizacion</p>
+                    <h6 class="fw-semibold mb-1">Información básica</h6>
+                    <p class="text-muted small mb-3">Nombre y descripción de la automatización</p>
 
                     <div class="mb-3">
                         <label class="form-label">Nombre <span class="text-brand">*</span></label>
@@ -24,12 +24,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Descripcion</label>
+                        <label class="form-label">Descripción</label>
                         <textarea name="description" class="form-control" rows="2">{{ old('description', $automation->description) }}</textarea>
                     </div>
 
-                    <h6 class="fw-semibold mb-1 mt-4">Trigger</h6>
-                    <p class="text-muted small mb-3">Evento que dispara esta automatizacion</p>
+                    <h6 class="fw-semibold mb-1 mt-4">Disparador</h6>
+                    <p class="text-muted small mb-3">Evento que dispara esta automatización</p>
 
                     <div class="mb-3">
                         <label class="form-label">Evento <span class="text-brand">*</span></label>
@@ -44,6 +44,14 @@
                     <p class="text-muted small mb-3">JSON array con condiciones. Ej: <code>[{"field": "priority", "op": "equals", "value": "high"}]</code></p>
 
                     <div class="mb-3">
+                        <label class="form-label" for="automation-match-mode">Se aplica cuando se cumplen</label>
+                        <select name="match_mode" id="automation-match-mode" class="form-select">
+                            <option value="all" @selected(old('match_mode', $automation->match_mode ?? 'all') === 'all')>Todas las condiciones</option>
+                            <option value="any" @selected(old('match_mode', $automation->match_mode ?? 'all') === 'any')>Cualquiera de las condiciones</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <textarea name="conditions" class="form-control font-monospace" rows="4" required>{{ old('conditions', json_encode($automation->conditions ?? [])) }}</textarea>
                     </div>
 
@@ -54,8 +62,8 @@
                         <textarea name="actions" class="form-control font-monospace" rows="4" required>{{ old('actions', json_encode($automation->actions ?? [])) }}</textarea>
                     </div>
 
-                    <h6 class="fw-semibold mb-1 mt-4">Configuracion</h6>
-                    <p class="text-muted small mb-3">Estado y prioridad de ejecucion</p>
+                    <h6 class="fw-semibold mb-1 mt-4">Configuración</h6>
+                    <p class="text-muted small mb-3">Estado y prioridad de ejecución</p>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -86,27 +94,27 @@
             </div>
             <div class="card-body">
                 <p class="card-text text-muted mb-0">
-                    Una automatizacion vigila los tickets y, cuando se cumplen sus condiciones,
-                    ejecuta las acciones definidas sin intervencion del agente.
+                    Una automatización vigila los tickets y, cuando se cumplen sus condiciones,
+                    ejecuta las acciones definidas sin intervención del agente.
                 </p>
             </div>
         </div>
         <div class="card mb-3">
             <div class="card-header border-bottom">
-                <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                <h6 class="mb-0 fw-bold">Buenas prácticas</h6>
             </div>
             <div class="card-body">
                 <ul class="text-muted mb-0">
-                    <li class="mb-2">Empieza por una condicion concreta y amplia despues</li>
-                    <li class="mb-2">Comprueba el orden: se aplican de la primera a la ultima</li>
+                    <li class="mb-2">Empieza por una condición concreta y amplía después</li>
+                    <li class="mb-2">Comprueba el orden: se aplican de la primera a la última</li>
                     <li class="mb-2">Evita dos reglas que cambien el mismo campo</li>
-                    <li class="mb-0">Desactivala en vez de borrarla mientras la pruebas</li>
+                    <li class="mb-0">Desactívala en vez de borrarla mientras la pruebas</li>
                 </ul>
             </div>
         </div>
         <div class="card mb-3">
             <div class="card-header border-bottom">
-                <h6 class="mb-0 fw-bold">Operadores de condicion</h6>
+                <h6 class="mb-0 fw-bold">Operadores de condición</h6>
             </div>
             <div class="card-body">
                 <ul class="small text-muted mb-0">
@@ -121,7 +129,7 @@
         </div>
         <div class="card">
             <div class="card-header border-bottom">
-                <h6 class="mb-0 fw-bold">Tipos de accion</h6>
+                <h6 class="mb-0 fw-bold">Tipos de acción</h6>
             </div>
             <div class="card-body">
                 <ul class="small text-muted mb-0">

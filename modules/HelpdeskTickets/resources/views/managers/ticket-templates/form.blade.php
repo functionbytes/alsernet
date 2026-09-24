@@ -65,7 +65,7 @@
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-1">
                             <h6 class="fw-semibold mb-0">Contenido</h6>
                             <button type="button" id="previewTemplateBtn" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-eye me-1"></i> Vista previa
+                                Vista previa
                             </button>
                         </div>
                         <p class="text-muted small mb-3">Asunto y cuerpo del ticket que se creará al aplicar la plantilla. Acepta variables — ver la lista completa en el panel de la derecha.</p>
@@ -168,7 +168,7 @@
                                     @php $currentIsGeneral = old('is_general', isset($template) ? ($template->isGeneral() ? 1 : 0) : 0); @endphp
                                     <select name="is_general" class="form-select select2">
                                         <option value="0" {{ $currentIsGeneral == 0 ? 'selected' : '' }}>
-                                            Personal — solo tu la ves y usas
+                                            Personal — solo tú la ves y usas
                                         </option>
                                         <option value="1" {{ $currentIsGeneral == 1 ? 'selected' : '' }}>
                                             General — visible y usable por todos
@@ -178,7 +178,7 @@
                             @else
                                 <div class="col-12 col-md-6">
                                     <label class="form-label">Alcance</label>
-                                    <input type="text" class="form-control" value="Personal — solo tu la ves y usas" disabled>
+                                    <input type="text" class="form-control" value="Personal — solo tú la ves y usas" disabled>
                                     <small class="text-muted">Solo un administrador puede compartir una plantilla con todos</small>
                                 </div>
                             @endif

@@ -3,10 +3,10 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">
-            <i class="fas fa-ticket-alt me-2 text-primary"></i>My tickets
+            <i class="fas fa-ticket-alt me-2 text-primary"></i>Mis tickets
         </h4>
         <a href="{{ route('portal.tickets.create') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus me-1"></i>New ticket
+            Nuevo ticket
         </a>
     </div>
 
@@ -20,7 +20,7 @@
         <div class="card shadow-sm">
             <div class="card-body text-center py-5 text-muted">
                 <i class="fas fa-inbox fa-2x mb-2"></i>
-                <p class="mb-0">You don't have any tickets yet.</p>
+                <p class="mb-0">Todavía no tienes ningún ticket.</p>
             </div>
         </div>
     @else
@@ -30,11 +30,11 @@
                     <thead class="table-light">
                         <tr>
                             <th>Ticket #</th>
-                            <th>Subject</th>
-                            <th>Status</th>
-                            <th>Category</th>
-                            <th>Opened</th>
-                            <th></th>
+                            <th>Asunto</th>
+                            <th>Estado</th>
+                            <th>Categoría</th>
+                            <th>Abierto</th>
+                            <th><span class="visually-hidden">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,7 +65,7 @@
                                         href="{{ route('portal.tickets.show', $ticket->ticket_number) }}"
                                         class="btn btn-outline-primary btn-sm"
                                     >
-                                        <i class="fas fa-eye me-1"></i>View
+                                        Ver
                                     </a>
                                 </td>
                             </tr>

@@ -5,7 +5,7 @@
     </div>
     <div class="card-body">
         <p class="card-text text-muted mb-0">
-            Cada buzon conectado es un canal independiente: el sistema revisa la carpeta indicada
+            Cada buzón conectado es un canal independiente: el sistema revisa la carpeta indicada
             y convierte los correos que encuentra en tickets, o en respuestas de tickets ya abiertos.
         </p>
     </div>
@@ -29,8 +29,8 @@
     </div>
     <div class="card-body">
         <ul class="text-muted mb-0">
-            <li class="mb-2">Usa "Probar conexion" para validar servidor y puerto</li>
-            <li class="mb-2">En Gmail y Outlook necesitas una contrasena de aplicacion</li>
+            <li class="mb-2">Usa "Probar conexión" para validar servidor y puerto</li>
+            <li class="mb-2">En Gmail y Outlook necesitas una contraseña de aplicación</li>
             <li class="mb-2">Sin servidor SMTP, las respuestas salen del correo por defecto</li>
             <li class="mb-0">Tras guardar, usa "Sincronizar ahora" para la primera lectura</li>
         </ul>

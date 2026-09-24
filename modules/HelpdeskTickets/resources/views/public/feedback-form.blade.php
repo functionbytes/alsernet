@@ -7,7 +7,7 @@
 @push('css')
     <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
 @endpush
-@section('title', 'Tu opinion - Ticket '.$ticket->ticket_number)
+@section('title', 'Tu opinión - Ticket '.$ticket->ticket_number)
 
 @section('content')
 @php($csatReasons = (array) config('helpdesktickets.csat_reasons', []))
@@ -18,7 +18,7 @@
             <div class="card shadow-sm">
                 <div class="card-body p-5 text-center">
                     <i class="fas fa-comment-dots text-primary mb-3 hdt-icon-xl"></i>
-                    <h4 class="fw-bold mb-1">¿Cómo calificarias nuestra atencion?</h4>
+                    <h4 class="fw-bold mb-1">¿Cómo calificarías nuestra atención?</h4>
                     <p class="text-muted small mb-4">Ticket #{{ $ticket->ticket_number }}</p>
 
                     @if(session('success'))
@@ -49,7 +49,7 @@
                         @endif
                         <div class="mb-4">
                             <textarea name="comment" class="form-control" rows="4"
-                                placeholder="Cuentanos mas (opcional)..."></textarea>
+                                placeholder="Cuéntanos más (opcional)..."></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Enviar feedback</button>
                     </form>

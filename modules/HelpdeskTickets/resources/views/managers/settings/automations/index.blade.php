@@ -19,11 +19,11 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Automatizaciones</h5>
-                        <p class="small mb-0 text-muted">Reglas automaticas que se ejecutan cuando un ticket cumple condiciones</p>
+                        <p class="small mb-0 text-muted">Reglas automáticas que se ejecutan cuando un ticket cumple condiciones</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.settings.automations.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nueva automatizacion
+                            Nueva automatización
                         </a>
                     </div>
                 </div>
@@ -81,16 +81,16 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por nombre o descripcion..."
+                                       placeholder="Buscar por nombre o descripción..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
                         @if(request('search'))
                             <a href="{{ route('manager.helpdesk.settings.automations.index') }}"
-                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
+                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar filtros" aria-label="Limpiar filtros">
                                 <i class="fas fa-times"></i>
                             </a>
                         @endif
@@ -107,9 +107,9 @@
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
-                                    <th>Trigger</th>
+                                    <th>Disparador</th>
                                     <th>Ejecuciones</th>
-                                    <th>Ultima ejecucion</th>
+                                    <th>Última ejecución</th>
                                     <th class="text-center">Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -125,7 +125,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-info-subtle text-info">{{ $auto->trigger_event }}</span>
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ $auto->trigger_event }}</span>
                                         </td>
                                         <td>{{ number_format($auto->run_count) }}</td>
                                         <td>
@@ -140,7 +140,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" aria-label="Más acciones">
                                                     <i class="fas fa-ellipsis-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -155,7 +155,7 @@
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
                                                            data-url="{{ route('manager.helpdesk.settings.automations.destroy', $auto) }}"
-                                                           data-title="Eliminar automatizacion: {{ $auto->name }}">
+                                                           data-title="Eliminar automatización: {{ $auto->name }}">
                                                             Eliminar
                                                         </a>
                                                     </li>
@@ -181,14 +181,14 @@
                             @if(request('search'))
                                 No hay resultados para "{{ request('search') }}"
                             @else
-                                Crea reglas para que se ejecuten automaticamente cuando un ticket cumpla condiciones
+                                Crea reglas para que se ejecuten automáticamente cuando un ticket cumpla condiciones
                             @endif
                         </p>
                         @if(request('search'))
                             <a href="{{ route('manager.helpdesk.settings.automations.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('manager.helpdesk.settings.automations.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nueva automatizacion
+                                Nueva automatización
                             </a>
                         @endif
                     </div>
@@ -215,7 +215,7 @@
     {{-- Bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
     </div>
 
@@ -224,15 +224,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Accion masiva</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> automatizacion(es)</strong>.</p>
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> automatización(es)</strong>.</p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Accion</label>
+                        <label class="form-label fw-semibold">Acción</label>
                         <select id="bulk-action-select" class="form-select select2">
-                            <option value="">Seleccionar accion...</option>
+                            <option value="">Seleccionar acción...</option>
                             <option value="activate">Activar</option>
                             <option value="deactivate">Desactivar</option>
                             <option value="delete">Eliminar</option>

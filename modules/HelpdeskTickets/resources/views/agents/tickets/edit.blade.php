@@ -12,7 +12,7 @@
 
 @section('content')
     <div class="d-flex align-items-center gap-2 mb-4">
-        <a href="{{ route('agent.helpdesk.tickets.show', $ticket) }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('agent.helpdesk.tickets.show', $ticket) }}" class="btn btn-sm btn-outline-secondary" aria-label="Volver">
             <i class="fas fa-arrow-left"></i>
         </a>
         <h5 class="mb-0 fw-bold">Editar — {{ $ticket->ticket_number }}</h5>
@@ -62,7 +62,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i>Guardar cambios
+                    Guardar cambios
                 </button>
             </form>
         </div>

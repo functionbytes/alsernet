@@ -19,11 +19,11 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Canales de correo</h5>
-                        <p class="small mb-0 text-muted">Cada buzon conectado es un canal independiente: los correos que le lleguen se convierten en tickets o en respuestas de seguimiento</p>
+                        <p class="small mb-0 text-muted">Cada buzón conectado es un canal independiente: los correos que le lleguen se convierten en tickets o en respuestas de seguimiento</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.settings.email-channels.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nuevo canal
+                            Nuevo canal
                         </a>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Con errores</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['with_errors']) }}</h4>
-                                <small class="text-muted">Ultima sincronizacion fallida</small>
+                                <small class="text-muted">Última sincronización fallida</small>
                             </div>
                         </div>
                     </div>
@@ -76,12 +76,12 @@
                                        value="{{ $search }}">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
                         @if($search !== '')
                             <a href="{{ route('manager.helpdesk.settings.email-channels.index') }}"
-                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
+                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar filtros" aria-label="Limpiar filtros">
                                 <i class="fas fa-times"></i>
                             </a>
                         @endif
@@ -135,14 +135,14 @@
                                         </td>
                                         <td class="text-center">
                                             @if($c['create_tickets'] ?? false)
-                                                <span class="badge bg-success-subtle text-success">Si</span>
+                                                <span class="badge bg-success-subtle text-success">Sí</span>
                                             @else
                                                 <span class="badge bg-secondary-subtle text-secondary">No</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
                                             @if($c['create_replies'] ?? false)
-                                                <span class="badge bg-success-subtle text-success">Si</span>
+                                                <span class="badge bg-success-subtle text-success">Sí</span>
                                             @else
                                                 <span class="badge bg-secondary-subtle text-secondary">No</span>
                                             @endif
@@ -156,14 +156,14 @@
                                             @if($neverChecked)
                                                 <span class="badge bg-secondary-subtle text-secondary">Sin sincronizar</span>
                                             @elseif($hasError)
-                                                <span class="badge bg-warning-subtle text-warning" title="{{ $c['last_error'] }}">Error</span>
+                                                <span class="badge bg-brand-subtle text-brand" title="{{ $c['last_error'] }}">Error</span>
                                             @else
                                                 <span class="badge bg-success-subtle text-success">OK</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
                                             <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false" aria-label="Más acciones">
                                                     <i class="fas fa-ellipsis-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -209,14 +209,14 @@
                             @if($search !== '')
                                 No hay resultados para "{{ $search }}"
                             @else
-                                Agrega una cuenta IMAP para que sus correos entrantes generen tickets automaticamente
+                                Agrega una cuenta IMAP para que sus correos entrantes generen tickets automáticamente
                             @endif
                         </p>
                         @if($search !== '')
                             <a href="{{ route('manager.helpdesk.settings.email-channels.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('manager.helpdesk.settings.email-channels.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nuevo canal
+                                Nuevo canal
                             </a>
                         @endif
                     </div>
@@ -245,7 +245,7 @@
     {{-- Bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none hdt-floating-bar">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
     </div>
 
@@ -254,15 +254,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Accion masiva</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> canal(es)</strong>.</p>
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> canal(es)</strong>.</p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Accion</label>
+                        <label class="form-label fw-semibold">Acción</label>
                         <select id="bulk-action-select" class="form-select select2">
-                            <option value="">Seleccionar accion...</option>
+                            <option value="">Seleccionar acción...</option>
                             <option value="activate">Generar tickets: activar</option>
                             <option value="deactivate">Generar tickets: desactivar</option>
                             <option value="delete">Eliminar</option>

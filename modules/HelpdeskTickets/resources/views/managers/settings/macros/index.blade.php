@@ -22,7 +22,7 @@
                     <small class="text-muted">Acciones predefinidas que un agente puede aplicar manualmente en un ticket</small>
                 </div>
                 <a href="{{ route('manager.helpdesk.settings.macros.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i> Nueva macro
+                    Nueva macro
                 </a>
             </div>
 
@@ -74,7 +74,7 @@
                                 <th>Acciones</th>
                                 <th>Visibilidad</th>
                                 <th>Usos</th>
-                                <th>Ultimo uso</th>
+                                <th>Último uso</th>
                                 <th>Estado</th>
                                 <th class="text-end">Opciones</th>
                             </tr>
@@ -90,7 +90,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge bg-info-subtle text-info">{{ count($macro->actions ?? []) }} acciones</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ count($macro->actions ?? []) }} acciones</span>
                                 </td>
                                 <td>
                                     @if($macro->is_shared)
@@ -110,7 +110,7 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="dropdown">
-                                        <a class="text-muted" href="#" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-vertical"></i></a>
+                                        <a class="text-muted" href="#" data-bs-toggle="dropdown" aria-label="Más acciones"><i class="fas fa-ellipsis-vertical"></i></a>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li><a class="dropdown-item" href="{{ route('manager.helpdesk.settings.macros.edit', $macro) }}">Editar</a></li>
                                             <li>
@@ -153,7 +153,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Acción masiva</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
                 <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> macro(s)</strong>.</p>

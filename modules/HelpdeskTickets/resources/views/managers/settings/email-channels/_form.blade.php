@@ -14,8 +14,8 @@
     $showTestButtons = $showTestButtons ?? true;
 @endphp
 
-<h6 class="fw-semibold mb-1">Conexion entrante (IMAP)</h6>
-<p class="text-muted small mb-3">Buzon del que se leen los correos que se convierten en tickets</p>
+<h6 class="fw-semibold mb-1">Conexión entrante (IMAP)</h6>
+<p class="text-muted small mb-3">Buzón del que se leen los correos que se convierten en tickets</p>
 
 <div class="row g-3 mb-4">
 
@@ -78,14 +78,14 @@
     <div class="col-12 col-md-6">
         <div class="mb-3">
             <label for="channelPassword" class="form-label">
-                Contrasena @unless($isEdit)<span class="text-brand">*</span>@endunless
+                Contraseña @unless($isEdit)<span class="text-brand">*</span>@endunless
             </label>
             <input type="password" name="password" id="channelPassword"
                    class="form-control @error('password') is-invalid @enderror"
                    autocomplete="new-password"
                    {{ $isEdit ? '' : 'required' }}>
             @if($isEdit)
-                <small class="form-text text-muted">Deja en blanco para conservar la contrasena actual</small>
+                <small class="form-text text-muted">Deja en blanco para conservar la contraseña actual</small>
             @endif
             @error('password')
                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -99,7 +99,7 @@
             <input type="text" name="folder" id="channelFolder"
                    class="form-control @error('folder') is-invalid @enderror"
                    value="{{ $field('folder', 'INBOX') }}">
-            <small class="form-text text-muted">Carpeta del buzon que se revisa. Por defecto INBOX</small>
+            <small class="form-text text-muted">Carpeta del buzón que se revisa. Por defecto INBOX</small>
             @error('folder')
                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
             @enderror
@@ -108,7 +108,7 @@
 
     <div class="col-12 col-md-6">
         <div class="mb-3">
-            <label for="channelEncryption" class="form-label">Encriptacion</label>
+            <label for="channelEncryption" class="form-label">Encriptación</label>
             <select name="encryption" id="channelEncryption"
                     class="form-select select2 @error('encryption') is-invalid @enderror">
                 <option value="ssl" {{ $field('encryption', 'ssl') === 'ssl' ? 'selected' : '' }}>SSL</option>
@@ -126,7 +126,7 @@
             <input type="date" name="sync_since" id="channelSyncSince"
                    class="form-control @error('sync_since') is-invalid @enderror"
                    value="{{ $field('sync_since') }}">
-            <small class="form-text text-muted">Ignora los correos anteriores a esta fecha al sincronizar. Dejalo vacio para no filtrar</small>
+            <small class="form-text text-muted">Ignora los correos anteriores a esta fecha al sincronizar. Déjalo vacío para no filtrar</small>
             @error('sync_since')
                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
             @enderror
@@ -135,7 +135,7 @@
 
     @if($showTestButtons)
         <div class="col-12">
-            <button type="button" class="btn btn-light" id="btn-test-channel">Probar conexion IMAP</button>
+            <button type="button" class="btn btn-light" id="btn-test-channel">Probar conexión IMAP</button>
             <div id="channelTestResult" class="d-none mt-3"></div>
         </div>
     @endif
@@ -144,7 +144,7 @@
 
 <h6 class="fw-semibold mb-1">SMTP saliente</h6>
 <p class="text-muted small mb-3">
-    Para que las respuestas del agente salgan desde este mismo buzon, en vez del correo generico del sistema.
+    Para que las respuestas del agente salgan desde este mismo buzón, en vez del correo genérico del sistema.
     Deja el servidor en blanco para responder con el correo por defecto.
 </p>
 
@@ -177,13 +177,13 @@
 
     <div class="col-12">
         <div class="mb-3">
-            <label for="channelSmtpEncryption" class="form-label">Encriptacion</label>
+            <label for="channelSmtpEncryption" class="form-label">Encriptación</label>
             <select name="smtp_encryption" id="channelSmtpEncryption"
                     class="form-select select2 @error('smtp_encryption') is-invalid @enderror">
                 <option value="ssl" {{ $field('smtp_encryption', 'ssl') === 'ssl' ? 'selected' : '' }}>SSL</option>
                 <option value="tls" {{ $field('smtp_encryption', 'ssl') === 'tls' ? 'selected' : '' }}>TLS</option>
             </select>
-            <small class="form-text text-muted">Usa el mismo usuario y contrasena que el IMAP</small>
+            <small class="form-text text-muted">Usa el mismo usuario y contraseña que el IMAP</small>
             @error('smtp_encryption')
                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
             @enderror
@@ -192,7 +192,7 @@
 
     @if($showTestButtons)
         <div class="col-12">
-            <button type="button" class="btn btn-light" id="btn-test-smtp-channel">Probar conexion SMTP</button>
+            <button type="button" class="btn btn-light" id="btn-test-smtp-channel">Probar conexión SMTP</button>
             <div id="channelSmtpTestResult" class="d-none mt-3"></div>
         </div>
     @endif
@@ -200,7 +200,7 @@
 </div>
 
 <h6 class="fw-semibold mb-1">Comportamiento</h6>
-<p class="text-muted small mb-3">Que hace el sistema con los correos que llegan a este buzon</p>
+<p class="text-muted small mb-3">Qué hace el sistema con los correos que llegan a este buzón</p>
 
 <div class="row g-3">
 
@@ -208,7 +208,7 @@
         <div class="mb-3">
             <label for="channelCreateTickets" class="form-label">Crear tickets desde correos nuevos</label>
             <select name="create_tickets" id="channelCreateTickets" class="form-select select2">
-                <option value="1" {{ (int) $field('create_tickets', 1) === 1 ? 'selected' : '' }}>Si</option>
+                <option value="1" {{ (int) $field('create_tickets', 1) === 1 ? 'selected' : '' }}>Sí</option>
                 <option value="0" {{ (int) $field('create_tickets', 1) === 0 ? 'selected' : '' }}>No</option>
             </select>
             <small class="form-text text-muted">Cada correo sin ticket asociado abre uno nuevo</small>
@@ -219,10 +219,10 @@
         <div class="mb-3">
             <label for="channelCreateReplies" class="form-label">Crear respuestas desde correos de seguimiento</label>
             <select name="create_replies" id="channelCreateReplies" class="form-select select2">
-                <option value="1" {{ (int) $field('create_replies', 1) === 1 ? 'selected' : '' }}>Si</option>
+                <option value="1" {{ (int) $field('create_replies', 1) === 1 ? 'selected' : '' }}>Sí</option>
                 <option value="0" {{ (int) $field('create_replies', 1) === 0 ? 'selected' : '' }}>No</option>
             </select>
-            <small class="form-text text-muted">Los correos que responden a un ticket se anaden como comentario</small>
+            <small class="form-text text-muted">Los correos que responden a un ticket se añaden como comentario</small>
         </div>
     </div>
 
@@ -230,7 +230,7 @@
         <div class="mb-3">
             <label for="channelIsDefault" class="form-label">Canal por defecto para tickets sin correo entrante</label>
             <select name="is_default" id="channelIsDefault" class="form-select select2">
-                <option value="1" {{ (int) $field('is_default', 0) === 1 ? 'selected' : '' }}>Si</option>
+                <option value="1" {{ (int) $field('is_default', 0) === 1 ? 'selected' : '' }}>Sí</option>
                 <option value="0" {{ (int) $field('is_default', 0) === 0 ? 'selected' : '' }}>No</option>
             </select>
             <small class="form-text text-muted">

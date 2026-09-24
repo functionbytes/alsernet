@@ -14,7 +14,7 @@
             <div class="card h-100">
                 <div class="card-header border-bottom p-3">
                     <h5 class="mb-0 fw-bold">Enviar correo de prueba</h5>
-                    <small class="text-muted">Envia directamente a Mailpit omitiendo el MAIL_HOST configurado</small>
+                    <small class="text-muted">Envía directamente a Mailpit omitiendo el MAIL_HOST configurado</small>
                 </div>
                 <div class="card-body">
                     <form id="send-email-form">
@@ -45,16 +45,16 @@
                 </div>
                 <div class="card-footer">
                     <button type="button" id="btn-send-email" class="btn btn-primary w-100 mb-2">
-                        <span id="btn-send-text"><i class="fas fa-paper-plane me-1"></i> Enviar a Mailpit</span>
+                        <span id="btn-send-text">Enviar a Mailpit</span>
                         <span id="btn-send-spinner" class="d-none">
                             <span class="spinner-border spinner-border-sm me-1"></span> Enviando...
                         </span>
                     </button>
                     <p class="text-muted small mb-1">
-                        El correo se envia a Mailpit (127.0.0.1:1025). Luego usa "Sincronizar" para crear el ticket.
+                        El correo se envía a Mailpit (127.0.0.1:1025). Luego usa "Sincronizar" para crear el ticket.
                     </p>
                     <a href="http://localhost:8025" target="_blank" class="small">
-                        <i class="fas fa-external-link-alt me-1"></i> Abrir Mailpit UI
+                        Abrir Mailpit UI
                     </a>
                 </div>
             </div>
@@ -65,18 +65,18 @@
             <div class="card h-100">
                 <div class="card-header border-bottom p-3">
                     <h5 class="mb-0 fw-bold">Sincronizar y ver tickets</h5>
-                    <small class="text-muted">Ejecuta <code>imap:emailticket --sync</code> y muestra los ultimos 5 tickets</small>
+                    <small class="text-muted">Ejecuta <code>imap:emailticket --sync</code> y muestra los últimos 5 tickets</small>
                 </div>
                 <div class="card-body">
                     <button type="button" id="btn-sync" class="btn btn-success w-100 mb-3">
-                        <span id="btn-sync-text"><i class="fas fa-rotate me-1"></i> Sincronizar emails &rarr; tickets</span>
+                        <span id="btn-sync-text">Sincronizar emails &rarr; tickets</span>
                         <span id="btn-sync-spinner" class="d-none">
                             <span class="spinner-border spinner-border-sm me-1"></span> Sincronizando...
                         </span>
                     </button>
 
                     <div id="tickets-result" class="text-muted small">
-                        Haz click en Sincronizar para ver los ultimos tickets creados.
+                        Haz click en Sincronizar para ver los últimos tickets creados.
                     </div>
                 </div>
             </div>

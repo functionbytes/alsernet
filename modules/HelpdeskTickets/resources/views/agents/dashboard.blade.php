@@ -25,7 +25,7 @@
                 <div class="dropdown">
                     <a href="javascript:void(0)"
                        class="d-flex align-items-center justify-content-center rounded-circle text-muted btn-icon-sm"
-                       data-bs-toggle="dropdown" aria-expanded="false">
+                       data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más acciones">
                         <i class="fas fa-ellipsis-vertical"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -91,14 +91,14 @@
                     <div class="row align-items-center">
                         <div class="col-8">
                             <h5 class="card-title fw-semibold mb-3">Vencen hoy</h5>
-                            <h4 class="fw-semibold mb-2 {{ $stats['my_due_today'] > 0 ? 'text-warning' : '' }}">
+                            <h4 class="fw-semibold mb-2 {{ $stats['my_due_today'] > 0 ? 'text-secondary' : '' }}">
                                 {{ $stats['my_due_today'] }}
                             </h4>
                             <p class="fs-3 mb-0 text-muted">Con vencimiento hoy</p>
                         </div>
                         <div class="col-4 d-flex justify-content-end">
-                            <span class="rounded-circle bg-warning-subtle d-flex align-items-center justify-content-center stat-icon">
-                                <i class="fas fa-clock text-warning"></i>
+                            <span class="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center stat-icon">
+                                <i class="fas fa-clock text-secondary"></i>
                             </span>
                         </div>
                     </div>
@@ -135,8 +135,8 @@
                             <p class="fs-3 mb-0 text-muted">Abiertas asignadas</p>
                         </div>
                         <div class="col-4 d-flex justify-content-end">
-                            <span class="rounded-circle bg-info-subtle d-flex align-items-center justify-content-center stat-icon">
-                                <i class="fas fa-comments text-info"></i>
+                            <span class="rounded-circle bg-dark-subtle d-flex align-items-center justify-content-center stat-icon">
+                                <i class="fas fa-comments text-dark"></i>
                             </span>
                         </div>
                     </div>
@@ -247,7 +247,7 @@
                                         <p class="fs-3 mb-0 text-muted">{{ $ticket->ticket_number }}</p>
                                     </div>
                                 </div>
-                                <span class="small {{ $isPast ? 'text-brand fw-semibold' : 'text-warning' }}">
+                                <span class="small {{ $isPast ? 'text-brand fw-semibold' : 'text-muted' }}">
                                     {{ $ticket->sla_resolution_due_at?->format('d/m H:i') ?? '—' }}
                                 </span>
                             </div>

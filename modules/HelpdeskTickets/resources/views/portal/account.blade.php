@@ -5,9 +5,9 @@
         <div class="col-md-6">
             <div class="d-flex align-items-center mb-4">
                 <a href="{{ route('portal.tickets') }}" class="btn btn-sm btn-outline-secondary me-3">
-                    <i class="fas fa-arrow-left me-1"></i>Back to my tickets
+                    Volver a mis tickets
                 </a>
-                <h4 class="mb-0">Account settings</h4>
+                <h4 class="mb-0">Ajustes de la cuenta</h4>
             </div>
 
             @if (session('success'))
@@ -31,7 +31,7 @@
                         @method('PUT')
 
                         <div class="mb-3">
-                            <label for="name" class="form-label fw-semibold">Name</label>
+                            <label for="name" class="form-label fw-semibold">Nombre</label>
                             <input
                                 type="text"
                                 id="name"
@@ -47,7 +47,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">Email</label>
+                            <label for="email" class="form-label fw-semibold">Correo electrónico</label>
                             <input
                                 type="email"
                                 id="email"
@@ -56,11 +56,11 @@
                                 readonly
                                 disabled
                             >
-                            <div class="form-text">Email cannot be changed — it is used to log in via magic link.</div>
+                            <div class="form-text">El correo no se puede cambiar: se usa para acceder mediante el enlace mágico.</div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="phone" class="form-label fw-semibold">Phone</label>
+                            <label for="phone" class="form-label fw-semibold">Teléfono</label>
                             <input
                                 type="text"
                                 id="phone"
@@ -75,7 +75,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>Save changes
+                            Guardar cambios
                         </button>
                     </form>
                 </div>

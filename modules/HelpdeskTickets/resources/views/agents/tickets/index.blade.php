@@ -13,7 +13,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h4 class="mb-0 fw-bold"><i class="fas fa-ticket-alt me-2 text-primary"></i>Mis tickets</h4>
         <a href="{{ route('agent.helpdesk.tickets.create') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus me-1"></i>Nuevo ticket
+            Nuevo ticket
         </a>
     </div>
 
@@ -33,7 +33,7 @@
             <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar..." value="{{ request('search') }}">
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-sm btn-outline-secondary">
+            <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Buscar">
                 <i class="fas fa-search"></i>
             </button>
         </div>
@@ -50,7 +50,7 @@
                         <th>Categoría</th>
                         <th>Cliente</th>
                         <th>Creado</th>
-                        <th></th>
+                        <th><span class="visually-hidden">Acciones</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,7 +69,7 @@
                         <td>{{ $ticket->customer?->name ?? '-' }}</td>
                         <td><small>{{ $ticket->created_at?->diffForHumans() }}</small></td>
                         <td>
-                            <a href="{{ route('agent.helpdesk.tickets.show', $ticket) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ route('agent.helpdesk.tickets.show', $ticket) }}" class="btn btn-sm btn-outline-primary" aria-label="Ver ticket">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>

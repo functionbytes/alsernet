@@ -19,11 +19,11 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Plantillas de ticket</h5>
-                        <p class="small mb-0 text-muted">Plantillas reutilizables para crear tickets rapidamente — generales (compartidas) y personales</p>
+                        <p class="small mb-0 text-muted">Plantillas reutilizables para crear tickets rápidamente — generales (compartidas) y personales</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.ticket-templates.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nueva plantilla
+                            Nueva plantilla
                         </a>
                     </div>
                 </div>
@@ -89,7 +89,7 @@
                                value="{{ request('search') }}">
 
                         <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
-                                data-bs-toggle="modal" data-bs-target="#tt-filter-modal" title="Filtros avanzados">
+                                data-bs-toggle="modal" data-bs-target="#tt-filter-modal" title="Filtros avanzados" aria-label="Filtros avanzados">
                             <i class="fas fa-filter"></i>
                             @if($ttActiveFilterCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary tt-filter-badge">
@@ -99,11 +99,11 @@
                         </button>
 
                         <div class="d-flex gap-1 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary" title="Buscar">
+                            <button type="submit" class="btn btn-primary" title="Buscar" aria-label="Buscar">
                                 <i class="fas fa-magnifying-glass"></i>
                             </button>
                             @if($ttFiltering)
-                                <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="btn btn-secondary" title="Limpiar filtros" aria-label="Limpiar filtros">
                                     <i class="fas fa-xmark"></i>
                                 </a>
                             @endif
@@ -157,14 +157,14 @@
                     {{-- Generales --}}
                     <div class="tab-pane fade show active" id="tpl-general">
                         @if(! $canManageGeneral)
-                            <p class="small text-muted mb-3">Las plantillas generales las gestiona un administrador. Aqui puedes verlas y usarlas al crear un ticket.</p>
+                            <p class="small text-muted mb-3">Las plantillas generales las gestiona un administrador. Aquí puedes verlas y usarlas al crear un ticket.</p>
                         @endif
                         @include('helpdesktickets::managers.ticket-templates._table', ['templates' => $general, 'canManage' => $canManageGeneral, 'group' => 'general'])
                     </div>
 
                     {{-- Mias --}}
                     <div class="tab-pane fade" id="tpl-mine">
-                        <p class="small text-muted mb-3">Solo tu puedes ver, editar o eliminar estas plantillas.</p>
+                        <p class="small text-muted mb-3">Solo tú puedes ver, editar o eliminar estas plantillas.</p>
                         @include('helpdesktickets::managers.ticket-templates._table', ['templates' => $mine, 'canManage' => true, 'group' => 'mine'])
                     </div>
 
@@ -180,7 +180,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Filtros avanzados</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -234,7 +234,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Acción masiva — {{ $groupLabel }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
                     <div class="modal-body">
                         <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> plantilla(s)</strong>.</p>
