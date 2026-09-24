@@ -17,7 +17,7 @@
                     // de variables): snake_case plano, nunca con puntos —
                     // {{cliente.nombre}} nunca se sustituía (bug 11-sep-2026).
                     '<span class="hint">variables: {{customer_name}} {{ticket_number}} {{agent_name}}</span></label>' +
-                    '<textarea class="tkt-input" id="tkt-tpled-body" style="min-height:160px">' + escapeHtml(reply.content || '') + '</textarea></div>' +
+                    '<textarea class="tkt-input tkt-input-lg" id="tkt-tpled-body">' + escapeHtml(reply.content || '') + '</textarea></div>' +
                   '<div class="tkt-cap">Vista previa</div>' +
                   '<div class="tkt-tpl-preview" id="tkt-tpled-preview">' + escapeHtml(reply.content || '') + '</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tpled-save">Guardar plantilla</button>' +

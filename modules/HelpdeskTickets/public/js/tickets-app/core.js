@@ -32,6 +32,7 @@
             threadHistoryExpanded: false,
             slaTimer: null,
             undoAction: null,
+            pendingSend: null,
             undoTimer: null,
             networkOnline: typeof navigator === 'undefined' || navigator.onLine !== false,
             offlineQueue: [],
@@ -665,6 +666,10 @@
     // lo mismo ('form'/'formulario'/'web_form') por datos de distintas épocas:
     // se mapean todas en vez de normalizar la columna, que obligaría a una
     // migración de datos por una etiqueta.
+    // Estado de presencia del agente asignado (AgentPresenceService). Offline
+    // no se pinta: la ausencia del indicador ya lo dice.
+    var PRESENCE_LABELS = { available: 'en línea', busy: 'ocupado', away: 'ausente' };
+
     var ORIGIN_LABELS = {
         email: 'Email', widget: 'Widget', wa: 'WhatsApp', whatsapp: 'WhatsApp',
         fb: 'Facebook', facebook: 'Facebook', ig: 'Instagram', instagram: 'Instagram',
@@ -1530,7 +1535,7 @@
                     // las demás etiquetas sin depender de un glifo.
                     '<span class="tkt-rchip origin">' + escapeHtml(ORIGIN_LABELS[t.source] || t.source || '—') + '</span>' +
                     (t.priority && t.priority !== 'normal' && t.priority !== 'low'
-                        ? '<span class="tkt-rchip strong">' + escapeHtml(priorityLabel(t.priority)) + '</span>'
+                        ? '<span class="tkt-rchip ' + (t.priority === 'urgent' ? 'strong' : 'prio-high') + '">' + escapeHtml(priorityLabel(t.priority)) + '</span>'
                         : '') +
                     // Distinto del SLA de resolución (más abajo): first_response_at
                     // dice si YA se contestó al cliente, sin importar si el
@@ -1541,7 +1546,7 @@
                     // pendiente de contestar (mismo criterio que el aviso de
                     // autoasignación, ver renderSelfAssignBanner()).
                     (!t.first_response_at && t.status_slug !== 'closed'
-                        ? '<span class="tkt-rchip strong" title="Nadie ha respondido a este ticket todavía">Sin responder</span>'
+                        ? '<span class="tkt-rchip attn" title="Nadie ha respondido a este ticket todavía">Sin responder</span>'
                         : '') +
                     (t.category_name ? '<span class="tkt-rchip cat" title="' + escapeHtml(t.category_name) + '">' + escapeHtml(t.category_name) + '</span>' : '') +
                     // Equipo/cola: mismo caso que el canal — ya viaja en el
@@ -1566,7 +1571,7 @@
                     // renderDetail()): "Email rebotado" para failed y
                     // bounced por igual, sin distinguir matices ahí tampoco.
                     (t.last_mail_status === 'failed' || t.last_mail_status === 'bounced'
-                        ? '<span class="tkt-rchip strong" title="El último correo saliente no llegó al cliente">Correo rebotado</span>'
+                        ? '<span class="tkt-rchip bounce" title="El último correo saliente no llegó al cliente">Correo rebotado</span>'
                         : '') +
                     // slaRowText() devuelve el guion largo cuando el ticket no
                     // tiene plazo: es un valor "vacío" con forma de texto, así
@@ -2052,7 +2057,7 @@
             iconClass: opts.danger ? 'danger' : '',
             title: opts.title,
             width: 'sm',
-            body: '<p style="margin:0;font-size:var(--tkt-t-md);color:var(--tkt-text-soft)">' + escapeHtml(opts.message) + '</p>',
+            body: '<p class="tkt-confirm-msg">' + escapeHtml(opts.message) + '</p>',
             foot: '<button type="button" class="tkt-btn ' + (opts.danger ? 'tkt-btn-danger' : 'tkt-btn-primary') + '" id="tkt-confirm-ok">' + escapeHtml(opts.confirmLabel || 'Confirmar') + '</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
         }));
@@ -2138,6 +2143,7 @@
     function selectTicket(t) {
         var previousTicket = TKA.state.currentTicket;
         if (!previousTicket || String(previousTicket.id) !== String(t.id)) {
+            flushPendingSend();
             TKA.state.threadHistoryExpanded = false;
             TKA.state.currentDetail = null;
             TKA.state.threadSearch = '';
@@ -2267,9 +2273,9 @@
         // ejemplo tiene correo enviado, pero un ticket de widget o WhatsApp
         // no tiene ninguna entrega que reportar.
         var deliveryChip = t.last_mail_status === 'delivered' || t.last_mail_status === 'sent'
-            ? '<span class="tkt-chip-delivery"><i class="fa-solid fa-circle-check"></i> Email entregado</span>'
+            ? '<span class="tkt-chip-delivery"><i class="fa-solid fa-circle-check"></i> Correo entregado</span>'
             : (t.last_mail_status === 'failed' || t.last_mail_status === 'bounced'
-                ? '<span class="tkt-chip-delivery" style="background:var(--tkt-danger-bg);color:#fff"><i class="fa-solid fa-circle-exclamation"></i> Email rebotado</span>'
+                ? '<span class="tkt-chip-delivery is-failed"><i class="fa-solid fa-circle-exclamation"></i> Correo rebotado</span>'
                 : '');
 
         $d.html(
@@ -2292,7 +2298,7 @@
                             (t.priority ? '<span class="tkt-chip ' + priorityChipClass(t.priority) + '"><i class="fa-solid fa-flag"></i>' + escapeHtml(priorityLabel(t.priority)) + '</span>' : '') +
                             '<span class="tkt-chip-channel"><i class="' + (ORIGIN_ICON[t.source] || 'fa-solid fa-tag') + '"></i>' + escapeHtml(ORIGIN_LABELS[t.source] || t.source || '—') + '</span>' +
                             slaChip +
-                            (t.has_attachments ? '<span class="tkt-chip-att"><i class="fa-solid fa-paperclip"></i> 1</span>' : '') +
+                            (t.has_attachments ? '<span class="tkt-chip-att" title="El último mensaje trae adjuntos"><i class="fa-solid fa-paperclip"></i> Adjuntos</span>' : '') +
                         '</div>' +
                         '<div class="tkt-detail-context">' +
                             (t.customer ? '<span class="who"><i class="fa-regular fa-user"></i>' + escapeHtml(t.customer.name) + '</span>' : '<span class="who"><i class="fa-regular fa-user"></i>Sin cliente</span>') +
@@ -2861,7 +2867,7 @@
         var advancedActive = Object.keys(activeFilters).some(function (key) {
             return key === 'type' ? activeFilters[key] !== 'all' : Boolean(activeFilters[key]);
         });
-        $p.find('[data-thread-no-results]').toggle((Boolean(query) || advancedActive) && $p.find('[data-thread-kind]:not([data-thread-kind="day"]):visible').length === 0);
+        $p.find('[data-thread-no-results]').prop('hidden', !((Boolean(query) || advancedActive) && $p.find('[data-thread-kind]:not([data-thread-kind="day"]):visible').length === 0));
     }
 
     function loadOlderThread() {
@@ -2923,7 +2929,7 @@
                 '<button type="button" class="' + (activeThreadFilter === 'no-events' ? 'on' : '') + '" data-thread-filter="no-events">Sin eventos</button>' +
             '</div>' +
             '<label class="tkt-thread-search-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" class="tkt-thread-search" id="tkt-thread-search" value="' + escapeHtml(activeThreadSearch) + '" placeholder="Buscar en el hilo" aria-label="Buscar en la conversación"></label>' +
-            '<button type="button" class="tkt-btn tkt-btn-mini tkt-thread-advanced-toggle" id="tkt-thread-advanced-toggle" aria-expanded="false"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Filtros</button>' +
+            '<button type="button" class="tkt-btn tkt-btn-mini tkt-thread-advanced-toggle" id="tkt-thread-advanced-toggle" aria-expanded="false">Filtros</button>' +
             '<div class="tkt-thread-advanced" id="tkt-thread-advanced" hidden>' +
                 '<label>Remitente<input type="search" id="tkt-thread-filter-sender" value="' + escapeHtml(activeThreadFilters.sender) + '" placeholder="Nombre o email"></label>' +
                 '<label>Tipo<select id="tkt-thread-filter-type"><option value="all">Todos</option><option value="customer"' + (activeThreadFilters.type === 'customer' ? ' selected' : '') + '>Cliente</option><option value="agent"' + (activeThreadFilters.type === 'agent' ? ' selected' : '') + '>Agente</option><option value="note"' + (activeThreadFilters.type === 'note' ? ' selected' : '') + '>Nota interna</option><option value="event"' + (activeThreadFilters.type === 'event' ? ' selected' : '') + '>Evento</option></select></label>' +
@@ -3094,7 +3100,7 @@
             var mode = $(this).data('thread-filter');
             applyThreadFilter($p, mode, TKA.state.threadSearch);
         });
-        $p.find('.tkt-thread-bar').append('<span class="tkt-thread-no-results" data-thread-no-results style="display:none">No hay coincidencias</span>');
+        $p.find('.tkt-thread-bar').append('<span class="tkt-thread-no-results" data-thread-no-results hidden>No hay coincidencias</span>');
         $p.off('input.tktThreadSearch').on('input.tktThreadSearch', '#tkt-thread-search', function () {
             var value = String(this.value || '').trim();
             applyThreadFilter($p, activeThreadFilter, value);
@@ -3282,13 +3288,13 @@
                 // menciones de la nota interna): este composer suele vivir
                 // pegado al fondo de la pantalla, un dropdown hacia abajo
                 // quedaría cortado por el viewport.
-                '<div class="tkt-drop tkt-drop-up" id="tkt-reply-tpl-drop" style="bottom:100%;left:0;right:0;margin-bottom:6px;max-height:260px;overflow:auto" hidden></div>' +
+                '<div class="tkt-drop tkt-drop-up tkt-drop-composer" id="tkt-reply-tpl-drop" hidden></div>' +
                 // "@" para mencionar — el placeholder ya lo anunciaba, como
                 // "/", pero el botón "Mencionar" solo insertaba el símbolo
                 // sin sugerir a quién. Mismo bindMentionAutocomplete() que ya
                 // usan las notas internas del sidebar, mismo criterio
                 // "hacia arriba" que el de plantillas de aquí al lado.
-                '<div class="tkt-drop tkt-drop-up" id="tkt-reply-mention-drop" style="bottom:100%;left:0;right:0;margin-bottom:6px;max-height:200px;overflow:auto" hidden></div>' +
+                '<div class="tkt-drop tkt-drop-up tkt-drop-composer is-short" id="tkt-reply-mention-drop" hidden></div>' +
             '</div>' +
         '</div>';
     }
@@ -4191,6 +4197,75 @@
         formData.append('is_internal', isInternal ? 1 : 0);
         for (var i = 0; i < files.length; i++) formData.append('attachments[]', files[i]);
 
+        // Deshacer envío (24-sep-2026): una respuesta al cliente se retiene
+        // SEND_UNDO_MS con un "Deshacer" en la barra de estado. Las notas
+        // internas se guardan al momento: no salen del equipo.
+        if (!isInternal) {
+            scheduleUndoableSend(t, body, files, function () { postReply(t, formData, body, isInternal, files, idempotencyKey); });
+            return;
+        }
+
+        postReply(t, formData, body, isInternal, files, idempotencyKey);
+    }
+
+    var SEND_UNDO_MS = 5000;
+
+    function scheduleUndoableSend(t, body, files, send) {
+        flushPendingSend();
+
+        var $body = $('#tkt-reply-body');
+        var draftBody = body;
+        var draftFiles = files;
+        var pending = { ticketId: t.id, send: send };
+
+        pending.timer = setTimeout(function () {
+            if (TKA.state.pendingSend === pending) TKA.state.pendingSend = null;
+            hideUndo();
+            send();
+        }, SEND_UNDO_MS);
+        TKA.state.pendingSend = pending;
+
+        // El composer se vacía ya (como si hubiera salido); Deshacer lo
+        // devuelve tal cual, adjuntos incluidos si el ticket sigue abierto.
+        $body.val('').css('height', '');
+        $('#tkt-reply-attach-count').text('');
+
+        offerUndo('Enviando respuesta…', function () {
+            if (TKA.state.pendingSend !== pending) return;
+            clearTimeout(pending.timer);
+            TKA.state.pendingSend = null;
+            var current = TKA.state.currentTicket;
+            if (current && String(current.id) === String(pending.ticketId)) {
+                $('#tkt-reply-body').val(draftBody).trigger('input').trigger('focus');
+                try {
+                    var dt = new DataTransfer();
+                    for (var k = 0; k < draftFiles.length; k++) dt.items.add(draftFiles[k]);
+                    document.getElementById('tkt-reply-attach').files = dt.files;
+                    $('#tkt-reply-attach-count').text(draftFiles.length ? draftFiles.length + (draftFiles.length === 1 ? ' adjunto' : ' adjuntos') : '');
+                } catch (e) { /* navegador sin DataTransfer: el texto sí vuelve */ }
+            }
+            if (window.toastr) toastr.info('Envío cancelado');
+        });
+        clearTimeout(TKA.state.undoTimer);
+        TKA.state.undoTimer = setTimeout(hideUndo, SEND_UNDO_MS);
+    }
+
+    // Cambiar de ticket con un envío retenido lo manda en ese momento: el
+    // "Deshacer" pertenece al ticket que se estaba contestando.
+    function flushPendingSend() {
+        var pending = TKA.state.pendingSend;
+        if (!pending) return;
+        clearTimeout(pending.timer);
+        TKA.state.pendingSend = null;
+        hideUndo();
+        pending.send();
+    }
+
+    function postReply(t, formData, body, isInternal, files, idempotencyKey) {
+        var isCurrent = function () {
+            return TKA.state.currentTicket && String(TKA.state.currentTicket.id) === String(t.id);
+        };
+
         $.ajax({
             url: t.url_message_store,
             method: 'POST',
@@ -4201,9 +4276,12 @@
             beforeSend: function (xhr) { xhr.setRequestHeader('X-Idempotency-Key', idempotencyKey); },
             success: function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || 'Mensaje enviado');
+                clearComposerDraft(t);
+                // Con el envío retenido, el agente puede estar ya en otro
+                // ticket: solo se toca el composer si sigue en este.
+                if (!isCurrent()) return;
                 emitTyping(false);
                 clearTimeout(TKA.state.draftSaveTimer);
-                clearComposerDraft(t);
                 $('#tkt-reply-body').val('').css('height', '').trigger('blur');
                 $('#tkt-reply-attach').val('');
                 $('#tkt-reply-attach-count').text('');
@@ -5141,7 +5219,7 @@
         var body;
         if (csat.rating) {
             var stars = '';
-            for (var i = 1; i <= 5; i++) stars += '<i class="fa-solid fa-star" style="color:' + (i <= csat.rating ? 'var(--tkt-warn)' : 'var(--tkt-border-strong)') + ';font-size:13px"></i>';
+            for (var i = 1; i <= 5; i++) stars += '<i class="fa-solid fa-star tkt-csat-star' + (i <= csat.rating ? ' on' : '') + '"></i>';
             body = '<div class="tkt-kv"><span class="k">Puntuación</span><span class="v">' + stars + '</span></div>' +
                 '<div class="tkt-kv"><span class="k">Recibida</span><span class="v">' + escapeHtml(csat.rated_at_human || '—') + '</span></div>' +
                 (csat.reason ? '<div class="tkt-kv"><span class="k">Motivo</span><span class="v">' + escapeHtml(csat.reason) + '</span></div>' : '') +
@@ -5235,7 +5313,9 @@
                                 ? 'Agente' + (asg.agent_open_tickets != null ? ' · ' + asg.agent_open_tickets + (asg.agent_open_tickets === 1 ? ' ticket abierto' : ' tickets abiertos') : '')
                                 : 'Nadie lo está atendiendo') + '</span>' +
                         '</span>' +
-                        (agentName ? '<span class="tkt-live"><span class="dot"></span>en línea</span>' : '') +
+                        (agentName && PRESENCE_LABELS[asg.agent_presence]
+                            ? '<span class="tkt-live is-' + escapeHtml(asg.agent_presence) + '"><span class="dot"></span>' + PRESENCE_LABELS[asg.agent_presence] + '</span>'
+                            : '') +
                         '<i class="fa-solid fa-chevron-right"></i>' +
                     '</button>' +
                     '<div class="tkt-side-rows">' +
@@ -5306,8 +5386,11 @@
             '</div>') +
             assigneeCard +
             slaCard +
-            (featureEnabled('mgmt_csat_card') ? renderCsatCard(csat) : '')
+            (featureEnabled('mgmt_csat_card') ? renderCsatCard(csat) : '') +
+            (featureEnabled('mgmt_time_card') && t.url_time_entries ? '<div class="tkt-side-card" id="tkt-time-card"><div class="tkt-side-card-head">Tiempo invertido</div><div class="tkt-side-card-body"><div class="tkt-meta-xs">Cargando…</div></div></div>' : '')
         );
+
+        if (featureEnabled('mgmt_time_card') && t.url_time_entries) loadTimeCard(t, $c.find('#tkt-time-card'));
 
         // Tanto la ficha del agente como "Reasignar" abren el modal 37 — salvo
         // que "Reasignar" esté apagado en Funcionalidades: entonces la ficha
@@ -5640,8 +5723,8 @@
                 '<div class="tkt-side-card-head">Cliente</div>' +
                 '<div class="tkt-side-card-body">' +
                     (customer.url_c360
-                        ? '<a href="' + customer.url_c360 + '" class="tkt-person tkt-plain-link"><span class="tkt-person-avatar">' + initials(customer.name) + '</span><span class="tkt-fill"><span style="display:block;font-size:12.5px;font-weight:700">' + escapeHtml(customer.name) + '</span><span style="display:block;font-size:11px;color:var(--tkt-text-mute)">' + escapeHtml(customer.company || 'Sin empresa') + (customer.customer_since_year ? ' · cliente desde ' + customer.customer_since_year : '') + '</span></span></a>'
-                        : '<div class="tkt-person"><span class="tkt-person-avatar">' + initials(customer.name) + '</span><span style="flex:1;font-size:12.5px;font-weight:700">' + escapeHtml(customer.name) + '</span></div>') +
+                        ? '<a href="' + customer.url_c360 + '" class="tkt-person tkt-plain-link"><span class="tkt-person-avatar">' + initials(customer.name) + '</span><span class="tkt-fill"><span class="tkt-person-name">' + escapeHtml(customer.name) + '</span><span class="tkt-person-sub">' + escapeHtml(customer.company || 'Sin empresa') + (customer.customer_since_year ? ' · cliente desde ' + customer.customer_since_year : '') + '</span></span></a>'
+                        : '<div class="tkt-person"><span class="tkt-person-avatar">' + initials(customer.name) + '</span><span class="tkt-person-name tkt-fill">' + escapeHtml(customer.name) + '</span></div>') +
                     '<div class="tkt-kv"><span class="k">Email</span><span class="v mono">' + escapeHtml(customer.email || '—') + '</span></div>' +
                     '<div class="tkt-kv"><span class="k">Teléfono</span><span class="v mono">' + escapeHtml(customer.phone || '—') + '</span></div>' +
                     // El móvil solo cuando es distinto del fijo: repetir el
@@ -5659,7 +5742,7 @@
                     // Log::info. El backend manda esto solo cuando la búsqueda
                     // ya corrió y falló (CustomerSummaryService::erpMissing()).
                     erpMissingHtml(customer) +
-                    (badges ? '<div style="display:flex;flex-wrap:wrap;gap:5px">' + badges + '</div>' : '') +
+                    (badges ? '<div class="tkt-badge-row">' + badges + '</div>' : '') +
                 '</div>' +
             '</div>';
 
@@ -7107,7 +7190,7 @@
                 '<div class="tkt-field" id="tkt-side-email-field" hidden><label class="tkt-label">Email externo<span class="req">*</span></label>' +
                     '<input type="email" class="tkt-input" id="tkt-side-email"></div>' +
                 '<div class="tkt-field"><label class="tkt-label">Mensaje inicial<span class="req">*</span></label>' +
-                    '<textarea class="tkt-input" id="tkt-side-body" maxlength="20000" style="min-height:90px"></textarea></div>',
+                    '<textarea class="tkt-input tkt-input-md" id="tkt-side-body" maxlength="20000"></textarea></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-side-confirm">Crear</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
         }));
@@ -7397,24 +7480,24 @@
                 // pantalla).
                 return '<span class="tkt-note-color-dot' + (n.color === c ? ' on' : '') + '" data-note-color="' + n.id + '" data-color="' + c + '" role="button" tabindex="0" aria-label="' + NOTE_COLOR_LABELS[c] + '" style="background:var(--tkt-note-' + c + ',' + c + ')"></span>';
             }).join('');
-            return '<div class="tkt-note-card' + (n.is_pinned ? ' pinned' : '') + '"><span class="tkt-person-avatar" style="width:22px;height:22px;font-size:9px">' + initials(n.author_name) + '</span>' +
+            return '<div class="tkt-note-card' + (n.is_pinned ? ' pinned' : '') + '"><span class="tkt-person-avatar is-xs">' + initials(n.author_name) + '</span>' +
                 '<div class="tkt-fill">' +
-                    '<div style="display:flex;align-items:center;gap:6px">' +
-                        '<span style="font-size:10.5px;color:var(--tkt-text-faint);flex:1;min-width:0">' + escapeHtml(n.author_name) + ' · ' + escapeHtml(n.created_at_human) + (n.is_pinned ? ' · <strong>fijada</strong>' : '') + '</span>' +
-                        '<button type="button" class="tkt-btn-icon" data-note-pin="' + n.id + '" title="' + (n.is_pinned ? 'Desfijar' : 'Fijar') + '" style="width:20px;height:20px"><i class="fa-solid fa-thumbtack" style="font-size:9px"></i></button>' +
-                        '<button type="button" class="tkt-btn-icon" data-note-delete="' + n.id + '" title="Eliminar" style="width:20px;height:20px"><i class="fa-solid fa-trash" style="font-size:9px"></i></button>' +
+                    '<div class="tkt-note-card-head">' +
+                        '<span class="tkt-note-card-meta">' + escapeHtml(n.author_name) + ' · ' + escapeHtml(n.created_at_human) + (n.is_pinned ? ' · <strong>fijada</strong>' : '') + '</span>' +
+                        '<button type="button" class="tkt-btn-icon" data-note-pin="' + n.id + '" title="' + (n.is_pinned ? 'Desfijar' : 'Fijar') + '" aria-label="' + (n.is_pinned ? 'Desfijar nota' : 'Fijar nota') + '"><i class="fa-solid fa-thumbtack"></i></button>' +
+                        '<button type="button" class="tkt-btn-icon" data-note-delete="' + n.id + '" title="Eliminar" aria-label="Eliminar nota"><i class="fa-solid fa-trash"></i></button>' +
                     '</div>' +
-                    (n.title ? '<div style="font-size:11.5px;font-weight:700">' + escapeHtml(n.title) + '</div>' : '') +
-                    '<div style="font-size:11.5px;line-height:1.5">' + escapeHtml(n.body) + '</div>' +
-                    '<div style="display:flex;gap:4px;margin-top:4px">' + colorDots + '</div>' +
+                    (n.title ? '<div class="tkt-note-card-title">' + escapeHtml(n.title) + '</div>' : '') +
+                    '<div class="tkt-note-card-body">' + escapeHtml(n.body) + '</div>' +
+                    '<div class="tkt-note-card-colors">' + colorDots + '</div>' +
                 '</div></div>';
         }).join('');
 
         $c.html(
             '<div class="tkt-side-card"><div class="tkt-side-card-head">Nota interna</div><div class="tkt-side-card-body">' +
                 '<div class="tkt-relative">' +
-                    '<textarea id="tkt-new-note" class="tkt-w-100" style="padding:9px 10px;border:1px solid var(--tkt-border);border-radius:7px;font-size:11.5px;min-height:66px" placeholder="Escribe una nota que solo verá el equipo… (usa @ para mencionar)"></textarea>' +
-                    '<div class="tkt-drop" id="tkt-note-mention-drop" style="top:100%;left:0;right:0;max-height:160px;overflow:auto" hidden></div>' +
+                    '<textarea id="tkt-new-note" class="tkt-w-100 tkt-note-input" placeholder="Escribe una nota que solo verá el equipo… (usa @ para mencionar)"></textarea>' +
+                    '<div class="tkt-drop tkt-drop-below" id="tkt-note-mention-drop" hidden></div>' +
                 '</div>' +
                 // Barra del mockup: las tres acciones sobre el texto a la
                 // izquierda y el contador a la derecha. "Mencionar" inserta
@@ -7583,11 +7666,11 @@
         if (aiSuggestion && (aiSuggestion.category || aiSuggestion.priority)) {
             html += '<div class="tkt-side-card"><div class="tkt-side-card-head"><i class="fa-solid fa-wand-magic-sparkles"></i> Sugerido por IA</div><div class="tkt-side-card-body">';
             if (aiSuggestion.category) {
-                html += '<div class="tkt-row"><span style="flex:1;font-size:11.5px">Categoría: <strong>' + escapeHtml(aiSuggestion.category.name) + '</strong></span>' +
+                html += '<div class="tkt-row"><span class="tkt-row-label">Categoría: <strong>' + escapeHtml(aiSuggestion.category.name) + '</strong></span>' +
                     '<button type="button" class="tkt-btn tkt-btn-sm" data-ai-apply="category">Aplicar</button></div>';
             }
             if (aiSuggestion.priority) {
-                html += '<div class="tkt-row"><span style="flex:1;font-size:11.5px">Prioridad: <strong>' + escapeHtml(priorityLabel(aiSuggestion.priority)) + '</strong></span>' +
+                html += '<div class="tkt-row"><span class="tkt-row-label">Prioridad: <strong>' + escapeHtml(priorityLabel(aiSuggestion.priority)) + '</strong></span>' +
                     '<button type="button" class="tkt-btn tkt-btn-sm" data-ai-apply="priority">Aplicar</button></div>';
             }
             html += '<button type="button" class="tkt-btn tkt-w-100" id="tkt-open-tagging">Revisar clasificación sugerida</button>';
@@ -7703,7 +7786,7 @@
                 : '');
         var relatedHtml = (related || []).map(function (r) {
             return '<div class="tkt-line">' +
-                '<a href="' + TKA.urls.index + '?ticket=' + r.id + '" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:9px;flex:1;min-width:0">' +
+                '<a href="' + TKA.urls.index + '?ticket=' + r.id + '" class="tkt-line-link">' +
                     '<span class="mono tkt-meta-xs">' + escapeHtml(r.ticket_number) + '</span>' +
                     '<span class="tkt-trunc tkt-fill">' + escapeHtml(r.subject) + '</span>' +
                     (r.link_type ? chip(LINK_TYPE_LABELS[r.link_type] || r.link_type, 'tkt-chip-info') : '') +
@@ -7791,7 +7874,7 @@
                 '<div class="tkt-field"><label class="tkt-label">Ticket a vincular<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-link-target" placeholder="Nº de ticket, asunto o ID…">' +
                     '<div class="tkt-pick-list sm" id="tkt-link-results"></div></div>' +
-                '<div style="display:flex;flex-direction:column;gap:6px">' + options + '</div>',
+                '<div class="tkt-stack-6">' + options + '</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-link-confirm">Vincular</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
         }));
@@ -8763,6 +8846,32 @@
                 return '<div class="tkt-field"><label class="tkt-label">Etiqueta</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="Ej: urgente-cliente"></div>';
             },
         },
+        change_priority: {
+            icon: 'fa-solid fa-flag', title: 'Cambiar prioridad', field: 'priority', confirmLabel: 'Cambiar',
+            emptyError: 'Selecciona una prioridad',
+            body: function () {
+                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">Prioridad</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">Selecciona una prioridad…</option>' +
+                    ['low', 'normal', 'high', 'urgent'].map(function (p) { return '<option value="' + p + '">' + escapeHtml(priorityLabel(p)) + '</option>'; }).join('') +
+                    '</select></div>';
+            },
+        },
+        remove_tag: {
+            icon: 'fa-solid fa-tag', title: 'Quitar etiqueta', field: 'tag', confirmLabel: 'Quitar',
+            emptyError: 'Escribe la etiqueta que quieres quitar',
+            body: function () {
+                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">Etiqueta</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="Ej: urgente-cliente"></div>';
+            },
+        },
+        snooze: {
+            icon: 'fa-regular fa-clock', title: 'Posponer', field: 'snooze_hours', confirmLabel: 'Posponer',
+            emptyError: 'Elige hasta cuándo',
+            body: function () {
+                var opts = [[1, '1 hora'], [4, '4 horas'], [24, 'Mañana a esta hora'], [72, '3 días'], [168, '1 semana']];
+                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">Posponer durante</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">Selecciona…</option>' +
+                    opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+                    '</select><div class="tkt-hint">Vuelven a la cola solos al terminar, o antes si el cliente responde.</div></div>';
+            },
+        },
         change_status: {
             icon: 'fa-solid fa-arrow-right-arrow-left', title: 'Cambiar estado', field: 'status_id', confirmLabel: 'Cambiar',
             emptyError: 'Selecciona un estado',
@@ -8932,8 +9041,93 @@
         if (mode === 'kanban') renderKanban();
     }
 
+    // ═══════════ Tiempo invertido ═══════════
+    // Tarjeta del panel de gestión sobre TimeEntriesController, que existía
+    // sin ninguna interfaz (24-sep-2026). Total, las cinco últimas
+    // imputaciones y un alta rápida en minutos.
+    function loadTimeCard(t, $card) {
+        $.ajax({
+            url: t.url_time_entries, method: 'GET', headers: { Accept: 'application/json' },
+            success: function (resp) { renderTimeCard(t, $card, resp || {}); },
+            error: function () { $card.find('.tkt-side-card-body').html('<div class="tkt-meta-xs">No se pudo cargar el tiempo imputado.</div>'); },
+        });
+    }
+
+    function renderTimeCard(t, $card, data) {
+        var entries = (data.entries || []).slice(0, 5);
+        var rows = entries.map(function (e) {
+            var who = e.user ? ((e.user.firstname || '') + ' ' + (e.user.lastname || '')).trim() : '';
+            var canDelete = e.user_id && String(e.user_id) === String(TKA.state.currentUserId);
+            return '<div class="tkt-time-row">' +
+                '<span class="mono tkt-time-dur">' + escapeHtml(e.formatted_duration || (e.minutes + ' min')) + '</span>' +
+                '<span class="tkt-trunc tkt-fill">' + escapeHtml(e.description || '—') + (who ? ' <span class="tkt-meta-xs">· ' + escapeHtml(who) + '</span>' : '') + '</span>' +
+                (canDelete ? '<button type="button" class="tkt-btn-icon" data-time-delete="' + e.id + '" title="Eliminar" aria-label="Eliminar imputación"><i class="fa-solid fa-xmark"></i></button>' : '') +
+            '</div>';
+        }).join('');
+
+        $card.find('.tkt-side-card-head').html('Tiempo invertido<span class="tkt-spacer tkt-side-tag mono">' + escapeHtml(data.formatted_total || '0 min') + '</span>');
+        $card.find('.tkt-side-card-body').html(
+            (rows || '<div class="tkt-meta-xs">Aún no hay tiempo imputado.</div>') +
+            '<form class="tkt-time-form" novalidate>' +
+                '<label class="visually-hidden" for="tkt-time-min">Minutos</label>' +
+                '<input type="number" id="tkt-time-min" class="tkt-input tkt-time-min" min="1" max="480" step="1" placeholder="Min" required>' +
+                '<label class="visually-hidden" for="tkt-time-desc">Descripción</label>' +
+                '<input type="text" id="tkt-time-desc" class="tkt-input tkt-fill" maxlength="500" placeholder="¿En qué? (opcional)">' +
+                '<button type="submit" class="tkt-btn tkt-btn-sm">Imputar</button>' +
+            '</form>'
+        );
+
+        $card.find('.tkt-time-form').on('submit', function (ev) {
+            ev.preventDefault();
+            var minutes = parseInt($card.find('#tkt-time-min').val(), 10);
+            if (!minutes || minutes < 1 || minutes > 480) {
+                var err = 'Indica entre 1 y 480 minutos';
+                if (window.toastr) toastr.error(err); else window.alert(err);
+                return;
+            }
+            var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+            $.ajax({
+                url: t.url_time_entries, method: 'POST', headers: { Accept: 'application/json' },
+                data: { minutes: minutes, description: $card.find('#tkt-time-desc').val() },
+                success: function () { loadTimeCard(t, $card); },
+                error: function (xhr) {
+                    var msg = apiErrorMessage(xhr, 'No se pudo imputar el tiempo');
+                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                    $btn.prop('disabled', false);
+                },
+            });
+        });
+
+        $card.find('[data-time-delete]').on('click', function () {
+            var url = (t.url_time_entry_destroy_template || '').replace('__ENTRY__', $(this).data('time-delete'));
+            $.ajax({
+                url: url, method: 'DELETE', headers: { Accept: 'application/json' },
+                success: function () { loadTimeCard(t, $card); },
+                error: function (xhr) {
+                    var msg = apiErrorMessage(xhr, 'No se pudo eliminar');
+                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                },
+            });
+        });
+    }
+
     // ═══════════ Eventos ═══════════
     function bindEvents() {
+        // Modo compacto (ventanas bajas): el botón "Filtros y vistas" abre y
+        // cierra las dos barras que el CSS esconde por debajo de 960 px de
+        // alto. Se recuerda por navegador; si el almacenamiento no está
+        // disponible, simplemente arranca cerrado.
+        var FILTERS_OPEN_KEY = 'tkt.filtersOpen';
+        var setFiltersOpen = function (open) {
+            $('.tkt').toggleClass('is-filters-open', open);
+            $('#tkt-toggle-filters').attr('aria-expanded', open ? 'true' : 'false');
+            try { window.localStorage.setItem(FILTERS_OPEN_KEY, open ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
+        };
+        try { if (window.localStorage.getItem(FILTERS_OPEN_KEY) === '1') setFiltersOpen(true); } catch (e) { /* sin almacenamiento */ }
+        $('#tkt-toggle-filters').on('click', function () {
+            setFiltersOpen(!$('.tkt').hasClass('is-filters-open'));
+        });
+
         // Pestañas de estado y chips de vista. Cambiar de pestaña ya no criba
         // en cliente los 50 tickets de la página (que era el motivo de que el
         // badge dijera 340 y la lista mostrara 6): se le pide al servidor la
@@ -8986,6 +9180,15 @@
             applyListDensity(compact);
             writePreference(TKT_LIST_DENSITY_KEY, compact ? 'compact' : 'normal');
         });
+        // Cerrar o recargar la pestaña con una respuesta retenida: el
+        // navegador pregunta antes de salir (no se puede enviar de forma
+        // fiable durante la descarga de la página).
+        window.addEventListener('beforeunload', function (ev) {
+            if (!TKA.state.pendingSend) return;
+            ev.preventDefault();
+            ev.returnValue = '';
+        });
+
         $('#tkt-undo-btn').on('click', function () {
             var action = TKA.state.undoAction;
             hideUndo();
@@ -9224,6 +9427,25 @@
             // fallido simplemente no cuentan (ver BulkTicketsController).
             retry_failed_mail: { title: 'Reintentar envío', message: 'Solo se reintentan los correos de salida marcados como fallidos.', confirmLabel: 'Reintentar', danger: false },
         };
+        // Menú "Más acciones" de la barra de selección.
+        var closeBulkMore = function () {
+            $('#tkt-bulk-more-menu').prop('hidden', true);
+            $('#tkt-bulk-more').attr('aria-expanded', 'false');
+        };
+        $('#tkt-bulk-more').on('click', function (ev) {
+            ev.stopPropagation();
+            var open = $('#tkt-bulk-more-menu').prop('hidden');
+            $('#tkt-bulk-more-menu').prop('hidden', !open);
+            $(this).attr('aria-expanded', open ? 'true' : 'false');
+        });
+        $(document).on('click', function (ev) {
+            if (!$(ev.target).closest('#tkt-bulk-more-menu').length) closeBulkMore();
+        });
+        $(document).on('keydown', function (ev) {
+            if (ev.key === 'Escape') closeBulkMore();
+        });
+        $('#tkt-bulk-more-menu').on('click', '.tkt-drop-item', closeBulkMore);
+
         $('[data-bulk-action]').on('click', function () {
             var action = $(this).data('bulk-action');
             if (BULK_EXTRA_CONFIG[action]) { openBulkExtraModal(action); return; }

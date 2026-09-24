@@ -139,7 +139,8 @@
         var conds = (rule.conditions || []).map(escConditionText);
         var acts = (rule.actions || []).map(escActionText);
         var si = escTriggerLabel(rule.trigger_event) || rule.trigger_event;
-        return (conds.length ? si + ' y ' + conds.join(' y ') : si) + ' → ' + (acts.join(', ') || 'nada');
+        var joiner = rule.match_mode === 'any' ? ' o ' : ' y ';
+        return (conds.length ? si + ' y ' + conds.join(joiner) : si) + ' → ' + (acts.join(', ') || 'nada');
     }
 
     // ── Render ────────────────────────────────────────────────────
@@ -199,7 +200,7 @@
         // además no evalúa reglas, solo marca incumplimientos de SLA. Lo que se
         // cuenta aquí es lo que de verdad pasa.
         return '<div class="tkt-note"><i class="fa-solid fa-gauge-high"></i><div>' +
-            'Las reglas se evalúan en cuanto ocurre el evento elegido (en la cola <span class="tkt-esc-mono">default</span>), no por reloj. ' +
+            'Las reglas se evalúan en cuanto ocurre el evento elegido (en la cola <span class="tkt-esc-mono">default</span>). Las de «Periódicamente» se revisan cada 15 minutos y actúan una vez por periodo de inactividad del ticket. ' +
             'El aviso <span class="tkt-esc-mono">SlaBreachMail</span> a los managers ya sale solo al incumplirse el SLA: no hace falta ninguna regla.' +
             '</div></div>';
     }
@@ -212,7 +213,7 @@
 
     // ── Formulario "Si… Entonces…" ────────────────────────────────
     function escResetDraft() {
-        TKT_ESC.draft = { name: '', trigger_event: null, is_active: true };
+        TKT_ESC.draft = { name: '', trigger_event: null, match_mode: 'all', is_active: true };
         TKT_ESC.conds = [];
         TKT_ESC.acts = [{ type: 'set_priority', value: null }];
     }
@@ -235,6 +236,13 @@
             '<select class="tkt-select" id="tkt-esc-trigger">' + triggers.map(function (t) {
                 return '<option value="' + escapeHtml(t.value) + '"' + (t.value === TKT_ESC.draft.trigger_event ? ' selected' : '') + '>' + escapeHtml(t.label) + '</option>';
             }).join('') + '</select></div>';
+
+        var anyMode = TKT_ESC.draft.match_mode === 'any';
+        html += '<div class="tkt-field"><label class="tkt-label" for="tkt-esc-match">Combinar las condiciones</label>' +
+            '<select class="tkt-select" id="tkt-esc-match">' +
+                '<option value="all"' + (anyMode ? '' : ' selected') + '>Se tienen que cumplir todas</option>' +
+                '<option value="any"' + (anyMode ? ' selected' : '') + '>Basta con que se cumpla una</option>' +
+            '</select></div>';
 
         html += '<div class="tkt-field"><label class="tkt-label">Y se cumple<button type="button" class="tkt-label-action" id="tkt-esc-add-cond">+ añadir condición</button></label>' +
             '<div id="tkt-esc-conds">' + (TKT_ESC.conds.length
@@ -381,6 +389,7 @@
             name: $.trim($backdrop.find('#tkt-esc-name').val() || ''),
             trigger_event: $backdrop.find('#tkt-esc-trigger').val(),
             conditions: conditions,
+            match_mode: $backdrop.find('#tkt-esc-match').val() === 'any' ? 'any' : 'all',
             actions: actions,
             is_active: $backdrop.find('#tkt-esc-active').is(':checked') ? 1 : 0,
         };
@@ -395,6 +404,7 @@
         TKT_ESC.draft = {
             name: leido.name,
             trigger_event: leido.trigger_event,
+            match_mode: leido.match_mode,
             is_active: !!leido.is_active,
         };
         TKT_ESC.conds = leido.conditions;
@@ -520,7 +530,7 @@
             var $btn = $(this).prop('disabled', true);
             $.ajax({
                 url: url, method: 'POST', headers: { Accept: 'application/json' },
-                data: { conditions: datos.conditions },
+                data: { conditions: datos.conditions, match_mode: datos.match_mode },
             }).done(function (resp) {
                 escSyncStructure($backdrop);
                 TKT_ESC.errors = null;

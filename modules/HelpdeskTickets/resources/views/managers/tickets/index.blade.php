@@ -227,7 +227,7 @@
             </div>
             <div class="tkt-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input id="tkt-search" aria-label="Buscar tickets" placeholder="Buscar por nº de ticket, cliente o asunto…" value="{{ request('search') }}">
+                <input id="tkt-search" aria-label="Buscar tickets" placeholder="Buscar nº, asunto, cliente o texto…" value="{{ request('search') }}">
             </div>
             <div class="tkt-toolbar-right">
                 <div class="tkt-seg" id="tkt-mode-switch">
@@ -262,6 +262,17 @@
             {{-- "· cola de correo: N" lo rellena tickets-app.js al cargar (fetchOpsQueueHint(),
                  reusa TKA.urls.ops — misma fuente que ya alimenta el modal "Cola" — sin
                  duplicar ninguna sonda ni inventar un endpoint nuevo). Vacío hasta entonces. --}}
+            {{-- Modo compacto (24-sep-2026): con poca altura de ventana las
+                 barras de filtros y vistas se esconden tras este botón para
+                 dejar sitio a la conversación (a 900 px de alto quedaban unos
+                 60 px de hilo visibles). En pantallas altas el botón no se ve
+                 y todo queda como en el mockup. Ver .tkt-compact-toggle. --}}
+            @php
+                $activeFilterCount = collect(request()->only(['source', 'tag', 'category', 'assignee', 'priority', 'created_from', 'created_to', 'status', 'group', 'sla_status', 'mail_status', 'mail_type', 'mailbox', 'has_attachments']))
+                    ->filter(fn ($v) => is_scalar($v) && filled($v) && $v !== 'all')
+                    ->count();
+            @endphp
+            <button type="button" class="tkt-state-link tkt-compact-toggle" id="tkt-toggle-filters" aria-expanded="false" aria-controls="tkt-filter-form">Filtros y vistas @if($activeFilterCount > 0)<span class="c">{{ $activeFilterCount }}</span>@endif</button>
             <span class="tkt-queue-hint">SLA en riesgo: {{ $tabCounts['sla_risk'] }}<span id="tkt-mail-queue-hint"></span></span>
         </div>
 
@@ -543,19 +554,13 @@
                 </div>
                 <div class="tkt-bulk-bar" id="tkt-bulk-bar">
                     <span id="tkt-bulk-count" class="tkt-title-sm">0 seleccionados</span>
+                    {{-- 24-sep-2026: 14 acciones en línea ocupaban 3-4 filas en
+                         la columna de 380 px. Quedan a la vista las cuatro de
+                         uso diario y el resto va en "Más acciones". --}}
                     <span class="tkt-actions">
                         @can('helpdesk.tickets.update')
                             <button type="button" class="tkt-btn" data-bulk-action="assign">Asignar</button>
-                            <button type="button" class="tkt-btn" data-bulk-action="add_tag">Etiquetar</button>
                             <button type="button" class="tkt-btn" data-bulk-action="change_status">Cambiar estado</button>
-                            <button type="button" class="tkt-btn" id="tkt-bulk-move-team">Mover a equipo</button>
-                            {{-- "Reintentar envío"/"Vincular a un ticket" del mockup
-                                 (modal 13, ve-mail-bulk) — mismo permiso que el resto
-                                 de esta fila, ya que ambas operan sobre datos del
-                                 propio ticket (no hay un ability "merge" separado
-                                 expuesto aquí, a diferencia de show.blade.php). --}}
-                            <button type="button" class="tkt-btn" data-bulk-action="retry_failed_mail">Reintentar envío</button>
-                            <button type="button" class="tkt-btn" id="tkt-bulk-link-ticket">Vincular a un ticket</button>
                         @endcan
                         @can('helpdesk.tickets.resolve')
                             <button type="button" class="tkt-btn" data-bulk-action="resolve">Resolver</button>
@@ -563,14 +568,25 @@
                         @can('helpdesk.tickets.close')
                             <button type="button" class="tkt-btn" data-bulk-action="close">Cerrar</button>
                         @endcan
-                        @can('helpdesk.tickets.delete')
-                            <button type="button" class="tkt-btn" data-bulk-action="delete">Eliminar</button>
-                        @endcan
-                        {{-- "Exportar selección": el modal de exportar ya sabe
-                             acotarse a los ids marcados, aquí solo se ofrece
-                             desde donde se hace la selección. --}}
-                        <button type="button" class="tkt-btn" id="tkt-bulk-export">Exportar</button>
-                        <button type="button" class="tkt-btn" id="tkt-bulk-clear">Quitar</button>
+                        <span class="tkt-relative">
+                            <button type="button" class="tkt-btn" id="tkt-bulk-more" aria-haspopup="menu" aria-expanded="false" aria-controls="tkt-bulk-more-menu">Más acciones</button>
+                            <div class="tkt-drop tkt-bulk-more-menu" id="tkt-bulk-more-menu" role="menu" hidden>
+                                @can('helpdesk.tickets.update')
+                                    <button type="button" class="tkt-drop-item" role="menuitem" data-bulk-action="change_priority">Cambiar prioridad</button>
+                                    <button type="button" class="tkt-drop-item" role="menuitem" data-bulk-action="add_tag">Añadir etiqueta</button>
+                                    <button type="button" class="tkt-drop-item" role="menuitem" data-bulk-action="remove_tag">Quitar etiqueta</button>
+                                    <button type="button" class="tkt-drop-item" role="menuitem" data-bulk-action="snooze">Posponer</button>
+                                    <button type="button" class="tkt-drop-item" role="menuitem" id="tkt-bulk-move-team">Mover a equipo</button>
+                                    <button type="button" class="tkt-drop-item" role="menuitem" data-bulk-action="retry_failed_mail">Reintentar envío</button>
+                                    <button type="button" class="tkt-drop-item" role="menuitem" id="tkt-bulk-link-ticket">Vincular a un ticket</button>
+                                @endcan
+                                <button type="button" class="tkt-drop-item" role="menuitem" id="tkt-bulk-export">Exportar selección</button>
+                                @can('helpdesk.tickets.delete')
+                                    <button type="button" class="tkt-drop-item" role="menuitem" data-bulk-action="delete">Eliminar</button>
+                                @endcan
+                            </div>
+                        </span>
+                        <button type="button" class="tkt-btn" id="tkt-bulk-clear">Quitar selección</button>
                     </span>
                 </div>
                 <div class="tkt-skeleton-list" id="tkt-skeleton">
@@ -676,7 +692,6 @@
             <span class="tkt-spacer"></span>
             <button type="button" class="tkt-status-icon-btn" id="tkt-status-sound" title="Sonido al llegar un mensaje nuevo" aria-label="Alternar sonido de mensaje nuevo" aria-pressed="false"><i class="fa-solid fa-volume-high"></i></button>
             <button type="button" class="tkt-status-icon-btn" id="tkt-status-shortcuts" title="Atajos de teclado (?)" aria-label="Mostrar atajos de teclado"><i class="fa-solid fa-keyboard"></i></button>
-            <span class="tkt-status-version">v1.0 · Tickets</span>
         </div>
 
     </div>

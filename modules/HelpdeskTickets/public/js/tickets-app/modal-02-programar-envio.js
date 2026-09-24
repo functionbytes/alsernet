@@ -40,7 +40,7 @@
                     '<div class="tkt-field"><label class="tkt-label" for="tkt-sched-date">Fecha</label><input type="date" class="tkt-input" id="tkt-sched-date"></div>' +
                     '<div class="tkt-field"><label class="tkt-label" for="tkt-sched-time">Hora</label><input type="time" class="tkt-input" id="tkt-sched-time" value="18:00"></div>' +
                 '</div>' +
-                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> El envío respeta el horario laboral configurado. Fuera de horario se difiere al siguiente día hábil.</div>' +
+                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Se envía exactamente a la fecha y hora elegidas (hora de tu navegador), sin ajustarse al horario laboral.</div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-sched-cancel"' + (composeDraft && composeDraft.cancelIfReplies ? ' checked' : '') + '> Cancelar si el cliente responde antes</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sched-confirm">Programar</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-sched-cancel-btn">Cancelar</button>',
