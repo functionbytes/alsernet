@@ -87,22 +87,22 @@ class TicketSlaNearBreach implements ShouldBroadcast
                 'subject' => $this->ticket->subject,
                 'priority' => $this->ticket->priority,
                 'status' => [
-                    'id' => $this->ticket->status->id,
-                    'name' => $this->ticket->status->name,
-                    'color' => $this->ticket->status->color,
+                    'id' => $this->ticket->status?->id,
+                    'name' => $this->ticket->status?->name,
+                    'color' => $this->ticket->status?->color,
                 ],
                 'category' => [
-                    'id' => $this->ticket->category->id,
-                    'name' => $this->ticket->category->name,
-                    'color' => $this->ticket->category->color,
+                    'id' => $this->ticket->category?->id,
+                    'name' => $this->ticket->category?->name,
+                    'color' => $this->ticket->category?->color,
                 ],
                 'customer' => [
-                    'id' => $this->ticket->customer->id,
-                    'name' => $this->ticket->customer->name,
+                    'id' => $this->ticket->customer?->id,
+                    'name' => $this->ticket->customer?->name,
                 ],
                 'assignee' => $this->ticket->assignee ? [
-                    'id' => $this->ticket->assignee->id,
-                    'name' => $this->ticket->assignee->fullName(),
+                    'id' => $this->ticket->assignee?->id,
+                    'name' => $this->ticket->assignee?->fullName(),
                 ] : null,
             ],
         ];

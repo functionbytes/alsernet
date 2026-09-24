@@ -8,8 +8,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\SlaWarning;
+use Modules\HelpdeskTickets\Events\TicketSlaNearBreach;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -83,6 +85,19 @@ class SendSlaWarnings implements ShouldQueue
                         // El aviso lo envía el listener SendSlaWarningNotification
                         // (SlaWarningMail) suscrito a SlaWarning — no duplicar aquí.
                         event(new SlaWarning($ticket, $percentUsed));
+
+                        // Aviso en el panel/push al asignado (TicketSlaNearBreach →
+                        // SendSlaWarningBroadcastNotification), que no se
+                        // disparaba nunca. Una sola vez por plazo: este job pasa
+                        // cada pocos minutos y el ticket sigue en la ventana.
+                        $dedupeKey = "helpdesk:sla-near-breach:{$ticket->id}:".$ticket->sla_resolution_due_at->getTimestamp();
+                        if (Cache::add($dedupeKey, 1, $ticket->sla_resolution_due_at->copy()->addDay())) {
+                            try {
+                                TicketSlaNearBreach::dispatch($ticket, 'resolution', (int) max(0, now()->diffInMinutes($ticket->sla_resolution_due_at, false)));
+                            } catch (\Throwable $e) {
+                                Log::warning('SLA near-breach alert failed', ['ticket_id' => $ticket->id, 'error' => $e->getMessage()]);
+                            }
+                        }
 
                         Log::warning("SLA warning for ticket #{$ticket->id} - {$percentUsed}% time used", [
                             'ticket_id' => $ticket->id,

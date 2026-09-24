@@ -7,7 +7,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\SlaBreachBroadcast;
 use Modules\HelpdeskTickets\Events\SlaBreached;
+use Modules\HelpdeskTickets\Events\TicketSlaBreached;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketSlaBreach;
 
 /**
  * Dueño único de la aritmética de SLA de tickets.
@@ -61,6 +63,19 @@ class SlaService
                     // tiempo real al panel.
                     event(new SlaBreached($ticket));
                     SlaBreachBroadcast::dispatch($ticket);
+
+                    // Aviso en el panel/push al asignado y al canal de equipo
+                    // (Slack/Teams): lo hace SendSlaBreachBroadcastNotification,
+                    // que escucha TicketSlaBreached — evento que hasta el
+                    // 24-sep-2026 no disparaba nadie, así que esas alertas,
+                    // ofrecidas en Ajustes → Notificaciones, nunca llegaban.
+                    // Aislado: un fallo al avisar de un ticket no puede cortar
+                    // el barrido del resto.
+                    try {
+                        TicketSlaBreached::dispatch($ticket, $this->resolutionBreachRecord($ticket));
+                    } catch (\Throwable $e) {
+                        Log::warning('SLA breach alert failed', ['ticket_id' => $ticket->id, 'error' => $e->getMessage()]);
+                    }
 
                     Log::warning('SLA breach detected', [
                         'ticket_id' => $ticket->id,
@@ -215,5 +230,34 @@ class SlaService
         }
 
         return $ticket->sla_resolution_due_at;
+    }
+
+    /**
+     * Registro de auditoría del incumplimiento de resolución: reutiliza el
+     * abierto si ya lo creó el escalado (mismo criterio que
+     * EscalationService) para no duplicar filas.
+     */
+    private function resolutionBreachRecord(Ticket $ticket): TicketSlaBreach
+    {
+        $existing = TicketSlaBreach::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('breach_type', 'resolution')
+            ->unresolved()
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $dueAt = $ticket->sla_resolution_due_at;
+
+        return TicketSlaBreach::create([
+            'ticket_id' => $ticket->id,
+            'breach_type' => 'resolution',
+            'due_at' => $dueAt,
+            'breached_at' => now(),
+            'breach_duration_minutes' => $dueAt !== null ? (int) round(abs($dueAt->diffInMinutes(now()))) : null,
+            'metadata' => ['recorded_by' => 'sla_sweep'],
+        ]);
     }
 }

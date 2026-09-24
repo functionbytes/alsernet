@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Events\TicketSlaBreached;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketActivity;
 use Modules\HelpdeskTickets\Listeners\TrackTicketResponseSla;
@@ -18,12 +20,14 @@ use Modules\HelpdeskTickets\Models\Automation;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketGroup;
+use Modules\HelpdeskTickets\Models\TicketSlaBreach;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Services\AutomationEngine;
 use Modules\HelpdeskTickets\Services\EscalationService;
 use Modules\HelpdeskTickets\Services\MacroExecutor;
+use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\Concerns\SeedsHelpdeskRoles;
@@ -366,6 +370,18 @@ class TicketSlaAndLifecycleConsistencyTest extends TestCase
         $ticket->priority = 'low';
         $this->assertNotContains(TicketSlaPolicy::resolveForTicket($ticket)?->id, [$urgente->id, $urgenteVip->id]);
         $this->assertNotNull($general);
+    }
+
+    public function test_el_barrido_de_sla_dispara_la_alerta_del_panel_y_de_equipo(): void
+    {
+        Event::fake([TicketSlaBreached::class, SlaBreached::class]);
+
+        $ticket = $this->ticket(['sla_resolution_due_at' => now()->subHour(), 'sla_resolution_breached' => false]);
+
+        app(SlaService::class)->checkBreaches();
+
+        Event::assertDispatched(TicketSlaBreached::class, fn ($e) => $e->ticket->id === $ticket->id);
+        $this->assertSame(1, TicketSlaBreach::query()->where('ticket_id', $ticket->id)->count());
     }
 
     private function ticket(array $overrides = []): Ticket
