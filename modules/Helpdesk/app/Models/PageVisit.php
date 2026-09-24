@@ -14,21 +14,21 @@ class PageVisit extends Model
 
     protected $table = 'helpdesk_page_visits';
 
+    // Columnas reales de helpdesk_page_visits (migración 2025_12_29_020925):
+    // la fecha de la visita es created_at y el tiempo en página duration_seconds.
     protected $fillable = [
         'customer_id',
-        'session_id',
         'page_url',
-        'page_title',
         'referrer',
-        'time_spent_seconds',
-        'scroll_depth',
-        'visited_at',
+        'duration_seconds',
+        'device_type',
+        'browser',
     ];
 
     protected function casts(): array
     {
         return [
-            'visited_at' => 'datetime',
+            'duration_seconds' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -43,19 +43,11 @@ class PageVisit extends Model
     }
 
     /**
-     * Get the session associated with this visit
-     */
-    public function session(): BelongsTo
-    {
-        return $this->belongsTo(CustomerSession::class, 'session_id');
-    }
-
-    /**
      * Scope: Get visits from last N days
      */
     public function scopeLastDays($query, $days = 7)
     {
-        return $query->where('visited_at', '>=', now()->subDays($days));
+        return $query->where('created_at', '>=', now()->subDays($days));
     }
 
     /**
@@ -63,7 +55,7 @@ class PageVisit extends Model
      */
     public function scopeWithMinimumTimeSpent($query, $seconds = 5)
     {
-        return $query->where('time_spent_seconds', '>=', $seconds);
+        return $query->where('duration_seconds', '>=', $seconds);
     }
 
     /**
@@ -72,8 +64,8 @@ class PageVisit extends Model
     public function scopeMostVisited($query, $limit = 10)
     {
         return $query
-            ->selectRaw('page_url, page_title, COUNT(*) as visit_count')
-            ->groupBy('page_url', 'page_title')
+            ->selectRaw('page_url, COUNT(*) as visit_count')
+            ->groupBy('page_url')
             ->orderByDesc('visit_count')
             ->limit($limit);
     }
@@ -83,7 +75,7 @@ class PageVisit extends Model
      */
     public function getReadableTimeSpentAttribute()
     {
-        $seconds = $this->time_spent_seconds;
+        $seconds = (int) $this->duration_seconds;
 
         if ($seconds < 60) {
             return "{$seconds}s";

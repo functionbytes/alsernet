@@ -34,32 +34,34 @@ class CustomerInsightsService
 
     private function calculateHealthScore(Customer $customer): int
     {
-        $score = 50; // base neutral
+        $score = 50 + array_sum(array_column($this->healthFactors($customer), 'points'));
 
+        return max(0, min(100, $score));
+    }
+
+    /**
+     * Desglose de la puntuación de salud: cada regla con los puntos que
+     * aporta a este cliente (0 si no aplica). Parte de una base de 50;
+     * calculateHealthScore() suma exactamente estos puntos.
+     *
+     * @return array<int, array{key: string, label: string, points: int, max: int}>
+     */
+    public function healthFactors(Customer $customer): array
+    {
         $csatAvg = CsatRating::query()
             ->where('customer_id', $customer->id)
             ->whereNotNull('answered_at')
             ->avg('rating');
-
-        if ($csatAvg !== null && $csatAvg >= 4) {
-            $score += 30;
-        }
 
         $closedCount = Conversation::query()
             ->where('customer_id', $customer->id)
             ->whereNotNull('closed_at')
             ->count();
 
-        $score += intdiv($closedCount, 5) * 20;
-
         $lastConv = Conversation::query()
             ->where('customer_id', $customer->id)
             ->latest('created_at')
             ->value('created_at');
-
-        if ($lastConv && now()->diffInMonths($lastConv, true) > 6) {
-            $score -= 20;
-        }
 
         $hasNegativeSentiment = DB::connection('helpdesk')
             ->table('helpdesk_conversation_tag_pivot as pivot')
@@ -70,11 +72,12 @@ class CustomerInsightsService
             ->where('pivot.created_at', '>=', now()->subDays(30))
             ->exists();
 
-        if ($hasNegativeSentiment) {
-            $score -= 30;
-        }
-
-        return max(0, min(100, $score));
+        return [
+            ['key' => 'csat', 'label' => 'Satisfacción (CSAT ≥ 4)', 'points' => $csatAvg !== null && $csatAvg >= 4 ? 30 : 0, 'max' => 30],
+            ['key' => 'resolved', 'label' => 'Conversaciones resueltas', 'points' => intdiv($closedCount, 5) * 20, 'max' => 50],
+            ['key' => 'recency', 'label' => 'Contacto en los últimos 6 meses', 'points' => $lastConv && now()->diffInMonths($lastConv, true) > 6 ? -20 : 0, 'max' => 20],
+            ['key' => 'sentiment', 'label' => 'Sentimiento negativo (30 días)', 'points' => $hasNegativeSentiment ? -30 : 0, 'max' => 30],
+        ];
     }
 
     /**

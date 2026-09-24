@@ -20,6 +20,7 @@ class CustomerMergeAction
             $this->mergeExternalIds();
             $this->mergeCustomerInboxes();
             $this->mergeSessions();
+            $this->mergeNotes();
             $this->mergeAttributes();
             $this->deleteMergee();
 
@@ -101,6 +102,14 @@ class CustomerMergeAction
             ->update(['customer_id' => $this->base->id]);
     }
 
+    private function mergeNotes(): void
+    {
+        DB::connection('helpdesk')
+            ->table('helpdesk_customer_notes')
+            ->where('customer_id', $this->mergee->id)
+            ->update(['customer_id' => $this->base->id]);
+    }
+
     private function mergeAttributes(): void
     {
         $updates = [];
@@ -112,6 +121,25 @@ class CustomerMergeAction
             if (empty($this->base->{$field}) && ! empty($this->mergee->{$field})) {
                 $updates[$field] = $this->mergee->{$field};
             }
+        }
+
+        // Email secundario: el del absorbido (y sus secundarios) se conservan
+        // en secondary_emails cuando el principal ya tiene otro email.
+        $secondary = collect($this->base->secondary_emails ?? [])
+            ->merge($this->mergee->secondary_emails ?? [])
+            ->when(
+                ! empty($this->base->email) && ! empty($this->mergee->email)
+                    && mb_strtolower($this->base->email) !== mb_strtolower($this->mergee->email),
+                fn ($c) => $c->push($this->mergee->email)
+            )
+            ->map(fn ($e) => mb_strtolower(trim((string) $e)))
+            ->filter()
+            ->reject(fn ($e) => $e === mb_strtolower((string) $this->base->email))
+            ->unique()
+            ->values()
+            ->all();
+        if ($secondary !== ($this->base->secondary_emails ?? [])) {
+            $updates['secondary_emails'] = $secondary ?: null;
         }
 
         // Deep-merge custom_attributes — base values take precedence

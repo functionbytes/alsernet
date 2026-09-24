@@ -37,6 +37,7 @@ class Customer extends Model
     protected $fillable = [
         'name',
         'email',
+        'secondary_emails',
         'phone',
         'company_id',
         'erp_customer_id',
@@ -54,6 +55,8 @@ class Customer extends Model
         'email_verified_at',
         'banned_at',
         'ban_reason',
+        'is_vip',
+        'owner_id',
         'last_seen_at',
         'total_conversations',
         'total_page_visits',
@@ -81,10 +84,12 @@ class Customer extends Model
             'banned_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'custom_attributes' => 'array',
+            'secondary_emails' => 'array',
             'portal_token_expires_at' => 'datetime',
             'erp_synced_at' => 'datetime',
             'erp_lookup_at' => 'datetime',
             'is_blocked' => 'boolean',
+            'is_vip' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -98,7 +103,7 @@ class Customer extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'phone', 'internal_notes', 'banned_at'])
+            ->logOnly(['name', 'email', 'phone', 'internal_notes', 'banned_at', 'is_vip', 'owner_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('contact');
@@ -130,6 +135,36 @@ class Customer extends Model
     public function externalIds(): HasMany
     {
         return $this->hasMany(CustomerExternalId::class, 'customer_id');
+    }
+
+    /**
+     * Etiquetas libres asignadas al contacto (Contactos 360 — mockup "Editar
+     * contacto" / filtro "Etiquetas" del listado). Compartidas entre
+     * contactos, no propiedad de un solo agente/bandeja.
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(CustomerTag::class, 'helpdesk_customer_tag_pivot', 'customer_id', 'tag_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Notas internas con autor y fecha (Contactos 360), la más reciente primero.
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(CustomerNote::class, 'customer_id')->latest();
+    }
+
+    /**
+     * Agente responsable del contacto (Contactos 360: "Asignar agente
+     * responsable" y "Comercial asignado"). `users` está en otra conexión que
+     * esta tabla, por eso owner_id no tiene foreign key: Eloquent resuelve la
+     * relación con una segunda consulta contra la conexión de User.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     /**
@@ -268,6 +303,7 @@ class Customer extends Model
         return $query->where(function ($q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
                 ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('secondary_emails', 'like', "%{$term}%")
                 ->orWhere('phone', 'like', "%{$term}%")
                 ->orWhere('whatsapp_phone', 'like', "%{$term}%")
                 ->orWhereHas('externalIds', function ($eq) use ($term) {
@@ -404,6 +440,43 @@ class Customer extends Model
     public function getAvatarUrl(): string
     {
         return $this->avatar_url ?? 'https://ui-avatars.com/api/?name='.urlencode($this->name);
+    }
+
+    /**
+     * Two-letter initials from the customer's name (e.g. "Gabriel Morales" →
+     * "GM") for compact avatar chips — the listado/ficha 360 de Contactos
+     * usan dos letras, distinto del single-letter avatar del resto del panel.
+     */
+    public function getInitialsAttribute(): string
+    {
+        $words = array_values(array_filter(explode(' ', trim((string) $this->name))));
+
+        if ($words === []) {
+            return '?';
+        }
+
+        $initials = mb_substr($words[0], 0, 1).($words[1] ?? '' ? mb_substr($words[1], 0, 1) : '');
+
+        return mb_strtoupper($initials);
+    }
+
+    /**
+     * VIP flag — columna dedicada e indexada (`is_vip`), no un CustomAttribute:
+     * la pivote polimórfica helpdesk_attributables de ese sistema no tiene
+     * migración en este repo, y la vista guardada "VIP" del listado filtra por
+     * este flag en cada carga paginada (un WHERE directo basta).
+     */
+    public function isVip(): bool
+    {
+        return (bool) $this->is_vip;
+    }
+
+    /**
+     * Scope: solo clientes marcados como VIP.
+     */
+    public function scopeVip(Builder $query): Builder
+    {
+        return $query->where('is_vip', true);
     }
 
     /**
