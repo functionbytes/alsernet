@@ -358,6 +358,11 @@ class TicketItem extends Model
             'ca' => 'catalán', 'eu' => 'euskera', 'gl' => 'gallego',
             'nl' => 'neerlandés', 'ru' => 'ruso', 'zh' => 'chino',
             'ja' => 'japonés', 'ar' => 'árabe', 'pl' => 'polaco',
+            'bg' => 'búlgaro', 'cs' => 'checo', 'da' => 'danés', 'el' => 'griego',
+            'et' => 'estonio', 'fi' => 'finés', 'hu' => 'húngaro', 'id' => 'indonesio',
+            'ko' => 'coreano', 'lt' => 'lituano', 'lv' => 'letón', 'nb' => 'noruego',
+            'ro' => 'rumano', 'sk' => 'eslovaco', 'sl' => 'esloveno', 'sv' => 'sueco',
+            'tr' => 'turco', 'uk' => 'ucraniano',
         ];
 
         $code = strtolower(substr($this->source_locale, 0, 2));

@@ -169,7 +169,9 @@
             <div class="card mt-3" id="category-fields"
                  data-index-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.index', $category) }}"
                  data-store-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.store', $category) }}"
-                 data-destroy-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.destroy', [$category, '__FIELD__']) }}">
+                 data-destroy-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.destroy', [$category, '__FIELD__']) }}"
+                 data-update-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.update', [$category, '__FIELD__']) }}"
+                 data-reorder-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.reorder', $category) }}">
                 <div class="card-header p-3">
                     <h6 class="mb-0 fw-bold">Campos personalizados</h6>
                     <p class="text-muted small mb-0">Datos extra que se piden en los tickets de esta categoría (nº de pedido, modelo, fecha de compra…).</p>
@@ -207,6 +209,7 @@
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Añadir campo</button>
+                            <button type="button" class="btn btn-light" data-cancel-edit hidden>Cancelar edición</button>
                         </div>
                     </form>
                 </div>

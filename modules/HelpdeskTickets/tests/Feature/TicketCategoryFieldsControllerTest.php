@@ -418,14 +418,15 @@ class TicketCategoryFieldsControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_agent_role_without_settings_role_gets_403(): void
+    public function test_agent_without_settings_permission_gets_403(): void
     {
-        // Route middleware is role:super-admin|super-settings.
-        // A helpdesk-agent with the permission but wrong role is still rejected.
+        // El acceso lo decide el permiso helpdesk.tickets.settings (middleware
+        // can: del controlador), no el rol: la versión anterior de este test
+        // daba el permiso y esperaba 403 por el rol, regla que ya no existe
+        // desde el multi-rol por usuario (d492271ac).
         $agentRole = Role::firstOrCreate(['name' => 'helpdesk-agent', 'guard_name' => 'web']);
         $agent = User::factory()->create();
         $agent->assignRole($agentRole);
-        $agent->givePermissionTo('helpdesk.tickets.settings');
 
         $this->actingAs($agent)
             ->getJson(route('manager.helpdesk.settings.ticket-categories.fields.index', $this->category))

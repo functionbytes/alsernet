@@ -8542,7 +8542,12 @@
     if (TKA.urls.agentPresenceHeartbeat) {
         var agentPresenceBeat = function () {
             if (document.hidden || !TKA.state.networkOnline || navigator.onLine === false) return;
-            $.post(TKA.urls.agentPresenceHeartbeat);
+            // El contador "N agentes en línea" se recalcula DESPUÉS de cada
+            // latido: pedido solo una vez al cargar, llegaba antes del primer
+            // latido del propio agente (salía 0) y no se refrescaba nunca.
+            $.post(TKA.urls.agentPresenceHeartbeat).always(function () {
+                if (typeof fetchOnlineAgentsCount === 'function') fetchOnlineAgentsCount();
+            });
         };
         agentPresenceBeat();
         setInterval(agentPresenceBeat, 60000);

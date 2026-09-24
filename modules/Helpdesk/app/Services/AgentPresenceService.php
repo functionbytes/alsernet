@@ -246,7 +246,9 @@ class AgentPresenceService
 
             return [
                 'user_id' => $settings->user_id,
-                'name' => $user?->name ?? 'Unknown',
+                // User no tiene columna name (firstname/lastname): salía siempre
+                // 'Unknown'. full_name es el accessor que ya usa el resto.
+                'name' => $user?->full_name ?: 'Agente',
                 'email' => $user?->email ?? '',
                 'presence_state' => $presence,
                 'last_heartbeat_at' => $settings->last_heartbeat_at?->toIso8601String(),

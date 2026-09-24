@@ -501,14 +501,36 @@ class CachedTranslator
         $primary = $this->resolveProvider();
         $fallback = $primary === 'deepl' ? 'libretranslate' : 'deepl';
 
-        $detected = $this->detectViaProvider($primary, $text, $feature);
+        $detected = $this->plausibleLanguage($this->detectViaProvider($primary, $text, $feature));
         if ($detected) {
-            return strtolower($detected);
+            return $detected;
         }
 
-        $detected = $this->detectViaProvider($fallback, $text, $feature);
+        return $this->plausibleLanguage($this->detectViaProvider($fallback, $text, $feature));
+    }
 
-        return $detected ? strtolower($detected) : null;
+    /**
+     * Idiomas que se aceptan como detección (los que DeepL traduce). Con
+     * frases cortas LibreTranslate devolvía 'oc' (occitano) para español
+     * corriente ("pero porque me dices eso"); ese código acababa guardado en
+     * el cliente y TODOS sus mensajes salían "traducidos del OC"
+     * (24-sep-2026). Una detección fuera de la lista se trata como "no sé".
+     */
+    private const PLAUSIBLE_LANGUAGES = [
+        'ar', 'bg', 'ca', 'cs', 'da', 'de', 'el', 'en', 'es', 'et', 'eu', 'fi', 'fr', 'gl', 'hu', 'id',
+        'it', 'ja', 'ko', 'lt', 'lv', 'nb', 'nl', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sv', 'tr', 'uk', 'zh',
+    ];
+
+    private function plausibleLanguage(?string $detected): ?string
+    {
+        if (! $detected) {
+            return null;
+        }
+
+        $code = strtolower(substr($detected, 0, 2));
+        $allowed = (array) config('helpdesktranslate.plausible_languages', self::PLAUSIBLE_LANGUAGES);
+
+        return in_array($code, $allowed, true) ? $code : null;
     }
 
     private function detectViaProvider(string $provider, string $text, string $feature = 'other'): ?string
