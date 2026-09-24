@@ -27,6 +27,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketAiSuggestionControll
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketAttachmentDownloadController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketCommentsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketDetailDataController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketDraftsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketExportController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketFollowupsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketLifecycleController;
@@ -47,6 +48,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSearchController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSideConversationsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTranslationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketUnificationController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketWorkController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
 use Modules\HelpdeskTickets\Http\Middleware\EnsureTicketFeatureEnabled;
 
@@ -355,6 +357,18 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/messages', [TicketMessagingController::class, 'storeMessage'])
         ->middleware('throttle:helpdesk-write')
         ->name('manager.helpdesk.tickets.messages.store');
+    // Checklist de tareas y subtickets del ticket.
+    Route::post('/tickets/{ticket}/tasks', [TicketWorkController::class, 'storeTask'])->name('manager.helpdesk.tickets.tasks.store');
+    Route::patch('/tickets/{ticket}/tasks/{task}', [TicketWorkController::class, 'updateTask'])->name('manager.helpdesk.tickets.tasks.update');
+    Route::delete('/tickets/{ticket}/tasks/{task}', [TicketWorkController::class, 'destroyTask'])->name('manager.helpdesk.tickets.tasks.destroy');
+    Route::post('/tickets/{ticket}/subtickets', [TicketWorkController::class, 'storeSubticket'])->name('manager.helpdesk.tickets.subtickets.store');
+
+    // Borrador del composer en servidor (uno por agente y ticket).
+    Route::post('/tickets/{ticket}/draft', [TicketDraftsController::class, 'update'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.tickets.draft.update');
+    Route::delete('/tickets/{ticket}/draft', [TicketDraftsController::class, 'destroy'])
+        ->name('manager.helpdesk.tickets.draft.destroy');
     Route::post('/tickets/{ticket}/typing', [TicketMessagingController::class, 'typing'])
         ->middleware('throttle:helpdesk-msg-actions')
         ->name('manager.helpdesk.tickets.typing');

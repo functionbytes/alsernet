@@ -3371,3 +3371,18 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-time-row .tkt-btn-icon > i { font-size: 9px; }
 .tkt-time-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 .tkt-time-min { width: 64px; flex: 0 0 64px; }
+
+/* Aviso "X tiene un borrador sin enviar" sobre el composer. */
+.tkt-draft-others { margin: 0 0 8px; padding: 6px 10px; border: 1px dashed var(--tkt-accent-line); border-radius: var(--tkt-r-md); background: var(--tkt-accent-soft); color: var(--tkt-accent-dark); font-size: 11px; font-weight: 600; }
+
+/* Tarjetas "Tareas" y "Subtickets" del panel de gestión. */
+.tkt-task-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--tkt-border-soft); font-size: 11.5px; }
+.tkt-task-row .tkt-btn-icon { width: 20px; height: 20px; }
+.tkt-task-row .tkt-btn-icon > i { font-size: 9px; }
+.tkt-task-check { display: flex; align-items: flex-start; gap: 7px; flex: 1; min-width: 0; margin: 0; cursor: pointer; }
+.tkt-task-check input { margin-top: 2px; accent-color: var(--tkt-accent-dark); }
+.tkt-task-row.is-done .tkt-task-check span { color: var(--tkt-text-faint); text-decoration: line-through; }
+.tkt-inline-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.tkt-sub-parent { margin: 2px 0 4px; }
+#tkt-subtickets-card .tkt-line-link { padding: 5px 0; border-bottom: 1px solid var(--tkt-border-soft); }
+.tkt-sub-add { margin-top: 8px; }

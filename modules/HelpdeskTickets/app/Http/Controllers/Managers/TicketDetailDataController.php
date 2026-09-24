@@ -17,10 +17,12 @@ use Modules\Helpdesk\Services\AgentPresenceService;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAttachment;
+use Modules\HelpdeskTickets\Models\TicketDraft;
 use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketRead;
+use Modules\HelpdeskTickets\Models\TicketTask;
 use Modules\HelpdeskTickets\Services\CustomerSummaryService;
 use Modules\HelpdeskTickets\Services\EmailLogLookupService;
 use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
@@ -783,6 +785,11 @@ class TicketDetailDataController extends Controller
             // Card "Asignado a": los tres datos de la tablita (equipo,
             // seguidores, cuándo se asignó) y la carga del agente, que ya
             // calcula AssignmentService para el modal de reparto.
+            // Borradores en servidor: el mío completo (para recuperarlo en otro
+            // equipo) y, de los demás, solo quién y cuándo — nunca el texto.
+            ...$this->draftsFor($ticket),
+            // Checklist interna, subtickets y ticket padre.
+            'work' => $this->workFor($ticket),
             'assignment' => [
                 'group_name' => $ticket->group?->name,
                 'watchers_count' => $ticket->watchers->count(),
@@ -798,6 +805,60 @@ class TicketDetailDataController extends Controller
                 'agent_presence' => $this->agentPresence($ticket->assignee_id),
             ],
         ]);
+    }
+
+    /**
+     * @return array{tasks: array<int, array<string, mixed>>, subtickets: array<int, array<string, mixed>>, parent: ?array<string, mixed>}
+     */
+    private function workFor(Ticket $ticket): array
+    {
+        $row = fn (Ticket $t) => [
+            'id' => $t->id,
+            'ticket_number' => $t->ticket_number,
+            'subject' => $t->subject,
+            'status_name' => $t->status?->name,
+            'status_slug' => $t->statusSlug(),
+            'closed' => $t->closed_at !== null,
+        ];
+
+        $parentLink = $ticket->links()->where('link_type', 'subticket_of')->with('linkedTicket.status')->first();
+
+        return [
+            'tasks' => TicketTask::query()->where('ticket_id', $ticket->id)->orderBy('position')->get()
+                ->map(fn (TicketTask $task) => $task->toPanelRow())->all(),
+            'subtickets' => $ticket->linkedBy()->where('link_type', 'subticket_of')->with('ticket.status')->get()
+                ->pluck('ticket')->filter()->map($row)->values()->all(),
+            'parent' => $parentLink?->linkedTicket ? $row($parentLink->linkedTicket) : null,
+        ];
+    }
+
+    /**
+     * @return array{my_draft: ?array{body: string, mode: string, updated_at: ?string}, others_drafting: array<int, array{name: string, updated_at_human: ?string}>}
+     */
+    private function draftsFor(Ticket $ticket): array
+    {
+        $userId = auth()->id();
+
+        $drafts = TicketDraft::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('updated_at', '>=', now()->subDay())
+            ->with('user:id,firstname,lastname')
+            ->get();
+
+        $mine = $drafts->firstWhere('user_id', $userId);
+
+        return [
+            'my_draft' => $mine ? [
+                'body' => $mine->body,
+                'mode' => $mine->mode,
+                'updated_at' => $mine->updated_at?->toIso8601String(),
+            ] : null,
+            'others_drafting' => $drafts->where('user_id', '!=', $userId)
+                ->map(fn (TicketDraft $d) => [
+                    'name' => trim(($d->user->firstname ?? '').' '.($d->user->lastname ?? '')) ?: 'Otro agente',
+                    'updated_at_human' => $d->updated_at?->diffForHumans(),
+                ])->values()->all(),
+        ];
     }
 
     /**
@@ -1148,9 +1209,10 @@ class TicketDetailDataController extends Controller
         // que solo el lado "propietario" del enlace (links(), no
         // linkedBy()) puede desvincularse desde aquí — desvincular desde el
         // otro extremo requeriría abrir el ticket contrario.
-        $ownLinks = $ticket->links()->with('linkedTicket.status')->get()
+        // subticket_of va en su propia tarjeta (ver workFor()).
+        $ownLinks = $ticket->links()->where('link_type', '!=', 'subticket_of')->with('linkedTicket.status')->get()
             ->map(fn ($l) => ['link_id' => $l->id, 'link_type' => $l->link_type, 'ticket' => $l->linkedTicket, 'unlinkable' => true]);
-        $reverseLinks = $ticket->linkedBy()->with('ticket.status')->get()
+        $reverseLinks = $ticket->linkedBy()->where('link_type', '!=', 'subticket_of')->with('ticket.status')->get()
             ->map(fn ($l) => ['link_id' => $l->id, 'link_type' => $l->link_type, 'ticket' => $l->ticket, 'unlinkable' => false]);
 
         $explicitLinks = $ownLinks->concat($reverseLinks)->filter(fn ($row) => $row['ticket'] !== null);

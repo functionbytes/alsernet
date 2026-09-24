@@ -72,6 +72,8 @@ class TicketFeatures
                 'mgmt_sla_card' => 'Tarjeta SLA (con calendario)',
                 'mgmt_csat_card' => 'Encuesta de satisfacción (CSAT)',
                 'mgmt_time_card' => 'Tiempo invertido (imputación de horas)',
+                'mgmt_tasks_card' => 'Tareas (checklist interna)',
+                'mgmt_subtickets_card' => 'Subtickets',
             ],
         ],
         'tabs' => [

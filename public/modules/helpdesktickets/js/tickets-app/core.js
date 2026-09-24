@@ -33,6 +33,7 @@
             slaTimer: null,
             undoAction: null,
             pendingSend: null,
+            serverDraftTimer: null,
             undoTimer: null,
             networkOnline: typeof navigator === 'undefined' || navigator.onLine !== false,
             offlineQueue: [],
@@ -508,6 +509,32 @@
         } catch (e) { /* los borradores son una mejora opcional */ }
     }
 
+    // Copia en servidor (24-sep-2026): el borrador sobrevive a cambiar de
+    // equipo y los demás agentes ven que alguien está a medias. Va más
+    // espaciada que la copia local para no hacer una petición por tecla.
+    function syncServerDraft(ticket, body, mode) {
+        if (!ticket || !ticket.url_draft) return;
+        clearTimeout(TKA.state.serverDraftTimer);
+        TKA.state.serverDraftTimer = setTimeout(function () {
+            $.ajax({
+                url: ticket.url_draft,
+                // POST y no PUT: en el Docker de este proyecto un PUT real por
+                // AJAX devuelve 405 aunque la ruta exista.
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+                data: { body: String(body || ''), mode: mode === 'note' ? 'note' : 'reply' },
+            });
+        }, 1500);
+    }
+
+    function serverDraftFor(ticket) {
+        var d = TKA.state.currentDetail;
+        // currentDetail siempre es el del ticket abierto: selectTicket() lo
+        // vacía al cambiar y fetchDetailData() descarta respuestas de otro.
+        if (!ticket || !d || !d.my_draft || !d.my_draft.body) return null;
+        return { body: d.my_draft.body, mode: d.my_draft.mode, updatedAt: d.my_draft.updated_at };
+    }
+
     function scheduleComposerDraftSave() {
         var $body = $('#tkt-reply-body');
         var ticket = TKA.state.currentTicket;
@@ -517,6 +544,7 @@
         TKA.state.draftSaveTimer = setTimeout(function () {
             saveComposerDraft(ticket, $body.val(), $composer.attr('data-mode'));
         }, 500);
+        syncServerDraft(ticket, $body.val(), $composer.attr('data-mode'));
     }
 
     function stopSlaClock() {
@@ -2558,6 +2586,7 @@
                     if ($oldRow.length) $oldRow.replaceWith(renderRow(t));
                 }
                 renderThreadPane(d.thread || []);
+                renderWorkCards(t);
                 renderActivityPane(d.activity || [], d.activity_total_count);
                 renderFilesPane(d.files || [], t);
                 renderMailPane(d.mail);
@@ -3302,6 +3331,21 @@
     // ⌘↵ en Mac, Ctrl+↵ en el resto. El mockup se dibujó en Mac y muestra
     // ⌘↵ fijo; anunciar un atajo que no existe en Windows es peor que
     // apartarse del mockup en dos caracteres.
+    // "X tiene un borrador sin enviar": evita que dos agentes contesten lo
+    // mismo sin saberlo (el aviso de "escribiendo" solo existe en vivo).
+    function renderOthersDrafting($composer) {
+        var d = TKA.state.currentDetail;
+        $('#tkt-draft-others').remove();
+        var others = (d && d.others_drafting) || [];
+        if (!others.length || !$composer.length) return;
+        var text = others.map(function (o) {
+            return escapeHtml(o.name) + (o.updated_at_human ? ' (' + escapeHtml(o.updated_at_human) + ')' : '');
+        }).join(', ');
+        $composer.before('<div class="tkt-draft-others" id="tkt-draft-others" role="status">' +
+            text + (others.length === 1 ? ' tiene un borrador sin enviar en este ticket.' : ' tienen borradores sin enviar en este ticket.') +
+            '</div>');
+    }
+
     function sendShortcutLabel() {
         return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘↵' : 'Ctrl+↵';
     }
@@ -3314,7 +3358,8 @@
         var $c = $('#tkt-composer');
         var $body = $('#tkt-reply-body');
         var t = TKA.state.currentTicket;
-        var draft = readComposerDraft(t);
+        var draft = readComposerDraft(t) || serverDraftFor(t);
+        renderOthersDrafting($c);
 
         // "/" para respuestas rápidas: el placeholder lo anuncia desde
         // siempre pero nunca estuvo conectado a nada — solo abría el modal
@@ -5387,8 +5432,12 @@
             assigneeCard +
             slaCard +
             (featureEnabled('mgmt_csat_card') ? renderCsatCard(csat) : '') +
-            (featureEnabled('mgmt_time_card') && t.url_time_entries ? '<div class="tkt-side-card" id="tkt-time-card"><div class="tkt-side-card-head">Tiempo invertido</div><div class="tkt-side-card-body"><div class="tkt-meta-xs">Cargando…</div></div></div>' : '')
+            (featureEnabled('mgmt_time_card') && t.url_time_entries ? '<div class="tkt-side-card" id="tkt-time-card"><div class="tkt-side-card-head">Tiempo invertido</div><div class="tkt-side-card-body"><div class="tkt-meta-xs">Cargando…</div></div></div>' : '') +
+            (featureEnabled('mgmt_tasks_card') && t.url_tasks_store ? '<div class="tkt-side-card" id="tkt-tasks-card"></div>' : '') +
+            (featureEnabled('mgmt_subtickets_card') && t.url_subtickets_store ? '<div class="tkt-side-card" id="tkt-subtickets-card"></div>' : '')
         );
+
+        renderWorkCards(t);
 
         if (featureEnabled('mgmt_time_card') && t.url_time_entries) loadTimeCard(t, $c.find('#tkt-time-card'));
 
@@ -9039,6 +9088,142 @@
         $('#tkt-split-wrap').toggle(mode === 'list');
         $('#tkt-kanban').toggleClass('on', mode === 'kanban');
         if (mode === 'kanban') renderKanban();
+    }
+
+    // ═══════════ Tareas y subtickets ═══════════
+    // Checklist interna y subtickets (24-sep-2026), sobre TicketWorkController.
+    // Los datos llegan en detail.work; hasta entonces las tarjetas quedan
+    // vacías y renderWorkCards() se vuelve a llamar al terminar cada cambio.
+    function renderWorkCards(t) {
+        var work = (TKA.state.currentDetail && TKA.state.currentDetail.work) || null;
+        var $tasks = $('#tkt-tasks-card');
+        var $subs = $('#tkt-subtickets-card');
+        if (!work) {
+            $tasks.add($subs).html('');
+            return;
+        }
+
+        if ($tasks.length) {
+            var tasks = work.tasks || [];
+            var done = tasks.filter(function (x) { return x.is_done; }).length;
+            $tasks.html(
+                '<div class="tkt-side-card-head">Tareas' + (tasks.length ? '<span class="tkt-spacer tkt-side-tag mono">' + done + '/' + tasks.length + '</span>' : '') + '</div>' +
+                '<div class="tkt-side-card-body">' +
+                    tasks.map(function (task) {
+                        return '<div class="tkt-task-row' + (task.is_done ? ' is-done' : '') + '">' +
+                            '<label class="tkt-task-check"><input type="checkbox" data-task-toggle="' + task.id + '"' + (task.is_done ? ' checked' : '') + '> <span>' + escapeHtml(task.title) + '</span></label>' +
+                            '<button type="button" class="tkt-btn-icon" data-task-delete="' + task.id + '" title="Eliminar" aria-label="Eliminar tarea"><i class="fa-solid fa-xmark"></i></button>' +
+                        '</div>';
+                    }).join('') +
+                    '<form class="tkt-inline-form" id="tkt-task-form" novalidate>' +
+                        '<label class="visually-hidden" for="tkt-task-title">Nueva tarea</label>' +
+                        '<input type="text" id="tkt-task-title" class="tkt-input tkt-fill" maxlength="255" placeholder="Añadir tarea…">' +
+                        '<button type="submit" class="tkt-btn tkt-btn-sm">Añadir</button>' +
+                    '</form>' +
+                '</div>'
+            );
+
+            var taskUrl = function (id) { return (t.url_task_template || '').replace('__TASK__', id); };
+            var fail = function (xhr, fallback) {
+                var msg = apiErrorMessage(xhr, fallback);
+                if (window.toastr) toastr.error(msg); else window.alert(msg);
+            };
+            // Se actualiza el estado local con la respuesta y se repinta: no
+            // se depende de volver a pedir el detalle, que el refresco
+            // periódico de la lista puede descartar por carrera.
+            var apply = function (mutate) {
+                var detail = TKA.state.currentDetail;
+                if (detail && detail.work) mutate(detail.work.tasks = detail.work.tasks || []);
+                renderWorkCards(TKA.state.currentTicket || t);
+            };
+
+            $tasks.find('#tkt-task-form').on('submit', function (ev) {
+                ev.preventDefault();
+                var title = $.trim($tasks.find('#tkt-task-title').val() || '');
+                if (!title) return;
+                $.ajax({ url: t.url_tasks_store, method: 'POST', headers: { Accept: 'application/json' }, data: { title: title } })
+                    .done(function (resp) { apply(function (list) { list.push(resp.task); }); $('#tkt-task-title').trigger('focus'); })
+                    .fail(function (xhr) { fail(xhr, 'No se pudo añadir la tarea'); });
+            });
+            $tasks.find('[data-task-toggle]').on('change', function () {
+                var id = $(this).data('task-toggle');
+                $.ajax({ url: taskUrl(id), method: 'PATCH', headers: { Accept: 'application/json' }, data: { is_done: this.checked ? 1 : 0 } })
+                    .done(function (resp) { apply(function (list) { list.forEach(function (x, i) { if (String(x.id) === String(id)) list[i] = resp.task; }); }); })
+                    .fail(function (xhr) { fail(xhr, 'No se pudo actualizar la tarea'); });
+            });
+            $tasks.find('[data-task-delete]').on('click', function () {
+                var id = $(this).data('task-delete');
+                $.ajax({ url: taskUrl(id), method: 'DELETE', headers: { Accept: 'application/json' } })
+                    .done(function () { apply(function (list) { for (var i = list.length - 1; i >= 0; i--) if (String(list[i].id) === String(id)) list.splice(i, 1); }); })
+                    .fail(function (xhr) { fail(xhr, 'No se pudo eliminar la tarea'); });
+            });
+        }
+
+        if ($subs.length) {
+            var subs = work.subtickets || [];
+            var link = function (x) {
+                return '<a class="tkt-line-link" href="' + TKA.urls.index + '?ticket=' + x.id + '">' +
+                    '<span class="mono tkt-meta-xs">' + escapeHtml(x.ticket_number) + '</span>' +
+                    '<span class="tkt-trunc tkt-fill">' + escapeHtml(x.subject || '(sin asunto)') + '</span>' +
+                    chip(x.status_name || STATUS_LABEL_FALLBACK[x.status_slug] || '—', statusChipClass(x.status_slug)) +
+                '</a>';
+            };
+            $subs.html(
+                '<div class="tkt-side-card-head">Subtickets' + (subs.length ? '<span class="tkt-spacer tkt-side-tag mono">' + subs.filter(function (x) { return !x.closed; }).length + ' abiertos</span>' : '') + '</div>' +
+                '<div class="tkt-side-card-body">' +
+                    (work.parent ? '<div class="tkt-meta-xs tkt-sub-parent">Subticket de</div>' + link(work.parent) : '') +
+                    subs.map(link).join('') +
+                    (!subs.length && !work.parent ? '<div class="tkt-meta-xs">Divide el trabajo en tickets hijos; el padre no se cierra mientras alguno siga abierto.</div>' : '') +
+                    '<button type="button" class="tkt-btn tkt-btn-sm tkt-w-100 tkt-sub-add" id="tkt-subticket-add">Crear subticket</button>' +
+                '</div>'
+            );
+            $subs.find('#tkt-subticket-add').on('click', function () { openSubticketModal(t); });
+        }
+    }
+
+    function openSubticketModal(t) {
+        var $modal = openModal(modalShell({
+            icon: 'fa-solid fa-diagram-project',
+            kicker: 'Ticket · ' + escapeHtml(t.ticket_number || ''),
+            title: 'Nuevo subticket',
+            body: '<div class="tkt-field"><label class="tkt-label" for="tkt-sub-subject">Asunto</label><input type="text" class="tkt-input" id="tkt-sub-subject" maxlength="255"></div>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-sub-desc">Descripción</label><textarea class="tkt-input tkt-input-md" id="tkt-sub-desc" maxlength="5000"></textarea></div>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-sub-assignee">Asignar a</label><select class="tkt-select" id="tkt-sub-assignee"><option value="">Sin asignar</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>' +
+                '<div class="tkt-hint">Mismo cliente, equipo y prioridad que ' + escapeHtml(t.ticket_number || 'el ticket') + '. El cliente no recibe aviso.</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sub-confirm">Crear</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+        }));
+
+        $modal.on('click', '#tkt-sub-confirm', function () {
+            var subject = $.trim($('#tkt-sub-subject').val() || '');
+            if (!subject) {
+                if (window.toastr) toastr.error('Escribe el asunto'); else window.alert('Escribe el asunto');
+                return;
+            }
+            var $btn = $(this).prop('disabled', true);
+            $.ajax({
+                url: t.url_subtickets_store, method: 'POST', headers: { Accept: 'application/json' },
+                data: { subject: subject, description: $('#tkt-sub-desc').val(), assignee_id: $('#tkt-sub-assignee').val() },
+                success: function (resp) {
+                    closeModal();
+                    if (window.toastr) toastr.success((resp && resp.message) || 'Subticket creado');
+                    var detail = TKA.state.currentDetail;
+                    if (detail && detail.work && resp && resp.ticket_id) {
+                        detail.work.subtickets = (detail.work.subtickets || []).concat([{
+                            id: resp.ticket_id, ticket_number: resp.ticket_number, subject: subject,
+                            status_name: 'Nuevo', status_slug: 'new', closed: false,
+                        }]);
+                        renderWorkCards(TKA.state.currentTicket || t);
+                    }
+                    queueTicketListRefresh('subticket', t, { freshCounts: true });
+                },
+                error: function (xhr) {
+                    $btn.prop('disabled', false);
+                    var msg = apiErrorMessage(xhr, 'No se pudo crear el subticket');
+                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                },
+            });
+        });
     }
 
     // ═══════════ Tiempo invertido ═══════════

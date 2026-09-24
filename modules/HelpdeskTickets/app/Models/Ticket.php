@@ -639,7 +639,16 @@ class Ticket extends Model
             ->get()
             ->map(fn (TicketLink $l) => $l->ticket);
 
-        return $blockedByOpen->merge($blocksThisOpen)->filter()->unique('id')->values();
+        // Subtickets abiertos: el padre no se da por cerrado con trabajo
+        // derivado pendiente (24-sep-2026).
+        $openSubtickets = $this->linkedBy()
+            ->where('link_type', 'subticket_of')
+            ->whereHas('ticket', fn ($q) => $q->whereNull('closed_at'))
+            ->with('ticket:id,ticket_number,subject')
+            ->get()
+            ->map(fn (TicketLink $l) => $l->ticket);
+
+        return $blockedByOpen->merge($blocksThisOpen)->merge($openSubtickets)->filter()->unique('id')->values();
     }
 
     public function followups(): HasMany
@@ -1553,6 +1562,10 @@ class Ticket extends Model
             'url_canned_replies' => route('manager.helpdesk.tickets.canned-replies', ['ticket' => '__TICKET__']),
             // Sonda del refresco automático; ver TicketDetailDataController::pulse().
             'url_pulse' => route('manager.helpdesk.tickets.pulse', ['ticket' => '__TICKET__']),
+            'url_draft' => route('manager.helpdesk.tickets.draft.update', ['ticket' => '__TICKET__']),
+            'url_tasks_store' => route('manager.helpdesk.tickets.tasks.store', ['ticket' => '__TICKET__']),
+            'url_task_template' => route('manager.helpdesk.tickets.tasks.update', ['ticket' => '__TICKET__', 'task' => '__TASK__']),
+            'url_subtickets_store' => route('manager.helpdesk.tickets.subtickets.store', ['ticket' => '__TICKET__']),
             'url_message_store' => route('manager.helpdesk.tickets.messages.store', ['ticket' => '__TICKET__']),
             'url_update' => route('manager.helpdesk.tickets.update', ['ticket' => '__TICKET__']),
             'url_close' => route('manager.helpdesk.tickets.close', ['ticket' => '__TICKET__']),

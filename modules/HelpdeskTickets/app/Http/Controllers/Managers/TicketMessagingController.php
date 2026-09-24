@@ -17,6 +17,7 @@ use Modules\HelpdeskTickets\Events\TicketTyping;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkReplyTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\StoreTicketMessageRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketDraft;
 use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
@@ -246,6 +247,9 @@ class TicketMessagingController extends Controller
         // de arriba ya es la única fuente de verdad para "mensaje añadido en
         // vivo" (ver HelpdeskTicketsEventServiceProvider).
         MessageAdded::dispatch($item);
+
+        // Enviado: el borrador en servidor de quien escribe ya no tiene sentido.
+        TicketDraft::query()->where('ticket_id', $ticket->id)->where('user_id', auth()->id())->delete();
 
         return $item;
     }

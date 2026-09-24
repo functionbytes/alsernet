@@ -10,9 +10,11 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketDraft;
 use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Models\TicketTask;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
@@ -489,6 +491,95 @@ class ManagersTicketsCrudTest extends TestCase
             ->getJson(route('manager.helpdesk.search.global', ['q' => $marca]))
             ->assertOk()
             ->assertJsonMissing(['id' => $ajeno->id]);
+    }
+
+    public function test_el_borrador_se_guarda_en_servidor_y_los_demas_solo_ven_que_existe(): void
+    {
+        $ticket = $this->createTicket();
+        $otro = User::factory()->create();
+        $otro->assignRole('super-settings');
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.draft.update', $ticket), ['body' => 'Texto secreto a medias', 'mode' => 'reply'])
+            ->assertOk()->assertJson(['saved' => true]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertOk()
+            ->assertJsonPath('my_draft.body', 'Texto secreto a medias');
+
+        $response = $this->actingAs($otro)->getJson(route('manager.helpdesk.tickets.data', $ticket))->assertOk();
+        $this->assertNull($response->json('my_draft'));
+        $this->assertCount(1, $response->json('others_drafting'));
+        $this->assertStringNotContainsString('Texto secreto', $response->getContent());
+    }
+
+    public function test_enviar_la_respuesta_borra_el_borrador_del_servidor(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.draft.update', $ticket), ['body' => 'Borrador', 'mode' => 'note']);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.messages.store', $ticket), ['body' => 'Nota final', 'is_internal' => true])
+            ->assertOk();
+
+        $this->assertSame(0, TicketDraft::query()->where('ticket_id', $ticket->id)->count());
+    }
+
+    public function test_checklist_de_tareas_se_crea_marca_y_borra(): void
+    {
+        $ticket = $this->createTicket();
+
+        $taskId = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.tasks.store', $ticket), ['title' => 'Pedir foto del precinto'])
+            ->assertCreated()
+            ->json('task.id');
+
+        $this->actingAs($this->manager)
+            ->patchJson(route('manager.helpdesk.tickets.tasks.update', [$ticket, $taskId]), ['is_done' => true])
+            ->assertOk()
+            ->assertJsonPath('task.is_done', true);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertJsonPath('work.tasks.0.title', 'Pedir foto del precinto');
+
+        $this->actingAs($this->manager)
+            ->deleteJson(route('manager.helpdesk.tickets.tasks.destroy', [$ticket, $taskId]))
+            ->assertOk();
+    }
+
+    public function test_una_tarea_de_otro_ticket_no_se_puede_tocar(): void
+    {
+        $ticket = $this->createTicket();
+        $otro = $this->createTicket();
+        $task = TicketTask::create(['ticket_id' => $otro->id, 'title' => 'Ajena']);
+
+        $this->actingAs($this->manager)
+            ->patchJson(route('manager.helpdesk.tickets.tasks.update', [$ticket, $task->id]), ['is_done' => true])
+            ->assertNotFound();
+    }
+
+    public function test_un_subticket_abierto_bloquea_el_cierre_del_padre(): void
+    {
+        $padre = $this->createTicket();
+
+        $hijoId = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.subtickets.store', $padre), ['subject' => 'Recoger el paquete'])
+            ->assertCreated()
+            ->json('ticket_id');
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $padre))
+            ->assertJsonPath('work.subtickets.0.id', $hijoId);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $hijoId))
+            ->assertJsonPath('work.parent.id', $padre->id);
+
+        $this->assertTrue($padre->fresh()->openBlockers()->pluck('id')->contains($hijoId));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
