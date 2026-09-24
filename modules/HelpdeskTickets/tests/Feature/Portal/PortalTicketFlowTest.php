@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Portal;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -427,6 +428,30 @@ class PortalTicketFlowTest extends TestCase
         $this->withSession(['portal_customer_id' => $this->customer->id])
             ->get(route('portal.tickets.item-attachments.download', [$ticket->ticket_number, $internal->id, 0]))
             ->assertNotFound();
+    }
+
+    public function test_el_cliente_puede_poner_correos_en_copia_al_abrir_el_ticket(): void
+    {
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->post(route('portal.tickets.store'), [
+                'subject' => 'Con copia '.uniqid(),
+                'description' => 'Descripción',
+                'cc' => 'jefa@empresa.com, no-es-un-correo, JEFA@empresa.com, '.$this->customer->email,
+            ])->assertRedirect();
+
+        $ticket = Ticket::where('customer_id', $this->customer->id)->latest('id')->first();
+        $this->assertSame(['jefa@empresa.com'], $ticket->cc_emails);
+    }
+
+    public function test_abrir_un_ticket_tras_ver_sugerencias_cuenta_como_no_desviado(): void
+    {
+        $this->withSession(['portal_customer_id' => $this->customer->id, 'portal_deflection_shown_at' => now()->timestamp])
+            ->post(route('portal.tickets.store'), ['subject' => 'Tras sugerencias '.uniqid(), 'description' => 'x'])
+            ->assertRedirect();
+
+        $this->assertSame(1, DB::connection('helpdesk')
+            ->table('helpdesk_ticket_deflection_events')
+            ->where('customer_id', $this->customer->id)->where('event', 'created')->count());
     }
 
     private function createTicket(Customer $customer, array $overrides = []): Ticket

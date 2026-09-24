@@ -119,9 +119,14 @@ class SendCustomerReplyNotification implements ShouldQueue
 
         $mailable = new TicketReplyMail($ticket, $subject, $html, $fromAddress, $ownMessageId, $inReplyTo, $item->attachment_urls ?? []);
 
-        ($mailerName ? Mail::mailer($mailerName) : Mail::mailer())
-            ->to($ticket->customer->email)
-            ->send($mailable);
+        // Copias que el cliente añadió al abrir el ticket (portal, 24-sep-2026).
+        $cc = array_values(array_filter((array) ($ticket->cc_emails ?? []), fn ($e) => is_string($e) && filter_var($e, FILTER_VALIDATE_EMAIL)));
+
+        $pending = ($mailerName ? Mail::mailer($mailerName) : Mail::mailer())->to($ticket->customer->email);
+        if ($cc !== []) {
+            $pending->cc($cc);
+        }
+        $pending->send($mailable);
 
         // Record outbound email for traceability
         TicketMail::create([
@@ -133,6 +138,7 @@ class SendCustomerReplyNotification implements ShouldQueue
             'in_reply_to' => $inReplyTo,
             'from' => $fromAddress ?: config('mail.from.address'),
             'to' => $ticket->customer->email,
+            'cc' => $cc !== [] ? implode(',', $cc) : null,
             'subject' => $subject,
             'body_html' => $html,
             'body_text' => strip_tags($html),

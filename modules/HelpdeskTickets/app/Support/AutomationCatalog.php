@@ -323,12 +323,21 @@ final class AutomationCatalog
                 'options' => null,
                 'cast' => null,
             ],
+            // Corta la cadena: las reglas posteriores (por orden) del mismo
+            // disparador no se evalúan para este ticket.
+            [
+                'type' => 'stop_processing',
+                'label' => 'No evaluar más reglas después de esta',
+                'input' => 'none',
+                'options' => null,
+                'cast' => null,
+            ],
         ];
     }
 
     /**
-     * Disparadores reales: los cinco eventos que tienen listener
-     * (RunAutomationsOnTicket*). No hay disparadores por tiempo.
+     * Disparadores reales: los eventos que tienen listener
+     * (RunAutomationsOnTicket*) y el periódico (ticket:run-time-automations).
      *
      * @return array<int, array{value: string, label: string}>
      */

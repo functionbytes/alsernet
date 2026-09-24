@@ -434,13 +434,51 @@ class CustomerPortalController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
         ]);
 
+        $articles = $deflection->suggest(
+            (string) ($validated['subject'] ?? ''),
+            (string) ($validated['description'] ?? ''),
+        );
+
+        // Una vez por redacción (no por cada tecla que vuelve a consultar).
+        if (! empty($articles) && ! session()->has('portal_deflection_shown_at')) {
+            session()->put('portal_deflection_shown_at', now()->timestamp);
+            $this->recordDeflection('shown', $customer->id);
+        }
+
         return response()->json([
             'success' => true,
-            'articles' => $deflection->suggest(
-                (string) ($validated['subject'] ?? ''),
-                (string) ($validated['description'] ?? ''),
-            ),
+            'articles' => $articles,
         ]);
+    }
+
+    /** POST /portal/tickets/suggest-articles/click — el cliente abrió un artículo sugerido. */
+    public function deflectionClick(Request $request): JsonResponse
+    {
+        $customer = $this->getAuthenticatedCustomer();
+
+        if (! $customer) {
+            return response()->json(['success' => false], 401);
+        }
+
+        $validated = $request->validate(['article_id' => ['nullable', 'integer']]);
+        $this->recordDeflection('clicked', $customer->id, $validated['article_id'] ?? null);
+
+        return response()->json(['success' => true]);
+    }
+
+    private function recordDeflection(string $event, ?int $customerId, ?int $articleId = null, ?int $ticketId = null): void
+    {
+        try {
+            DB::connection('helpdesk')->table('helpdesk_ticket_deflection_events')->insert([
+                'customer_id' => $customerId,
+                'event' => $event,
+                'article_id' => $articleId,
+                'ticket_id' => $ticketId,
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable) {
+            // La métrica nunca puede romper el portal.
+        }
     }
 
     public function storeTicket(StoreTicketRequest $request): RedirectResponse
@@ -470,6 +508,7 @@ class CustomerPortalController extends Controller
                 'priority' => $validated['priority'] ?? 'normal',
                 'status_id' => $defaultStatus?->id ?? 1,
                 'source' => 'portal',
+                'cc_emails' => $request->ccEmails($customer->email) ?: null,
             ]);
 
             if ($request->hasFile('attachments')) {
@@ -483,6 +522,14 @@ class CustomerPortalController extends Controller
         // el ticket del portal no recibía confirmación, aviso a agentes,
         // auto-asignación ni automatizaciones.
         TicketCreated::dispatch($ticket);
+
+        // Deflexión: si al redactar se le enseñaron artículos y aun así abrió
+        // el ticket, cuenta como "no resuelto por la sugerencia".
+        if ($shownAt = session()->pull('portal_deflection_shown_at')) {
+            if (now()->timestamp - (int) $shownAt <= 3600) {
+                $this->recordDeflection('created', $customer->id, null, $ticket->id);
+            }
+        }
 
         return redirect()->route('portal.tickets.show', $ticket->ticket_number)
             ->with('status', __('helpdesktickets::helpdesktickets.portal.ticket_created'));

@@ -20,6 +20,9 @@ Route::post('tickets', [CustomerPortalController::class, 'storeTicket'])
 Route::post('tickets/suggest-articles', [CustomerPortalController::class, 'suggestArticles'])
     ->middleware('throttle:30,1')
     ->name('tickets.suggest-articles');
+Route::post('tickets/suggest-articles/click', [CustomerPortalController::class, 'deflectionClick'])
+    ->middleware('throttle:30,1')
+    ->name('tickets.suggest-articles.click');
 Route::get('tickets/{ticketNumber}', [CustomerPortalController::class, 'showTicket'])->name('tickets.show');
 // Descarga de un adjunto del propio ticket. El controlador vuelve a comprobar
 // que el ticket es del cliente en sesión y que el adjunto cuelga de ese ticket.

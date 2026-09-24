@@ -27,6 +27,10 @@ body:has(.tkt) .mc-content {
 .tkt {
   height: 100%;
   overflow: hidden;
+  /* Los cortes responsive miran el ancho del panel, no el de la ventana
+     (ver @container tkt más abajo). */
+  container-type: inline-size;
+  container-name: tkt;
   /* ── Paleta del mockup, literal ────────────────────────────
      El mockup "Alvarez Gestión de tickets" usa exactamente once
      combinaciones de color, todas dentro de dos escalas: zinc
@@ -1077,7 +1081,16 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    .tkt-app-card exigía 1180px de ancho mínimo pero el layout todavía no
    había colapsado a 1 columna, y el contenido de la topbar se recortaba
    con scroll horizontal no intencional. */
-@media (max-width: 1180px) {
+/* 24-sep-2026: de @media (ventana) a @container (panel). Entre 941 y 1180 px
+   de panel, tres columnas más estrechas en vez de scroll horizontal; por
+   debajo de 940, el modo de una columna de siempre. */
+@container tkt (max-width: 1180px) {
+  .tkt-app-card { min-width: 0; }
+  .tkt-split { --tkt-list-width: 300px; --tkt-side-width: 270px; grid-template-columns: minmax(250px, var(--tkt-list-width)) 8px minmax(340px, 1fr) 8px minmax(240px, var(--tkt-side-width)); }
+  .tkt-split.side-collapsed { grid-template-columns: minmax(250px, var(--tkt-list-width)) 8px minmax(340px, 1fr) 8px 46px; }
+}
+
+@container tkt (max-width: 940px) {
   .tkt-app-card { min-width: 0; }
   .tkt-mobile-nav { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
   .tkt-mobile-nav > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--tkt-text-soft); font-size: 11px; font-weight: 600; cursor: pointer; }

@@ -27,6 +27,9 @@ class StoreTicketRequest extends FormRequest
             // alta (la escala el agente o el escalado automático). Antes
             // cualquier cadena pasaba y acababa en la columna tal cual.
             'priority' => ['nullable', Rule::in(['low', 'normal', 'high'])],
+            // Hasta 5 correos en copia, separados por coma (se validan uno a
+            // uno en ccEmails()).
+            'cc' => ['nullable', 'string', 'max:500'],
             'attachments' => [
                 'nullable',
                 'array',
@@ -74,5 +77,23 @@ class StoreTicketRequest extends FormRequest
             'priority' => 'prioridad',
             'attachments.*' => 'archivo adjunto',
         ];
+    }
+
+    /**
+     * Correos en copia normalizados y validados (máx. 5, sin duplicar el del
+     * propio cliente).
+     *
+     * @return array<int, string>
+     */
+    public function ccEmails(?string $customerEmail): array
+    {
+        return collect(preg_split('/[,;\s]+/', (string) $this->input('cc')))
+            ->map(fn ($e) => mb_strtolower(trim((string) $e)))
+            ->filter(fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL))
+            ->reject(fn ($e) => $customerEmail && $e === mb_strtolower($customerEmail))
+            ->unique()
+            ->take(5)
+            ->values()
+            ->all();
     }
 }

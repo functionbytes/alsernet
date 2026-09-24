@@ -35,7 +35,20 @@ class AutomationEngine
             $this->runActions($automation->actions, $ticket);
             $automation->increment('run_count');
             $automation->update(['last_run_at' => now()]);
+
+            if ($this->stopsProcessing($automation)) {
+                break;
+            }
         }
+    }
+
+    /**
+     * Acción "No evaluar más reglas después de esta": las siguientes reglas
+     * del mismo disparador se saltan para este ticket (orden = columna order).
+     */
+    private function stopsProcessing(Automation $automation): bool
+    {
+        return collect($automation->actions ?? [])->contains(fn ($a) => ($a['type'] ?? null) === 'stop_processing');
     }
 
     /**
@@ -171,6 +184,10 @@ class AutomationEngine
             $automation->increment('run_count');
             $automation->update(['last_run_at' => now()]);
             $ran++;
+
+            if ($this->stopsProcessing($automation)) {
+                break;
+            }
         }
 
         return $ran;
@@ -236,6 +253,8 @@ class AutomationEngine
                 // implicito del modulo, para que quede visible y configurable
                 // en el panel como cualquier otra regla.
                 'ai_route' => $this->aiRoute($ticket),
+                // Lo trata handle()/runTimeBased() al terminar la regla.
+                'stop_processing' => null,
                 default => null,
             };
         }

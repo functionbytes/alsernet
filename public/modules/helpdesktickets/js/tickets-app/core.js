@@ -438,6 +438,17 @@
         applyListDensity(readPreference(TKT_LIST_DENSITY_KEY, 'normal') === 'compact');
     }
 
+    // Modo de una columna (lista / detalle / gestión por pestañas). Mide el
+    // ANCHO DEL PANEL, no de la ventana: con el menú lateral del tema abierto
+    // un portátil de 1280-1440 px dejaba el panel por debajo del mínimo sin
+    // cambiar de modo y aparecía scroll horizontal. Mismo umbral que el
+    // @container tkt (max-width: 940px) de tickets-app.css.
+    var SINGLE_PANE_MAX = 940;
+    function isSinglePaneLayout() {
+        var el = document.querySelector('.tkt');
+        return !!el && el.getBoundingClientRect().width <= SINGLE_PANE_MAX;
+    }
+
     function applyMobilePane(which) {
         which = ['list', 'detail', 'side'].indexOf(which) !== -1 ? which : 'list';
         TKA.state.mobilePane = which;
@@ -2197,7 +2208,7 @@
         }
         renderDetail(t);
         renderSidePanel(t);
-        if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('detail');
+        if (isSinglePaneLayout()) openMobilePane('detail');
     }
 
     /**
@@ -2490,7 +2501,7 @@
         $quick.html('<button type="button" id="tkt-detail-customer-open" title="Abrir resumen del cliente"><i class="fa-regular fa-address-card"></i> ' + escapeHtml(facts.join(' · ')) + '</button>').removeAttr('hidden');
         $quick.off('click.tktCustomer').on('click.tktCustomer', '#tkt-detail-customer-open', function () {
             if (TKA.state.sideTab !== 'cliente') selectSideTab('cliente');
-            if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('side');
+            if (isSinglePaneLayout()) openMobilePane('side');
             var el = document.getElementById('tkt-side-content');
             if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         });
@@ -9879,17 +9890,17 @@
             if (action === 'reply' || action === 'note') {
                 selectDetailTab('thread');
                 $('[data-comp-mode="' + action + '"]').trigger('click');
-                if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('detail');
+                if (isSinglePaneLayout()) openMobilePane('detail');
                 $('#tkt-reply-body').trigger('focus');
             } else if (action === 'status') openChangeStatusModal(t);
             else if (action === 'assign') openAssignModal(t);
             else if (action === 'manage') {
                 selectSideTab('gestion');
-                if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('side');
+                if (isSinglePaneLayout()) openMobilePane('side');
                 $('#tkt-sg-actions').addClass('tkt-highlight-flash').one('animationend', function () { $(this).removeClass('tkt-highlight-flash'); });
             } else if (action === 'customer') {
                 selectSideTab('cliente');
-                if (window.matchMedia && window.matchMedia('(max-width: 1180px)').matches) openMobilePane('side');
+                if (isSinglePaneLayout()) openMobilePane('side');
             } else if (action === 'snooze') snoozeTicket(t);
             else if (action === 'schedule') openScheduleModal(t);
             else if (action === 'portal') openPortalModal(t);

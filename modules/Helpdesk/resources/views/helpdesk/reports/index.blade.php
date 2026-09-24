@@ -414,6 +414,22 @@
                                 <span class="text-muted">Mediana de resolución</span>
                                 <span class="fw-semibold">{{ $medianResolutionTime ?? 0 }} min</span>
                             </div>
+                            @if (isset($medianBusinessResponseTime))
+                                <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                    <span class="text-muted">Mediana 1ª respuesta (horario laboral)</span>
+                                    <span class="fw-semibold">{{ $medianBusinessResponseTime }} min</span>
+                                </div>
+                                <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                    <span class="text-muted">Mediana de resolución (horario laboral)</span>
+                                    <span class="fw-semibold">{{ $medianBusinessResolutionTime }} min</span>
+                                </div>
+                            @endif
+                            @if (($deflectionShown ?? 0) > 0)
+                                <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                    <span class="text-muted">Portal: resueltos con artículos</span>
+                                    <span class="fw-semibold" title="{{ $deflectionShown }} con sugerencias, {{ $deflectionClicked }} abrieron un artículo, {{ $deflectionCreated }} abrieron ticket igualmente">{{ $deflectionRate }}%</span>
+                                </div>
+                            @endif
                             <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
                                 <span class="text-muted">Tasa de reapertura</span>
                                 <span class="fw-semibold">{{ $reopenRate ?? 0 }}%</span>

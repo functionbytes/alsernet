@@ -33,6 +33,11 @@
                         Conversaciones
                     </a>
                     @endif
+                    @if(\Illuminate\Support\Facades\Route::has('public.helpcenter.index'))
+                    <a href="{{ route('public.helpcenter.index') }}" class="btn btn-outline-light btn-sm" target="_blank" rel="noopener">
+                        Centro de ayuda
+                    </a>
+                    @endif
                     <a href="{{ route('portal.account') }}" class="btn btn-sm btn-outline-secondary me-2">
                         Cuenta
                     </a>

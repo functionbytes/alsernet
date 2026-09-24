@@ -384,6 +384,30 @@ class TicketSlaAndLifecycleConsistencyTest extends TestCase
         $this->assertSame(1, TicketSlaBreach::query()->where('ticket_id', $ticket->id)->count());
     }
 
+    public function test_detener_aqui_evita_que_se_evaluen_las_reglas_siguientes(): void
+    {
+        $primera = Automation::create([
+            'name' => 'Primera '.uniqid(), 'trigger_event' => 'ticket.reopened', 'conditions' => [],
+            'actions' => [['type' => 'add_tag', 'value' => 'primera'], ['type' => 'stop_processing']],
+            'is_active' => true, 'order' => -2,
+        ]);
+        $segunda = Automation::create([
+            'name' => 'Segunda '.uniqid(), 'trigger_event' => 'ticket.reopened', 'conditions' => [],
+            'actions' => [['type' => 'add_tag', 'value' => 'segunda']],
+            'is_active' => true, 'order' => -1,
+        ]);
+        $ticket = $this->ticket();
+
+        app(AutomationEngine::class)->handle('ticket.reopened', $ticket);
+
+        $tags = $ticket->fresh()->tags ?? [];
+        $this->assertContains('primera', $tags);
+        $this->assertNotContains('segunda', $tags);
+
+        Cache::forget("helpdesk:automation-runs:{$primera->id}:{$ticket->id}");
+        Cache::forget("helpdesk:automation-runs:{$segunda->id}:{$ticket->id}");
+    }
+
     private function ticket(array $overrides = []): Ticket
     {
         return Ticket::create(array_merge([

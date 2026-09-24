@@ -34,6 +34,12 @@ use Modules\HelpdeskTickets\Support\TicketFeatures;
 
 class TicketsCrudController extends Controller
 {
+    /** Última respuesta pública del cliente del ticket (orden "Cliente esperando más"). */
+    private const LAST_CUSTOMER_MSG_SQL = 'SELECT MAX(i.created_at) FROM helpdesk_ticket_items i WHERE i.ticket_id = helpdesk_tickets.id AND i.type = \'message\' AND i.is_internal = 0 AND i.user_id IS NULL AND i.author_id IS NOT NULL AND i.deleted_at IS NULL';
+
+    /** Última respuesta pública de un agente del ticket. */
+    private const LAST_AGENT_MSG_SQL = 'SELECT MAX(i.created_at) FROM helpdesk_ticket_items i WHERE i.ticket_id = helpdesk_tickets.id AND i.type = \'message\' AND i.is_internal = 0 AND i.user_id IS NOT NULL AND i.deleted_at IS NULL';
+
     public function __construct(
         private readonly TicketUpdateService $ticketUpdateService,
     ) {}
@@ -195,6 +201,18 @@ class TicketsCrudController extends Controller
             'date_desc' => $query->reorder()->latest(),
             'priority' => $query->reorder()
                 ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+                ->latest(),
+            // 24-sep-2026: lo último que se movió, sea del cliente o del equipo.
+            'activity' => $query->reorder()
+                ->orderByRaw('COALESCE(helpdesk_tickets.last_activity_at, helpdesk_tickets.updated_at) DESC')
+                ->latest(),
+            // "Cliente esperando más": primero los tickets cuya última respuesta
+            // pública es del cliente, y entre ellos el que lleva más tiempo sin
+            // contestar. Subconsultas correlacionadas sobre el índice
+            // (ticket_id, …) de items; se evalúan solo sobre la página pedida.
+            'waiting' => $query->reorder()
+                ->orderByRaw('(('.self::LAST_CUSTOMER_MSG_SQL.') > COALESCE(('.self::LAST_AGENT_MSG_SQL.'), \'1970-01-01\')) DESC')
+                ->orderByRaw('('.self::LAST_CUSTOMER_MSG_SQL.') ASC')
                 ->latest(),
             default => null,
         };

@@ -64,6 +64,7 @@ class Ticket extends Model
         'source',
         'custom_fields',
         'tags',
+        'cc_emails',
         'assigned_at',
         'closed_at',
         'close_reason',
@@ -104,6 +105,7 @@ class Ticket extends Model
         return [
             'custom_fields' => 'array',
             'tags' => 'array',
+            'cc_emails' => 'array',
             'assigned_at' => 'datetime',
             'closed_at' => 'datetime',
             'resolved_at' => 'datetime',

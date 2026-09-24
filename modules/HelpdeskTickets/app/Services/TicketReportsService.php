@@ -4,8 +4,10 @@ namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\CsatRating;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -128,6 +130,9 @@ class TicketReportsService
             'slaComplianceRate' => $currentSlaRate,
             'avgResponseTime' => round($current->avg_response_time ?? 0),
             'avgResolutionTime' => round($current->avg_resolution_time ?? 0),
+            // Deflexión del portal: sugerencias mostradas, artículos abiertos
+            // y tickets abiertos igualmente tras ver sugerencias.
+            ...$this->deflectionMetrics($from, $to),
             // Mediana y calidad de resolución (24-sep-2026). La media se
             // dispara con un solo ticket olvidado un mes; la mediana dice
             // cuánto tarda el caso típico.
@@ -165,16 +170,16 @@ class TicketReportsService
      * resolución al primer contacto (un solo mensaje público de agente),
      * sobre los tickets creados en el periodo.
      *
-     * @return array{medianResponseTime: int, medianResolutionTime: int, reopenRate: float, firstContactResolutionRate: float}
+     * @return array{medianResponseTime: int, medianResolutionTime: int, medianBusinessResponseTime: ?int, medianBusinessResolutionTime: ?int, reopenRate: float, firstContactResolutionRate: float}
      */
     private function qualityMetrics(Carbon $from, Carbon $to): array
     {
         $base = fn () => Ticket::query()->whereBetween('created_at', [$from, $to]);
 
         $responseMinutes = $base()->whereNotNull('first_response_at')->limit(50000)->get(['created_at', 'first_response_at'])
-            ->map(fn (Ticket $t) => (int) $t->created_at->diffInMinutes($t->first_response_at));
+            ->map(fn (Ticket $t) => max(0, (int) $t->created_at->diffInMinutes($t->first_response_at)));
         $resolutionMinutes = $base()->whereNotNull('closed_at')->limit(50000)->get(['created_at', 'closed_at'])
-            ->map(fn (Ticket $t) => (int) $t->created_at->diffInMinutes($t->closed_at));
+            ->map(fn (Ticket $t) => max(0, (int) $t->created_at->diffInMinutes($t->closed_at)));
 
         $finished = $base()->where(fn ($q) => $q->whereNotNull('resolved_at')->orWhereNotNull('closed_at'));
         $finishedCount = (clone $finished)->count();
@@ -188,12 +193,68 @@ class TicketReportsService
             ->whereHas('items', fn ($q) => $q->where('type', 'message')->where('is_internal', false)->whereNotNull('user_id'), '=', 1)
             ->count();
 
+        // Mismas medianas contando solo horario laboral (calendario y
+        // festivos de HelpdeskSla). Un ticket del viernes a las 18:00
+        // contestado el lunes a las 9:00 no son 63 horas de espera real.
+        $businessResponse = $this->businessMedian($base()->whereNotNull('first_response_at')->limit(5000)->get(['created_at', 'first_response_at']), 'first_response_at');
+        $businessResolution = $this->businessMedian($base()->whereNotNull('closed_at')->limit(5000)->get(['created_at', 'closed_at']), 'closed_at');
+
         return [
             'medianResponseTime' => (int) round($responseMinutes->median() ?? 0),
             'medianResolutionTime' => (int) round($resolutionMinutes->median() ?? 0),
+            'medianBusinessResponseTime' => $businessResponse,
+            'medianBusinessResolutionTime' => $businessResolution,
             'reopenRate' => $finishedCount > 0 ? round($reopened / $finishedCount * 100, 1) : 0.0,
             'firstContactResolutionRate' => $finishedCount > 0 ? round($firstContact / $finishedCount * 100, 1) : 0.0,
         ];
+    }
+
+    /**
+     * @return array{deflectionShown: int, deflectionClicked: int, deflectionCreated: int, deflectionRate: ?float}
+     */
+    private function deflectionMetrics(Carbon $from, Carbon $to): array
+    {
+        try {
+            $counts = DB::connection('helpdesk')
+                ->table('helpdesk_ticket_deflection_events')
+                ->whereBetween('created_at', [$from, $to])
+                ->selectRaw('event, COUNT(*) as c')
+                ->groupBy('event')
+                ->pluck('c', 'event');
+        } catch (\Throwable) {
+            $counts = collect();
+        }
+
+        $shown = (int) ($counts['shown'] ?? 0);
+        $created = (int) ($counts['created'] ?? 0);
+
+        return [
+            'deflectionShown' => $shown,
+            'deflectionClicked' => (int) ($counts['clicked'] ?? 0),
+            'deflectionCreated' => $created,
+            // Quien vio sugerencias y NO acabó abriendo ticket.
+            'deflectionRate' => $shown > 0 ? round(max(0, $shown - $created) / $shown * 100, 1) : null,
+        ];
+    }
+
+    /**
+     * Mediana en minutos laborables, o null si HelpdeskSla no está instalado.
+     */
+    private function businessMedian(Collection $tickets, string $endField): ?int
+    {
+        if (! class_exists(BusinessHoursCalculator::class)) {
+            return null;
+        }
+
+        try {
+            $calculator = app(BusinessHoursCalculator::class);
+
+            $minutes = $tickets->map(fn (Ticket $t) => $calculator->businessMinutesBetween($t->created_at, $t->{$endField}));
+
+            return (int) round($minutes->median() ?? 0);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

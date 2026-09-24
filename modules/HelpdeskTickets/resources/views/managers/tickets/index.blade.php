@@ -544,6 +544,8 @@
                         <option value="date_desc" @selected(request('sort', 'date_desc') === 'date_desc')>Fecha ↓</option>
                         <option value="date_asc" @selected(request('sort') === 'date_asc')>Fecha ↑</option>
                         <option value="priority" @selected(request('sort') === 'priority')>Prioridad</option>
+                        <option value="activity" @selected(request('sort') === 'activity')>Última actividad</option>
+                        <option value="waiting" @selected(request('sort') === 'waiting')>Cliente esperando más</option>
                     </select>
                     <span class="tkt-list-head-icons">
                         <button type="button" id="tkt-list-density" title="Usar lista compacta" aria-label="Usar lista compacta" aria-pressed="false"><i class="fa-solid fa-compress"></i></button>

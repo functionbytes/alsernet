@@ -92,6 +92,16 @@
                             </div>
                         @endif
 
+                        <div class="mb-3">
+                            <label for="cc" class="form-label">Enviar copia a <span class="text-muted">(opcional)</span></label>
+                            <input type="text" id="cc" name="cc" class="form-control @error('cc') is-invalid @enderror"
+                                   value="{{ old('cc') }}" maxlength="500" placeholder="compañero@empresa.com, otro@empresa.com">
+                            <div class="form-text">Hasta 5 correos separados por coma. Recibirán también nuestras respuestas.</div>
+                            @error('cc')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <div class="mb-4">
                             <label for="priority" class="form-label">Prioridad</label>
                             <select id="priority" name="priority" class="form-select">
@@ -112,19 +122,14 @@
     </div>
 @endsection
 
-{{-- OJO: portal/layout.blade.php NO tiene @stack('scripts') (solo
-     @yield('content')), así que este @push('scripts') no se renderiza en
-     ningún sitio — esto ya pasaba con el <script> inline anterior, no es una
-     regresión de esta extracción. La deflexión de KB del portal lleva sin
-     ejecutarse en producción desde que se escribió; arreglar el layout queda
-     fuera del alcance de esta limpieza de <script> inline (se deja
-     documentado para quien lo retome). --}}
+
 @push('scripts')
 {{-- Solo datos: la URL del endpoint de sugerencias. La lógica entera vive en
      portal-ticket-create-form.js. --}}
 <script>
 window.hdtPortalTicketCreateConfig = {
     suggestUrl: @json(route('portal.tickets.suggest-articles')),
+    clickUrl: @json(route('portal.tickets.suggest-articles.click')),
 };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/portal-ticket-create-form.js') }}"></script>

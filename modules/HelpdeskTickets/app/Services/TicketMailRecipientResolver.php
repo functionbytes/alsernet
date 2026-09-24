@@ -78,6 +78,13 @@ class TicketMailRecipientResolver
             $emails->push(mb_strtolower($ticket->customer->email));
         }
 
+        // Copias que el cliente pidió al abrir el ticket desde el portal.
+        foreach ((array) ($ticket->cc_emails ?? []) as $cc) {
+            if (is_string($cc) && $cc !== '') {
+                $emails->push(mb_strtolower($cc));
+            }
+        }
+
         TicketMail::query()
             ->where('ticket_id', $ticket->id)
             ->get(['to', 'cc', 'bcc'])

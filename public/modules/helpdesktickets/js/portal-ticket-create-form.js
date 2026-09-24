@@ -59,27 +59,40 @@
 
                 res.articles.forEach(function (a) {
                     $list.append(
-                        $('<a target="_blank" class="list-group-item list-group-item-action small py-2">')
+                        $('<a target="_blank" rel="noopener" class="list-group-item list-group-item-action small py-2">')
                             .attr('href', a.url)
+                            .attr('data-article-id', a.id)
                             .append($('<i class="fas fa-book me-2 text-muted">'))
                             .append(document.createTextNode(a.title))
                     );
                 });
 
                 $container.append(
-                    $('<div class="alert alert-info p-2 mb-0">').append(
+                    $('<div class="alert alert-secondary p-2 mb-0">').append(
                         $('<strong class="small">').append(
                             $('<i class="fas fa-lightbulb me-1">'),
-                            document.createTextNode(' Could this solve it?')
+                            document.createTextNode(' ¿Te sirve alguno de estos artículos?')
                         ),
                         $list,
                         $('<div class="small text-muted mt-2">').text(
-                            'If not, just carry on — your ticket will be created normally.'
+                            'Si no, sigue adelante: tu ticket se creará con normalidad.'
                         )
                     )
                 );
             });
         }
+
+        // Medición de la deflexión: qué artículos sugeridos se abren. Se envía
+        // sin esperar respuesta; perder un clic no rompe nada.
+        $container.on('click', 'a[data-article-id]', function () {
+            if (!cfg.clickUrl) return;
+            $.ajax({
+                url: cfg.clickUrl,
+                method: 'POST',
+                data: { article_id: parseInt($(this).data('article-id'), 10) || null },
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            });
+        });
 
         // 1200 ms, no 500: detrás hay una llamada con coste, no una búsqueda local.
         $subject.add($description).on('input', function () {
