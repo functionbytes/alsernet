@@ -29,7 +29,7 @@ class AssignmentService
                 throw new \Exception('User is not a helpdesk agent');
             }
 
-            return DB::transaction(function () use ($ticket, $agentId, $agent, $reason) {
+            $assign = function () use ($ticket, $agentId, $agent, $reason) {
                 if ($ticket->assignee_id && $ticket->assignee_id !== $agentId) {
                     $this->unassignTicket($ticket, 'Reassigning to another agent');
                 }
@@ -61,7 +61,9 @@ class AssignmentService
                 ]);
 
                 return $assignment;
-            });
+            };
+
+            return $this->transactional($assign);
         } catch (\Exception $e) {
             Log::error('Error assigning ticket', [
                 'ticket_id' => $ticket->id,
@@ -82,7 +84,7 @@ class AssignmentService
                 return;
             }
 
-            DB::transaction(function () use ($ticket, $reason) {
+            $this->transactional(function () use ($ticket, $reason) {
                 TicketAssignment::create([
                     'ticket_id' => $ticket->id,
                     'assigned_to' => $ticket->assignee_id,
@@ -130,7 +132,7 @@ class AssignmentService
                 throw new \Exception('User is not a helpdesk agent');
             }
 
-            return DB::transaction(function () use ($ticket, $newAgentId, $reason) {
+            return $this->transactional(function () use ($ticket, $newAgentId, $reason) {
                 if ($ticket->assignee_id) {
                     $this->unassignTicket($ticket, $reason ?? 'Reassigning to another agent');
                 }
@@ -403,5 +405,18 @@ class AssignmentService
 
             return $agents;
         }
+    }
+
+    /**
+     * Misma guarda que el resto del módulo: si la conexión ya está en una
+     * transacción (un llamador que la abrió, o el PDO compartido de los
+     * tests), se reutiliza en vez de abrir otra ("There is already an
+     * active transaction").
+     */
+    private function transactional(callable $callback): mixed
+    {
+        $connection = DB::connection();
+
+        return $connection->getPdo()->inTransaction() ? $callback() : $connection->transaction($callback);
     }
 }

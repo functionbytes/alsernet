@@ -304,7 +304,11 @@ class TicketOpsSlaTest extends TestCase
 
     public function test_avisa_de_que_el_ticket_no_tiene_politica_asignada(): void
     {
+        // TicketObserver asigna la política por defecto al crear (en la BD
+        // real existe "SLA Estándar"): se quita a propósito para probar el
+        // caso "sin política".
         $ticket = $this->makeTicket();
+        $ticket->forceFill(['sla_policy_id' => null])->saveQuietly();
 
         $payload = $this->actingAs($this->manager)
             ->getJson(route('manager.helpdesk.tickets.sla-calendar', ['ticket' => $ticket->id]))

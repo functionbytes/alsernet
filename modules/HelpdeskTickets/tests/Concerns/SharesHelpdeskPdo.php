@@ -45,6 +45,16 @@ trait SharesHelpdeskPdo
         DB::connection('helpdesk')->setPdo($shared->getPdo());
         DB::connection('helpdesk')->setReadPdo($shared->getPdo());
 
+        // Opt-in (IsolatesAgentPool): los tests que crean usuarios y luego
+        // les asignan tickets necesitan que 'mysql' (tabla users) comparta
+        // también el PDO; si no, el FK helpdesk_ticket_assignments → users
+        // espera a la otra transacción hasta el lock timeout (~50 s).
+        if (method_exists($this, 'sharesUsersPdo') && $this->sharesUsersPdo()) {
+            DB::connection('mysql')->setPdo($shared->getPdo());
+            DB::connection('mysql')->setReadPdo($shared->getPdo());
+            $this->connectionsToTransact = ['mariadb'];
+        }
+
         $this->baseBeginDatabaseTransaction();
     }
 }

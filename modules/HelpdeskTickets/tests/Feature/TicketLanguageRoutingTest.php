@@ -13,6 +13,7 @@ use Modules\HelpdeskTickets\Listeners\AutoAssignNewTicket;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
+use Modules\HelpdeskTickets\Tests\Concerns\IsolatesAgentPool;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -27,6 +28,7 @@ use Tests\TestCase;
  */
 class TicketLanguageRoutingTest extends TestCase
 {
+    use IsolatesAgentPool;
     use SharesHelpdeskPdo;
 
     private TicketStatus $openStatus;
@@ -40,6 +42,8 @@ class TicketLanguageRoutingTest extends TestCase
         if (! $this->helpdeskConnectionAvailable()) {
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
+
+        $this->isolateAgentPool();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         Role::findOrCreate('helpdesk-agent', 'web');

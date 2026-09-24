@@ -8,6 +8,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
+use Modules\HelpdeskTickets\Tests\Concerns\IsolatesAgentPool;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -15,6 +16,7 @@ use Tests\TestCase;
 
 class AutoAssignmentTest extends TestCase
 {
+    use IsolatesAgentPool;
     use SharesHelpdeskPdo;
 
     private TicketStatus $openStatus;
@@ -28,6 +30,8 @@ class AutoAssignmentTest extends TestCase
         if (! $this->helpdeskConnectionAvailable()) {
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
+
+        $this->isolateAgentPool();
 
         // No dependas del seeding de la BD de tests: crea el rol on-the-fly.
         // Limpia antes la cache de Spatie (roles de tests anteriores revertidos).
