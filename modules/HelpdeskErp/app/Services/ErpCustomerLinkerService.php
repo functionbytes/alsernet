@@ -168,6 +168,8 @@ class ErpCustomerLinkerService
 
         $this->fillProfileFromErp($customer);
 
+        $this->linkStoreFromErp($customer, $erpId, $this->matchedRecord, fetchIfMissing: false);
+
         // Invalidar el contexto cacheado de este cliente.
         //
         // getCustomerContext() cachea también los negativos (miss_ttl, 60 s por
@@ -223,6 +225,76 @@ class ErpCustomerLinkerService
      * contacto (índice único, incluye borrados) no se toca: es señal de un
      * duplicado a fusionar a mano, no algo que se pueda resolver aquí.
      */
+    /**
+     * Gestión → tienda: la ficha del ERP guarda el id de cliente de
+     * PrestaShop (CODIGO_INTERNET). Si el contacto aún no tiene vínculo con la
+     * tienda, se crea con ese id. Nunca sustituye un vínculo existente ni
+     * roba un id que ya es de otro contacto (índice único platform+id).
+     * Desactivable con helpdeskErp.link.store_from_erp.
+     */
+    public function linkStoreFromErp(Customer $customer, int $erpId, ?array $record = null, bool $fetchIfMissing = true): bool
+    {
+        if (! config('helpdeskErp.link.store_from_erp', true)
+            || (function_exists('helpdesk_prestashop_enabled') && ! helpdesk_prestashop_enabled())) {
+            return false;
+        }
+
+        if ($customer->externalIds()->where('platform', 'prestashop')->exists()) {
+            return false;
+        }
+
+        // Solo el registro de ESTE cliente ERP; si no, se pide la ficha.
+        $psId = (int) ($record['id'] ?? 0) === $erpId ? ($record['code_internet'] ?? null) : null;
+
+        // Al vincular solo se usa lo que ya trajo la búsqueda (sin otra
+        // llamada al manager); el backfill sí pide la ficha.
+        if (! $this->isStoreId($psId) && $fetchIfMissing) {
+            $base = rtrim((string) config('helpdeskErp.manager_url', ''), '/');
+            if ($base === '') {
+                return false;
+            }
+            try {
+                $request = Http::timeout((int) config('helpdeskErp.http_timeout', 15))->connectTimeout(4)->acceptJson();
+                $token = (string) config('helpdeskErp.bridge_token', '');
+                if ($token !== '') {
+                    $request = $request->withToken($token);
+                }
+                $resp = $request->get($base.'/api/erp/customer/'.$erpId);
+                $psId = $resp->successful() && $resp->json('success') ? $resp->json('data.code_internet') : null;
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        if (! $this->isStoreId($psId)) {
+            return false;
+        }
+
+        $via = 'erp_code_internet';
+
+        if (class_exists(CustomerIntegrationService::class)) {
+            return app(CustomerIntegrationService::class)
+                ->linkAutomatically($customer, 'prestashop', (string) (int) $psId, $via);
+        }
+
+        try {
+            $customer->linkExternalId('prestashop', (string) (int) $psId, ['linked_via' => $via]);
+
+            return true;
+        } catch (QueryException $e) {
+            if ((string) $e->getCode() !== '23000') {
+                throw $e;
+            }
+
+            return false;
+        }
+    }
+
+    private function isStoreId(mixed $id): bool
+    {
+        return is_numeric($id) && (int) $id > 0;
+    }
+
     private function fillProfileFromErp(Customer $customer): void
     {
         $record = $this->matchedRecord;

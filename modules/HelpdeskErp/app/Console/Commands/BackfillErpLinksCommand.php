@@ -14,7 +14,8 @@ class BackfillErpLinksCommand extends Command
                             {--chunk=100 : Tamaño de chunk para iterar customers}
                             {--sync : Ejecutar el linker inline en lugar de encolar el job}
                             {--id=* : Procesar sólo los customers con estos IDs (uno o varios)}
-                            {--prestashop : Procesar sólo los customers vinculados a PrestaShop}';
+                            {--prestashop : Procesar sólo los customers vinculados a PrestaShop}
+                            {--store-from-erp : En vez de buscar en Gestión, vincular con la tienda a los contactos ya vinculados a Gestión (CODIGO_INTERNET)}';
 
     protected $description = 'Recorre customers sin vínculo ERP y dispatcha LinkCustomerToErpJob (o ejecuta el linker en sync)';
 
@@ -24,6 +25,10 @@ class BackfillErpLinksCommand extends Command
         $chunk = max(1, (int) $this->option('chunk'));
         $sync = (bool) $this->option('sync');
         $ids = array_filter(array_map('intval', (array) $this->option('id')));
+
+        if ($this->option('store-from-erp')) {
+            return $this->storeFromErp($linker, $ids, $limit);
+        }
 
         $query = Customer::on('helpdesk')
             ->whereDoesntHave('externalIds', fn ($q) => $q->where('platform', 'erp'))
@@ -96,6 +101,40 @@ class BackfillErpLinksCommand extends Command
         if ($stats['errors'] > 0) {
             $this->warn("Errores: {$stats['errors']}");
         }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Gestión → tienda para contactos ya vinculados a Gestión y sin vínculo
+     * con PrestaShop. Siempre inline: una llamada al manager por contacto.
+     *
+     * @param  int[]  $ids
+     */
+    private function storeFromErp(ErpCustomerLinkerService $linker, array $ids, int $limit): int
+    {
+        $query = Customer::on('helpdesk')
+            ->whereHas('externalIds', fn ($q) => $q->where('platform', 'erp'))
+            ->whereDoesntHave('externalIds', fn ($q) => $q->where('platform', 'prestashop'))
+            ->when(! empty($ids), fn ($q) => $q->whereIn('id', $ids))
+            ->when($limit > 0, fn ($q) => $q->limit($limit));
+
+        $linked = 0;
+        $processed = 0;
+
+        foreach ($query->get() as $customer) {
+            $erpId = $customer->externalIds()->where('platform', 'erp')->pluck('external_id')
+                ->first(fn ($id) => is_numeric($id) && (int) $id > 0);
+            if ($erpId === null) {
+                continue;
+            }
+            $processed++;
+            if ($linker->linkStoreFromErp($customer, (int) $erpId)) {
+                $linked++;
+            }
+        }
+
+        $this->info("Contactos revisados: {$processed} · vinculados con la tienda: {$linked}");
 
         return self::SUCCESS;
     }

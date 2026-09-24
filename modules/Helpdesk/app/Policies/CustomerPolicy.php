@@ -17,7 +17,7 @@ class CustomerPolicy
     public function view(User $user, Customer $customer): bool
     {
         return $user->hasPermissionTo('helpdesk.customers.view')
-            && $this->sharesInboxWith($user, $customer);
+            && ($this->sharesInboxWith($user, $customer) || $this->reachableViaTicket($user, $customer));
     }
 
     public function create(User $user): bool
@@ -87,5 +87,33 @@ class CustomerPolicy
             || $customer->inboxes()
                 ->whereIn('helpdesk_customer_inboxes.inbox_id', $inboxIds)
                 ->exists();
+    }
+
+    /**
+     * Solo para ver (no editar ni borrar): quien puede ver un ticket del
+     * cliente puede ver al cliente, aunque no compartan bandeja (la pestaña
+     * «Tienda y Gestión» de la vista de ticket). Se revisan como mucho los 50
+     * tickets más recientes del cliente.
+     */
+    public function reachableViaTicket(User $user, Customer $customer): bool
+    {
+        $ticketClass = 'Modules\\HelpdeskTickets\\Models\\Ticket';
+
+        if (! class_exists($ticketClass)) {
+            return false;
+        }
+
+        try {
+            return $ticketClass::query()
+                ->where('customer_id', $customer->id)
+                ->latest('id')
+                ->limit(50)
+                ->get()
+                ->contains(fn ($ticket): bool => $user->can('view', $ticket));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 }
