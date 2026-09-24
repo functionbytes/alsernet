@@ -81,7 +81,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por nombre o descripcion..."
+                                       placeholder="Buscar por nombre o descripción..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
@@ -107,7 +107,7 @@
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
-                                    <th>Descripcion</th>
+                                    <th>Descripción</th>
                                     <th>Modo asignacion</th>
                                     <th class="text-center">Usuarios</th>
                                     <th class="text-center">Estado</th>
@@ -233,7 +233,7 @@
     {{-- Bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
     </div>
 
@@ -242,15 +242,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Accion masiva</h5>
+                    <h5 class="modal-title">Acción masiva</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> grupo(s)</strong>.</p>
+                    <p class="text-muted mb-3">Se aplicara la acción sobre <strong><span data-bulk-count>0</span> grupo(s)</strong>.</p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Accion</label>
+                        <label class="form-label fw-semibold">Acción</label>
                         <select id="bulk-action-select" class="form-select select2">
-                            <option value="">Seleccionar accion...</option>
+                            <option value="">Seleccionar acción...</option>
                             <option value="activate">Activar</option>
                             <option value="deactivate">Desactivar</option>
                             <option value="delete">Eliminar</option>
@@ -330,7 +330,7 @@ $(document).ready(function () {
     $('#bulk-apply-btn').on('click', function () {
         const action = $('#bulk-action-select').val();
         const ids = bulk.getIds();
-        if (!action) { toastr.warning('Selecciona una accion.'); return; }
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un grupo.'); return; }
         if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' grupo(s) seleccionados?')) { return; }
 

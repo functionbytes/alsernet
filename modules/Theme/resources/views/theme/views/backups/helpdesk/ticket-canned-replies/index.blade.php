@@ -19,7 +19,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Respuestas predefinidas</h5>
-                        <p class="small mb-0 text-muted">Respuestas rapidas reutilizables para los agentes</p>
+                        <p class="small mb-0 text-muted">Respuestas rápidas reutilizables para los agentes</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.settings.ticket-canned-replies.create') }}" class="btn btn-primary">
@@ -81,7 +81,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por titulo, atajo o contenido..."
+                                       placeholder="Buscar por título, atajo o contenido..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
@@ -106,8 +106,8 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
-                                    <th>Titulo</th>
-                                    <th>Categoria</th>
+                                    <th>Título</th>
+                                    <th>Categoría</th>
                                     <th>Tags</th>
                                     <th class="text-center">Uso</th>
                                     <th class="text-center">Estado</th>

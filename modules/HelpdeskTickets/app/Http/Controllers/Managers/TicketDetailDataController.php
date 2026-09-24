@@ -22,6 +22,7 @@ use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketRead;
+use Modules\HelpdeskTickets\Models\TicketReview;
 use Modules\HelpdeskTickets\Models\TicketTask;
 use Modules\HelpdeskTickets\Services\CustomerSummaryService;
 use Modules\HelpdeskTickets\Services\EmailLogLookupService;
@@ -808,7 +809,7 @@ class TicketDetailDataController extends Controller
     }
 
     /**
-     * @return array{tasks: array<int, array<string, mixed>>, subtickets: array<int, array<string, mixed>>, parent: ?array<string, mixed>}
+     * @return array{category_fields: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, subtickets: array<int, array<string, mixed>>, parent: ?array<string, mixed>}
      */
     private function workFor(Ticket $ticket): array
     {
@@ -824,6 +825,29 @@ class TicketDetailDataController extends Controller
         $parentLink = $ticket->links()->where('link_type', 'subticket_of')->with('linkedTicket.status')->first();
 
         return [
+            // Definición de los campos de la categoría + valores actuales,
+            // para editarlos desde el panel.
+            'category_fields' => $ticket->category
+                ? $ticket->category->fields()->where('is_visible', true)->where('type', '!=', 'file')->ordered()->get()
+                    ->map(fn ($f) => [
+                        'key' => $f->key,
+                        'label' => $f->label,
+                        'type' => $f->type,
+                        'options' => $f->options ?: [],
+                        'is_required' => (bool) $f->is_required,
+                        'placeholder' => $f->placeholder,
+                        'value' => ($ticket->custom_fields ?: [])[$f->key] ?? $f->default_value,
+                    ])->values()->all()
+                : [],
+            // Revisión de calidad por muestreo (TicketQualityReviewService) y
+            // su disputa: antes no se enseñaba en ningún sitio.
+            'quality_review' => ($review = TicketReview::query()->where('ticket_id', $ticket->id)->first()) ? [
+                'score' => $review->score,
+                'summary' => $review->summary,
+                'issues' => array_values(array_filter((array) ($review->issues ?? []), 'is_string')),
+                'disputed' => (bool) $review->disputed,
+                'dispute_note' => $review->dispute_note,
+            ] : null,
             'tasks' => TicketTask::query()->where('ticket_id', $ticket->id)->orderBy('position')->get()
                 ->map(fn (TicketTask $task) => $task->toPanelRow())->all(),
             'subtickets' => $ticket->linkedBy()->where('link_type', 'subticket_of')->with('ticket.status')->get()

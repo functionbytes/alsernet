@@ -107,7 +107,7 @@
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
-                                    <th>Descripcion</th>
+                                    <th>Descripción</th>
                                     <th class="text-center">Tipo</th>
                                     <th class="text-center">SLA</th>
                                     <th class="text-center">Acciones</th>
@@ -223,7 +223,7 @@
     {{-- Bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
     </div>
 
@@ -232,15 +232,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Accion masiva</h5>
+                    <h5 class="modal-title">Acción masiva</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> estado(s)</strong>.</p>
+                    <p class="text-muted mb-3">Se aplicara la acción sobre <strong><span data-bulk-count>0</span> estado(s)</strong>.</p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Accion</label>
+                        <label class="form-label fw-semibold">Acción</label>
                         <select id="bulk-action-select" class="form-select select2">
-                            <option value="">Seleccionar accion...</option>
+                            <option value="">Seleccionar acción...</option>
                             <option value="activate">Activar</option>
                             <option value="deactivate">Desactivar</option>
                             <option value="delete">Eliminar</option>
@@ -279,7 +279,7 @@ $(document).ready(function () {
     if (document.getElementById('statuses-sortable')) {
         $('#statuses-sortable').sortable({
             // Sin columna de arrastre: la fila entera es el asidero, igual que
-            // en la tabla de categorias. 'cancel' evita que un clic en un
+            // en la tabla de categorías. 'cancel' evita que un clic en un
             // control o enlace inicie el arrastre.
             handle: 'tr',
             cancel: 'input,textarea,button,select,option,a',
@@ -322,7 +322,7 @@ $(document).ready(function () {
     $('#bulk-apply-btn').on('click', function () {
         const action = $('#bulk-action-select').val();
         const ids = bulk.getIds();
-        if (!action) { toastr.warning('Selecciona una accion.'); return; }
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
         if (!ids.length) { toastr.warning('Selecciona al menos un estado.'); return; }
         if (action === 'delete' && !confirm('¿Eliminar los ' + ids.length + ' estado(s) seleccionados?')) { return; }
 

@@ -25,8 +25,8 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre, slug y descripcion visible del estado</p>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre, slug y descripción visible del estado</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
@@ -59,7 +59,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea name="description"
                                               class="form-control @error('description') is-invalid @enderror"
                                               rows="3">{{ old('description', $status->description) }}</textarea>
@@ -193,7 +193,7 @@
                     </p>
                     <p class="small mb-2">
                         <span class="fw-semibold">Temporizador SLA.</span>
-                        Detenlo en las esperas que no dependen del agente, como esperar respuesta del cliente: ese tiempo deja de contar contra el plazo de la politica SLA.
+                        Detenlo en las esperas que no dependen del agente, como esperar respuesta del cliente: ese tiempo deja de contar contra el plazo de la política SLA.
                     </p>
                     <p class="small mb-2">
                         <span class="fw-semibold">Estado por defecto.</span>

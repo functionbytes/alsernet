@@ -353,6 +353,7 @@ Route::group(['prefix' => ''], function () {
     Route::patch('/tickets/{ticket}/tasks/{task}', [TicketWorkController::class, 'updateTask'])->name('manager.helpdesk.tickets.tasks.update');
     Route::delete('/tickets/{ticket}/tasks/{task}', [TicketWorkController::class, 'destroyTask'])->name('manager.helpdesk.tickets.tasks.destroy');
     Route::post('/tickets/{ticket}/subtickets', [TicketWorkController::class, 'storeSubticket'])->name('manager.helpdesk.tickets.subtickets.store');
+    Route::post('/tickets/{ticket}/custom-fields', [TicketWorkController::class, 'updateCustomFields'])->name('manager.helpdesk.tickets.custom-fields.update');
 
     // Borrador del composer en servidor (uno por agente y ticket).
     Route::post('/tickets/{ticket}/draft', [TicketDraftsController::class, 'update'])

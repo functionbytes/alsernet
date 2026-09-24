@@ -1566,6 +1566,8 @@ class Ticket extends Model
             'url_tasks_store' => route('manager.helpdesk.tickets.tasks.store', ['ticket' => '__TICKET__']),
             'url_task_template' => route('manager.helpdesk.tickets.tasks.update', ['ticket' => '__TICKET__', 'task' => '__TASK__']),
             'url_subtickets_store' => route('manager.helpdesk.tickets.subtickets.store', ['ticket' => '__TICKET__']),
+            'url_custom_fields' => route('manager.helpdesk.tickets.custom-fields.update', ['ticket' => '__TICKET__']),
+            'url_dispute_review' => route('manager.helpdesk.tickets.ai.dispute-review', ['ticket' => '__TICKET__']),
             'url_message_store' => route('manager.helpdesk.tickets.messages.store', ['ticket' => '__TICKET__']),
             'url_update' => route('manager.helpdesk.tickets.update', ['ticket' => '__TICKET__']),
             'url_close' => route('manager.helpdesk.tickets.close', ['ticket' => '__TICKET__']),

@@ -24,7 +24,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
                         <p class="text-muted small mb-3">Nombre y slug de la prioridad</p>
                         <div class="row g-3 mb-4">
 
@@ -60,7 +60,7 @@
                         </div>
 
                         <h6 class="fw-semibold mb-1">Apariencia y nivel</h6>
-                        <p class="text-muted small mb-3">Color en los listados y nivel de prioridad frente a las demas (a mayor numero, mas urgente)</p>
+                        <p class="text-muted small mb-3">Color en los listados y nivel de prioridad frente a las demas (a mayor número, mas urgente)</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -85,7 +85,7 @@
                                            class="form-control @error('level') is-invalid @enderror"
                                            value="{{ old('level', 1) }}"
                                            required>
-                                    <small class="form-text text-muted">Ordena las prioridades entre si: 1 es la mas baja y el numero mas alto, la mas urgente</small>
+                                    <small class="form-text text-muted">Ordena las prioridades entre si: 1 es la mas baja y el número mas alto, la mas urgente</small>
                                     @error('level')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                     @enderror
@@ -95,7 +95,7 @@
                         </div>
 
                         <h6 class="fw-semibold mb-1">Tiempos de referencia (horas)</h6>
-                        <p class="text-muted small mb-3">Valores informativos del catalogo — el motor de SLA usa sus propias politicas, no estos valores</p>
+                        <p class="text-muted small mb-3">Valores informativos del catalogo — el motor de SLA usa sus propias políticas, no estos valores</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
@@ -174,7 +174,7 @@
                     <ul class="text-muted mb-0">
                         <li class="mb-2">Un nivel mas alto significa mas urgente</li>
                         <li class="mb-2">Usa colores que se distingan entre si en los listados</li>
-                        <li class="mb-2">Los tiempos de referencia son informativos: el SLA usa sus politicas</li>
+                        <li class="mb-2">Los tiempos de referencia son informativos: el SLA usa sus políticas</li>
                         <li class="mb-0">El slug lo usan la API y las automatizaciones: cambialo con cuidado</li>
                     </ul>
                 </div>
@@ -186,7 +186,7 @@
                 <div class="card-body">
                     <p class="card-text small text-muted mb-0">
                         <i class="fas fa-circle-info me-1"></i> Todavia no controla el campo de prioridad de los
-                        tickets ni las politicas de SLA, que usan sus propios valores fijos (urgente/alta/normal/baja).
+                        tickets ni las políticas de SLA, que usan sus propios valores fijos (urgente/alta/normal/baja).
                     </p>
                 </div>
             </div>

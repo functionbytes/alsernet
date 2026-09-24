@@ -25,13 +25,13 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Titulo y atajo para usar esta respuesta rapidamente</p>
+                        {{-- Información básica --}}
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Título y atajo para usar esta respuesta rápidamente</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
-                                <label class="form-label">Titulo <span class="text-danger">*</span></label>
+                                <label class="form-label">Título <span class="text-danger">*</span></label>
                                 <input type="text" name="title"
                                        class="form-control @error('title') is-invalid @enderror"
                                        value="{{ old('title', $reply->title) }}"
@@ -50,7 +50,7 @@
                                            value="{{ old('short_code', $reply->short_code) }}"
                                            placeholder="greet">
                                 </div>
-                                <small class="form-text text-muted">Escribe este atajo en el chat para insertar la respuesta rapidamente</small>
+                                <small class="form-text text-muted">Escribe este atajo en el chat para insertar la respuesta rápidamente</small>
                                 @error('short_code')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                 @enderror
@@ -89,11 +89,11 @@
 
                         {{-- Clasificacion --}}
                         <h6 class="fw-semibold mb-1">Clasificacion</h6>
-                        <p class="text-muted small mb-3">Categoria, etiquetas y categorias de ticket donde aplica</p>
+                        <p class="text-muted small mb-3">Categoría, etiquetas y categorías de ticket donde aplica</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Categoria</label>
+                                <label class="form-label">Categoría</label>
                                 <input type="text" name="category"
                                        class="form-control @error('category') is-invalid @enderror"
                                        value="{{ old('category', $reply->category) }}"
@@ -118,7 +118,7 @@
 
                             <div class="col-12">
                                 @php $selectedCategoryIds = old('ticket_categories', $reply->ticketCategories->pluck('id')->toArray()); @endphp
-                                <label class="form-label">Categorias de ticket <small class="text-muted fw-normal">(opcional)</small></label>
+                                <label class="form-label">Categorías de ticket <small class="text-muted fw-normal">(opcional)</small></label>
                                 <select name="ticket_categories[]" class="form-select select2 @error('ticket_categories') is-invalid @enderror" multiple>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat->id }}"
@@ -134,8 +134,8 @@
 
                         </div>
 
-                        {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1">Configuracion</h6>
+                        {{-- Configuración --}}
+                        <h6 class="fw-semibold mb-1">Configuración</h6>
                         <p class="text-muted small mb-3">Visibilidad y disponibilidad de la respuesta</p>
                         <div class="row g-3">
 
@@ -176,7 +176,7 @@
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Sobre las respuestas rapidas</h6>
+                    <h6 class="mb-0 fw-bold">Sobre las respuestas rápidas</h6>
                 </div>
                 <div class="card-body">
                     <p class="card-text text-muted">
@@ -190,16 +190,16 @@
                 </div>
                 <div class="card-body">
                     <ul class="text-muted mb-0">
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa titulos descriptivos para encontrar la respuesta rapidamente</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa titulos descriptivos para encontrar la respuesta rápidamente</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Define atajos cortos y memorables como /greet o /close</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Agrupa respuestas similares con la misma categoria</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Agrupa respuestas similares con la misma categoría</li>
                         <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Usa variables como {agent_name} para personalizar el texto</li>
                     </ul>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                    <h6 class="mb-0 fw-bold">Información del registro</h6>
                 </div>
                 <div class="card-body">
                     <ul class="text-muted mb-0">

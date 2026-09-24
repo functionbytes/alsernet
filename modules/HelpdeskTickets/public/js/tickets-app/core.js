@@ -5433,6 +5433,8 @@
             slaCard +
             (featureEnabled('mgmt_csat_card') ? renderCsatCard(csat) : '') +
             (featureEnabled('mgmt_time_card') && t.url_time_entries ? '<div class="tkt-side-card" id="tkt-time-card"><div class="tkt-side-card-head">Tiempo invertido</div><div class="tkt-side-card-body"><div class="tkt-meta-xs">Cargando…</div></div></div>' : '') +
+            (t.url_custom_fields ? '<div class="tkt-side-card" id="tkt-cfields-card" hidden></div>' : '') +
+            (t.url_dispute_review ? '<div class="tkt-side-card" id="tkt-review-card" hidden></div>' : '') +
             (featureEnabled('mgmt_tasks_card') && t.url_tasks_store ? '<div class="tkt-side-card" id="tkt-tasks-card"></div>' : '') +
             (featureEnabled('mgmt_subtickets_card') && t.url_subtickets_store ? '<div class="tkt-side-card" id="tkt-subtickets-card"></div>' : '')
         );
@@ -9100,8 +9102,13 @@
         var $subs = $('#tkt-subtickets-card');
         if (!work) {
             $tasks.add($subs).html('');
+            $('#tkt-cfields-card').prop('hidden', true).html('');
+            $('#tkt-review-card').prop('hidden', true).html('');
             return;
         }
+
+        renderCustomFieldsCard(t, work.category_fields || []);
+        renderQualityReviewCard(t, work.quality_review || null);
 
         if ($tasks.length) {
             var tasks = work.tasks || [];
@@ -9179,6 +9186,113 @@
             );
             $subs.find('#tkt-subticket-add').on('click', function () { openSubticketModal(t); });
         }
+    }
+
+    // Campos personalizados de la categoría, editables (24-sep-2026). Solo
+    // aparece si la categoría del ticket define alguno.
+    function renderCustomFieldsCard(t, fields) {
+        var $card = $('#tkt-cfields-card');
+        if (!$card.length) return;
+        if (!fields.length) { $card.prop('hidden', true).html(''); return; }
+
+        var input = function (f) {
+            var id = 'tkt-cf-' + f.key;
+            var name = 'data-cf="' + escapeHtml(f.key) + '"';
+            var val = f.value == null ? '' : f.value;
+            var opts = f.options || [];
+            if (f.type === 'textarea') {
+                return '<textarea class="tkt-input tkt-input-md" id="' + id + '" ' + name + '>' + escapeHtml(val) + '</textarea>';
+            }
+            if (f.type === 'select' || f.type === 'radio') {
+                return '<select class="tkt-select" id="' + id + '" ' + name + '><option value="">—</option>' +
+                    opts.map(function (o) { return '<option value="' + escapeHtml(o.value) + '"' + (String(o.value) === String(val) ? ' selected' : '') + '>' + escapeHtml(o.label) + '</option>'; }).join('') +
+                    '</select>';
+            }
+            if (f.type === 'checkbox') {
+                var chosen = Array.isArray(val) ? val.map(String) : [];
+                return opts.map(function (o, i) {
+                    return '<label class="tkt-check"><input type="checkbox" data-cf-multi="' + escapeHtml(f.key) + '" value="' + escapeHtml(o.value) + '"' + (chosen.indexOf(String(o.value)) !== -1 ? ' checked' : '') + '> ' + escapeHtml(o.label) + '</label>';
+                }).join('');
+            }
+            var type = { email: 'email', number: 'number', date: 'date', phone: 'tel' }[f.type] || 'text';
+            return '<input type="' + type + '" class="tkt-input" id="' + id + '" ' + name + ' value="' + escapeHtml(val) + '" placeholder="' + escapeHtml(f.placeholder || '') + '">';
+        };
+
+        $card.prop('hidden', false).html(
+            '<div class="tkt-side-card-head">Campos de la categoría</div>' +
+            '<div class="tkt-side-card-body">' +
+                '<form id="tkt-cf-form" novalidate>' +
+                    fields.map(function (f) {
+                        return '<div class="tkt-field"><label class="tkt-label" for="tkt-cf-' + escapeHtml(f.key) + '">' + escapeHtml(f.label) + (f.is_required ? ' *' : '') + '</label>' + input(f) + '</div>';
+                    }).join('') +
+                    '<button type="submit" class="tkt-btn tkt-btn-sm tkt-w-100">Guardar campos</button>' +
+                '</form>' +
+            '</div>'
+        );
+
+        $card.find('#tkt-cf-form').on('submit', function (ev) {
+            ev.preventDefault();
+            var data = {};
+            $card.find('[data-cf]').each(function () { data['fields[' + $(this).data('cf') + ']'] = $(this).val(); });
+            fields.filter(function (f) { return f.type === 'checkbox'; }).forEach(function (f) {
+                var vals = $card.find('[data-cf-multi="' + f.key + '"]:checked').map(function () { return this.value; }).get();
+                if (vals.length) data['fields[' + f.key + ']'] = vals; else data['fields[' + f.key + ']'] = '';
+            });
+            var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+            $.ajax({
+                url: t.url_custom_fields, method: 'POST', headers: { Accept: 'application/json' }, data: data,
+                success: function (resp) {
+                    $btn.prop('disabled', false);
+                    fields.forEach(function (f) { if (resp.values && f.key in resp.values) f.value = resp.values[f.key]; });
+                    if (window.toastr) toastr.success('Campos guardados');
+                },
+                error: function (xhr) {
+                    $btn.prop('disabled', false);
+                    var msg = apiErrorMessage(xhr, 'No se pudieron guardar los campos');
+                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                },
+            });
+        });
+    }
+
+    // Revisión de calidad automática del ticket y derecho a réplica: una
+    // revisión disputada deja de contar para las medias (24-sep-2026).
+    function renderQualityReviewCard(t, review) {
+        var $card = $('#tkt-review-card');
+        if (!$card.length) return;
+        if (!review) { $card.prop('hidden', true).html(''); return; }
+
+        $card.prop('hidden', false).html(
+            '<div class="tkt-side-card-head">Revisión de calidad<span class="tkt-spacer tkt-side-tag mono">' + escapeHtml(String(review.score)) + '/100</span></div>' +
+            '<div class="tkt-side-card-body">' +
+                (review.summary ? '<p class="tkt-review-summary">' + escapeHtml(review.summary) + '</p>' : '') +
+                (review.issues && review.issues.length ? '<ul class="tkt-review-issues">' + review.issues.map(function (i) { return '<li>' + escapeHtml(i) + '</li>'; }).join('') + '</ul>' : '') +
+                (review.disputed
+                    ? '<div class="tkt-meta-xs">Disputada' + (review.dispute_note ? ': ' + escapeHtml(review.dispute_note) : '') + '. No cuenta para las medias.</div>'
+                    : '<label class="visually-hidden" for="tkt-review-note">Motivo de la disputa</label>' +
+                      '<textarea class="tkt-input tkt-input-md" id="tkt-review-note" maxlength="2000" placeholder="¿Por qué no estás de acuerdo? (opcional)"></textarea>' +
+                      '<button type="button" class="tkt-btn tkt-btn-sm tkt-w-100 tkt-review-dispute" id="tkt-review-dispute">Disputar revisión</button>') +
+            '</div>'
+        );
+
+        $card.find('#tkt-review-dispute').on('click', function () {
+            var $btn = $(this).prop('disabled', true);
+            $.ajax({
+                url: t.url_dispute_review, method: 'POST', headers: { Accept: 'application/json' },
+                data: { note: $card.find('#tkt-review-note').val() },
+                success: function (resp) {
+                    review.disputed = true;
+                    review.dispute_note = $card.find('#tkt-review-note').val();
+                    renderQualityReviewCard(t, review);
+                    if (window.toastr) toastr.success((resp && resp.message) || 'Revisión disputada');
+                },
+                error: function (xhr) {
+                    $btn.prop('disabled', false);
+                    var msg = apiErrorMessage(xhr, 'No se pudo disputar la revisión');
+                    if (window.toastr) toastr.error(msg); else window.alert(msg);
+                },
+            });
+        });
     }
 
     function openSubticketModal(t) {

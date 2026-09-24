@@ -24,8 +24,8 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre y descripcion visible de la vista</p>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre y descripción visible de la vista</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -44,7 +44,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea name="description"
                                               class="form-control @error('description') is-invalid @enderror"
                                               rows="2"
@@ -77,7 +77,7 @@
 
                             <div class="col-12 col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Categoria</label>
+                                    <label class="form-label">Categoría</label>
                                     <select class="form-select select2" name="filters[category_id]">
                                         <option value="">Cualquiera</option>
                                         @foreach($categories as $categoryOption)

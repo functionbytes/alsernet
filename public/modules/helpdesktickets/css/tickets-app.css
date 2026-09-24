@@ -3386,3 +3386,8 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-sub-parent { margin: 2px 0 4px; }
 #tkt-subtickets-card .tkt-line-link { padding: 5px 0; border-bottom: 1px solid var(--tkt-border-soft); }
 .tkt-sub-add { margin-top: 8px; }
+
+/* Tarjeta "Revisión de calidad". */
+.tkt-review-summary { margin: 0 0 6px; font-size: 11.5px; line-height: 1.5; color: var(--tkt-text-mid); }
+.tkt-review-issues { margin: 0 0 8px; padding-left: 16px; font-size: 11px; color: var(--tkt-text-soft); }
+.tkt-review-dispute { margin-top: 6px; }

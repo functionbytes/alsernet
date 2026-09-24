@@ -81,7 +81,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control ps-0"
-                                       placeholder="Buscar por nombre o descripcion..."
+                                       placeholder="Buscar por nombre o descripción..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
@@ -107,7 +107,7 @@
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
-                                    <th>Descripcion</th>
+                                    <th>Descripción</th>
                                     <th class="text-center">Propietario</th>
                                     <th class="text-center">Visibilidad</th>
                                     <th class="text-center">Acciones</th>

@@ -25,8 +25,8 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre y descripcion visible del grupo</p>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre y descripción visible del grupo</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -44,7 +44,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea name="description"
                                               class="form-control @error('description') is-invalid @enderror"
                                               rows="3">{{ old('description', $group->description) }}</textarea>
@@ -88,7 +88,7 @@
                                 ->all(),
                         ])
 
-                        <h6 class="fw-semibold mb-1">Configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Configuración</h6>
                         <p class="text-muted small mb-3">Prioridad y disponibilidad del grupo</p>
                         <div class="row g-3">
 
@@ -137,7 +137,7 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text text-muted">
-                        Los grupos permiten organizar a los agentes y definir estrategias de asignacion automatica de tickets segun carga de trabajo o rotacion.
+                        Los grupos permiten organizar a los agentes y definir estrategias de asignacion automatica de tickets según carga de trabajo o rotacion.
                     </p>
                 </div>
             </div>
@@ -156,7 +156,7 @@
             </div>
             <div class="card">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                    <h6 class="mb-0 fw-bold">Información del registro</h6>
                 </div>
                 <div class="card-body">
                     <ul class="text-muted mb-0">

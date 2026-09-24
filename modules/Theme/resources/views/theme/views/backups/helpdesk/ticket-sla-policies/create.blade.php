@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Nueva politica SLA')
+@section('title', 'Nueva política SLA')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Nueva politica SLA'])
+    @include('core::components.card', ['title' => 'Nueva política SLA'])
 @endsection
 
 @section('content')
@@ -17,16 +17,16 @@
                     @csrf
 
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Nueva politica</h5>
+                        <h5 class="mb-0 fw-bold">Nueva política</h5>
                         <small class="text-muted">Define tiempos de respuesta y resolucion para los tickets</small>
                     </div>
 
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre, descripcion y zona horaria aplicable a la politica</p>
+                        {{-- Información básica --}}
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre, descripción y zona horaria aplicable a la política</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -42,11 +42,11 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripcion</label>
+                                <label class="form-label">Descripción</label>
                                 <textarea name="description"
                                           class="form-control @error('description') is-invalid @enderror"
                                           rows="2"
-                                          placeholder="Describe el proposito de esta politica">{{ old('description') }}</textarea>
+                                          placeholder="Describe el proposito de esta política">{{ old('description') }}</textarea>
                                 @error('description')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                 @enderror
@@ -157,8 +157,8 @@
                                 <label for="business_hours_only" class="form-label">Modo de horario</label>
                                 <select class="form-select select2 @error('business_hours_only') is-invalid @enderror"
                                         name="business_hours_only" id="business_hours_only">
-                                    <option value="0" {{ old('business_hours_only', '0') == '0' ? 'selected' : '' }}>24/7 — la politica aplica todo el tiempo</option>
-                                    <option value="1" {{ old('business_hours_only', '0') == '1' ? 'selected' : '' }}>Solo horario laboral — aplica segun horario configurado</option>
+                                    <option value="0" {{ old('business_hours_only', '0') == '0' ? 'selected' : '' }}>24/7 — la política aplica todo el tiempo</option>
+                                    <option value="1" {{ old('business_hours_only', '0') == '1' ? 'selected' : '' }}>Solo horario laboral — aplica según horario configurado</option>
                                 </select>
                                 @error('business_hours_only')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -166,7 +166,7 @@
                             </div>
 
                             <div class="col-12" id="business-hours-config" style="{{ old('business_hours_only') == '1' ? '' : 'display:none;' }}">
-                                <label class="form-label">Configuracion por dia</label>
+                                <label class="form-label">Configuración por dia</label>
                                 @php
                                     $days = [
                                         'monday'    => 'Lunes',
@@ -207,7 +207,7 @@
 
                         {{-- Multiplicadores por prioridad --}}
                         <h6 class="fw-semibold mb-1">Multiplicadores por prioridad</h6>
-                        <p class="text-muted small mb-3">Factor aplicado al tiempo segun la prioridad del ticket</p>
+                        <p class="text-muted small mb-3">Factor aplicado al tiempo según la prioridad del ticket</p>
                         <div class="row g-3 mb-4">
 
                             @php
@@ -256,9 +256,9 @@
 
                         </div>
 
-                        {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1">Configuracion</h6>
-                        <p class="text-muted small mb-3">Disponibilidad de esta politica</p>
+                        {{-- Configuración --}}
+                        <h6 class="fw-semibold mb-1">Configuración</h6>
+                        <p class="text-muted small mb-3">Disponibilidad de esta política</p>
                         <div class="row g-3">
 
                             <div class="col-12">
@@ -276,7 +276,7 @@
                     </div>
 
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar politica</button>
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar política</button>
                         <a href="{{ route('manager.helpdesk.settings.ticket-sla-policies.index') }}" class="btn btn-light w-100">Cancelar</a>
                     </div>
                 </form>
@@ -291,7 +291,7 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text text-muted">
-                        Las politicas SLA definen los compromisos de tiempo de respuesta y resolucion que el equipo de soporte debe cumplir con cada ticket.
+                        Las políticas SLA definen los compromisos de tiempo de respuesta y resolucion que el equipo de soporte debe cumplir con cada ticket.
                     </p>
                 </div>
             </div>
@@ -301,7 +301,7 @@
                 </div>
                 <div class="card-body">
                     <ul class="text-muted mb-0">
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Define tiempos realistas segun la capacidad del equipo</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Define tiempos realistas según la capacidad del equipo</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa multiplicadores para diferenciar prioridades</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Activa el escalamiento para recibir alertas antes del vencimiento</li>
                         <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> El horario laboral excluye fines de semana y horas no configuradas</li>

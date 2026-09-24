@@ -12,7 +12,7 @@
 
     La columna del pivot (helpdesk_group_user) se llama conversation_priority,
     no priority: la comparte con el reparto de conversaciones. El nombre corto
-    se mantiene aqui dentro por legibilidad; la traduccion la hace la vista que
+    se mantiene aquí dentro por legibilidad; la traduccion la hace la vista que
     incluye este partial.
 --}}
 @php
@@ -44,7 +44,7 @@
                     <tr>
                         <th class="py-2">Usuario</th>
                         <th class="py-2">Prioridad</th>
-                        <th class="py-2 text-end">Accion</th>
+                        <th class="py-2 text-end">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="members-container">

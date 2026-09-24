@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Categorias de tickets')
+@section('title', 'Categorías de tickets')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Categorias de tickets'])
+    @include('core::components.card', ['title' => 'Categorías de tickets'])
 @endsection
 
 @section('content')
@@ -18,12 +18,12 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Categorias de tickets</h5>
-                        <p class="small mb-0 text-muted">Organiza los tickets por categoria para un mejor seguimiento</p>
+                        <h5 class="mb-1 fw-bold">Categorías de tickets</h5>
+                        <p class="small mb-0 text-muted">Organiza los tickets por categoría para un mejor seguimiento</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.settings.ticket-categories.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nueva categoria
+                            <i class="fas fa-plus me-1"></i> Nueva categoría
                         </a>
                     </div>
                 </div>
@@ -37,7 +37,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Total</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
-                                <small class="text-muted">Categorias registradas</small>
+                                <small class="text-muted">Categorías registradas</small>
                             </div>
                         </div>
                     </div>
@@ -64,7 +64,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Con SLA</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['with_sla']) }}</h4>
-                                <small class="text-muted">Con politica SLA</small>
+                                <small class="text-muted">Con política SLA</small>
                             </div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por nombre, slug o descripcion..."
+                                       placeholder="Buscar por nombre, slug o descripción..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
@@ -108,7 +108,7 @@
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Slug</th>
-                                    <th>Descripcion</th>
+                                    <th>Descripción</th>
                                     <th class="text-center">Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -161,7 +161,7 @@
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
                                                            data-url="{{ route('manager.helpdesk.settings.ticket-categories.destroy', $category->id) }}"
-                                                           data-title="Eliminar categoria: {{ $category->name }}">
+                                                           data-title="Eliminar categoría: {{ $category->name }}">
                                                             Eliminar
                                                         </a>
                                                     </li>
@@ -180,21 +180,21 @@
                             @if(request('search'))
                                 No se encontraron resultados
                             @else
-                                No hay categorias configuradas
+                                No hay categorías configuradas
                             @endif
                         </h5>
                         <p class="text-muted mb-4">
                             @if(request('search'))
                                 No hay resultados para "{{ request('search') }}"
                             @else
-                                Aun no hay categorias creadas
+                                Aun no hay categorías creadas
                             @endif
                         </p>
                         @if(request('search'))
                             <a href="{{ route('manager.helpdesk.settings.ticket-categories.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('manager.helpdesk.settings.ticket-categories.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nueva categoria
+                                <i class="fas fa-plus me-1"></i> Nueva categoría
                             </a>
                         @endif
                     </div>
@@ -223,7 +223,7 @@
     {{-- Bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
         <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
         </button>
     </div>
 
@@ -232,15 +232,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Accion masiva</h5>
+                    <h5 class="modal-title">Acción masiva</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> categoria(s)</strong>.</p>
+                    <p class="text-muted mb-3">Se aplicara la acción sobre <strong><span data-bulk-count>0</span> categoría(s)</strong>.</p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Accion</label>
+                        <label class="form-label fw-semibold">Acción</label>
                         <select id="bulk-action-select" class="form-select select2">
-                            <option value="">Seleccionar accion...</option>
+                            <option value="">Seleccionar acción...</option>
                             <option value="activate">Activar</option>
                             <option value="deactivate">Desactivar</option>
                             <option value="delete">Eliminar</option>
@@ -315,9 +315,9 @@ $(document).ready(function () {
     $('#bulk-apply-btn').on('click', function () {
         const action = $('#bulk-action-select').val();
         const ids = bulk.getIds();
-        if (!action) { toastr.warning('Selecciona una accion.'); return; }
-        if (!ids.length) { toastr.warning('Selecciona al menos una categoria.'); return; }
-        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' categoria(s) seleccionadas?')) { return; }
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una categoría.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' categoría(s) seleccionadas?')) { return; }
 
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
         $.ajax({

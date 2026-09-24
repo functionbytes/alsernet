@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Politicas SLA')
+@section('title', 'Políticas SLA')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Politicas SLA'])
+    @include('core::components.card', ['title' => 'Políticas SLA'])
 @endsection
 
 @section('content')
@@ -18,12 +18,12 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Politicas SLA</h5>
+                        <h5 class="mb-1 fw-bold">Políticas SLA</h5>
                         <p class="small mb-0 text-muted">Define tiempos de respuesta y resolucion para los tickets</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.settings.ticket-sla-policies.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nueva politica
+                            <i class="fas fa-plus me-1"></i> Nueva política
                         </a>
                     </div>
                 </div>
@@ -37,7 +37,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Total</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['total']) }}</h4>
-                                <small class="text-muted">Politicas registradas</small>
+                                <small class="text-muted">Políticas registradas</small>
                             </div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search" class="form-control -0 ps-0"
-                                       placeholder="Buscar por nombre o descripcion..."
+                                       placeholder="Buscar por nombre o descripción..."
                                        value="{{ request('search') }}">
                             </div>
                         </div>
@@ -163,7 +163,7 @@
                                                            data-bs-toggle="modal"
                                                            data-bs-target="#delete-modal"
                                                            data-url="{{ route('manager.helpdesk.settings.ticket-sla-policies.destroy', $policy->id) }}"
-                                                           data-title="Eliminar politica: {{ $policy->name }}">
+                                                           data-title="Eliminar política: {{ $policy->name }}">
                                                             Eliminar
                                                         </a>
                                                     </li>
@@ -182,21 +182,21 @@
                             @if(request('search'))
                                 No se encontraron resultados
                             @else
-                                No hay politicas SLA configuradas
+                                No hay políticas SLA configuradas
                             @endif
                         </h5>
                         <p class="text-muted mb-4">
                             @if(request('search'))
                                 No hay resultados para "{{ request('search') }}"
                             @else
-                                Aun no hay politicas creadas
+                                Aun no hay políticas creadas
                             @endif
                         </p>
                         @if(request('search'))
                             <a href="{{ route('manager.helpdesk.settings.ticket-sla-policies.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('manager.helpdesk.settings.ticket-sla-policies.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nueva politica
+                                <i class="fas fa-plus me-1"></i> Nueva política
                             </a>
                         @endif
                     </div>

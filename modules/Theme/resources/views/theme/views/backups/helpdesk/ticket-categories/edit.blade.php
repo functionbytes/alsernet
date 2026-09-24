@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Editar categoria: ' . $category->name)
+@section('title', 'Editar categoría: ' . $category->name)
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Editar categoria'])
+    @include('core::components.card', ['title' => 'Editar categoría'])
 @endsection
 
 @section('content')
@@ -19,14 +19,14 @@
 
                     <div class="card-header border-bottom p-3">
                         <h5 class="mb-0 fw-bold">Editar: {{ $category->name }}</h5>
-                        <small class="text-muted">Modifica las propiedades de la categoria</small>
+                        <small class="text-muted">Modifica las propiedades de la categoría</small>
                     </div>
 
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre, slug y descripcion visible de la categoria</p>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre, slug y descripción visible de la categoría</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
@@ -58,7 +58,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea name="description"
                                               class="form-control @error('description') is-invalid @enderror"
                                               rows="3">{{ old('description', $category->description) }}</textarea>
@@ -71,7 +71,7 @@
                         </div>
 
                         <h6 class="fw-semibold mb-1">Apariencia</h6>
-                        <p class="text-muted small mb-3">Icono y color que identifican visualmente la categoria en listados</p>
+                        <p class="text-muted small mb-3">Icono y color que identifican visualmente la categoría en listados</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -116,17 +116,17 @@
                             </div>
                         </div>
 
-                        <h6 class="fw-semibold mb-1">Configuracion</h6>
-                        <p class="text-muted small mb-3">Politica SLA por defecto y disponibilidad de la categoria</p>
+                        <h6 class="fw-semibold mb-1">Configuración</h6>
+                        <p class="text-muted small mb-3">Política SLA por defecto y disponibilidad de la categoría</p>
                         <div class="row g-3">
 
                             @if(isset($slaPolicies) && $slaPolicies->count())
                                 <div class="col-12 col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Politica SLA por defecto</label>
+                                        <label class="form-label">Política SLA por defecto</label>
                                         <select name="default_sla_policy_id"
                                                 class="form-select select2 @error('default_sla_policy_id') is-invalid @enderror">
-                                            <option value="">Sin politica SLA</option>
+                                            <option value="">Sin política SLA</option>
                                             @foreach($slaPolicies as $sla)
                                                 <option value="{{ $sla->id }}"
                                                         {{ old('default_sla_policy_id', $category->default_sla_policy_id) == $sla->id ? 'selected' : '' }}>
@@ -148,7 +148,7 @@
                                         <option value="1" {{ old('active', $category->active ? 1 : 0) == 1 ? 'selected' : '' }}>Activa</option>
                                         <option value="0" {{ old('active', $category->active ? 1 : 0) == 0 ? 'selected' : '' }}>Inactiva</option>
                                     </select>
-                                    <small class="form-text text-muted">Las inactivas no estan disponibles para nuevos tickets</small>
+                                    <small class="form-text text-muted">Las inactivas no están disponibles para nuevos tickets</small>
                                     @error('active')
                                         <div class="field-validation-error">{{ $message }}</div>
                                     @enderror
@@ -164,23 +164,70 @@
                     </div>
                 </form>
             </div>
+            {{-- Campos personalizados de la categoría (24-sep-2026): se piden en el
+                 formulario público y el agente los edita desde el panel del ticket. --}}
+            <div class="card mt-3" id="category-fields"
+                 data-index-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.index', $category) }}"
+                 data-store-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.store', $category) }}"
+                 data-destroy-url="{{ route('manager.helpdesk.settings.ticket-categories.fields.destroy', [$category, '__FIELD__']) }}">
+                <div class="card-header p-3">
+                    <h6 class="mb-0 fw-bold">Campos personalizados</h6>
+                    <p class="text-muted small mb-0">Datos extra que se piden en los tickets de esta categoría (nº de pedido, modelo, fecha de compra…).</p>
+                </div>
+                <div class="card-body">
+                    <div data-fields-list class="mb-3"><p class="text-muted small mb-0">Cargando…</p></div>
+                    <form data-field-form class="row g-2 align-items-end" novalidate>
+                        <div class="col-md-5">
+                            <label class="form-label" for="cf-label">Etiqueta</label>
+                            <input type="text" id="cf-label" name="label" class="form-control" maxlength="255" required placeholder="Nº de pedido">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="cf-type">Tipo</label>
+                            <select id="cf-type" name="type" class="form-select">
+                                <option value="text">Texto</option>
+                                <option value="textarea">Texto largo</option>
+                                <option value="number">Número</option>
+                                <option value="email">Email</option>
+                                <option value="phone">Teléfono</option>
+                                <option value="date">Fecha</option>
+                                <option value="select">Desplegable</option>
+                                <option value="radio">Opción única</option>
+                                <option value="checkbox">Varias opciones</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="cf-required" name="is_required" value="1">
+                                <label class="form-check-label" for="cf-required">Obligatorio</label>
+                            </div>
+                        </div>
+                        <div class="col-12" data-options-row hidden>
+                            <label class="form-label" for="cf-options">Opciones (una por línea; «valor|Etiqueta» o solo el texto)</label>
+                            <textarea id="cf-options" name="options" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Añadir campo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         {{-- Help panel --}}
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Sobre las categorias</h6>
+                    <h6 class="mb-0 fw-bold">Sobre las categorías</h6>
                 </div>
                 <div class="card-body">
                     <p class="card-text text-muted">
-                        Las categorias permiten clasificar los tickets para facilitar su gestion y enrutamiento hacia el equipo correcto.
+                        Las categorías permiten clasificar los tickets para facilitar su gestión y enrutamiento hacia el equipo correcto.
                     </p>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                    <h6 class="mb-0 fw-bold">Información del registro</h6>
                 </div>
                 <div class="card-body">
                     <ul class="text-muted mb-0">
@@ -200,6 +247,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('modules/helpdesktickets/js/category-fields.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/category-fields.js')) }}"></script>
 <script>
 $(document).ready(function () {
     // Icon preview

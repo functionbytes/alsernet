@@ -24,8 +24,8 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre, slug y descripcion visible del estado</p>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre, slug y descripción visible del estado</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
@@ -60,7 +60,7 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea name="description"
                                               class="form-control @error('description') is-invalid @enderror"
                                               rows="3"
@@ -169,7 +169,7 @@
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Solo un estado puede ser el predeterminado</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa "Se detiene" en estados de espera del cliente</li>
                         <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Marca como "Cerrado" solo los estados finales</li>
-                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> El slug se genera automaticamente desde el nombre</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> El slug se genera automáticamente desde el nombre</li>
                     </ul>
                 </div>
             </div>

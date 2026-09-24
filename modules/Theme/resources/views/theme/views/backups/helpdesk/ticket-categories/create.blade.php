@@ -1,9 +1,9 @@
 @extends('layouts.theme')
 
-@section('title', 'Nueva categoria de ticket')
+@section('title', 'Nueva categoría de ticket')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Nueva categoria de ticket'])
+    @include('core::components.card', ['title' => 'Nueva categoría de ticket'])
 @endsection
 
 @section('content')
@@ -17,15 +17,15 @@
                     @csrf
 
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Nueva categoria</h5>
-                        <small class="text-muted">Crea una categoria para clasificar los tickets</small>
+                        <h5 class="mb-0 fw-bold">Nueva categoría</h5>
+                        <small class="text-muted">Crea una categoría para clasificar los tickets</small>
                     </div>
 
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre, slug y descripcion visible de la categoria</p>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre, slug y descripción visible de la categoría</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
@@ -59,11 +59,11 @@
 
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
+                                    <label class="form-label">Descripción</label>
                                     <textarea name="description"
                                               class="form-control @error('description') is-invalid @enderror"
                                               rows="3"
-                                              placeholder="Describe el alcance de esta categoria">{{ old('description') }}</textarea>
+                                              placeholder="Describe el alcance de esta categoría">{{ old('description') }}</textarea>
                                     @error('description')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                     @enderror
@@ -73,7 +73,7 @@
                         </div>
 
                         <h6 class="fw-semibold mb-1">Apariencia</h6>
-                        <p class="text-muted small mb-3">Icono y color que identifican visualmente la categoria en listados</p>
+                        <p class="text-muted small mb-3">Icono y color que identifican visualmente la categoría en listados</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -101,7 +101,7 @@
                                     @include('core::components.color-field', [
                                         'name' => 'color',
                                         'value' => old('color', '#90bb13'),
-                                        'preview' => old('name', 'Categoria'),
+                                        'preview' => old('name', 'Categoría'),
                                         'previewFrom' => 'input[name=name]',
                                     ])
                                     @error('color')
@@ -111,17 +111,17 @@
                             </div>
                         </div>
 
-                        <h6 class="fw-semibold mb-1">Configuracion</h6>
-                        <p class="text-muted small mb-3">Politica SLA por defecto y disponibilidad de la categoria</p>
+                        <h6 class="fw-semibold mb-1">Configuración</h6>
+                        <p class="text-muted small mb-3">Política SLA por defecto y disponibilidad de la categoría</p>
                         <div class="row g-3">
 
                             @if(isset($slaPolicies) && $slaPolicies->count())
                                 <div class="col-12 col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Politica SLA por defecto</label>
+                                        <label class="form-label">Política SLA por defecto</label>
                                         <select name="default_sla_policy_id"
                                                 class="form-select select2 @error('default_sla_policy_id') is-invalid @enderror">
-                                            <option value="">Sin politica SLA</option>
+                                            <option value="">Sin política SLA</option>
                                             @foreach($slaPolicies as $sla)
                                                 <option value="{{ $sla->id }}" {{ old('default_sla_policy_id') == $sla->id ? 'selected' : '' }}>
                                                     {{ $sla->name }}
@@ -142,7 +142,7 @@
                                         <option value="1" {{ old('active', 1) == 1 ? 'selected' : '' }}>Activa</option>
                                         <option value="0" {{ old('active', 1) == 0 ? 'selected' : '' }}>Inactiva</option>
                                     </select>
-                                    <small class="form-text text-muted">Las inactivas no estan disponibles para nuevos tickets</small>
+                                    <small class="form-text text-muted">Las inactivas no están disponibles para nuevos tickets</small>
                                     @error('active')
                                         <div class="field-validation-error">{{ $message }}</div>
                                     @enderror
@@ -153,7 +153,7 @@
                     </div>
 
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar categoria</button>
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar categoría</button>
                         <a href="{{ route('manager.helpdesk.settings.ticket-categories.index') }}" class="btn btn-light w-100">Cancelar</a>
                     </div>
                 </form>
@@ -164,11 +164,11 @@
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-header border-bottom">
-                    <h6 class="mb-0 fw-bold">Sobre las categorias</h6>
+                    <h6 class="mb-0 fw-bold">Sobre las categorías</h6>
                 </div>
                 <div class="card-body">
                     <p class="card-text text-muted">
-                        Las categorias permiten clasificar los tickets para facilitar su gestion y enrutamiento hacia el equipo correcto.
+                        Las categorías permiten clasificar los tickets para facilitar su gestión y enrutamiento hacia el equipo correcto.
                     </p>
                 </div>
             </div>
@@ -179,9 +179,9 @@
                 <div class="card-body">
                     <ul class="text-muted mb-0">
                         <li class="mb-2">Usa nombres cortos y descriptivos</li>
-                        <li class="mb-2">Asigna un color distinto por categoria</li>
-                        <li class="mb-2">Configura una politica SLA para controlar tiempos</li>
-                        <li class="mb-0">El slug se genera automaticamente desde el nombre</li>
+                        <li class="mb-2">Asigna un color distinto por categoría</li>
+                        <li class="mb-2">Configura una política SLA para controlar tiempos</li>
+                        <li class="mb-0">El slug se genera automáticamente desde el nombre</li>
                     </ul>
                 </div>
             </div>

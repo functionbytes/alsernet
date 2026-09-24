@@ -10,9 +10,11 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketDraft;
 use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketRead;
+use Modules\HelpdeskTickets\Models\TicketReview;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketTask;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
@@ -580,6 +582,50 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertJsonPath('work.parent.id', $padre->id);
 
         $this->assertTrue($padre->fresh()->openBlockers()->pluck('id')->contains($hijoId));
+    }
+
+    public function test_el_agente_edita_los_campos_de_la_categoria_con_validacion(): void
+    {
+        $categoria = TicketCategory::create(['name' => 'Garantías '.uniqid(), 'slug' => 'garantias-'.uniqid(), 'active' => true]);
+        $categoria->fields()->create(['type' => 'text', 'key' => 'pedido', 'label' => 'Nº de pedido', 'is_required' => true, 'is_visible' => true, 'width' => 'full', 'sort_order' => 1]);
+        $categoria->fields()->create(['type' => 'select', 'key' => 'estado_caja', 'label' => 'Estado de la caja', 'is_required' => false, 'is_visible' => true, 'width' => 'full', 'sort_order' => 2, 'options' => [['value' => 'ok', 'label' => 'Bien'], ['value' => 'rota', 'label' => 'Rota']]]);
+        $ticket = $this->createTicket(['category_id' => $categoria->id]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertJsonPath('work.category_fields.0.key', 'pedido');
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.custom-fields.update', $ticket), ['fields' => ['pedido' => '', 'estado_caja' => 'inventado']])
+            ->assertUnprocessable();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.custom-fields.update', $ticket), ['fields' => ['pedido' => '45012', 'estado_caja' => 'rota']])
+            ->assertOk()
+            ->assertJsonPath('values.pedido', '45012');
+
+        $this->assertSame('rota', $ticket->fresh()->custom_fields['estado_caja']);
+    }
+
+    public function test_la_revision_de_calidad_se_ve_y_se_puede_disputar(): void
+    {
+        $ticket = $this->createTicket();
+        TicketReview::create([
+            'ticket_id' => $ticket->id, 'score' => 42, 'summary' => 'Respuesta incompleta',
+            'issues' => ['No se ofreció seguimiento'], 'dimensions' => [], 'disputed' => false,
+        ]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertJsonPath('work.quality_review.score', 42);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.ai.dispute-review', $ticket), ['note' => 'El cliente ya tenía la información'])
+            ->assertOk();
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.data', $ticket))
+            ->assertJsonPath('work.quality_review.disputed', true);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
