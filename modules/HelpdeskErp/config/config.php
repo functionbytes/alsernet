@@ -126,4 +126,32 @@ return [
      | sentido pronto.
      */
     'lookup_error_cooldown_minutes' => env('HELPDESK_ERP_LOOKUP_ERROR_COOLDOWN', 30),
+
+    /*
+     | Gestión dentro del chat (ErpChatService): caché por sección y cliente.
+     | Segundos según el estado normalizado de la respuesta del manager.
+     | - ok: listas y fichas del cliente.
+     | - detail: detalle de pedido / albarán / factura (cambian poco).
+     | - blocked: sección sin GRANT en Oracle; no cambia hasta que el DBA actúe.
+     | - unavailable: endpoint inexistente (404) en esta versión del manager.
+     | - down: manager caído o timeout; corto para reintentar pronto.
+     | Una respuesta "loading" (escaneo de pedidos en curso) nunca se cachea.
+     */
+    'chat_ttl' => [
+        'ok' => (int) env('HELPDESK_ERP_CHAT_TTL_OK', 300),
+        'detail' => (int) env('HELPDESK_ERP_CHAT_TTL_DETAIL', 1800),
+        'blocked' => (int) env('HELPDESK_ERP_CHAT_TTL_BLOCKED', 600),
+        'unavailable' => (int) env('HELPDESK_ERP_CHAT_TTL_UNAVAILABLE', 300),
+        'down' => (int) env('HELPDESK_ERP_CHAT_TTL_DOWN', 30),
+    ],
+
+    /*
+     | Primera página de pedidos que trae el resumen del panel (overview).
+     */
+    'chat_overview_orders_limit' => (int) env('HELPDESK_ERP_CHAT_OVERVIEW_ORDERS', 10),
+
+    /*
+     | Días de antelación con los que se avisa de que un vale o bono caduca.
+     */
+    'chat_expiry_warning_days' => (int) env('HELPDESK_ERP_CHAT_EXPIRY_DAYS', 7),
 ];

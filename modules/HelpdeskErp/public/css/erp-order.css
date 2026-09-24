@@ -1,0 +1,74 @@
+/* ============================================================
+   HelpdeskErp · workspace de pedido de Gestión (erp-order-workspace)
+   Complementa erp-chat.css (.erc-*) y el esqueleto .bv-po-* del core.
+   Prefijo propio .erc-ow-*. Mismos valores visuales que el workspace
+   de pedido de PrestaShop, sin depender de ese módulo.
+   Paleta: verdes y grises; ámbar solo en estados bloqueado/sin conexión
+   (los pinta erp-chat.css).
+   Fuente: modules/HelpdeskErp/public/css/ — copiar a public/modules/helpdeskerp/css/.
+   ============================================================ */
+
+/* Cuerpo: ancla de las hojas internas (.erc-sheet, position:absolute). */
+.erc-ow-body { position: relative; min-height: 320px; }
+.erc-ow-pad { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.erc-ow-state:empty { display: none; }
+.erc-ow-skel { display: flex; flex-direction: column; }
+.erc-ow-gap { margin-top: 10px; }
+
+/* Título: "Pedido #44398" + nombre del cliente */
+.erc-ow-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; min-width: 0; }
+.erc-ow-crumb { margin-left: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+/* Cabecera del contenido: fecha, estado y chips (origen, almacén, catálogo…) */
+.erc-ow-meta { display: flex; flex-direction: column; gap: 9px; }
+.erc-ow-meta-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.erc-ow-meta-date { font-family: var(--erc-mono, 'JetBrains Mono', monospace); font-size: .72rem; color: #565656; }
+.erc-ow-meta-pill { display: none; }
+.erc-ow-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.erc-ow-chip {
+    display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+    padding: 3px 9px; border-radius: 6px; border: 1px solid #ececec;
+    background: #f6f7f5; color: #2d2d2d; font-size: .69rem; font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.erc-ow-chip .k { font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #a3a3a3; }
+.erc-ow-chip--good { background: rgba(144, 187, 19, .1); border-color: rgba(144, 187, 19, .35); color: #5e7a0d; }
+.erc-ow-chip--good .k { color: #5e7a0d; opacity: .75; }
+
+/* Totales y observaciones bajo las líneas */
+.erc-ow-totals:empty, .erc-ow-obs:empty { display: none; }
+.erc-ow-totals { margin-top: 12px; }
+.erc-ow-obs { margin-top: 10px; }
+
+/* Pestañas laterales con etiqueta (igual que las de PrestaShop) */
+.erc-ow-tabs .bv-po-tab { flex-direction: column; gap: 3px; min-width: 0; }
+.erc-ow-tab-lbl { font-size: .56rem; font-weight: 600; letter-spacing: .01em; line-height: 1; white-space: nowrap; }
+
+/* Envío: tarjeta de transportista */
+.erc-ow-track { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid #f0f0f0; border-radius: 10px; background: #fff; min-width: 0; }
+.erc-ow-track .ic { width: 38px; height: 38px; border-radius: 9px; background: #2d3324; color: #fff; display: grid; place-items: center; font-size: .9rem; flex-shrink: 0; }
+.erc-ow-track.is-empty .ic { background: #f6f7f5; color: #8a8a8a; }
+.erc-ow-track .bd { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.erc-ow-track .c { font-size: .78rem; font-weight: 700; color: #2d2d2d; overflow-wrap: anywhere; }
+.erc-ow-track .t { font-size: .69rem; color: #8a8a8a; overflow-wrap: anywhere; }
+.erc-ow-track .t a { color: #5e7a0d; font-weight: 600; }
+
+/* Botones-enlace dentro de las tarjetas: ancho completo */
+.erc-ow-dialog .bv-po-card > .erc-btn { display: flex; }
+
+/* Las filas de albarán son <button>: sin estilos de botón del navegador */
+button.erc-item { font-family: inherit; cursor: pointer; }
+button.erc-item .t, button.erc-item .m { text-align: left; }
+
+/* ─── Pantallas estrechas (~380px) ───────────────────────────── */
+@media (max-width: 575.98px) {
+    .erc-ow-dialog .bv-po-grid { padding: 10px; gap: 10px; }
+    .erc-ow-dialog .bv-po-card { padding: 11px; }
+    /* El estado se muestra dentro del contenido; la cabecera queda para el título. */
+    .erc-ow-head-status { display: none; }
+    .erc-ow-meta-pill { display: inline-flex; }
+    .erc-ow-tabs { padding: 4px 2px 0; }
+    .erc-ow-tabs .bv-po-tab { padding: 9px 0; }
+    .erc-ow-tabs .bv-po-tab i { font-size: 14px; }
+    .erc-ow-pad { padding: 12px; }
+}

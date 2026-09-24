@@ -1,0 +1,142 @@
+/* ============================================================
+   HelpdeskErp · Ficha de cliente de Gestión (bv-modal
+   "erp-customer-workspace"). Prefijo .erc-cw-*.
+   Mismos valores visuales que el workspace de cliente de
+   PrestaShop (.ps-ws-*), copiados para no depender de ese módulo.
+   Usa los tokens --erc-* de erp-chat.css (se carga antes).
+   Solo verdes y grises; ámbar solo para bloqueado / sin conexión.
+   ============================================================ */
+
+.bv-modal .bv-modal-dialog.erc-cw-dialog { max-width: 1040px; width: 96vw; }
+
+/* Cabecera: nombre + datos clave (NIF, tarjeta, categoría) */
+.erc-cw-headwrap { flex: 1 1 0; min-width: 0; }
+.erc-cw-dialog .bv-modal-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erc-cw-id { font-family: var(--erc-mono); font-size: .75rem; font-weight: 500; color: var(--erc-muted); }
+.erc-cw-headmeta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; min-width: 0; }
+.erc-cw-headmeta:empty { display: none; }
+.erc-cw-chip {
+    display: inline-flex; align-items: baseline; gap: 5px; max-width: 100%;
+    padding: 2px 8px; border-radius: 5px; background: var(--erc-surface-alt);
+    font-size: .66rem; color: var(--erc-ink-soft); min-width: 0;
+}
+.erc-cw-chip .k { font-size: .53rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-faint); flex-shrink: 0; }
+.erc-cw-chip .v { font-family: var(--erc-mono); font-weight: 600; color: var(--erc-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.erc-cw-chip--off { background: #e8e8e6; }
+
+/* Cuerpo: menú + panel */
+.erc-cw-dialog .bv-modal-body.erc-cw-body { padding: 0; gap: 0; overflow: hidden; }
+.erc-cw { display: grid; grid-template-columns: 248px minmax(0, 1fr); height: min(620px, calc(100vh - 230px)); min-height: 0; }
+
+.erc-cw-nav {
+    border-right: 1px solid var(--erc-line); background: #fbfbfa;
+    padding: 10px 8px; display: flex; flex-direction: column; gap: 10px;
+    overflow-y: auto; min-width: 0;
+}
+.erc-cw-nav:empty { display: none; }
+.erc-cw-group { display: flex; flex-direction: column; gap: 4px; }
+.erc-cw-label { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--erc-faint); padding: 0 6px 4px; }
+.erc-cw-item {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    padding: 6px 8px; border-radius: 8px; border: 1px solid transparent;
+    background: none; text-align: left; cursor: pointer; color: var(--erc-ink);
+}
+.erc-cw-item:hover { background: #f4f5f0; }
+.erc-cw-item .ic {
+    width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
+    background: #f0f0ee; color: #6c757d; display: grid; place-items: center; font-size: .63rem;
+}
+.erc-cw-item-body { flex: 1; min-width: 0; }
+.erc-cw-item .t { display: block; font-size: .75rem; font-weight: 600; }
+.erc-cw-item .s { display: block; font-size: .63rem; color: var(--erc-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erc-cw-item .erc-cw-chev { color: #ccc; font-size: .56rem; flex-shrink: 0; }
+.erc-cw-item.is-on { background: #fff; border-color: var(--erc-primary); box-shadow: 0 1px 2px rgba(0, 0, 0, .04); }
+.erc-cw-item.is-on .ic { background: #f0f7dc; color: var(--erc-primary-strong); }
+.erc-cw-item.is-on .t { font-weight: 700; }
+.erc-cw-item.is-on .erc-cw-chev { visibility: hidden; }
+
+.erc-cw-pane { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; min-width: 0; min-height: 0; }
+.erc-cw-pane > * { flex-shrink: 0; }
+.erc-cw-pane .erc-card + .erc-card { margin-top: 0; }
+
+/* Cabecera de panel: título + "actualizado hace…" */
+.erc-cw-pane-hd { display: flex; align-items: flex-end; gap: 10px; min-width: 0; }
+.erc-cw-pane-hd .tt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.erc-cw-pane-hd .t { font-size: .94rem; font-weight: 700; letter-spacing: -.02em; color: var(--erc-ink); overflow-wrap: anywhere; }
+.erc-cw-pane-hd .s { font-size: .69rem; color: var(--erc-muted); margin-top: 1px; }
+.erc-cw-pane-hd .at { font-size: .63rem; color: var(--erc-faint); white-space: nowrap; flex-shrink: 0; }
+
+/* Dos columnas de tarjetas (se apilan en pantallas estrechas) */
+.erc-cw-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+
+/* Accesos a otros modales de Gestión */
+.erc-cw-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.erc-cw-link {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0;
+    padding: 10px 12px; border: 1px solid var(--erc-line); border-radius: 10px;
+    background: #fff; text-align: left; cursor: pointer; color: var(--erc-ink);
+}
+.erc-cw-link:hover { border-color: var(--erc-primary); background: #fbfdf6; }
+.erc-cw-link .t { font-size: .78rem; font-weight: 700; }
+.erc-cw-link .s { font-size: .66rem; color: var(--erc-muted); overflow-wrap: anywhere; }
+
+/* Teléfonos */
+.erc-cw-phone { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--erc-line); border-radius: 10px; min-width: 0; }
+.erc-cw-phone--off { background: #fbfbfa; opacity: .75; }
+.erc-cw-phone .info { flex: 1; min-width: 0; }
+.erc-cw-phone .num { font-family: var(--erc-mono); font-size: .84rem; font-weight: 700; color: var(--erc-ink); overflow-wrap: anywhere; }
+.erc-cw-phone .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.erc-cw-phone .m { display: block; font-size: .66rem; color: var(--erc-muted); margin-top: 4px; overflow-wrap: anywhere; }
+.erc-cw-phone .erc-btn { flex-shrink: 0; }
+
+/* Email / dato copiable */
+.erc-cw-copyrow { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 8px; background: var(--erc-surface-alt); min-width: 0; }
+.erc-cw-copyrow .k { font-size: .75rem; color: var(--erc-muted); flex-shrink: 0; }
+.erc-cw-copyrow .v { flex: 1; min-width: 0; font-family: var(--erc-mono); font-size: .75rem; font-weight: 600; color: var(--erc-ink); overflow-wrap: anywhere; text-align: right; }
+.erc-cw-copyrow .erc-btn { flex-shrink: 0; }
+
+/* Direcciones con acción */
+.erc-cw-addr { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.erc-cw-addr > .erc-btn { align-self: flex-start; }
+.erc-cw-addrs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+/* Sí / No en consentimientos */
+.erc-cw-yes { color: var(--erc-primary-strong); }
+.erc-cw-no { color: var(--erc-ink-soft); }
+
+/* Tarjetas bancarias */
+.erc-cw-bank { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--erc-line); border-radius: 10px; min-width: 0; }
+.erc-cw-bank--main { border-color: var(--erc-primary-line); background: rgba(144, 187, 19, .05); }
+.erc-cw-bank--off { background: #fbfbfa; opacity: .75; }
+.erc-cw-bank .ic { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--erc-surface-alt); color: #7a7f74; display: grid; place-items: center; font-size: .72rem; }
+.erc-cw-bank .info { flex: 1; min-width: 0; }
+.erc-cw-bank .num { font-family: var(--erc-mono); font-size: .8rem; font-weight: 700; color: var(--erc-ink); overflow-wrap: anywhere; }
+.erc-cw-bank .m { display: block; font-size: .66rem; color: var(--erc-muted); margin-top: 3px; overflow-wrap: anywhere; }
+.erc-cw-bank .erc-tag { flex-shrink: 0; }
+
+/* ─── Menú arriba (tablet y móvil) ───────────────────────────── */
+@media (max-width: 900px) {
+    .erc-cw { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: calc(100vh - 210px); }
+    .erc-cw-nav {
+        flex-direction: row; align-items: flex-start; overflow-x: auto; overflow-y: hidden;
+        border-right: 0; border-bottom: 1px solid var(--erc-line); padding: 8px; gap: 4px;
+    }
+    .erc-cw-group { flex-direction: row; gap: 4px; }
+    .erc-cw-label { display: none; }
+    .erc-cw-item { width: auto; flex-shrink: 0; }
+    .erc-cw-split, .erc-cw-addrs { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 575.98px) {
+    .bv-modal.on:has(> .erc-cw-dialog) { padding: 8px; }
+    .bv-modal .bv-modal-dialog.erc-cw-dialog { width: 100%; max-height: calc(100vh - 16px); }
+    .erc-cw { height: calc(100vh - 190px); }
+    .erc-cw-item .s, .erc-cw-item .erc-cw-chev { display: none; }
+    .erc-cw-item { padding: 5px 8px; }
+    .erc-cw-pane { padding: 12px; }
+    .erc-cw-pane-hd { flex-wrap: wrap; row-gap: 2px; }
+    .erc-cw-pane-hd .at { flex-basis: 100%; }
+    .erc-cw-phone, .erc-cw-copyrow { flex-wrap: wrap; row-gap: 6px; }
+    .erc-cw-copyrow .v { text-align: left; flex-basis: 100%; order: 3; }
+    .erc-cw-links { grid-template-columns: minmax(0, 1fr); }
+}

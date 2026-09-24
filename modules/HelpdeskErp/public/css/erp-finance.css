@@ -1,0 +1,87 @@
+/* ============================================================
+   HelpdeskErp · modales Finanzas (erp-finance) y Fidelización
+   (erp-loyalty). Compartido por ambos blades de modals/parts.
+   Se apoya en erp-chat.css (tokens --erc-* y piezas .erc-*); aquí
+   solo va lo propio de estos dos modales, con prefijo .erc-fin-.
+
+   Paleta: verdes y grises. Ámbar solo para "bloqueado" (sin GRANT
+   en Oracle) y "sin conexión".
+
+   Fuente: modules/HelpdeskErp/public/css/ — copiar a
+   public/modules/helpdeskerp/css/ tras editar.
+   ============================================================ */
+
+/* ─── Diálogo ────────────────────────────────────────────────── */
+.erc-fin-dialog .bv-modal-title-wrap { min-width: 0; flex: 1; }
+.erc-fin-dialog .bv-modal-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erc-fin-id { font-family: var(--erc-mono); font-size: .66rem; font-weight: 500; color: var(--erc-faint); margin-left: 4px; }
+
+/* Cuerpo con alto mínimo: el modal no "salta" al cambiar de pestaña y
+   las hojas internas (.erc-sheet, absolutas) tienen sitio. */
+.erc-fin-body { min-height: 380px; }
+
+/* ─── Pestañas (fuera del cuerpo: no se desplazan) ───────────── */
+.erc-fin-tabs {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    padding: 8px 14px; border-bottom: 1px solid var(--erc-line);
+    background: var(--erc-surface);
+}
+.erc-fin-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border: 1px solid transparent; border-radius: 7px;
+    background: none; color: var(--erc-muted);
+    font-size: .72rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.erc-fin-tab:hover { color: var(--erc-ink); background: var(--erc-surface-alt); }
+.erc-fin-tab.is-on { background: var(--erc-primary-soft); border-color: var(--erc-primary-line); color: var(--erc-primary-strong); font-weight: 700; }
+.erc-fin-tab .n { font-family: var(--erc-mono); font-size: .6rem; color: inherit; opacity: .75; }
+.erc-fin-tab .dot { display: none; width: 6px; height: 6px; border-radius: 999px; flex-shrink: 0; }
+.erc-fin-tab.is-blocked .dot { display: inline-block; background: var(--erc-warn-dot); }
+.erc-fin-tab.is-good .dot { display: inline-block; background: var(--erc-primary); }
+
+/* ─── Cabecera de panel (título + filtros) ───────────────────── */
+.erc-fin-pane-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.erc-fin-pane-head .erc-sec-label { margin: 0; }
+.erc-fin-pane-head .erc-meta { font-size: .66rem; color: var(--erc-faint); }
+
+/* Botón "Cargar más" */
+.erc-fin-more { width: auto; min-width: 160px; }
+
+/* Acciones secundarias dentro de un .erc-item (enlaces "Ver …") */
+.erc-fin-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; }
+.erc-fin-links .erc-link { font-size: .69rem; }
+
+/* Etiquetas en línea bajo el título de un elemento */
+.erc-fin-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+
+/* Importe negativo o canjeado: gris oscuro, nunca rojo. */
+.erc-fin-neg { color: var(--erc-ink-soft); }
+
+/* Tarjeta de vale / bono con botón de insertar al pie */
+.erc-fin-vch-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
+.erc-fin-vch-obs { margin-top: 5px; font-size: .66rem; color: var(--erc-muted); overflow-wrap: anywhere; white-space: pre-line; }
+.erc-fin-vch-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* Canales de envío de un bono (sms / email / correo / impreso) */
+.erc-fin-sent { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.erc-fin-sent span { font-family: var(--erc-mono); font-size: .56rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--erc-surface-alt); color: #7a7f74; }
+.erc-fin-sent span.is-on { background: var(--erc-primary-chip); color: var(--erc-primary-strong); }
+
+/* Tarjeta principal de fidelización */
+.erc-fin-cardno { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.erc-fin-cardno .ic { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; background: #f0f7dc; color: var(--erc-primary-strong); display: grid; place-items: center; }
+.erc-fin-cardno .tt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.erc-fin-cardno .k { font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-faint); }
+.erc-fin-cardno .v { font-family: var(--erc-mono); font-size: .8rem; font-weight: 700; color: var(--erc-ink); overflow-wrap: anywhere; }
+
+/* Botonera dentro de hojas y tarjetas */
+.erc-fin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ─── Pantallas estrechas (~380px) ───────────────────────────── */
+@media (max-width: 575.98px) {
+    .erc-fin-tabs { padding: 8px 10px; }
+    .erc-fin-tab { padding: 5px 8px; font-size: .69rem; }
+    .erc-fin-body { min-height: 320px; }
+    .erc-fin-links { justify-content: flex-start; }
+    .erc-fin-more { width: 100%; }
+}

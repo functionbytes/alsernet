@@ -1,49 +1,65 @@
 {{--
-   Inbox slot del módulo HelpdeskErp.
-   Aporta los tabs de ERP (Gestión/Finanzas/Fidelización) al panel derecho del
-   inbox. Si el módulo se desactiva, estos tabs desaparecen.
-
-   NOTA: no se invoca ErpContextService server-side aquí porque, si Oracle no es
-   alcanzable, el servicio tiene un timeout (~3s) que bloquearía el render del
-   panel. Los datos en vivo se cargan de forma diferida (lazy) vía
-   ErpContextController cuando la conexión a Oracle está disponible.
+   Inbox slot del módulo HelpdeskErp: pestañas Gestión, Finanzas y
+   Fidelización del panel derecho. Si el módulo se desactiva, desaparecen.
    Recibe: $rpCust
-   El CSS (erp-inbox.css) y el JS (erp-inbox.js, que también maneja el click de
-   .rp3-erp-order para abrir el workspace de pedido) se cargan desde
-   modals/order-workspace.blade.php, que siempre está presente cuando el
-   módulo está activo (cubre modal + este tab). Nada de <script> suelto aquí.
+
+   Todo sale de UNA llamada diferida (ErpChat.overview(), que consulta el
+   manager en paralelo). La pinta erp-inbox.js. Aquí no se consulta el ERP en
+   servidor: Oracle puede tardar y bloquearía el render del panel.
+
+   El marcado inicial es un esqueleto y NO un .bv-tab-empty: el core
+   (syncRightTabVisibility) oculta el botón de una pestaña cuyo único hijo es
+   .bv-tab-empty, y entonces no habría forma de abrirla.
+
+   CSS (erp-panel.css) y JS (erp-inbox.js) se cargan desde los modales del
+   módulo, que siempre están presentes cuando el módulo está activo. Nada de
+   <script> ni <link> aquí: el panel se sustituye entero al cambiar de
+   conversación.
 --}}
+@php
+    $ercRelinkUrl = ($rpCust && \Illuminate\Support\Facades\Route::has('manager.helpdesk.erp.customers.relink'))
+        ? route('manager.helpdesk.erp.customers.relink', ['customerId' => $rpCust->id])
+        : '';
+@endphp
 
-{{-- Tab: Gestión (pedidos ERP). La lista se carga en diferido al abrir el tab
-     (Oracle puede tardar), y cada pedido abre el workspace de pedido ERP. --}}
-<div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="erp-orders" id="bv-erp-orders"
+{{-- Gestión: cliente, avisos, últimos pedidos y dirección de envío --}}
+<div class="bv-right-tab-content bv-tab-hidden erc-panel" data-bv-tab-content="erp-orders" id="bv-erp-orders"
+     data-erc-tab="orders"
      data-erp-customer-id="{{ $rpCust?->id }}"
-     data-erp-email="{{ $rpCust?->email }}"
-     data-erp-context-url="{{ url('panel/helpdesk/erp/context') }}">
-    {{-- La lista de pedidos ERP la pinta erp-inbox.js como filas .rp3-erp-order.
-         El detalle de cada pedido lo pide el propio workspace (modals/order-workspace.blade.php)
-         contra /panel/helpdesk/erp/orders/{customerId}/{orderId}. --}}
-    <div class="bv-tab-empty">
-        <i class="fas fa-clipboard-list"></i>
-        <div class="bv-tab-empty-title">Gestión (ERP)</div>
-        <div class="bv-tab-empty-sub">Abre esta pestaña para consultar los pedidos del cliente en el ERP.</div>
+     data-relink-url="{{ $ercRelinkUrl }}">
+    <div class="erc-stack" data-erc-body>
+        <div class="erc-card">
+            <div class="erc-card-body">
+                <div class="erc-cust">
+                    <span class="erc-avatar">{{ $rpCust ? mb_strtoupper(mb_substr($rpCust->name ?: ($rpCust->email ?: '?'), 0, 2)) : '?' }}</span>
+                    <span class="erc-cust-body">
+                        <span class="nm">{{ $rpCust?->name ?: ($rpCust?->email ?? '—') }}</span>
+                        <span class="s">Cliente en Gestión</span>
+                    </span>
+                </div>
+                <span class="erc-skel erc-skel--line"></span>
+                <span class="erc-skel erc-skel--line erc-skel--short"></span>
+            </div>
+        </div>
+        <span class="erc-skel erc-skel--card"></span>
+        <span class="erc-skel"></span>
     </div>
 </div>
 
-{{-- Tab: Finanzas --}}
-<div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="erp-finance" id="bv-erp-finance">
-    <div class="bv-tab-empty">
-        <i class="fas fa-coins"></i>
-        <div class="bv-tab-empty-title">Finanzas (ERP)</div>
-        <div class="bv-tab-empty-sub">Sin datos financieros disponibles</div>
+{{-- Finanzas: saldo, riesgo, deudas y accesos a documentos --}}
+<div class="bv-right-tab-content bv-tab-hidden erc-panel" data-bv-tab-content="erp-finance" id="bv-erp-finance"
+     data-erc-tab="finance">
+    <div class="erc-stack" data-erc-body>
+        <span class="erc-skel erc-skel--card"></span>
+        <span class="erc-skel"></span>
     </div>
 </div>
 
-{{-- Tab: Fidelización --}}
-<div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="erp-loyalty" id="bv-erp-loyalty">
-    <div class="bv-tab-empty">
-        <i class="fas fa-star"></i>
-        <div class="bv-tab-empty-title">Fidelización (ERP)</div>
-        <div class="bv-tab-empty-sub">Sin datos de fidelización disponibles</div>
+{{-- Fidelización: puntos, movimientos, vales y bonos --}}
+<div class="bv-right-tab-content bv-tab-hidden erc-panel" data-bv-tab-content="erp-loyalty" id="bv-erp-loyalty"
+     data-erc-tab="loyalty">
+    <div class="erc-stack" data-erc-body>
+        <span class="erc-skel erc-skel--card"></span>
+        <span class="erc-skel"></span>
     </div>
 </div>

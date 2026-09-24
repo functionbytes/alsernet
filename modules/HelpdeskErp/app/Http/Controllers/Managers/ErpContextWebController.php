@@ -85,7 +85,9 @@ class ErpContextWebController extends Controller
 
     public function orderDetail(Request $request, int $customerId, int $orderId): JsonResponse
     {
-        if (! $request->user()?->can('helpdeskerp.view')) {
+        // Mismo permiso que la ruta API equivalente: sin él esta ruta legada
+        // serviría de atajo a la de chat (que exige helpdeskerp.orders.view).
+        if (! $request->user()?->can('helpdeskerp.view') || ! $request->user()->can('helpdeskerp.orders.detail.view')) {
             return response()->json(['success' => false], 403);
         }
 

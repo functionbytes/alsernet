@@ -1,0 +1,105 @@
+/* ============================================================
+   HelpdeskErp · pestañas ERP del panel derecho (Gestión, Finanzas,
+   Fidelización) y modal "Pedidos ERP".
+   Se apoya en erp-chat.css (tokens y piezas .erc-*): aquí solo lo
+   propio del panel y de la lista de pedidos. Mismos valores visuales
+   que la pestaña Tienda de HelpdeskPrestashop (.psc-*), sin depender
+   de ese módulo.
+
+   Paleta: verdes y grises. Ámbar solo para "bloqueado" o "sin
+   conexión". Nada de rojo, azul ni morado.
+   Se carga desde modals/parts/erp-orders.blade.php.
+   ============================================================ */
+
+/* ─── Contenedor de cada pestaña ─────────────────────────────── */
+.erc-panel { min-width: 0; }
+.erc-panel > .erc-stack { gap: 9px; }
+.erc-panel .erc-card + .erc-card { margin-top: 0; }
+.erc-panel .rsp-erp-missing { margin-top: 0; }
+
+/* Cabecera plegable: el chevron va a la derecha haya o no contador. */
+.erc-chevron--push { margin-left: auto; }
+.erc-chevron--after { margin-left: 6px; }
+
+.erc-small { font-size: .72rem; }
+
+/* ─── Filas de pedido / deuda en el panel (más compactas) ───── */
+.erc-item--row { gap: 10px; padding: 9px 10px; }
+.erc-item--row .ic { width: 28px; height: 28px; }
+.erc-item--row .m { margin-top: 2px; }
+.erc-item--row:focus-visible { outline: 2px solid var(--erc-primary-accent); outline-offset: 1px; }
+.erc-item-obs {
+    color: var(--erc-ink-soft);
+    font-weight: 500;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.erc-item .t.erc-item-obs { font-size: .72rem; margin-top: 3px; }
+
+/* ─── Dirección: acciones bajo la tarjeta ───────────────────── */
+.erc-addr-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; font-size: .72rem; }
+
+/* ─── Saldo: tres cifras en una fila estrecha ───────────────── */
+.erc-kpis--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.erc-kpis--3 .erc-kpi { padding: 8px 8px; }
+.erc-kpis--3 .erc-kpi .n { font-size: .78rem; overflow-wrap: anywhere; }
+
+/* ─── Botonera de documentos (2 columnas) ───────────────────── */
+.erc-foot--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.erc-foot--2 .erc-btn { padding-left: 8px; padding-right: 8px; }
+
+/* ─── Frescura del dato (pie de cada pestaña) ───────────────── */
+.erc-health {
+    display: flex; align-items: center; gap: 9px; min-width: 0;
+    padding: 8px 11px; border-radius: 8px;
+    background: var(--erc-surface-alt); font-size: .72rem; color: var(--erc-ink-soft);
+}
+.erc-health .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--erc-primary); flex-shrink: 0; }
+.erc-health .txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.erc-health--stale { background: var(--erc-warn-bg); color: var(--erc-warn-ink); }
+.erc-health--stale .dot { background: var(--erc-warn-dot); }
+
+/* ─── Modal "Pedidos ERP" ────────────────────────────────────── */
+.erc-ord-count { flex-shrink: 0; font-family: var(--erc-mono); font-size: .63rem; color: #7a7f74; background: #f5f6f2; padding: 1px 7px; border-radius: 4px; }
+.erc-ord-count:empty { display: none; }
+
+.erc-ord-tools {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px 14px; border-bottom: 1px solid var(--bv-border, #ececec);
+    min-width: 0;
+}
+.erc-search input[type="search"] { -webkit-appearance: none; appearance: none; }
+.erc-search input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
+
+.erc-range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.erc-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; margin: 0; }
+.erc-field .lbl { font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-faint); }
+.erc-field input {
+    width: 100%; min-width: 0; height: 34px; padding: 0 9px;
+    border: 1px solid #ececec; border-radius: 8px; background: #fff;
+    font-size: .75rem; color: var(--erc-ink); outline: none; box-shadow: none;
+}
+.erc-field input:focus { border-color: var(--erc-primary); }
+.erc-range-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 34px; }
+.erc-range-actions .erc-btn--sm { height: 34px; }
+
+.erc-ord-body { gap: 10px; }
+.erc-ord-summary { font-size: .72rem; color: var(--erc-ink-soft); line-height: 1.5; overflow-wrap: anywhere; }
+.erc-ord-summary b { font-family: var(--erc-mono); color: var(--erc-ink); }
+
+/* ─── Pantallas estrechas (~380px) ───────────────────────────── */
+@media (max-width: 575.98px) {
+    .erc-range { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .erc-range-actions { grid-column: 1 / -1; }
+    .erc-ord-tools { padding: 10px 12px; }
+    .erc-item--row .end { flex: 0 0 auto; flex-direction: column; align-items: flex-end; }
+    .erc-item--row { flex-wrap: nowrap; }
+}
+
+@media (max-width: 359.98px) {
+    .erc-range { grid-template-columns: minmax(0, 1fr); }
+    .erc-foot--2 { grid-template-columns: minmax(0, 1fr); }
+    .erc-kpis--3 { grid-template-columns: minmax(0, 1fr); }
+}

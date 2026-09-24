@@ -183,7 +183,7 @@ class ErpLookupStateTest extends TestCase
             /** @param array<int, string> $forgotten */
             public function __construct(public array &$forgotten) {}
 
-            public function searchCustomers(string $query, string $type = 'email'): array
+            public function searchCustomers(string $query, string $type = 'email', int $offset = 0): array
             {
                 return [['id' => 4242, 'email' => $query]];
             }

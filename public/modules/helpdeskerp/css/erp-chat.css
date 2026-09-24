@@ -1,0 +1,374 @@
+/* ============================================================
+   HelpdeskErp · Gestión (ERP) dentro del chat — núcleo visual
+   Prefijo .erc-*. Mismos valores visuales que las piezas .psc-*
+   de HelpdeskPrestashop, copiados aquí para que el ERP no dependa
+   de que ese módulo esté activo.
+
+   Reglas del sistema:
+   - Solo verdes: #90bb13 primario, #5e7a0d fuerte, #b6d34a acento.
+     Grises #565656 / #2d3324 para "peligro" o bloqueo.
+   - Ámbar (#fdf3e0 / #7a5b00) SOLO para "bloqueado" (sin GRANT en
+     Oracle) y "sin conexión". Nada de rojo, azul ni morado.
+   - Pies de modal apilados, primario arriba, a ancho completo.
+   - Botones con texto sin icono.
+   ============================================================ */
+
+:root {
+    --erc-primary: #90bb13;
+    --erc-primary-strong: #5e7a0d;
+    --erc-primary-accent: #b6d34a;
+    --erc-primary-soft: rgba(144, 187, 19, .08);
+    --erc-primary-line: rgba(144, 187, 19, .35);
+    --erc-primary-chip: rgba(144, 187, 19, .16);
+    --erc-ink: #2d2d2d;
+    --erc-ink-soft: #565656;
+    --erc-muted: #8a8a8a;
+    --erc-faint: #a3a3a3;
+    --erc-line: #f0f0f0;
+    --erc-line-strong: #dcdcd6;
+    --erc-surface: #fff;
+    --erc-surface-alt: #f6f7f5;
+    --erc-surface-deep: #2d3324;
+    --erc-warn-bg: #fdf3e0;
+    --erc-warn-ink: #7a5b00;
+    --erc-warn-dot: #c99a2e;
+    --erc-mono: var(--bv-mono, 'JetBrains Mono', ui-monospace, monospace);
+}
+
+/* ─── Contenedores ───────────────────────────────────────────── */
+.erc-stack { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.erc-stack > :empty { display: none; }
+
+.erc-card { background: var(--erc-surface); border: 1px solid #ececec; border-radius: 10px; overflow: hidden; min-width: 0; }
+.erc-card + .erc-card { margin-top: 9px; }
+.erc-stack > .erc-card + .erc-card { margin-top: 0; }
+
+.erc-card-head {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    padding: 11px 12px; border: 0; border-bottom: 1px solid var(--erc-line);
+    background: none; text-align: left;
+    font-size: .8rem; font-weight: 700; color: var(--erc-ink);
+}
+.erc-card-head .erc-meta { margin-left: auto; font-size: .67rem; font-weight: 500; color: var(--erc-faint); white-space: nowrap; }
+.erc-card-head .erc-count {
+    margin-left: auto; font-family: var(--erc-mono); font-size: .6rem; color: #7a7f74;
+    background: #f5f6f2; padding: 1px 7px; border-radius: 4px;
+}
+.erc-card-head .erc-count + .erc-meta { margin-left: 6px; }
+.erc-card-head-tt { display: flex; flex-direction: column; min-width: 0; }
+.erc-card-head-tt .s { font-size: .63rem; font-weight: 500; color: var(--erc-faint); margin-top: 1px; }
+.erc-card-head--toggle { cursor: pointer; }
+.erc-card-head--toggle .erc-chevron { color: #b4b4b4; font-size: .58rem; transition: transform .15s; }
+.erc-card-head--toggle[aria-expanded="true"] .erc-chevron { transform: rotate(180deg); }
+.erc-collapse[hidden] { display: none; }
+
+.erc-card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.erc-card-foot { padding: 9px 12px; border-top: 1px solid var(--erc-line); display: flex; flex-direction: column; gap: 6px; }
+
+.erc-sec-label { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--erc-faint); }
+
+/* ─── Cabecera del cliente ───────────────────────────────────── */
+.erc-cust { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.erc-avatar {
+    width: 38px; height: 38px; border-radius: 999px; flex-shrink: 0;
+    background: var(--erc-primary-soft); color: var(--erc-primary-strong);
+    display: grid; place-items: center; font-size: .72rem; font-weight: 800;
+}
+.erc-avatar--sm { width: 28px; height: 28px; font-size: .6rem; }
+.erc-cust-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.erc-cust-body .nm { font-size: .84rem; font-weight: 700; color: var(--erc-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erc-cust-body .s { font-size: .69rem; color: var(--erc-muted); margin-top: 1px; overflow-wrap: anywhere; }
+.erc-cust-body .id { font-family: var(--erc-mono); font-size: .63rem; color: var(--erc-faint); }
+.erc-cust-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+
+/* ─── Filas etiqueta / valor ─────────────────────────────────── */
+.erc-row { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 8px; background: var(--erc-surface-alt); font-size: .78rem; min-width: 0; }
+.erc-row .k { color: var(--erc-muted); flex-shrink: 0; }
+.erc-row .v { margin-left: auto; font-weight: 700; color: var(--erc-ink); text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erc-row .v.mono { font-family: var(--erc-mono); font-weight: 600; }
+.erc-row--good { background: var(--erc-primary-soft); }
+.erc-row--good .k, .erc-row--good .v { color: var(--erc-primary-strong); }
+.erc-row--total { background: var(--erc-surface-deep); color: #fff; font-size: .84rem; font-weight: 800; }
+.erc-row--total .k, .erc-row--total .v { color: #fff; }
+.erc-row--total .v { font-family: var(--erc-mono); }
+
+/* Rejilla clave / valor (fichas, cabeceras de albarán y factura) */
+.erc-kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 12px; }
+.erc-kv > div { min-width: 0; }
+.erc-kv .k { display: block; font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-faint); }
+.erc-kv .v { display: block; font-size: .75rem; font-weight: 600; color: var(--erc-ink); margin-top: 2px; overflow-wrap: anywhere; }
+.erc-kv .v.mono { font-family: var(--erc-mono); font-weight: 500; }
+.erc-kv .is-wide { grid-column: 1 / -1; }
+
+/* ─── Métricas ───────────────────────────────────────────────── */
+.erc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.erc-stats--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.erc-stat { padding: 7px 4px; border-radius: 8px; background: var(--erc-surface-alt); text-align: center; min-width: 0; }
+.erc-stat .n { display: block; font-family: var(--erc-mono); font-size: .78rem; font-weight: 700; color: var(--erc-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erc-stat .n.is-good { color: var(--erc-primary-strong); }
+.erc-stat .n.is-muted { color: var(--erc-faint); }
+.erc-stat .l { display: block; font-size: .53rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--erc-faint); margin-top: 1px; }
+
+.erc-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.erc-kpi { border: 1px solid var(--erc-line); border-radius: 10px; padding: 11px 12px; min-width: 0; }
+.erc-kpi .l { display: block; font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-faint); }
+.erc-kpi .n { display: block; font-family: var(--erc-mono); font-size: 1rem; font-weight: 800; margin-top: 4px; color: var(--erc-ink); }
+.erc-kpi .d { display: block; font-size: .66rem; color: var(--erc-muted); margin-top: 2px; }
+.erc-kpi .d.is-good { color: var(--erc-primary-strong); }
+.erc-kpi--blocked { background: var(--erc-warn-bg); border-color: transparent; }
+.erc-kpi--blocked .l, .erc-kpi--blocked .n, .erc-kpi--blocked .d { color: var(--erc-warn-ink); }
+
+/* Puntos de fidelización destacados */
+.erc-points { border-radius: 10px; padding: 14px; text-align: center; background: linear-gradient(135deg, #90bb13 0%, #4f6b0a 100%); color: #fff; }
+.erc-points .n { display: block; font-family: var(--erc-mono); font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.erc-points .l { display: block; font-size: .69rem; color: rgba(255, 255, 255, .8); margin-top: 4px; }
+
+/* ─── Etiquetas de estado ────────────────────────────────────── */
+.erc-tag {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;
+    font-family: var(--erc-mono); font-size: .53rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+}
+.erc-tag--pending  { background: rgba(182, 211, 74, .3); color: var(--erc-primary-strong); }
+.erc-tag--progress { background: var(--erc-primary-chip); color: var(--erc-primary-strong); }
+.erc-tag--done     { background: var(--erc-primary-strong); color: #fff; }
+.erc-tag--closed   { background: var(--erc-line); color: #7a7f74; }
+/* Cancelado / caducado / anulado: gris oscuro, nunca rojo. */
+.erc-tag--blocked  { background: #e8e8e6; color: var(--erc-ink-soft); }
+/* Solo para "pendiente de permiso" o "sin conexión". */
+.erc-tag--warn     { background: var(--erc-warn-bg); color: var(--erc-warn-ink); }
+
+/* ─── Chips (filtros) ────────────────────────────────────────── */
+.erc-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.erc-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid #e4e4e0; background: #fff; color: var(--erc-ink-soft); font-size: .72rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.erc-chip:hover { border-color: var(--erc-primary); }
+.erc-chip.is-on { background: var(--erc-surface-deep); border-color: var(--erc-surface-deep); color: #fff; font-weight: 700; }
+.erc-chip .n { font-family: var(--erc-mono); font-size: .63rem; margin-left: 4px; opacity: .75; }
+
+/* Selector segmentado */
+.erc-seg { display: flex; gap: 2px; padding: 3px; background: #f4f4f5; border-radius: 8px; }
+.erc-seg button { flex: 1; min-width: 0; padding: 6px 8px; border: 0; border-radius: 6px; background: none; font-size: .69rem; font-weight: 600; color: var(--erc-muted); text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erc-seg button.is-on { background: #fff; color: var(--erc-ink); font-weight: 700; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+
+/* Buscador */
+.erc-search { display: flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid #ececec; border-radius: 8px; background: #fff; }
+.erc-search i { color: var(--erc-faint); font-size: .75rem; }
+.erc-search input { flex: 1; min-width: 0; border: 0; padding: 9px 0; font-size: .78rem; color: var(--erc-ink); background: none; outline: none; box-shadow: none; }
+.erc-search:focus-within { border-color: var(--erc-primary); }
+
+/* ─── Alertas del cliente ────────────────────────────────────── */
+.erc-alerts { display: flex; flex-direction: column; gap: 6px; }
+.erc-alert { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 9px; font-size: .72rem; line-height: 1.4; min-width: 0; }
+.erc-alert .dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
+.erc-alert .txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.erc-alert .act { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; flex-shrink: 0; }
+/* Requiere atención: gris oscuro de marca (no rojo). */
+.erc-alert--warn { background: #f1f2ee; border: 1px solid var(--erc-line-strong); color: var(--erc-surface-deep); }
+.erc-alert--warn .dot { background: var(--erc-surface-deep); }
+.erc-alert--info { background: #f4f4f5; border: 1px solid #ececec; color: var(--erc-ink-soft); }
+.erc-alert--info .dot { background: var(--erc-faint); }
+.erc-alert--good { background: var(--erc-primary-soft); border: 1px solid var(--erc-primary-line); color: var(--erc-primary-strong); }
+.erc-alert--good .dot { background: var(--erc-primary); }
+
+/* Avisos de texto */
+.erc-note { display: flex; align-items: flex-start; gap: 9px; padding: 10px 11px; border-radius: 9px; font-size: .72rem; line-height: 1.45; }
+.erc-note .txt { flex: 1; min-width: 0; }
+.erc-note .act { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; flex-shrink: 0; }
+.erc-note--good { background: var(--erc-primary-soft); border: 1px solid var(--erc-primary-line); color: var(--erc-primary-strong); }
+.erc-note--info { background: #f4f4f5; border: 1px solid var(--erc-line-strong); color: var(--erc-ink-soft); }
+.erc-note--warn { background: var(--erc-warn-bg); color: var(--erc-warn-ink); }
+
+/* ─── Estados de sección (ErpChat.stateHtml) ─────────────────── */
+.erc-state { display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px; border-radius: 9px; font-size: .72rem; line-height: 1.45; min-width: 0; }
+.erc-state > i { margin-top: 2px; font-size: .8rem; flex-shrink: 0; }
+.erc-state .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.erc-state .t { font-weight: 700; overflow-wrap: anywhere; }
+.erc-state .s { opacity: .9; overflow-wrap: anywhere; }
+.erc-state .erc-link-btn { align-self: center; }
+.erc-state--blocked, .erc-state--down { background: var(--erc-warn-bg); color: var(--erc-warn-ink); }
+.erc-state--loading { background: var(--erc-surface-alt); color: var(--erc-ink-soft); }
+.erc-state--loading > i { color: var(--erc-primary); }
+.erc-state--unavailable, .erc-state--forbidden, .erc-state--unlinked { background: #f4f4f5; border: 1px solid #ececec; color: var(--erc-ink-soft); }
+.erc-state--empty { flex-direction: column; align-items: center; text-align: center; padding: 22px 16px; background: none; color: var(--erc-ink-soft); }
+.erc-state--empty > i { font-size: 1.25rem; color: #d6dcc4; margin: 0; }
+.erc-state--empty .body { align-items: center; }
+.erc-state--empty .s { color: var(--erc-faint); }
+
+.erc-link-btn { background: none; border: 0; padding: 0; font-size: .69rem; font-weight: 700; color: inherit; text-decoration: underline; cursor: pointer; flex-shrink: 0; }
+.erc-link-btn:disabled { opacity: .5; cursor: default; }
+.erc-link { color: var(--erc-primary-strong); font-weight: 600; text-decoration: none; cursor: pointer; background: none; border: 0; padding: 0; font-size: inherit; }
+.erc-link:hover { text-decoration: underline; }
+button.erc-link { font-size: .72rem; line-height: 1.2; }
+
+/* ─── Listas (pedidos, albaranes, facturas, movimientos) ─────── */
+.erc-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.erc-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--erc-line); border-radius: 10px; background: #fff; min-width: 0; text-align: left; width: 100%; }
+.erc-item[data-erp-order-open], .erc-item.is-link { cursor: pointer; }
+.erc-item[data-erp-order-open]:hover, .erc-item.is-link:hover { border-color: var(--erc-primary); background: #fbfdf6; }
+.erc-item--good { border-color: var(--erc-primary-line); background: rgba(144, 187, 19, .05); }
+.erc-item--muted { background: #fbfbfa; }
+.erc-item .ic { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--erc-surface-alt); color: #7a7f74; display: grid; place-items: center; font-size: .7rem; }
+.erc-item .info { flex: 1; min-width: 0; }
+.erc-item .top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.erc-item .ref { font-family: var(--erc-mono); font-size: .69rem; color: var(--erc-muted); white-space: nowrap; }
+.erc-item .t { display: block; font-size: .78rem; font-weight: 700; margin-top: 4px; line-height: 1.3; color: var(--erc-ink); overflow-wrap: anywhere; }
+.erc-item .m { display: block; font-size: .69rem; color: var(--erc-faint); margin-top: 3px; overflow-wrap: anywhere; }
+.erc-item .end { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.erc-item .amt { font-family: var(--erc-mono); font-size: .81rem; font-weight: 700; color: var(--erc-ink); white-space: nowrap; }
+.erc-item .amt.is-good { color: var(--erc-primary-strong); }
+.erc-item .amt.is-muted { color: var(--erc-faint); }
+.erc-item .act { font-size: .69rem; font-weight: 600; color: var(--erc-primary-strong); white-space: nowrap; }
+
+.erc-more { display: flex; justify-content: center; padding-top: 2px; }
+
+/* ─── Líneas de pedido / albarán / factura ───────────────────── */
+.erc-lines { display: flex; flex-direction: column; gap: 8px; }
+.erc-line { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border: 1px solid var(--erc-line); border-radius: 10px; background: #fff; min-width: 0; }
+.erc-line .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.erc-line .nm { font-size: .78rem; font-weight: 700; color: var(--erc-ink); line-height: 1.3; overflow-wrap: anywhere; }
+.erc-line .sku { font-family: var(--erc-mono); font-size: .6rem; color: var(--erc-muted); margin-top: 2px; overflow-wrap: anywhere; }
+.erc-line .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.erc-line .qty { font-family: var(--erc-mono); font-size: .69rem; color: var(--erc-muted); flex-shrink: 0; }
+.erc-line .amt { font-family: var(--erc-mono); font-size: .78rem; font-weight: 700; min-width: 70px; text-align: right; flex-shrink: 0; }
+.erc-line--free .amt { color: var(--erc-primary-strong); }
+.erc-lnchip { font-family: var(--erc-mono); font-size: .56rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--erc-surface-alt); color: #7a7f74; }
+.erc-lnchip--disc { background: var(--erc-primary-chip); color: var(--erc-primary-strong); }
+
+.erc-thumb {
+    width: 38px; height: 38px; border-radius: 7px; flex-shrink: 0; overflow: hidden;
+    background: repeating-linear-gradient(135deg, #f4f5f0, #f4f5f0 4px, #eaece3 4px, #eaece3 8px);
+    border: 1px solid #ececec; display: grid; place-items: center;
+    font-size: .7rem; color: var(--erc-faint);
+}
+.erc-thumb--sm { width: 28px; height: 28px; }
+
+/* ─── Totales (clase propia: .row de Bootstrap apila las celdas) ── */
+.erc-totals { display: flex; flex-direction: column; gap: 5px; padding-top: 10px; border-top: 1px solid var(--erc-line); }
+.erc-tot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .78rem; color: var(--erc-ink-soft); min-width: 0; }
+.erc-tot span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.erc-tot span:last-child { font-family: var(--erc-mono); white-space: nowrap; }
+.erc-tot.is-muted { color: var(--erc-faint); font-size: .72rem; }
+.erc-tot.is-good { color: var(--erc-primary-strong); }
+.erc-tot.is-total { margin-top: 4px; padding: 9px 11px; border-radius: 8px; background: var(--erc-surface-deep); color: #fff; font-size: .86rem; font-weight: 800; }
+
+/* ─── Direcciones ────────────────────────────────────────────── */
+.erc-addr { border: 1px solid var(--erc-line); border-radius: 9px; padding: 9px 10px; min-width: 0; }
+.erc-addr--shipping { border-color: var(--erc-primary-line); background: rgba(144, 187, 19, .05); }
+.erc-addr--off { background: #fbfbfa; opacity: .75; }
+.erc-addr-hd { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.erc-addr-kind { font-size: .53rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #7a7f74; }
+.erc-addr--shipping .erc-addr-kind { color: var(--erc-primary-strong); }
+.erc-addr-hd .erc-link-btn, .erc-addr-hd .erc-link { margin-left: auto; }
+.erc-addr-line { font-size: .72rem; color: var(--erc-ink-soft); line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
+.erc-addr-note { font-size: .63rem; color: var(--erc-faint); margin-top: 2px; overflow-wrap: anywhere; }
+
+/* ─── Observaciones ──────────────────────────────────────────── */
+.erc-obs { padding: 9px 11px; border-radius: 8px; background: #fafafa; border: 1px solid #ececec; }
+.erc-obs .k { display: block; font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-faint); }
+.erc-obs .v { display: block; font-size: .72rem; color: var(--erc-ink-soft); line-height: 1.5; margin-top: 3px; white-space: pre-line; overflow-wrap: anywhere; }
+
+/* ─── Línea temporal (historial de estados, movimientos) ─────── */
+.erc-timeline { display: flex; flex-direction: column; }
+.erc-tl-row { display: flex; gap: 11px; padding: 0 0 12px; min-width: 0; }
+.erc-tl-row:last-child { padding-bottom: 0; }
+.erc-tl-row .dot { width: 9px; height: 9px; border-radius: 999px; background: #d4d4d0; margin-top: 4px; flex-shrink: 0; }
+.erc-tl-row.is-current .dot { background: var(--erc-primary); box-shadow: 0 0 0 3px rgba(144, 187, 19, .18); }
+.erc-tl-row .body { flex: 1; min-width: 0; }
+.erc-tl-row .t { display: block; font-size: .78rem; font-weight: 600; color: var(--erc-ink); }
+.erc-tl-row.is-current .t { font-weight: 700; }
+.erc-tl-row .m { display: block; font-size: .69rem; color: var(--erc-muted); margin-top: 2px; }
+.erc-tl-row .v { font-family: var(--erc-mono); font-size: .72rem; font-weight: 700; flex-shrink: 0; }
+.erc-tl-row .v.is-good { color: var(--erc-primary-strong); }
+.erc-tl-row .v.is-muted { color: var(--erc-ink-soft); }
+
+/* ─── Barra de riesgo / progreso ─────────────────────────────── */
+.erc-risk { display: flex; flex-direction: column; gap: 5px; }
+.erc-risk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: .72rem; color: var(--erc-ink-soft); }
+.erc-risk-head b { font-family: var(--erc-mono); color: var(--erc-ink); }
+.erc-risk-track { display: block; height: 6px; border-radius: 3px; background: #f0f0ee; overflow: hidden; }
+.erc-risk-track > span { display: block; height: 100%; border-radius: 3px; background: var(--erc-primary); }
+.erc-risk--mid .erc-risk-track > span { background: var(--erc-primary-strong); }
+.erc-risk--over .erc-risk-track > span { background: var(--erc-surface-deep); }
+.erc-risk-cap { font-family: var(--erc-mono); font-size: .6rem; color: var(--erc-faint); }
+
+.erc-w-0 { width: 0; } .erc-w-5 { width: 5%; } .erc-w-10 { width: 10%; } .erc-w-15 { width: 15%; }
+.erc-w-20 { width: 20%; } .erc-w-25 { width: 25%; } .erc-w-30 { width: 30%; } .erc-w-35 { width: 35%; }
+.erc-w-40 { width: 40%; } .erc-w-45 { width: 45%; } .erc-w-50 { width: 50%; } .erc-w-55 { width: 55%; }
+.erc-w-60 { width: 60%; } .erc-w-65 { width: 65%; } .erc-w-70 { width: 70%; } .erc-w-75 { width: 75%; }
+.erc-w-80 { width: 80%; } .erc-w-85 { width: 85%; } .erc-w-90 { width: 90%; } .erc-w-95 { width: 95%; }
+.erc-w-100 { width: 100%; }
+
+/* ─── Vales y bonos ──────────────────────────────────────────── */
+.erc-vch { border: 1px solid var(--erc-line); border-radius: 9px; padding: 9px 10px; min-width: 0; }
+.erc-vch--available { border-color: var(--erc-primary-line); background: rgba(144, 187, 19, .05); }
+.erc-vch--spent { background: #fbfbfa; }
+.erc-vch-hd { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.erc-vch-code { font-family: var(--erc-mono); font-size: .56rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--erc-primary-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erc-vch--spent .erc-vch-code { color: var(--erc-faint); text-decoration: line-through; }
+.erc-vch-hd .erc-tag { margin-left: auto; flex-shrink: 0; }
+.erc-vch-value { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; }
+.erc-vch-value b { font-size: .81rem; font-weight: 700; }
+.erc-vch-value span { font-size: .69rem; color: var(--erc-muted); }
+.erc-vch-min { margin-top: 5px; font-size: .63rem; color: var(--erc-faint); }
+
+/* ─── Botones ────────────────────────────────────────────────── */
+.erc-foot { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.erc-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; padding: 9px 13px; border-radius: 7px; font-size: .75rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; text-decoration: none; line-height: 1.2; }
+.erc-btn--primary { background: var(--erc-primary); color: #fff; }
+.erc-btn--primary:hover { background: var(--erc-primary-strong); color: #fff; }
+.erc-btn--outline { background: #fff; border-color: #d4d4d8; color: var(--erc-ink); }
+.erc-btn--outline:hover { border-color: var(--erc-primary); color: var(--erc-primary-strong); }
+.erc-btn--sm { width: auto; padding: 5px 10px; font-size: .69rem; }
+.erc-btn:disabled, .erc-btn.is-disabled { background: #f5f5f5; border-color: #f5f5f5; color: #9ca3af; cursor: not-allowed; }
+.erc-icon-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid transparent; background: none; color: #a3a3a3; display: inline-grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+.erc-icon-btn:hover { border-color: var(--erc-line-strong); color: var(--erc-ink-soft); }
+
+/* ─── Hojas internas dentro del cuerpo de un modal ───────────── */
+/* ErpChat.sheet.open($body, …) marca el cuerpo como anfitrión y pinta la
+   hoja encima: nunca un modal sobre otro modal. */
+.erc-sheet-host { position: relative; }
+.erc-sheet-host.is-erc-sheet-open { min-height: 420px; overflow: hidden; }
+.erc-sheet { position: absolute; inset: 0; background: var(--erc-surface); display: flex; flex-direction: column; z-index: 5; min-width: 0; }
+.erc-sheet-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--erc-line); min-width: 0; }
+.erc-sheet-head .ic { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; background: #f0f7dc; color: var(--erc-primary-strong); display: grid; place-items: center; }
+.erc-sheet-head .tt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.erc-sheet-head .lbl { font-size: .59rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--erc-faint); }
+.erc-sheet-head .ttl { font-size: .94rem; font-weight: 700; letter-spacing: -.02em; margin-top: 1px; color: var(--erc-ink); overflow-wrap: anywhere; }
+.erc-sheet-body { flex: 1; min-height: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.erc-sheet-foot { padding: 12px 16px 14px; border-top: 1px solid var(--erc-line); display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
+.erc-sheet-foot:empty { display: none; }
+.erc-sheet-foot > .btn-primary, .erc-sheet-foot > .btn-secondary, .erc-sheet-foot > .erc-btn { width: 100%; }
+/* Con una hoja abierta, el pie del modal se oculta: una sola botonera. */
+.bv-modal-dialog.is-erc-sheet-open > .bv-modal-foot { display: none; }
+
+/* ─── Esqueletos de carga ────────────────────────────────────── */
+@keyframes erc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.erc-skel { display: block; height: 52px; border-radius: 9px; background: #f5f6f2; animation: erc-pulse 1.4s ease-in-out infinite; }
+.erc-skel + .erc-skel { margin-top: 9px; }
+.erc-skel--line { height: 11px; border-radius: 4px; }
+.erc-skel--line + .erc-skel--line { margin-top: 6px; }
+.erc-skel--short { width: 45%; }
+.erc-skel--card { height: 96px; border-radius: 10px; }
+.erc-loading { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: .72rem; color: var(--erc-faint); padding: 6px 0; }
+
+.erc-muted { color: var(--erc-faint); }
+.erc-mono { font-family: var(--erc-mono); }
+.erc-hidden { display: none !important; }
+.erc-offscreen { position: fixed; top: 0; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* ─── Pantallas estrechas (~380px) ───────────────────────────── */
+@media (max-width: 575.98px) {
+    .erc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .erc-kv { grid-template-columns: minmax(0, 1fr); }
+    .erc-item { flex-wrap: wrap; row-gap: 6px; }
+    .erc-item .end { flex-direction: row; align-items: center; justify-content: space-between; flex: 1 1 100%; }
+    .erc-item .top { flex-wrap: wrap; row-gap: 4px; }
+    .erc-line { flex-wrap: wrap; row-gap: 6px; }
+    .erc-line .body { flex: 1 1 calc(100% - 50px); }
+    .erc-line .qty { margin-left: 49px; }
+    .erc-line .amt { margin-left: auto; min-width: 0; }
+    .erc-sheet-head, .erc-sheet-body { padding-left: 12px; padding-right: 12px; }
+    .erc-sheet-foot { padding: 10px 12px 12px; }
+    .erc-alert { flex-wrap: wrap; }
+    .erc-alert .act { margin-left: 16px; }
+}
