@@ -13,7 +13,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
-use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketService;
@@ -22,8 +21,6 @@ use Modules\HelpdeskTickets\Support\InboundEmailAttachmentStorer;
 use Modules\HelpdeskTickets\Support\InboundEmailBounceRouter;
 use Modules\HelpdeskTickets\Support\InboundEmailMessageParser;
 use Modules\HelpdeskTickets\Support\InboundEmailTicketResolver;
-use Webklex\PHPIMAP\Attachment as ImapAttachment;
-use Webklex\PHPIMAP\Attribute as ImapAttribute;
 use Webklex\PHPIMAP\Client as ImapClient;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message as ImapMessage;
@@ -33,13 +30,20 @@ use Webklex\PHPIMAP\Message as ImapMessage;
  * entrante. El parseo de mensajes (InboundEmailMessageParser), el guardado de
  * adjuntos (InboundEmailAttachmentStorer), el hilado/creación de tickets
  * (InboundEmailTicketResolver) y la detección de rebotes/quejas
- * (InboundEmailBounceRouter) viven en app/Support (30-sep-2026, job de 1103
+ * (InboundEmailBounceRouter) viven en app/Support (28-sep-2026, job de 1103
  * líneas) — este job se queda con la orquestación IMAP (conexión, colas,
- * reintentos) y delega en esas clases. Los métodos protegidos que exponían
- * esta lógica se conservan como delegados finos con el mismo nombre/firma:
- * varios tests la ejercitan directamente (subclase de prueba y
- * ReflectionMethod), y unserialize() de trabajos ya encolados no debe
- * romperse.
+ * reintentos) y llama a esas clases directamente a través de los
+ * colaboradores perezosos de más abajo.
+ *
+ * Troceado otra vez (28-sep-2026): los ~20 métodos protegidos que antes
+ * delegaban uno a uno en esas clases (mismo nombre/firma que sus métodos
+ * públicos) solo existían para que los tests pudieran ejercitarlos por
+ * subclase/ReflectionMethod — el job en sí ya llamaba a los colaboradores a
+ * través de ellos, nunca los necesitó como API propia. Se eliminaron y
+ * processIncomingEmail() llama a InboundEmailMessageParser/
+ * InboundEmailAttachmentStorer/InboundEmailTicketResolver/
+ * InboundEmailBounceRouter directamente; los tests que los ejercitaban ahora
+ * apuntan a esas clases (ver tests/Unit/Support/).
  */
 class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
 {
@@ -382,9 +386,9 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         // un segundo ticket ni reenviar la confirmación al cliente. Algunos
         // emisores omiten Message-ID; en ese caso usamos el UID estable del
         // buzón, con el canal/carpeta dentro del namespace.
-        $messageId = $this->stringAttribute($message->message_id);
+        $messageId = $this->emailParser()->stringAttribute($message->message_id);
         if (! $messageId) {
-            $messageId = $this->stableImapMessageId($message, $connection);
+            $messageId = $this->emailParser()->stableImapMessageId($message, $connection);
         }
 
         if ($messageId && TicketMail::withTrashed()->where('message_id', $messageId)->exists()) {
@@ -402,32 +406,32 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         // con el contenido técnico del rebote como si fuera un mensaje real
         // del cliente. No hay riesgo de falso positivo grave: como mucho un
         // DSN legítimo no se detecta y sigue el flujo normal de ticket.
-        if ($this->routeIfBounceOrComplaint($message)) {
+        if ($this->bounceRouter()->routeIfBounceOrComplaint($message)) {
             return;
         }
 
         // Parse email data
         $parsed = [
-            'message_id' => $messageId ?: $this->generateMessageId(),
-            'in_reply_to' => $this->stringAttribute($message->in_reply_to),
-            'references' => $this->stringAttribute($message->references),
-            'from' => $this->formatAddressAttribute($message->from),
-            'to' => $this->formatAddressAttribute($message->to),
-            'cc' => $this->formatAddressAttribute($message->cc),
-            'bcc' => $this->formatAddressAttribute($message->bcc),
-            'subject' => $this->stringAttribute($message->subject) ?: 'Sin asunto',
+            'message_id' => $messageId ?: $this->emailParser()->generateMessageId(),
+            'in_reply_to' => $this->emailParser()->stringAttribute($message->in_reply_to),
+            'references' => $this->emailParser()->stringAttribute($message->references),
+            'from' => $this->emailParser()->formatAddressAttribute($message->from),
+            'to' => $this->emailParser()->formatAddressAttribute($message->to),
+            'cc' => $this->emailParser()->formatAddressAttribute($message->cc),
+            'bcc' => $this->emailParser()->formatAddressAttribute($message->bcc),
+            'subject' => $this->emailParser()->stringAttribute($message->subject) ?: 'Sin asunto',
             'body_text' => $message->getTextBody() ?: '',
             'body_html' => $message->getHTMLBody() ?: null,
-            'headers' => $this->extractHeaders($message),
-            'raw_email' => $this->rawSource($message),
+            'headers' => $this->emailParser()->extractHeaders($message),
+            'raw_email' => $this->emailParser()->rawSource($message),
         ];
 
         // Extract attachments
         $skippedAttachments = [];
-        $parsed['attachments'] = $this->parseAttachments($message, $skippedAttachments);
+        $parsed['attachments'] = $this->attachmentStorer()->parseAttachments($message, $skippedAttachments);
 
         // Find or create ticket
-        $ticket = $this->findOrCreateTicket($parsed, $connection);
+        $ticket = $this->ticketResolver()->findOrCreateTicket($parsed, $connection);
 
         if (! $ticket) {
             Log::warning('Could not create ticket for email: '.$parsed['subject']);
@@ -507,172 +511,6 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         $ticket->update(['last_message_at' => now()]);
 
         Log::info("Email processed for ticket #{$ticket->ticket_number}");
-    }
-
-    /**
-     * Ver InboundEmailBounceRouter::routeIfBounceOrComplaint().
-     */
-    protected function routeIfBounceOrComplaint(ImapMessage $message): bool
-    {
-        return $this->bounceRouter()->routeIfBounceOrComplaint($message);
-    }
-
-    /**
-     * Ver InboundEmailTicketResolver::findOrCreateTicket().
-     */
-    protected function findOrCreateTicket(array $parsed, array $connection = []): ?Ticket
-    {
-        return $this->ticketResolver()->findOrCreateTicket($parsed, $connection);
-    }
-
-    /**
-     * Ver InboundEmailTicketResolver::threadedTicket().
-     */
-    protected function threadedTicket(Ticket $ticket): Ticket
-    {
-        return $this->ticketResolver()->threadedTicket($ticket);
-    }
-
-    /**
-     * Ver InboundEmailTicketResolver::dispatchErpLookup().
-     */
-    protected function dispatchErpLookup(int $customerId, int $ticketId): void
-    {
-        $this->ticketResolver()->dispatchErpLookup($customerId, $ticketId);
-    }
-
-    /**
-     * Ver InboundEmailTicketResolver::senderMatchesTicket().
-     */
-    protected function senderMatchesTicket(Ticket $ticket, string $fromEmail): bool
-    {
-        return $this->ticketResolver()->senderMatchesTicket($ticket, $fromEmail);
-    }
-
-    /**
-     * Ver InboundEmailAttachmentStorer::parseAttachments().
-     */
-    protected function parseAttachments(ImapMessage $message, array &$skippedAttachments = []): array
-    {
-        return $this->attachmentStorer()->parseAttachments($message, $skippedAttachments);
-    }
-
-    /**
-     * Ver InboundEmailAttachmentStorer::attachmentMetadata().
-     *
-     * @return array{size: ?int, mime: ?string}
-     */
-    protected function attachmentMetadata(string $disk, string $path): array
-    {
-        return $this->attachmentStorer()->attachmentMetadata($disk, $path);
-    }
-
-    /**
-     * Ver InboundEmailAttachmentStorer::saveAttachment().
-     */
-    protected function saveAttachment(ImapAttachment $attachment, string $disk, array &$skippedAttachments = []): ?string
-    {
-        return $this->attachmentStorer()->saveAttachment($attachment, $disk, $skippedAttachments);
-    }
-
-    /**
-     * Ver InboundEmailAttachmentStorer::allowedAttachmentExtensions().
-     *
-     * @return list<string>
-     */
-    private function allowedAttachmentExtensions(): array
-    {
-        return $this->attachmentStorer()->allowedAttachmentExtensions();
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::extractEmailAddress().
-     */
-    protected function extractEmailAddress(string $from): string
-    {
-        return $this->emailParser()->extractEmailAddress($from);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::extractEmailName().
-     */
-    protected function extractEmailName(string $from): ?string
-    {
-        return $this->emailParser()->extractEmailName($from);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::extractHeaders().
-     */
-    protected function extractHeaders(ImapMessage $message): array
-    {
-        return $this->emailParser()->extractHeaders($message);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::splitReferences().
-     *
-     * @return array<int, string>
-     */
-    protected function splitReferences(?string $references): array
-    {
-        return $this->emailParser()->splitReferences($references);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::stringAttribute().
-     */
-    protected function stringAttribute(?ImapAttribute $attribute): ?string
-    {
-        return $this->emailParser()->stringAttribute($attribute);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::decodeMimeHeader().
-     */
-    protected function decodeMimeHeader(string $value): string
-    {
-        return $this->emailParser()->decodeMimeHeader($value);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::formatAddressAttribute().
-     */
-    protected function formatAddressAttribute(?ImapAttribute $attribute): ?string
-    {
-        return $this->emailParser()->formatAddressAttribute($attribute);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::rawSource().
-     */
-    protected function rawSource(ImapMessage $message): ?string
-    {
-        return $this->emailParser()->rawSource($message);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::detectPriority().
-     */
-    protected function detectPriority(string $subject): string
-    {
-        return $this->emailParser()->detectPriority($subject);
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::generateMessageId().
-     */
-    protected function generateMessageId(): string
-    {
-        return $this->emailParser()->generateMessageId();
-    }
-
-    /**
-     * Ver InboundEmailMessageParser::stableImapMessageId().
-     */
-    protected function stableImapMessageId(ImapMessage $message, array $connection = []): ?string
-    {
-        return $this->emailParser()->stableImapMessageId($message, $connection);
     }
 
     /**

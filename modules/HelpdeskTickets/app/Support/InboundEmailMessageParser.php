@@ -8,9 +8,9 @@ use Webklex\PHPIMAP\Message as ImapMessage;
 /**
  * Extracción de datos "puros" (sin BD, sin IMAP en vivo) de un mensaje
  * webklex/php-imap: cabeceras, direcciones, prioridad detectada e
- * identificadores. Extraído de FetchTicketEmailsJob (30-sep-2026, job de
- * 1103 líneas) — FetchTicketEmailsJob::extractEmailAddress()/etc. son ahora
- * delegados finos a esta clase; ver su docblock para el porqué del reparto.
+ * identificadores. Extraído de FetchTicketEmailsJob (28-sep-2026, job de
+ * 1103 líneas) — el job la llama directamente; ver el docblock de
+ * FetchTicketEmailsJob para el porqué del reparto.
  */
 class InboundEmailMessageParser
 {

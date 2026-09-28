@@ -12,9 +12,8 @@ use Webklex\PHPIMAP\Message as ImapMessage;
 /**
  * Guardado de adjuntos entrantes en disco, con lista blanca de extensiones,
  * límite de tamaño y escaneo antimalware. Extraído de FetchTicketEmailsJob
- * (30-sep-2026, job de 1103 líneas) — FetchTicketEmailsJob::parseAttachments()/
- * etc. son ahora delegados finos a esta clase; ver su docblock para el
- * porqué del reparto.
+ * (28-sep-2026, job de 1103 líneas) — el job la llama directamente;
+ * ver el docblock de FetchTicketEmailsJob para el porqué del reparto.
  */
 class InboundEmailAttachmentStorer
 {

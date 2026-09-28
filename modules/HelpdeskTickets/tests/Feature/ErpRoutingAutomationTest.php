@@ -7,13 +7,13 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskErp\Events\CustomerErpResolved;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
 use Modules\HelpdeskErp\Services\ErpFactsService;
-use Modules\HelpdeskTickets\Jobs\Helpdesks\FetchTicketEmailsJob;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnErpResolved;
 use Modules\HelpdeskTickets\Models\Automation;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AutomationEngine;
 use Modules\HelpdeskTickets\Support\AutomationCatalog;
+use Modules\HelpdeskTickets\Support\InboundEmailTicketResolver;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\TestCase;
 
@@ -172,9 +172,7 @@ class ErpRoutingAutomationTest extends TestCase
 
         $ticket = $this->ticket();
 
-        $job = new FetchTicketEmailsJob;
-        $method = new \ReflectionMethod($job, 'threadedTicket');
-        $method->invoke($job, $ticket);
+        app(InboundEmailTicketResolver::class)->threadedTicket($ticket);
 
         Queue::assertPushed(LinkCustomerToErpJob::class, function (LinkCustomerToErpJob $pushed) use ($ticket) {
             return (new \ReflectionProperty($pushed, 'sourceType'))->getValue($pushed) === 'ticket'

@@ -10,8 +10,7 @@ use Webklex\PHPIMAP\Message as ImapMessage;
 /**
  * Detección de DSN (bounce)/quejas de spam entre los correos entrantes, para
  * desviarlos de la creación de ticket. Extraído de FetchTicketEmailsJob
- * (30-sep-2026, job de 1103 líneas) — FetchTicketEmailsJob::routeIfBounceOrComplaint()
- * es ahora un delegado fino a esta clase; ver su docblock para el porqué del
+ * (28-sep-2026, job de 1103 líneas) — el job la llama directamente; ver el docblock de FetchTicketEmailsJob para el porqué del
  * reparto.
  */
 class InboundEmailBounceRouter

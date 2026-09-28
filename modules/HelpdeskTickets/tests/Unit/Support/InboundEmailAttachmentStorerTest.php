@@ -1,31 +1,31 @@
 <?php
 
-namespace Modules\HelpdeskTickets\Tests\Unit\Jobs;
+namespace Modules\HelpdeskTickets\Tests\Unit\Support;
 
 use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
-use Modules\HelpdeskTickets\Jobs\Helpdesks\FetchTicketEmailsJob;
+use Modules\HelpdeskTickets\Support\InboundEmailAttachmentStorer;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
-use ReflectionMethod;
 use Tests\TestCase;
 
 /**
- * allowedAttachmentExtensions() en un archivo APARTE de
- * FetchTicketEmailsJobTest.php a propósito: ese archivo está en la lista de
- * tests que no se vuelven a correr esta sesión (toca
- * TicketEmailChannelsRepository/incoming_email, Setting real — ver
- * feedback_settings_tests_corrupted_real_channel_data). Este test solo
- * instancia el job por reflexión para probar UN método privado que no toca
- * esa zona en absoluto: ni IMAP, ni TicketEmailChannelsRepository, ni
- * incoming_email — solo Modules\Helpdesk\Models\Setting (conexión
- * 'helpdesk', tabla helpdesk_settings, sin relación con la corrupción ya
- * documentada).
+ * Movido de FetchTicketEmailsJobTest/FetchTicketEmailsAllowedExtensionsTest
+ * (30-sep-2026, refactor estructural que extrajo el guardado de adjuntos de
+ * FetchTicketEmailsJob a InboundEmailAttachmentStorer) a apuntar
+ * directamente a esa clase: allowedAttachmentExtensions() es público ahí, así
+ * que ya no hace falta reflexión ni instanciar el job.
+ *
+ * En un archivo APARTE del resto de tests de InboundEmail* a propósito,
+ * igual que el original: solo toca Modules\Helpdesk\Models\Setting (conexión
+ * 'helpdesk', tabla helpdesk_settings), sin relación con la corrupción de
+ * incoming_email ya documentada (ver
+ * feedback_settings_tests_corrupted_real_channel_data).
  *
  * Bug real que motiva esto (4-sep-2026): Ajustes → Subida de archivos ya
  * guardaba uploading.allowed_extensions, pero ningún consumidor lo leía — un
  * admin podía "guardar" un cambio ahí sin ningún efecto real (un .mp3 real
  * se descartó en silencio sin forma de permitirlo desde la UI).
  */
-class FetchTicketEmailsAllowedExtensionsTest extends TestCase
+class InboundEmailAttachmentStorerTest extends TestCase
 {
     use SharesHelpdeskPdo;
 
@@ -54,9 +54,6 @@ class FetchTicketEmailsAllowedExtensionsTest extends TestCase
      */
     private function allowedExtensions(): array
     {
-        $job = new FetchTicketEmailsJob;
-        $method = new ReflectionMethod($job, 'allowedAttachmentExtensions');
-
-        return $method->invoke($job);
+        return (new InboundEmailAttachmentStorer)->allowedAttachmentExtensions();
     }
 }

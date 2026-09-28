@@ -16,9 +16,8 @@ use Modules\HelpdeskTickets\Services\SpamClassifierService;
 /**
  * Hilado (threading) por Message-ID/asunto y creación de tickets/clientes a
  * partir de un correo entrante ya parseado. Extraído de FetchTicketEmailsJob
- * (30-sep-2026, job de 1103 líneas) — FetchTicketEmailsJob::findOrCreateTicket()/
- * etc. son ahora delegados finos a esta clase; ver su docblock para el
- * porqué del reparto.
+ * (28-sep-2026, job de 1103 líneas) — el job la llama directamente;
+ * ver el docblock de FetchTicketEmailsJob para el porqué del reparto.
  */
 class InboundEmailTicketResolver
 {
