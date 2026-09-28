@@ -39,7 +39,7 @@ use Modules\Supplier\Services\PromptSelectionService;
  */
 class ErpModelSyncService
 {
-    protected string $erpBaseUrl;
+    protected ?string $erpBaseUrl = null;
 
     protected int $pageSize = 100;
 
@@ -48,8 +48,27 @@ class ErpModelSyncService
         private readonly PromptSelectionService $promptSelectionService,
         private readonly ContentGenerationService $contentGenerationService,
     ) {
-        $base = Setting::get('supplier.erp_internal_url', config('supplier.erp_internal_url', 'http://nginx'));
-        $this->erpBaseUrl = rtrim($base, '/').'/api/erp';
+        // No leer Setting::get() aquí: este servicio se inyecta en el
+        // constructor de RetryTransientFailuresCommand, y Laravel resuelve
+        // (instancia) TODOS los comandos registrados vía $this->commands()
+        // en CADA arranque de `artisan` (Artisan::starting() -> resolveCommands()),
+        // no solo cuando ese comando concreto se ejecuta. Leer un Setting en
+        // este constructor dispara cache()->remember() contra el store de
+        // caché real (redis en producción/Docker) en todo arranque de
+        // artisan, incluido `artisan test`, antes de que phpunit.xml pueda
+        // forzar CACHE_STORE=array — confirmado 28-sep-2026: rompía
+        // `php artisan test` con RedisException fuera de Docker. La URL se
+        // resuelve perezosamente la primera vez que se usa (erpBaseUrl()).
+    }
+
+    protected function erpBaseUrl(): string
+    {
+        if ($this->erpBaseUrl === null) {
+            $base = Setting::get('supplier.erp_internal_url', config('supplier.erp_internal_url', 'http://nginx'));
+            $this->erpBaseUrl = rtrim($base, '/').'/api/erp';
+        }
+
+        return $this->erpBaseUrl;
     }
 
     /**
@@ -88,7 +107,7 @@ class ErpModelSyncService
                 // cambiados en Gestión — mismo forget que ya hace retryModelFromErp().
                 Cache::forget("product:detailed:{$erpModelId}");
 
-                $response = Http::timeout(60)->get("{$this->erpBaseUrl}/products/{$erpModelId}/detailed");
+                $response = Http::erpApi()->timeout(60)->get("{$this->erpBaseUrl()}/products/{$erpModelId}/detailed");
 
                 if (! $response->successful()) {
                     $stats['errors'][] = "ERP API error: {$response->status()}";
@@ -164,7 +183,7 @@ class ErpModelSyncService
             }
 
             $httpErrors = $this->paginatedErpRequest(
-                url: "{$this->erpBaseUrl}/products/filter",
+                url: "{$this->erpBaseUrl()}/products/filter",
                 params: $filterParams,
                 timeout: 120,
                 maxItems: $limit,
@@ -398,7 +417,7 @@ class ErpModelSyncService
         $pageSize = $maxItems !== null ? min($maxItems, $this->pageSize) : $this->pageSize;
 
         while ($hasMore) {
-            $response = Http::timeout($timeout)->get($url, array_merge($params, [
+            $response = Http::erpApi()->timeout($timeout)->get($url, array_merge($params, [
                 'limit' => $pageSize,
                 'offset' => $offset,
             ]));
@@ -1144,7 +1163,7 @@ class ErpModelSyncService
         try {
             Cache::forget("product:detailed:{$erpModelId}");
 
-            $response = Http::timeout(60)->get("{$this->erpBaseUrl}/products/{$erpModelId}/detailed");
+            $response = Http::erpApi()->timeout(60)->get("{$this->erpBaseUrl()}/products/{$erpModelId}/detailed");
 
             if (! $response->successful()) {
                 return ['success' => false, 'product' => null, 'error' => "ERP API error: {$response->status()}"];

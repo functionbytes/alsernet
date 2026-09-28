@@ -12,9 +12,9 @@ use Modules\Core\Models\Setting;
 
 class ErpService
 {
-    protected Client $client;
+    protected ?Client $client = null;
 
-    protected string $urlErp;
+    protected ?string $urlErp = null;
 
     // Constantes para formas de pago
     const PAYMENT_CASHONDELIVERY = 1;
@@ -45,10 +45,26 @@ class ErpService
 
     public function __construct()
     {
-        $this->urlErp = rtrim(Setting::get('erp_api_url', env('ERP_URL', '')), '/');
+        // Nada de I/O aquí: este servicio se inyecta en el constructor de
+        // ErpCheckCommand, y Laravel resuelve (instancia) TODOS los comandos
+        // registrados vía $this->commands() en CADA arranque de `artisan`
+        // (Artisan::starting() -> resolveCommands()), no solo cuando ese
+        // comando concreto se ejecuta. Leer Setting::get() aquí disparaba
+        // cache()->remember() contra el store real (redis) en todo arranque
+        // de artisan, incluido `artisan test` — confirmado 28-sep-2026,
+        // mismo patrón que ErpModelSyncService. El cliente HTTP se crea
+        // perezosamente la primera vez que se usa (client()).
+    }
 
-        $this->client = new Client([
-            'base_uri' => $this->urlErp,
+    protected function urlErp(): string
+    {
+        return $this->urlErp ??= rtrim(Setting::get('erp_api_url', env('ERP_URL', '')), '/');
+    }
+
+    protected function client(): Client
+    {
+        return $this->client ??= new Client([
+            'base_uri' => $this->urlErp(),
             'timeout' => config('services.erp.timeout', 30),
             'connect_timeout' => config('services.erp.connect_timeout', 30),
             'http_errors' => false,
@@ -69,7 +85,7 @@ class ErpService
     public function get(string $endpoint, array $params = []): ?array
     {
         try {
-            $response = $this->client->get($endpoint, [
+            $response = $this->client()->get($endpoint, [
                 'query' => $params,
             ]);
 
@@ -104,7 +120,7 @@ class ErpService
     public function post(string $endpoint, array $data = []): ?array
     {
         try {
-            $response = $this->client->post($endpoint, [
+            $response = $this->client()->post($endpoint, [
                 'form_params' => $data,
             ]);
 
@@ -139,7 +155,7 @@ class ErpService
     public function put(string $endpoint, array $data = []): ?array
     {
         try {
-            $response = $this->client->put($endpoint, [
+            $response = $this->client()->put($endpoint, [
                 'form_params' => $data,
                 'headers' => [
                     'Accept' => 'application/xml',
@@ -187,7 +203,7 @@ class ErpService
     public function delete(string $endpoint, array $params = []): ?array
     {
         try {
-            $response = $this->client->delete($endpoint, [
+            $response = $this->client()->delete($endpoint, [
                 'query' => $params,
             ]);
 
@@ -790,7 +806,7 @@ class ErpService
     {
         try {
             // Intentar una petición simple al ERP
-            $response = $this->client->get('/api-gestion/', [
+            $response = $this->client()->get('/api-gestion/', [
                 'connect_timeout' => 5,
                 'timeout' => 10,
             ]);
@@ -805,7 +821,7 @@ class ErpService
                     'success' => true,
                     'status' => 'online',
                     'message' => 'Conexión con ERP establecida correctamente',
-                    'url' => $this->urlErp,
+                    'url' => $this->urlErp(),
                     'timestamp' => now()->toIso8601String(),
                 ];
             }
@@ -816,7 +832,7 @@ class ErpService
                 'success' => false,
                 'status' => 'offline',
                 'message' => "Servidor ERP respondió con status {$status}",
-                'url' => $this->urlErp,
+                'url' => $this->urlErp(),
                 'timestamp' => now()->toIso8601String(),
             ];
 
@@ -827,7 +843,7 @@ class ErpService
                 'success' => false,
                 'status' => 'offline',
                 'message' => 'No se pudo establecer conexión con el servidor ERP: '.$e->getMessage(),
-                'url' => $this->urlErp,
+                'url' => $this->urlErp(),
                 'timestamp' => now()->toIso8601String(),
             ];
         } catch (\Exception $e) {
@@ -837,7 +853,7 @@ class ErpService
                 'success' => false,
                 'status' => 'error',
                 'message' => 'Error inesperado: '.$e->getMessage(),
-                'url' => $this->urlErp,
+                'url' => $this->urlErp(),
                 'timestamp' => now()->toIso8601String(),
             ];
         }
