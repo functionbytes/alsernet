@@ -110,6 +110,18 @@ class NotificationServiceProvider extends ServiceProvider
             ->group(function () use ($modulePath) {
                 require $modulePath.'/routes/api.php';
             });
+
+        // Web Push (VAPID) subscription routes — 21-sep-2026. Distinto de
+        // push-tokens (routes/api.php): esas son para tokens FCM simples de
+        // apps móviles; esto es la suscripción completa del PushManager del
+        // navegador (endpoint + claves de cifrado) que registra
+        // theme.blade.php (window.__requestPush).
+        Route::middleware(['web', 'auth:web'])
+            ->prefix('panel/push')
+            ->name('push.')
+            ->group(function () use ($modulePath) {
+                require $modulePath.'/routes/push.php';
+            });
     }
 
     /**

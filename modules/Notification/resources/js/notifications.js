@@ -79,12 +79,31 @@ function handleNotification(notification) {
 
     // Show browser notification if supported
     if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(notification.title, {
+        // tag identifica la notificación para que el navegador reemplace una
+        // repetida en vez de apilarla — antes usaba solo document_id, que las
+        // notificaciones de Helpdesk (type + entity_id, sin document_id) nunca
+        // rellenan: todas caían en el mismo tag 'notification-undefined' y una
+        // notificación nueva (p.ej. "conversación asignada") silenciosamente
+        // reemplazaba a la anterior (p.ej. "nueva conversación sin asignar")
+        // en vez de mostrarse ambas.
+        const tagKey = notification.type
+            ? `${notification.type}-${notification.entity_id ?? ''}`
+            : `document-${notification.document_id ?? Date.now()}`;
+
+        const nativeNotif = new Notification(notification.title, {
             body: notification.message,
             icon: getIconUrl(notification.icon),
-            tag: `notification-${notification.document_id}`,
+            tag: `notification-${tagKey}`,
             requireInteraction: true,
         });
+
+        if (notification.action_url) {
+            nativeNotif.onclick = function () {
+                window.focus();
+                window.location.href = notification.action_url;
+                nativeNotif.close();
+            };
+        }
     }
 
     // Trigger custom event for components to handle
