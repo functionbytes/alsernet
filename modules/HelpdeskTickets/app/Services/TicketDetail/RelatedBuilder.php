@@ -5,7 +5,6 @@ namespace Modules\HelpdeskTickets\Services\TicketDetail;
 use Illuminate\Support\Collection;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
-use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
 
 /**
  * Panel derecho "Relacionados": tickets enlazados a mano, resto del
@@ -48,9 +47,10 @@ class RelatedBuilder
     }
 
     /**
-     * Otros tickets del mismo cliente — reusa
-     * HelpdeskTicketBridgeService::getCustomerTickets() (ya usado por
-     * Contactos 360 y por la bandeja de emails), excluyendo el actual.
+     * Otros tickets del mismo cliente — misma selección que
+     * HelpdeskTicketBridgeService::getCustomerTickets() (Contactos 360 y la
+     * bandeja de emails) sin su precarga de agente/categoría, excluyendo el
+     * actual.
      */
     public function relatedTicketsFor(Ticket $ticket): array
     {
@@ -79,8 +79,19 @@ class RelatedBuilder
 
         $explicitLinks = $ownLinks->concat($reverseLinks)->filter(fn ($row) => $row['ticket'] !== null);
 
+        // Misma selección que HelpdeskTicketBridgeService::getCustomerTickets()
+        // (últimos 6 del cliente), pero sin sus with(['status', 'category',
+        // 'assignee']): esa precarga es para las vistas que pintan agente y
+        // categoría por fila, y aquí solo se usan número, asunto y estado —
+        // el estado sale del catálogo memoizado (attachStatus). Eran tres
+        // consultas de más en cada apertura del detalle (QA 28-sep-2026).
         $customerRelated = $ticket->customer
-            ? app(HelpdeskTicketBridgeService::class)->getCustomerTickets($ticket->customer, 6)
+            ? Ticket::query()
+                ->where('customer_id', $ticket->customer_id)
+                ->latest()
+                ->limit(6)
+                ->get()
+                ->each(fn (Ticket $t) => $this->attachStatus($t))
                 ->map(fn (Ticket $t) => ['link_id' => null, 'link_type' => null, 'ticket' => $t, 'unlinkable' => false])
             : collect();
 
