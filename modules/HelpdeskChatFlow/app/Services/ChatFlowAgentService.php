@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
@@ -18,7 +19,10 @@ use Modules\Helpdesk\Services\AI\PromptSanitizer;
  */
 class ChatFlowAgentService
 {
-    private const MAX_STEPS = 4;
+    private const MAX_STEPS = 6;
+
+    /** Intentos de lookup_order sin sesión verificada (número + email) por sesión de flujo. */
+    private const MAX_UNVERIFIED_ORDER_ATTEMPTS = 5;
 
     /** Productos por búsqueda que ve el modelo (y como máximo se muestran). */
     private const MAX_PRODUCTS = 6;
@@ -29,12 +33,14 @@ class ChatFlowAgentService
 
     /**
      * @param  object|null  $embeddings  HelpdeskHelpcenter EmbeddingsService (optional)
+     * @param  object|null  $insights  ChatFlowProductInsights (tallas/stock/plazos/comparativa; null sin HelpdeskPrestashop)
      */
     public function __construct(
         private readonly ChatFlowOrderLookup $orderLookup,
         private readonly ?object $embeddings = null,
         ?AiClient $aiClient = null,
         ?PromptSanitizer $sanitizer = null,
+        private readonly ?object $insights = null,
     ) {
         $this->aiClient = $aiClient ?? (class_exists(AiClient::class) ? new AiClient : null);
         $this->sanitizer = $sanitizer ?? (class_exists(PromptSanitizer::class) ? new PromptSanitizer : null);
@@ -75,7 +81,8 @@ class ChatFlowAgentService
         // Productos que el modelo consultó: se muestran al cliente como tarjetas.
         $shown = [];
 
-        $tools = $this->buildTools($data, $catalog !== null, $cart !== null);
+        $tools = $this->buildTools($data, $catalog !== null, $cart !== null, $this->isVerifiedCustomer($context));
+        $context['_locale'] = strtolower(substr($locale, 0, 2));
         $system = trim($data['instructions'] ?? 'Eres un agente de atención al cliente. Usa las herramientas disponibles cuando ayuden a resolver la consulta. Responde de forma breve y amable.');
         $lang = strtolower(substr($locale, 0, 2));
         if ($lang !== 'es') {
@@ -273,7 +280,7 @@ class ChatFlowAgentService
      * @param  array<string,mixed>  $data
      * @return array<int, array<string,mixed>>
      */
-    private function buildTools(array $data, bool $withProducts = false, bool $withCart = false): array
+    private function buildTools(array $data, bool $withProducts = false, bool $withCart = false, bool $verifiedCustomer = false): array
     {
         $fn = fn (string $name, string $desc, array $props, array $required = []) => [
             'type' => 'function',
@@ -290,8 +297,16 @@ class ChatFlowAgentService
         ];
 
         if (($data['tool_order_lookup'] ?? true)) {
-            $tools[] = $fn('lookup_order', 'Consulta el estado de un pedido del cliente identificado por su número.',
-                ['order_id' => ['type' => 'string', 'description' => 'Número de pedido']], ['order_id']);
+            $tools[] = $fn('lookup_order', $verifiedCustomer
+                ? 'Consulta el estado de un pedido del cliente (ya identificado) por su número o referencia: estado, transportista, seguimiento y fechas.'
+                : 'Consulta el estado de un pedido por su número o referencia Y el email con el que se hizo la compra (pídeselos al cliente; ambos obligatorios).',
+                array_filter([
+                    'order_id' => ['type' => 'string', 'description' => 'Número o referencia del pedido'],
+                    'email' => $verifiedCustomer ? null : ['type' => 'string', 'description' => 'Email de la compra, tal como lo escribe el cliente'],
+                ]), $verifiedCustomer ? ['order_id'] : ['order_id', 'email']);
+            if ($verifiedCustomer) {
+                $tools[] = $fn('list_my_orders', 'Lista los últimos pedidos del cliente identificado (número, fecha, estado, total) para cuando no sabe el número.', []);
+            }
         }
         if (($data['tool_knowledge'] ?? true) && $this->embeddings !== null) {
             $tools[] = $fn('search_help', 'Busca información en el centro de ayuda para responder una pregunta.',
@@ -302,6 +317,17 @@ class ChatFlowAgentService
                 ['query' => ['type' => 'string', 'description' => 'Palabras clave del producto (tipo, marca, uso), sin frases completas']], ['query']);
             $tools[] = $fn('product_detail', 'Obtiene la ficha de un producto concreto del catálogo por su id (de product_search, o el que aparece como "Viendo ahora" en el contexto del visitante) para responder dudas sobre él.',
                 ['product_id' => ['type' => 'string', 'description' => 'Id del producto. Omítelo para usar el producto que el visitante está viendo ahora mismo.']]);
+            if ($this->insights !== null && ($data['tool_variants'] ?? true)) {
+                $tools[] = $fn('product_variants', 'Tallas/colores/variantes de un producto con su disponibilidad y plazo de entrega, y stock en tiendas físicas. Con "option" comprueba una concreta ("44", "talla XL", "marrón 42").',
+                    [
+                        'product_id' => ['type' => 'string', 'description' => 'Id del producto. Omítelo para el que está viendo ahora.'],
+                        'option' => ['type' => 'string', 'description' => 'Opción que pregunta el cliente (opcional)'],
+                    ]);
+            }
+            if ($this->insights !== null && ($data['tool_compare'] ?? true)) {
+                $tools[] = $fn('compare_products', 'Compara 2 o 3 productos (marca, precio, disponibilidad, plazo, variantes y descripción). Los ids salen de product_search o del contexto.',
+                    ['product_ids' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Ids de 2 a 3 productos']], ['product_ids']);
+            }
         }
         if ($withCart) {
             $tools[] = $fn('show_cart', 'Muestra lo que el cliente tiene ahora en su cesta de la tienda (productos, cantidades y total).', []);
@@ -309,6 +335,7 @@ class ChatFlowAgentService
                 [
                     'product_id' => ['type' => 'string', 'description' => 'Id del producto (de product_search, o el que está viendo ahora si no dio otro)'],
                     'quantity' => ['type' => 'integer', 'description' => 'Unidades (1 si no lo dice)'],
+                    'option' => ['type' => 'string', 'description' => 'Talla/variante elegida por el cliente si el producto tiene opciones ("44", "XL", "marrón 42")'],
                     'customer_confirmed' => ['type' => 'boolean', 'description' => 'true solo si el cliente lo pidió/confirmó expresamente'],
                 ], ['customer_confirmed']);
         }
@@ -356,7 +383,7 @@ class ChatFlowAgentService
                         'quantity' => $l['qty'] ?? null,
                         'total' => $l['total'] ?? null,
                     ], array_slice((array) $snapshot['lines'], 0, 20)),
-                ], JSON_UNESCAPED_UNICODE);
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             if ($name === 'add_to_cart' && $cart !== null && $catalog !== null) {
@@ -368,11 +395,22 @@ class ChatFlowAgentService
                     return 'No añadido: el producto no existe o no está disponible.';
                 }
                 $shown[(string) $product->id] = $product;
+                $idProductAttribute = (int) ($product->idProductAttribute ?? 0);
                 if ($product->hasCombinations ?? false) {
-                    return 'No añadido: el producto tiene opciones (talla, color...). Se le muestra la tarjeta para que las elija en la ficha.';
+                    $wanted = trim((string) ($args['option'] ?? ''));
+                    $option = ($wanted !== '' && $this->insights !== null)
+                        ? $this->insights->optionFor((int) $product->id, $wanted, $context['_locale'] ?? null)
+                        : null;
+                    if ($option === null) {
+                        return 'No añadido: el producto tiene opciones (talla, color...). Pregunta cuál quiere (consulta product_variants) o que la elija en la tarjeta.';
+                    }
+                    if (! ($option['available'] ?? false)) {
+                        return 'No añadido: la opción "'.$this->sanitize((string) ($option['label'] ?? $wanted)).'" no tiene stock.';
+                    }
+                    $idProductAttribute = (int) $option['id_product_attribute'];
                 }
 
-                $result = $cart->add((int) $product->id, (int) ($product->idProductAttribute ?? 0), max(1, (int) ($args['quantity'] ?? 1)));
+                $result = $cart->add((int) $product->id, $idProductAttribute, max(1, (int) ($args['quantity'] ?? 1)));
 
                 return ($result['ok'] ?? false)
                     ? 'Añadido a la cesta del cliente.'
@@ -394,7 +432,7 @@ class ChatFlowAgentService
                         'currency' => $p->currency,
                         'available' => $p->available,
                         'has_options' => (bool) ($p->hasCombinations ?? false),
-                    ], $products), JSON_UNESCAPED_UNICODE);
+                    ], $products), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             if ($name === 'product_detail' && $catalog !== null) {
@@ -412,32 +450,95 @@ class ChatFlowAgentService
                     'currency' => $product->currency,
                     'available' => $product->available,
                     'has_options' => (bool) ($product->hasCombinations ?? false),
-                ], JSON_UNESCAPED_UNICODE);
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($name === 'product_variants' && $catalog !== null && $this->insights !== null) {
+                $productId = (int) $this->resolveProductId($args, $context);
+                if ($productId <= 0) {
+                    return 'Indica de qué producto (id de product_search) o usa el que está viendo.';
+                }
+                $wanted = trim((string) ($args['option'] ?? ''));
+                $variants = $this->insights->variants($productId, $context['_locale'] ?? null);
+                if ($variants === null) {
+                    return 'No se encontró ese producto en el catálogo.';
+                }
+                if (($product = $catalog->find((string) $productId)) !== null) {
+                    $shown[(string) $product->id] = $product;
+                }
+                if ($wanted !== '') {
+                    $variants['asked_option'] = $this->insights->optionFor($productId, $wanted, $context['_locale'] ?? null)
+                        ?? 'No existe esa opción para este producto.';
+                }
+
+                return json_encode($this->sanitizeDeep($variants), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($name === 'compare_products' && $catalog !== null && $this->insights !== null) {
+                $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($args['product_ids'] ?? [])))));
+                if (count($ids) < 2) {
+                    return 'Necesito al menos 2 productos para comparar (usa product_search para obtener sus ids).';
+                }
+                $comparison = $this->insights->compare(array_slice($ids, 0, 3), $context['_locale'] ?? null);
+                foreach (array_slice($ids, 0, 3) as $id) {
+                    if (($product = $catalog->find((string) $id)) !== null) {
+                        $shown[(string) $product->id] = $product;
+                    }
+                }
+
+                return $comparison ? json_encode($this->sanitizeDeep($comparison), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : 'No se pudo comparar esos productos.';
+            }
+
+            if ($name === 'list_my_orders') {
+                if (! $this->isVerifiedCustomer($context)) {
+                    return 'El cliente no está identificado: pídele el número de pedido y el email de la compra.';
+                }
+                $orders = $this->orderLookup->recentOrders($this->verifiedCustomer($context), 5);
+
+                return $orders === [] ? 'El cliente no tiene pedidos en su cuenta.' : json_encode($this->sanitizeDeep($orders), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             if ($name === 'lookup_order') {
-                // Defensa en profundidad: exige customer_identified_via_otp,
-                // no el customer_identified genérico — un nodo identify_customer
-                // con require_otp=false (footgun de configuración documentado
-                // en ChatFlowIdentityOtp) también marca customer_identified,
-                // pero solo a partir de un email/teléfono/NIF escrito en texto
-                // libre por el usuario, sin verificar que sea realmente suyo.
-                // Sin este distingo, cualquiera podía "identificarse" como un
-                // tercero y este tool le exponía sus pedidos (mismo IDOR que
-                // el OTP existe para cerrar).
-                if (empty($context['customer_identified_via_otp'])) {
-                    return 'El cliente aún no ha verificado su identidad, no puedo consultar sus pedidos.';
+                // Dos vías, las dos con propiedad comprobada:
+                // - cliente verificado (OTP del flujo, o sesión de la tienda firmada
+                //   por PrestaShop → identity_verified): sus datos del contexto;
+                // - sin verificar: número/referencia + email de la compra (como el
+                //   seguimiento de invitado de la tienda), con límite de intentos.
+                // Nunca con customer_identified a secas (email escrito sin verificar).
+                if ($this->isVerifiedCustomer($context)) {
+                    $customer = $this->verifiedCustomer($context);
+                } else {
+                    $email = strtolower(trim((string) ($args['email'] ?? '')));
+                    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        return 'Para consultar el pedido necesito el número o referencia y el email con el que se hizo la compra.';
+                    }
+                    if (! $this->allowUnverifiedOrderAttempt($context)) {
+                        return 'Demasiados intentos. Ofrece pasar con un agente para revisarlo.';
+                    }
+                    $customer = ['email' => $email];
                 }
 
-                $order = $this->orderLookup->lookup($args['order_id'] ?? null, [
-                    'erp_id' => $context['customer_erp_id'] ?? null,
-                    'ps_id' => $context['customer_ps_id'] ?? null,
-                    'email' => $context['customer_email'] ?? null,
-                ]);
+                $order = $this->orderLookup->lookup(trim((string) ($args['order_id'] ?? '')), $customer);
 
-                return $order['found']
-                    ? json_encode(['status' => $order['status'], 'total' => $order['total'], 'tracking' => $order['tracking']], JSON_UNESCAPED_UNICODE)
-                    : 'No se encontró el pedido en la cuenta del cliente.';
+                if (! $order['found']) {
+                    return 'No hay ningún pedido con ese número/referencia asociado a ese cliente o email.';
+                }
+
+                return json_encode($this->sanitizeDeep(array_filter([
+                    'order_id' => $order['order_id'] ?? null,
+                    'reference' => $order['reference'] ?? null,
+                    'status' => $order['status'] ?? null,
+                    'status_date' => $order['status_date'] ?? null,
+                    'date' => $order['date'] ?? null,
+                    'total' => $order['total'] ?? null,
+                    'currency' => $order['currency'] ?? null,
+                    'carrier' => $order['carrier'] ?? null,
+                    'tracking_number' => $order['tracking_number'] ?? ($order['tracking'] ?? null),
+                    'tracking_url' => $order['tracking_url'] ?? null,
+                    'shipped_date' => $order['shipped_date'] ?? null,
+                    'expected_date' => $order['expected_date'] ?? null,
+                    'items' => $order['items'] ?? null,
+                ], fn ($v) => $v !== null && $v !== '' && $v !== [])), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             if ($name === 'search_help' && $this->embeddings !== null) {
@@ -457,6 +558,61 @@ class ChatFlowAgentService
         }
 
         return 'Herramienta desconocida.';
+    }
+
+    /**
+     * Cliente con identidad comprobada: OTP del flujo o sesión de la tienda
+     * firmada por PrestaShop (identity_verified, sembrado por ChatFlowEngine).
+     *
+     * @param  array<string,mixed>  $context
+     */
+    private function isVerifiedCustomer(array $context): bool
+    {
+        return ! empty($context['customer_identified_via_otp']) || ! empty($context['identity_verified']);
+    }
+
+    /**
+     * @param  array<string,mixed>  $context
+     * @return array{erp_id: mixed, ps_id: mixed, email: mixed}
+     */
+    private function verifiedCustomer(array $context): array
+    {
+        return [
+            'erp_id' => $context['customer_erp_id'] ?? null,
+            'ps_id' => $context['customer_ps_id'] ?? null,
+            'email' => $context['customer_email'] ?? null,
+        ];
+    }
+
+    /**
+     * Límite de consultas número+email sin verificar por sesión del flujo
+     * (evita probar combinaciones). La clave es el trace id de la sesión.
+     *
+     * @param  array<string,mixed>  $context
+     */
+    private function allowUnverifiedOrderAttempt(array $context): bool
+    {
+        $key = 'chatflow:order-attempts:'.($context['_trace_id'] ?? 'none');
+        $attempts = (int) Cache::get($key, 0);
+        if ($attempts >= self::MAX_UNVERIFIED_ORDER_ATTEMPTS) {
+            return false;
+        }
+        Cache::put($key, $attempts + 1, now()->addHour());
+
+        return true;
+    }
+
+    /**
+     * Sanea recursivamente los textos que vienen de la tienda antes de dárselos
+     * al modelo (nombres de producto o estados podrían traer instrucciones).
+     */
+    private function sanitizeDeep(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map(fn ($v) => $this->sanitizeDeep($v), $value);
+        }
+
+        return is_string($value) ? $this->sanitize($value) : $value;
     }
 
     /**

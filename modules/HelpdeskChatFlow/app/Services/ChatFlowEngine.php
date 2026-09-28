@@ -781,7 +781,11 @@ class ChatFlowEngine
             return null;
         }
 
-        return $this->start($this->pickAbVariant($flow, $conversation), $conversation, $triggerType);
+        // Solo semillas de texto conocidas: el resto del contexto de disparo es
+        // para el resolver, no para la sesión.
+        $seed = array_intersect_key($context, array_flip(['first_message', 'last_input']));
+
+        return $this->start($this->pickAbVariant($flow, $conversation), $conversation, $triggerType, $seed);
     }
 
     /**
@@ -1120,20 +1124,46 @@ class ChatFlowEngine
      */
     private function visitorContextSeed(Conversation $conversation): array
     {
+        $seed = $this->verifiedIdentitySeed($conversation);
         $visitor = $this->resolveVisitorContext($conversation);
 
         if ($visitor === null) {
-            return [];
+            return $seed;
         }
 
         $product = $visitor['current_product'];
         $cart = $visitor['cart'];
 
-        return array_filter([
+        return $seed + array_filter([
             'current_product_id' => $product['id'] ?? null,
             'current_product_title' => $product['title'] ?? null,
             'cart_total' => $cart['total'] ?? null,
             'cart_count' => $cart['products_count'] ?? null,
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Cliente con sesión iniciada en la tienda: el widget envió su email
+     * firmado por PrestaShop (identifier_hash, widgetcontext) y la conversación
+     * quedó con metadata.identity_verified. Es una verificación tan fuerte como
+     * el OTP, así que el agente IA puede consultar SUS pedidos sin pedir código.
+     * Nunca se deduce de un email escrito en el chat.
+     *
+     * @return array<string, mixed>
+     */
+    private function verifiedIdentitySeed(Conversation $conversation): array
+    {
+        $metadata = is_array($conversation->metadata) ? $conversation->metadata : [];
+        $email = $conversation->customer?->email;
+
+        if (empty($metadata['identity_verified']) || ! is_string($email) || $email === '') {
+            return [];
+        }
+
+        return array_filter([
+            'identity_verified' => true,
+            'customer_email' => $email,
+            'customer_name' => $conversation->customer?->name,
+        ], fn ($value) => $value !== null && $value !== '');
     }
 }

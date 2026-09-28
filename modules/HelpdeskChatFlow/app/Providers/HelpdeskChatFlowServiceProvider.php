@@ -29,6 +29,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowDocumentLink;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHsmDelivery;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
+use Modules\HelpdeskChatFlow\Services\ChatFlowProductInsights;
 use Modules\HelpdeskChatFlow\Services\ChatFlowSentiment;
 use Modules\HelpdeskChatFlow\Services\ChatFlowVoiceTranscriber;
 use Modules\HelpdeskChatFlow\Services\Compliance\ChatflowGdprExportContributor;
@@ -39,7 +40,9 @@ use Modules\HelpdeskErp\Services\ErpContextService;
 use Modules\HelpdeskHelpcenter\Services\EmbeddingsService;
 use Modules\HelpdeskPrestashop\Events\PsCartAbandoned;
 use Modules\HelpdeskPrestashop\Events\PsOrderStatusChanged;
+use Modules\HelpdeskPrestashop\Services\Ext\CatalogService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
+use Modules\HelpdeskPrestashop\Services\PrestashopProductQueryService;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -147,6 +150,18 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
             return new ChatFlowOrderLookup($erp, $ps);
         });
 
+        $this->app->bind(ChatFlowProductInsights::class, function ($app) {
+            $catalog = class_exists(CatalogService::class)
+                ? $app->make(CatalogService::class)
+                : null;
+
+            $query = class_exists(PrestashopProductQueryService::class)
+                ? $app->make(PrestashopProductQueryService::class)
+                : null;
+
+            return new ChatFlowProductInsights($catalog, $query);
+        });
+
         $this->app->bind(ChatFlowAgentService::class, function ($app) {
             $embeddings = class_exists(EmbeddingsService::class)
                 ? $app->make(EmbeddingsService::class)
@@ -160,7 +175,7 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
                 ? $app->make(PromptSanitizer::class)
                 : null;
 
-            return new ChatFlowAgentService($app->make(ChatFlowOrderLookup::class), $embeddings, $aiClient, $sanitizer);
+            return new ChatFlowAgentService($app->make(ChatFlowOrderLookup::class), $embeddings, $aiClient, $sanitizer, $app->make(ChatFlowProductInsights::class));
         });
 
         $this->app->bind(ChatFlowSentiment::class, function ($app) {

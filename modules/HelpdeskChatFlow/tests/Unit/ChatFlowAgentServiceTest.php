@@ -5,8 +5,8 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 use Illuminate\Support\Facades\Http;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
-use Tests\TestCase;
 
 class ChatFlowAgentServiceTest extends TestCase
 {
@@ -350,5 +350,201 @@ class ChatFlowAgentServiceTest extends TestCase
 
         $this->assertSame('escalate', $result['action']);
         $this->assertSame('Te paso con un agente.', $result['text']);
+    }
+
+    // ─── Pedidos: número + email / cliente verificado ──────────────────────────
+
+    private function fakePs(): object
+    {
+        return new class
+        {
+            public array $calls = [];
+
+            public function getOrderDetail(int $orderId, ?string $email, mixed $psId = null): ?array
+            {
+                $this->calls[] = [$orderId, $email];
+
+                return $orderId === 5001 && $email === 'cliente@example.com'
+                    ? ['id' => 5001, 'reference' => 'XKBKNABJK', 'state_name' => 'Enviado', 'totals' => ['total' => 146.99], 'currency' => 'EUR',
+                        'created_at' => '2026-09-20 10:00:00',
+                        'tracking' => [['tracking_number' => 'PK123', 'carrier_name' => 'GLS', 'tracking_url' => 'https://gls.example/PK123', 'date' => '2026-09-21']],
+                        'lines' => [['name' => 'Botas Chiruca Malviz', 'quantity' => 1]],
+                        'addresses' => ['delivery' => ['address1' => 'Calle Secreta 1']]]
+                    : null;
+            }
+
+            public function getCustomerOrders(?string $email, mixed $psId, int $limit, int $page): array
+            {
+                return ['orders' => [['id' => 5001, 'reference' => 'XKBKNABJK', 'state_name' => 'Enviado', 'created_at' => '2026-09-20', 'total_paid' => 146.99]]];
+            }
+        };
+    }
+
+    public function test_unverified_order_lookup_needs_email_and_matches_it(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('lookup_order', ['order_id' => '5001', 'email' => 'Cliente@Example.com']), 200)
+            ->push(['choices' => [['message' => ['content' => 'Tu pedido está enviado con GLS.', 'tool_calls' => []]]]], 200);
+
+        $ps = $this->fakePs();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, $ps), null);
+        $result = $agent->run('¿dónde está mi pedido 5001? cliente@example.com', ['_trace_id' => 't-order-1'], []);
+
+        $this->assertSame('respond', $result['action']);
+        $this->assertSame([[5001, 'cliente@example.com']], $ps->calls);
+
+        // Lo que vio el modelo: estado y seguimiento, nunca la dirección.
+        Http::assertSent(function ($request) {
+            $tool = collect($request->data()['messages'] ?? [])->firstWhere('role', 'tool');
+            if (! $tool) {
+                return false;
+            }
+
+            return str_contains($tool['content'], 'Enviado')
+                && str_contains($tool['content'], 'https://gls.example/PK123')
+                && ! str_contains($tool['content'], 'Calle Secreta');
+        });
+    }
+
+    public function test_unverified_order_lookup_is_rate_limited(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, $this->fakePs()), null);
+
+        $sequence = Http::fakeSequence('api.openai.com/*');
+        for ($i = 0; $i < 6; $i++) {
+            $sequence->push($this->toolCall('lookup_order', ['order_id' => (string) (7000 + $i), 'email' => 'otro@example.com']), 200)
+                ->push(['choices' => [['message' => ['content' => 'ok', 'tool_calls' => []]]]], 200);
+        }
+        for ($i = 0; $i < 6; $i++) {
+            $agent->run('pedido', ['_trace_id' => 't-order-limit'], []);
+        }
+
+        Http::assertSent(function ($request) {
+            $tool = collect($request->data()['messages'] ?? [])->firstWhere('role', 'tool');
+
+            return $tool && str_contains($tool['content'], 'Demasiados intentos');
+        });
+    }
+
+    public function test_verified_customer_gets_list_my_orders_without_email(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('list_my_orders', []), 200)
+            ->push(['choices' => [['message' => ['content' => 'Tu último pedido está enviado.', 'tool_calls' => []]]]], 200);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, $this->fakePs()), null);
+        $result = $agent->run('mis pedidos', ['identity_verified' => true, 'customer_email' => 'cliente@example.com'], []);
+
+        $this->assertContains('list_my_orders', $result['used_tools']);
+        Http::assertSent(function ($request) {
+            $names = array_map(fn ($t) => $t['function']['name'] ?? '', $request->data()['tools'] ?? []);
+            $lookup = collect($request->data()['tools'] ?? [])->firstWhere('function.name', 'lookup_order');
+
+            // Verificado: no se le pide el email al cliente.
+            return in_array('list_my_orders', $names, true)
+                && ! array_key_exists('email', $lookup['function']['parameters']['properties'] ?? []);
+        });
+    }
+
+    // ─── Tallas / variantes ─────────────────────────────────────────────────────
+
+    private function fakeInsights(): object
+    {
+        return new class
+        {
+            private array $options = [
+                ['id_product_attribute' => 911, 'label' => 'Talla: 43', 'available' => false, 'stock_level' => 'agotado', 'delivery_text' => null],
+                ['id_product_attribute' => 912, 'label' => 'Talla: 44', 'available' => true, 'stock_level' => 'disponible', 'delivery_text' => 'Envío en 24/48 h'],
+            ];
+
+            public function variants(int $productId, ?string $lang = null): ?array
+            {
+                return $productId === 60766 ? ['product_id' => 60766, 'title' => 'Botas Chiruca Malviz', 'options' => $this->options, 'delivery_text' => 'Envío en 24/48 h', 'in_store_stock' => []] : null;
+            }
+
+            public function optionFor(int $productId, string $wanted, ?string $lang = null): ?array
+            {
+                foreach ($this->options as $o) {
+                    if (str_contains($o['label'], preg_replace('/\D/', '', $wanted))) {
+                        return $o;
+                    }
+                }
+
+                return null;
+            }
+
+            public function compare(array $ids, ?string $lang = null): ?array
+            {
+                return ['products' => $ids];
+            }
+        };
+    }
+
+    private function fakeBootCatalog(): object
+    {
+        return new class
+        {
+            public function search(string $query, int $limit = 6): array
+            {
+                return [];
+            }
+
+            public function find(string $id): ?object
+            {
+                return $id === '60766'
+                    ? new CatalogProduct('60766', 'Botas Chiruca Malviz', price: 146.99, currency: 'EUR', idProductAttribute: 911, hasCombinations: true)
+                    : null;
+            }
+        };
+    }
+
+    public function test_product_variants_answers_size_stock_for_current_product(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('product_variants', ['option' => '44']), 200)
+            ->push(['choices' => [['message' => ['content' => 'Sí, la 44 está disponible.', 'tool_calls' => []]]]], 200);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null, null, null, $this->fakeInsights());
+        $result = $agent->run('¿tenéis la 44?', ['current_product_id' => '60766'], [], 'es', $this->fakeBootCatalog());
+
+        $this->assertContains('product_variants', $result['used_tools']);
+        $this->assertSame('60766', $result['products'][0]->id);
+        Http::assertSent(function ($request) {
+            $tool = collect($request->data()['messages'] ?? [])->firstWhere('role', 'tool');
+
+            return $tool && str_contains($tool['content'], '"asked_option"') && str_contains($tool['content'], 'Talla: 44');
+        });
+    }
+
+    public function test_add_to_cart_uses_the_combination_of_the_chosen_size(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('add_to_cart', ['option' => 'talla 44', 'quantity' => 1, 'customer_confirmed' => true]), 200)
+            ->push(['choices' => [['message' => ['content' => 'Añadida la talla 44.', 'tool_calls' => []]]]], 200);
+
+        $cart = $this->fakeCart();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null, null, null, $this->fakeInsights());
+        $agent->run('sí, añádela en la 44', ['current_product_id' => '60766'], [], 'es', $this->fakeBootCatalog(), $cart);
+
+        $this->assertSame([[60766, 912, 1]], $cart->added);
+    }
+
+    public function test_add_to_cart_refuses_a_size_without_stock(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('add_to_cart', ['option' => '43', 'customer_confirmed' => true]), 200)
+            ->push(['choices' => [['message' => ['content' => 'La 43 está agotada.', 'tool_calls' => []]]]], 200);
+
+        $cart = $this->fakeCart();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null, null, null, $this->fakeInsights());
+        $agent->run('añade la 43', ['current_product_id' => '60766'], [], 'es', $this->fakeBootCatalog(), $cart);
+
+        $this->assertSame([], $cart->added);
     }
 }

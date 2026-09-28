@@ -106,11 +106,15 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
         // Start the flow only for the conversation's first inbound customer message
         // (mirrors the original observer gate) so a mid-conversation reply after a
         // finished flow does not silently relaunch the bot.
+        // Solo mensajes con autor (el cliente): las respuestas automáticas
+        // (saludo, fuera de horario…) tampoco tienen user_id y, contadas aquí,
+        // impedían que el bot arrancase si el saludo salía antes.
         $hasPriorCustomerMessage = ConversationItem::on('helpdesk')
             ->where('conversation_id', $this->conversationId)
             ->where('type', 'message')
             ->where('is_internal', false)
             ->whereNull('user_id')
+            ->whereNotNull('author_id')
             ->where('id', '<', $this->itemId)
             ->whereJsonDoesntContain('metadata->sent_by_chatflow', true)
             ->exists();
@@ -119,7 +123,12 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
             return;
         }
 
-        $engine->triggerFor($conversation, 'conversation_start');
+        // El mensaje que dispara el flujo queda en el contexto (first_message y
+        // last_input) para que un nodo IA lo conteste sin volver a preguntarlo.
+        $firstMessage = trim((string) ($item->body ?? ''));
+        $engine->triggerFor($conversation, 'conversation_start', $firstMessage !== ''
+            ? ['first_message' => $firstMessage, 'last_input' => $firstMessage]
+            : []);
     }
 
     public function failed(\Throwable $exception): void

@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Modules\HelpdeskChatFlow\Services\ChatFlowTemplateLibrary;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowTemplateLibraryTest extends TestCase
 {
@@ -15,11 +15,11 @@ class ChatFlowTemplateLibraryTest extends TestCase
         $this->library = new ChatFlowTemplateLibrary;
     }
 
-    public function test_all_returns_the_four_templates_with_required_keys(): void
+    public function test_all_returns_the_five_templates_with_required_keys(): void
     {
         $all = $this->library->all();
 
-        $this->assertCount(4, $all);
+        $this->assertCount(5, $all);
 
         foreach ($all as $template) {
             $this->assertArrayHasKey('key', $template);
@@ -30,7 +30,7 @@ class ChatFlowTemplateLibraryTest extends TestCase
         }
 
         $keys = array_column($all, 'key');
-        $this->assertEqualsCanonicalizing(['faq_ai', 'order_status', 'rma_return', 'lead_capture'], $keys);
+        $this->assertEqualsCanonicalizing(['shopping_assistant', 'faq_ai', 'order_status', 'rma_return', 'lead_capture'], $keys);
     }
 
     public function test_build_returns_a_valid_node_tree_with_a_single_start(): void
@@ -72,6 +72,23 @@ class ChatFlowTemplateLibraryTest extends TestCase
 
         $this->assertContains('identify_customer', $types);
         $this->assertContains('order_lookup', $types);
+    }
+
+    public function test_shopping_assistant_answers_first_message_and_loops_back(): void
+    {
+        $nodes = collect((new ChatFlowTemplateLibrary)->build('shopping_assistant')['nodes'])->keyBy('id');
+
+        // Contesta el mensaje que abrió la conversación (sembrado en last_input)…
+        $this->assertSame('ai_agent', $nodes['agent']['type']);
+        $this->assertSame('start', $nodes['agent']['parentId']);
+        $this->assertSame('last_input', $nodes['agent']['data']['question_variable']);
+        // …espera la siguiente pregunta sin repetir un texto…
+        $this->assertSame('collect_input', $nodes['wait']['type']);
+        $this->assertSame('', $nodes['wait']['data']['question']);
+        // …y vuelve al agente.
+        $this->assertSame('go_to_step', $nodes['loop']['type']);
+        $this->assertSame('agent', $nodes['loop']['data']['target_node_id']);
+        $this->assertStringContainsString('15 días naturales', $nodes['agent']['data']['instructions']);
     }
 
     public function test_build_returns_null_for_unknown_template(): void

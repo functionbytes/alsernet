@@ -229,6 +229,28 @@ class PrestashopContextService
     }
 
     /**
+     * Variante de getOrderDetail() por reference en vez de id — para cuando
+     * el cliente solo conoce la reference de PrestaShop (ej. "XKBKNABJK"),
+     * no el id numérico. Misma verificación de propiedad por email/external_id
+     * que getOrderDetail(): el bridge resuelve el id a partir de la reference
+     * y comprueba que el pedido pertenezca al cliente identificado por el
+     * lookup antes de devolverlo (ver alsernet_order_detail()); sin email ni
+     * external_id, se rechaza aquí mismo sin llamar al bridge (fail closed).
+     */
+    public function getOrderDetailByReference(string $reference, ?string $customerEmail = null, ?int $externalId = null): ?array
+    {
+        $lookup = $this->buildOwnershipLookup($customerEmail, $externalId, 'order.detail', 0);
+        if ($lookup === null) {
+            return null;
+        }
+
+        return $this->callApi('order.detail', [
+            'reference' => $reference,
+            'lookup' => $lookup,
+        ]);
+    }
+
+    /**
      * Búsqueda de pedidos por id/reference (coincidencia parcial) — para
      * autocompletados internos del panel (Select2).
      *

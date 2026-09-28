@@ -9,12 +9,47 @@ namespace Modules\HelpdeskChatFlow\Services;
  */
 class ChatFlowTemplateLibrary
 {
+    private const SHOPPING_ASSISTANT_INSTRUCTIONS = <<<'TXT'
+Eres el asistente virtual de Álvarez (tienda de caza, pesca, golf, hípica, náutica, buceo, esquí, pádel y aventura), gestionado por inteligencia artificial. Tono cercano y profesional, respuestas breves (2-5 frases), con **negrita** para lo importante y listas cortas cuando ayuden.
+
+Productos
+- Si el cliente está viendo un producto (CONTEXTO_VISITANTE), "este/esta" se refiere a ese producto.
+- Tallas, colores o variantes: consulta product_variants antes de responder; di si hay stock de la opción que pide y el plazo de entrega si lo tienes. Nunca inventes stock ni plazos.
+- Para recomendar busca con product_search (palabras clave, no frases). Para comparar usa compare_products con los ids.
+- Precios: los muestra la tarjeta del producto; no los recalcules.
+- Añade a la cesta solo si el cliente lo pide o lo confirma, con la talla/variante elegida.
+
+Pedidos
+- Si el cliente está identificado (sesión iniciada), usa list_my_orders / lookup_order directamente.
+- Si no, pide el número o la referencia del pedido y el email de la compra, y usa lookup_order con ambos. Si no coincide, dilo sin dar detalles del pedido.
+- Da estado, transportista, número y enlace de seguimiento y la fecha prevista si existen. Nunca des direcciones ni datos de pago.
+
+Políticas de la tienda (publicadas en la web)
+- Entrega: la mayoría de pedidos en 48 horas; plazo general aproximado de 7 días laborables (productos bajo pedido, personalizados o artesanales pueden tardar más). Entrega a domicilio u oficina de Correos (no apartados de correos; algunos productos, como armas o armeros, no admiten Correos).
+- Envío gratis a partir de 99 € (península, salvo excepciones).
+- Cambios y devoluciones: 15 días naturales desde la recepción, producto en perfecto estado y con su embalaje. Si no es por causa de Álvarez, los gastos los asume el cliente; Álvarez puede gestionar la recogida por 4,99 € (España peninsular, productos estándar). Ropa y calzado marcados con "devolución gratuita" se devuelven gratis. Defectuosos o envíos erróneos: gastos a cargo de Álvarez si se comunica al recibir el pedido. Gestión: https://returns.itsrever.com/alvarez
+- Pago: tarjeta, Google Pay, Apple Pay, contra reembolso (salvo algunos productos) y pago a plazos con SeQura.
+- Teléfono 981 17 91 00 · web@a-alvarez.com · tiendas en https://www.a-alvarez.com/tiendas
+
+Límites
+- Armas, licencias, munición y temas legales: informa con prudencia y deriva a un agente.
+- Si no sabes algo o el cliente pide una persona, usa escalate_to_agent. No inventes datos.
+TXT;
+
     /**
      * @return array<int, array{key: string, name: string, description: string, icon: string, color: string, trigger_type: string}>
      */
     public function all(): array
     {
         return [
+            [
+                'key' => 'shopping_assistant',
+                'name' => 'Asistente de compras (IA)',
+                'description' => 'Agente IA que contesta desde el primer mensaje: productos, tallas y stock, comparativas, plazos de entrega, estado de pedido y políticas de la tienda. Añade a la cesta y pasa a un agente si no puede resolver.',
+                'icon' => 'fas fa-bag-shopping',
+                'color' => '#90bb13',
+                'trigger_type' => 'conversation_start',
+            ],
             [
                 'key' => 'faq_ai',
                 'name' => 'FAQ con IA',
@@ -62,6 +97,7 @@ class ChatFlowTemplateLibrary
         }
 
         $nodes = match ($key) {
+            'shopping_assistant' => $this->shoppingAssistant(),
             'faq_ai' => $this->faqAi(),
             'order_status' => $this->orderStatus(),
             'rma_return' => $this->rmaReturn(),
@@ -74,6 +110,39 @@ class ChatFlowTemplateLibrary
             'description' => $meta['description'],
             'trigger_type' => $meta['trigger_type'],
             'nodes' => $nodes,
+        ];
+    }
+
+    /**
+     * Agente IA en bucle: contesta el mensaje que abrió la conversación
+     * (first_message → last_input), espera el siguiente sin volver a
+     * preguntar y vuelve al agente. Las políticas de las instrucciones son las
+     * publicadas en la web (envíos, cambios y devoluciones, pago): revisarlas
+     * al crear el flujo si cambian.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    private function shoppingAssistant(): array
+    {
+        return [
+            $this->node('start', 'start', null, 'Inicio'),
+            $this->node('agent', 'ai_agent', 'start', 'Asistente IA', [
+                'instructions' => self::SHOPPING_ASSISTANT_INSTRUCTIONS,
+                'question_variable' => 'last_input',
+                'use_memory' => true,
+                'tool_products' => true,
+                'tool_cart' => true,
+                'tool_order_lookup' => true,
+                'tool_knowledge' => true,
+                'fallback_message' => 'Te paso con una persona del equipo para ayudarte mejor. 🙋',
+            ]),
+            $this->node('wait', 'collect_input', 'agent', 'Siguiente pregunta', [
+                'question' => '',
+                'variable_name' => 'last_input',
+            ]),
+            $this->node('loop', 'go_to_step', 'wait', 'Volver al asistente', [
+                'target_node_id' => 'agent',
+            ]),
         ];
     }
 

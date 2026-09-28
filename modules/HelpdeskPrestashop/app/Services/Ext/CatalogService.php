@@ -24,15 +24,16 @@ class CatalogService
      * Stock por ubicación, plazo, precio del cliente/público y tramos de un
      * producto. Sin forma de identificar al cliente en PrestaShop se pide
      * igual, sin lookup: el puente devuelve el precio público y sin fila
-     * "este cliente".
+     * "este cliente". $customer es opcional: sin cliente (p. ej. el bot de
+     * ChatFlow, que solo conoce el producto) se pide directamente en público.
      *
      * @return array<string, mixed>|null null si el producto no existe
      *
      * @throws PsUpstreamException
      */
-    public function productSheet(Customer $customer, int $productId, int $productAttributeId = 0, bool $fresh = false): ?array
+    public function productSheet(?Customer $customer, int $productId, int $productAttributeId = 0, bool $fresh = false): ?array
     {
-        $cacheKey = 'helpdeskprestashop.ext.catalog.sheet.'.$customer->id.'.'.$productId.'.'.$productAttributeId;
+        $cacheKey = 'helpdeskprestashop.ext.catalog.sheet.'.($customer->id ?? 'anon').'.'.$productId.'.'.$productAttributeId;
 
         if ($fresh) {
             Cache::forget($cacheKey);
@@ -113,8 +114,12 @@ class CatalogService
     /**
      * @return array{email?: string, external_id?: int}|null
      */
-    private function lookup(Customer $customer): ?array
+    private function lookup(?Customer $customer): ?array
     {
+        if ($customer === null) {
+            return null;
+        }
+
         $externalId = $customer->externalIdFor('prestashop');
         $email = trim((string) $customer->email);
 
