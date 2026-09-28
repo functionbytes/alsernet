@@ -3,10 +3,12 @@
 namespace Modules\Core\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Console\Commands\OptimizeProductionCommand;
 use Modules\Core\Http\Controllers\DashboardController;
+use Modules\Core\Models\Setting;
 use Modules\Theme\Services\NavService;
 
 class CoreServiceProvider extends ServiceProvider
@@ -33,6 +35,14 @@ class CoreServiceProvider extends ServiceProvider
     {
         $this->registerTranslations();
         $this->registerConfig();
+
+        // Los workers de cola son procesos de larga vida: sin vaciar el memo de
+        // Setting::get() al terminar cada job, un ajuste cambiado desde el panel
+        // no se vería en ese worker hasta reiniciarlo (mismo motivo que
+        // HelpdeskServiceProvider::registerSettingMemoReset()).
+        $this->app->terminating(fn () => Setting::forgetMemo());
+        Queue::after(fn () => Setting::forgetMemo());
+        Queue::failing(fn () => Setting::forgetMemo());
 
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->loadViewsFrom(module_path($this->moduleName, 'resources/views'), $this->moduleNameLower);

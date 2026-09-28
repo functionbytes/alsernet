@@ -95,10 +95,19 @@ Broadcast::channel('helpdesk.inbox.{inboxId}', function ($user, $inboxId) {
         return false;
     }
 
-    if ($user->can('helpdesk.manage')) {
+    if ($user->can('helpdesk.manage') || $user->can('helpdesk.conversations.view-all')) {
         return true;
     }
 
+    // 'helpdesk-agent-restricted' pasa por aqui igual que un agente normal
+    // (AgentInboxCapacity no distingue "toda la bandeja" de "solo lo mio"):
+    // el canal sigue siendo por-bandeja, asi que este rol SI recibe en tiempo
+    // real el payload ligero (nombre del cliente, preview) de conversaciones
+    // de otros agentes de su misma bandeja. El listado HTTP
+    // (ConversationsController::isRestrictedToOwnConversations) y la policy
+    // (ConversationPolicy::isRestrictedToOwn) SI lo filtran de verdad; esto
+    // es solo el canal en vivo. Ver conversations-list.js donde se descarta
+    // en el cliente lo que no es suyo.
     return AgentInboxCapacity::where('user_id', $user->id)
         ->where('inbox_id', $inboxId)
         ->exists();

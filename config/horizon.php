@@ -376,8 +376,12 @@ return [
                 'tries' => 3,
                 'timeout' => 60,
             ],
+            // Los supervisores con 'redis-long' (supplier-sync, -maintenance, -ai y
+            // media-heavy) atienden colas con jobs de mas de 6 minutos: ver
+            // config/queue.php. No cambiar su conexion a 'redis' sin subir antes
+            // REDIS_QUEUE_RETRY_AFTER por encima de su timeout.
             'supervisor-supplier-sync' => [
-                'connection' => 'redis',
+                'connection' => 'redis-long',
                 'queue' => ['sync'],
                 'balance' => 'simple',
                 'processes' => 2,
@@ -401,7 +405,7 @@ return [
                 'timeout' => 310,
             ],
             'supervisor-supplier-maintenance' => [
-                'connection' => 'redis',
+                'connection' => 'redis-long',
                 'queue' => ['maintenance'],
                 'balance' => 'simple',
                 'processes' => 1,
@@ -409,12 +413,48 @@ return [
                 'timeout' => 3700,
             ],
             'supervisor-supplier-ai' => [
-                'connection' => 'redis',
+                'connection' => 'redis-long',
                 'queue' => ['ai-generation', 'ai-content-generation'],
                 'balance' => 'simple',
                 'processes' => 1,
                 'tries' => 3,
                 'timeout' => 700,
+            ],
+            // Procesado de adjuntos/medios (modulo Media) -- agregado 21-sep-2026:
+            // ninguna de estas colas tenia supervisor en produccion, asi que
+            // miniaturas, WebP, limpieza EXIF, optimizacion y escaneo antivirus
+            // de lo que se sube (adjuntos de tickets y conversaciones incluidos)
+            // se encolaban en Redis y no se ejecutaban nunca. 'timeout' 310 por
+            // encima del $timeout mas alto de sus jobs (ScanForVirusJob, 300) y
+            // por debajo de retry_after (360), como supplier-extraction.
+            // media-heavy (OCR, marcas de agua, HLS...) va aparte para que un
+            // video largo no bloquee las miniaturas; TranscodeToHlsJob declara
+            // $timeout 1800 > retry_after, revisar REDIS_QUEUE_RETRY_AFTER si
+            // se usa (mismo caso que supplier-sync).
+            'supervisor-media' => [
+                'connection' => 'redis',
+                'queue' => ['media-light', 'media-optimize', 'media-scan'],
+                'balance' => 'simple',
+                'processes' => 2,
+                'tries' => 3,
+                'timeout' => 310,
+            ],
+            'supervisor-media-heavy' => [
+                'connection' => 'redis-long',
+                'queue' => ['media-heavy'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 2,
+                'timeout' => 310,
+            ],
+            // SyncContentToPrestashopJob ($timeout 300) -- tampoco tenia worker.
+            'supervisor-prestashop-sync' => [
+                'connection' => 'redis',
+                'queue' => ['prestashop-sync'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 310,
             ],
             // Cupones de cumpleanos (HelpdeskBirthday, SendBirthdayEmailJob) --
             // agregada 18-sep-2026: nunca tuvo worker real escuchandola, ni
@@ -451,7 +491,26 @@ return [
                 // se encolaban y jamas se procesaban: 42 jobs acumulados en Redis
                 // en el momento del hallazgo, cero en el log de Horizon. Mismo
                 // caso con 'helpdesklivechat', que tampoco estaba.
-                'queue' => ['default', 'pagespeed', 'google-sync', 'notifications', 'notifications-high', 'reviews-sync', 'exports', 'reviews-replies', 'replies', 'emails', 'sla', 'helpdesk', 'helpdesk-events', 'helpdesk-scheduled', 'helpdesk-heavy', 'helpdesk-ai', 'helpdesk-audit', 'helpdesk-social-ai', 'helpdesk-social-analytics', 'helpdesk-social-processing', 'chatflow', 'broadcasts', 'helpdesk-broadcasts', 'helpdesklivechat', 'drip', 'remarketing', 'remarketing-webhooks'],
+                //
+                // helpdesk-ps, helpdesk-ps-warming, helpdesk-erp,
+                // helpdesk-erp-warming y helpdesk-embeddings sumadas 20-sep-2026:
+                // mismo patron -- en 'production' las cubre 'supervisor-helpdesk-erp'
+                // (linea 353), pero aqui no habia worker. RefreshPsContextJob
+                // (revalidacion en background del contexto de cliente de
+                // PrestashopContextService) y WarmPsCacheJob (programado cada 30
+                // min) se encolaban y jamas se procesaban en local.
+                //
+                // media-light/optimize/scan, helpdeskcompliance, impressions y
+                // campaigns-scheduler sumadas 21-sep-2026: eran colas con jobs
+                // reales sin worker (66 de Media y 1.666 PublishScheduled/
+                // EndExpiredCampaignsJob acumulados en Redis; el borrado GDPR
+                // en cascada de HelpdeskCompliance tampoco corria). Se dejan
+                // FUERA a proposito las que escriben en sistemas externos --
+                // sync (SyncProductToErpListener escribe en el ERP),
+                // prestashop-sync, supplier-*, ai-content-generation -- y
+                // media-heavy (OCR/IA/HLS): en local no debe salir nada hacia
+                // fuera sin quererlo. En produccion si estan cubiertas.
+                'queue' => ['default', 'pagespeed', 'google-sync', 'notifications', 'notifications-high', 'reviews-sync', 'exports', 'reviews-replies', 'replies', 'emails', 'sla', 'helpdesk', 'helpdesk-events', 'helpdesk-scheduled', 'helpdesk-heavy', 'helpdesk-ai', 'helpdesk-audit', 'helpdesk-social-ai', 'helpdesk-social-analytics', 'helpdesk-social-processing', 'chatflow', 'broadcasts', 'helpdesk-broadcasts', 'helpdesklivechat', 'drip', 'remarketing', 'remarketing-webhooks', 'helpdesk-ps', 'helpdesk-ps-warming', 'helpdesk-erp', 'helpdesk-erp-warming', 'helpdesk-embeddings', 'media-light', 'media-optimize', 'media-scan', 'helpdeskcompliance', 'impressions', 'campaigns-scheduler'],
                 'balance' => 'simple',
                 'processes' => 3,
                 'tries' => 1,

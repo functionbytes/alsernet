@@ -71,4 +71,7 @@ yarn.lock
 tmp/
 temp/
 *.tmp
+
+# direnv: config local por desarrollador (ej. cuenta de Claude distinta)
+.envrc
 EOF

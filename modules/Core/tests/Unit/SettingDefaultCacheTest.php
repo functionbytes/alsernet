@@ -62,4 +62,38 @@ class SettingDefaultCacheTest extends TestCase
         // Y el default no lo pisa aunque se pida con uno distinto.
         $this->assertSame('guardado', Setting::get($this->key));
     }
+
+    public function test_la_segunda_lectura_del_mismo_request_no_sale_del_proceso(): void
+    {
+        Setting::set($this->key, 'uno');
+        $this->assertSame('uno', Setting::get($this->key));
+
+        // Cambio por debajo del modelo (sin eventos) y caché vaciada: solo la
+        // memoria del proceso puede seguir devolviendo 'uno'.
+        Setting::query()->where('key', $this->key)->update(['value' => 'dos']);
+        Cache::forget("setting_{$this->key}");
+
+        $this->assertSame('uno', Setting::get($this->key));
+
+        Setting::forgetMemo();
+
+        $this->assertSame('dos', Setting::get($this->key));
+    }
+
+    public function test_set_y_los_eventos_del_modelo_invalidan_la_memoria(): void
+    {
+        Setting::set($this->key, 'a');
+        $this->assertSame('a', Setting::get($this->key));
+
+        Setting::set($this->key, 'b');
+        $this->assertSame('b', Setting::get($this->key));
+
+        Setting::query()->where('key', $this->key)->first()->update(['value' => 'c']);
+        Cache::forget("setting_{$this->key}");
+        $this->assertSame('c', Setting::get($this->key));
+
+        Setting::query()->where('key', $this->key)->first()->delete();
+        Cache::forget("setting_{$this->key}");
+        $this->assertSame('sin-valor', Setting::get($this->key, 'sin-valor'));
+    }
 }

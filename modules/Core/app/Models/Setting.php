@@ -25,6 +25,37 @@ class Setting extends Model implements HasMedia
     protected $fillable = ['key', 'value'];
 
     /**
+     * Memoria de la petición en curso: evita repetir la ida y vuelta a Redis
+     * cuando un mismo request lee varias veces la misma clave. La vacían set(),
+     * los eventos saved/deleted del modelo y forgetMemo(), que además engancha
+     * CoreServiceProvider al fin de request y de job (los workers de cola no
+     * mueren entre jobs y, sin ese gancho, arrastrarían el valor para siempre).
+     *
+     * @var array<string, mixed>
+     */
+    private static array $memo = [];
+
+    protected static function booted(): void
+    {
+        static::saved(fn (self $setting) => self::forgetMemo($setting->key));
+        static::deleted(fn (self $setting) => self::forgetMemo($setting->key));
+    }
+
+    /**
+     * Olvida lo memoizado (una clave, o todo si no se indica).
+     */
+    public static function forgetMemo(?string $name = null): void
+    {
+        if ($name === null) {
+            self::$memo = [];
+
+            return;
+        }
+
+        unset(self::$memo[$name]);
+    }
+
+    /**
      * Register media collections for Setting model
      */
     public function registerMediaCollections(): void
@@ -73,15 +104,19 @@ class Setting extends Model implements HasMedia
         // el default en la caché el segundo llamador recibía el ajuste ajeno
         // durante diez minutos. Se cachea un centinela de "esta clave no existe"
         // y el default lo pone siempre quien pregunta.
-        $value = cache()->remember("setting_{$name}", now()->addMinutes(10), function () use ($name) {
-            $setting = self::where('key', $name)->first();
+        if (! array_key_exists($name, self::$memo)) {
+            self::$memo[$name] = cache()->remember("setting_{$name}", now()->addMinutes(10), function () use ($name) {
+                $setting = self::where('key', $name)->first();
 
-            if ($setting) {
-                return $setting->value;
-            }
+                if ($setting) {
+                    return $setting->value;
+                }
 
-            return self::defaultSettings()[$name]['value'] ?? self::MISSING;
-        });
+                return self::defaultSettings()[$name]['value'] ?? self::MISSING;
+            });
+        }
+
+        $value = self::$memo[$name];
 
         return $value === self::MISSING ? $defaultValue : $value;
     }
@@ -120,6 +155,7 @@ class Setting extends Model implements HasMedia
         $settings = self::where('key', 'LIKE', "{$prefix}.%")->pluck('key');
         foreach ($settings as $key) {
             cache()->forget("setting_{$key}");
+            self::forgetMemo($key);
         }
     }
 
@@ -174,6 +210,7 @@ class Setting extends Model implements HasMedia
 
         // Invalidate cache for this specific setting
         cache()->forget("setting_{$name}");
+        self::forgetMemo($name);
 
         return $option;
     }

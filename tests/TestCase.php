@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
+use Modules\Core\Models\Setting as CoreSetting;
 use Modules\Helpdesk\Models\Setting;
 
 abstract class TestCase extends BaseTestCase
@@ -84,6 +85,10 @@ abstract class TestCase extends BaseTestCase
         // que el primero acababa de fijar y revertir en su transacción.
         if (class_exists(Setting::class)) {
             Setting::forgetMemo();
+        }
+
+        if (class_exists(CoreSetting::class)) {
+            CoreSetting::forgetMemo();
         }
 
         // Ningún sitio del proyecto configura un timeout por defecto para

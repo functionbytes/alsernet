@@ -85,6 +85,27 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         | Misma Redis que 'redis', pero con retry_after por encima de los jobs de
+         | larga duracion (Supplier sync/limpiezas con $timeout 3600, HLS 1800,
+         | supplier-ai 700). Con los 360 s de 'redis' un job asi se reentregaba a
+         | otro worker a los 6 minutos: acababa ejecutandose dos veces, o marcado
+         | como fallido por MaxAttempts sin haber terminado.
+         |
+         | Solo lo usan los supervisores de Horizon que atienden esas colas; el
+         | resto sigue recuperandose de un worker caido a los 6 minutos. Los jobs
+         | se despachan igual (conexion 'redis'): el retry_after lo fija quien
+         | hace el pop, no quien encola.
+         */
+        'redis-long' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => env('REDIS_QUEUE', 'default'),
+            'retry_after' => (int) env('REDIS_LONG_QUEUE_RETRY_AFTER', 3800),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],
