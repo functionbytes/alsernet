@@ -6,13 +6,17 @@ import {
     addToCart,
     canAddToCart,
     CartSnapshot,
+    findVariantOption,
     getCart,
     getShop,
     getViewedProducts,
     refreshCart,
+    VariantGroup,
+    VariantOption,
     ViewedProduct,
 } from '../widget-commerce';
 import { touchChatSession } from '../widget-attribution';
+import { VariantPicker } from '../components/VariantPicker';
 
 /**
  * Panel "Productos" del visitante (equivalente al coviewer de Oct8ne):
@@ -34,6 +38,8 @@ interface ProductDetail {
     url: string;
     has_combinations: boolean;
     available: boolean;
+    groups?: VariantGroup[];
+    options?: VariantOption[];
 }
 
 type Tab = 'viewed' | 'cart';
@@ -97,6 +103,7 @@ export function ShopScreen() {
     const [loading, setLoading] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
     const [addState, setAddState] = useState<'idle' | 'adding' | 'added' | 'error'>('idle');
+    const [variantSelection, setVariantSelection] = useState<Record<string, string>>({});
 
     // La cesta puede cambiar en otra parte (tema, agente, otra pestaña).
     useEffect(() => {
@@ -113,6 +120,7 @@ export function ShopScreen() {
         setDetail(null);
         setImageIndex(0);
         setAddState('idle');
+        setVariantSelection({});
         const url = new URL(shop.product_url, window.location.href);
         url.searchParams.set('id', detailId);
         fetch(url.toString(), { credentials: 'same-origin', headers: { Accept: 'application/json' }, cache: 'no-store' })
@@ -126,10 +134,15 @@ export function ShopScreen() {
     const cartLines = cart?.lines ?? [];
     const cartCount = cart?.products_count ?? 0;
 
+    const variantMatch = detail?.has_combinations && detail.groups?.length && detail.options?.length
+        ? findVariantOption({ groups: detail.groups, options: detail.options }, variantSelection)
+        : null;
+
     const handleAdd = async () => {
         if (!detail) return;
+        const idProductAttribute = variantMatch ? variantMatch.id_product_attribute : detail.id_product_attribute ?? 0;
         setAddState('adding');
-        const res = await addToCart(Number(detail.id), detail.id_product_attribute ?? 0, 1);
+        const res = await addToCart(Number(detail.id), idProductAttribute, 1);
         setAddState(res.ok ? 'added' : 'error');
         if (res.ok) {
             touchChatSession('cart');
@@ -145,7 +158,10 @@ export function ShopScreen() {
     // ── Ficha de producto ─────────────────────────────────────────────
     if (detailId) {
         const images = detail?.images?.length ? detail.images : [];
-        const canAdd = !!detail && detail.available && !detail.has_combinations && canAddToCart();
+        const showVariantPicker = !!detail?.has_combinations && !!detail.groups?.length && !!detail.options?.length;
+        const canAdd = !!detail && canAddToCart() && (showVariantPicker ? !!variantMatch?.available : detail.available && !detail.has_combinations);
+        const effectiveAvailable = variantMatch ? variantMatch.available : detail?.available;
+        const mainImage = imageIndex === 0 && variantMatch?.image ? variantMatch.image : images[imageIndex];
         return (
             <div className="wgt-shop">
                 <header className="wgt-screen-header wgt-shop-header">
@@ -160,7 +176,7 @@ export function ShopScreen() {
                     ) : (
                         <article className="wgt-pd">
                             <div className="wgt-pd-media">
-                                <Thumb src={images[imageIndex]} alt={detail.title} className="wgt-pd-image" />
+                                <Thumb src={mainImage} alt={detail.title} className="wgt-pd-image" />
                                 {images.length > 1 && (
                                     <div className="wgt-pd-dots" role="tablist">
                                         {images.map((_, i) => (
@@ -175,9 +191,11 @@ export function ShopScreen() {
                             </div>
                             <h2 className="wgt-pd-title">{detail.title}</h2>
                             <div className="wgt-pd-price">
-                                <span className="wgt-pd-price-now">{money(detail.price, detail.currency)}</span>
-                                {detail.price_original && <span className="wgt-pd-price-was">{money(detail.price_original, detail.currency)}</span>}
-                                {!detail.available && <span className="wgt-pd-badge">{t('shop.out_of_stock')}</span>}
+                                <span className="wgt-pd-price-now">{money(variantMatch ? variantMatch.price : detail.price, detail.currency)}</span>
+                                {(variantMatch ? variantMatch.price_original : detail.price_original) != null && (
+                                    <span className="wgt-pd-price-was">{money(variantMatch ? variantMatch.price_original : detail.price_original, detail.currency)}</span>
+                                )}
+                                {!effectiveAvailable && <span className="wgt-pd-badge">{t('shop.out_of_stock')}</span>}
                             </div>
                             {detail.description && (
                                 <details className="wgt-pd-desc">
@@ -186,11 +204,22 @@ export function ShopScreen() {
                                 </details>
                             )}
                             <div className="wgt-pd-actions">
+                                {showVariantPicker && (
+                                    <VariantPicker
+                                        groups={detail.groups!}
+                                        options={detail.options!}
+                                        selection={variantSelection}
+                                        onSelect={(group, value) => setVariantSelection((s) => ({ ...s, [group]: value }))}
+                                        primaryColor={primaryColor}
+                                    />
+                                )}
                                 {canAdd ? (
                                     <button type="button" className={`wgt-pd-primary is-${addState}`} style={addState === 'added' ? undefined : { background: primaryColor }}
                                         onClick={handleAdd} disabled={addState === 'adding'} aria-live="polite">
                                         {addState === 'adding' ? t('shop.adding') : addState === 'added' ? `✓ ${t('shop.added')}` : t('shop.add_to_cart')}
                                     </button>
+                                ) : showVariantPicker ? (
+                                    <p className="wgt-variant-hint">{variantMatch ? t('shop.out_of_stock') : t('shop.select_all_options')}</p>
                                 ) : detail.has_combinations ? (
                                     <a className="wgt-pd-primary" style={{ background: primaryColor }} href={detail.url}>{t('shop.choose_options')}</a>
                                 ) : null}

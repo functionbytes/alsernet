@@ -3834,6 +3834,95 @@
     text-decoration: none;
 }
 
+/* --- Selector de combinación (talla, color…): tarjeta y ficha de producto --- */
+.wgt-variant-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.wgt-variant-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wgt-variant-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--wgt-gray-600);
+}
+
+.wgt-variant-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.wgt-variant-chip {
+    position: relative;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--wgt-border);
+    border-radius: 6px;
+    background: var(--wgt-white);
+    color: var(--wgt-gray-800);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.wgt-variant-chip.is-selected {
+    border-width: 2px;
+    font-weight: 700;
+}
+
+.wgt-variant-chip.is-disabled {
+    color: var(--wgt-gray-400);
+    background: var(--wgt-gray-50);
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+.wgt-variant-chip-color {
+    padding: 3px;
+    border-radius: 50%;
+}
+
+.wgt-variant-swatch {
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--wgt-border);
+}
+
+.wgt-variant-lowstock {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--wgt-warning, #f0a500);
+}
+
+.wgt-variant-lowstock-note {
+    margin: 4px 0 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #b37400;
+}
+
+.wgt-variant-hint {
+    margin: 0;
+    font-size: 11px;
+    color: var(--wgt-gray-600);
+}
+
 /* --- Engagement segment banners --- */
 .hd-segment-banner {
     display: flex;
@@ -4673,4 +4762,16 @@ a.wgt-bot-card:hover {
 
 .wgt-ai-feedback-btn:disabled:not(.is-selected) {
     opacity: 0.4;
+}
+
+.wgt-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }

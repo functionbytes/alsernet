@@ -76,6 +76,8 @@ export const translations = {
             checkout: 'Ir a pagar',
             add_error: 'No se pudo añadir. Inténtalo en la ficha.',
             out_of_stock: 'Sin stock',
+            select_all_options: 'Elige todas las opciones',
+            last_units: 'Últimas unidades',
         },
         nav: {
             home: 'Inicio',
@@ -313,6 +315,8 @@ export const translations = {
             checkout: 'Checkout',
             add_error: 'Could not add it. Please try on the product page.',
             out_of_stock: 'Out of stock',
+            select_all_options: 'Choose all the options',
+            last_units: 'Last few left',
         },
         nav: {
             home: 'Home',
@@ -550,6 +554,8 @@ export const translations = {
             checkout: 'Finalizar compra',
             add_error: 'Não foi possível adicionar. Tente na página do produto.',
             out_of_stock: 'Sem stock',
+            select_all_options: 'Escolha todas as opções',
+            last_units: 'Últimas unidades',
         },
         nav: {
             home: 'Início',
@@ -787,6 +793,8 @@ export const translations = {
             checkout: 'Commander',
             add_error: 'Impossible d’ajouter. Essayez depuis la fiche produit.',
             out_of_stock: 'Rupture de stock',
+            select_all_options: 'Choisissez toutes les options',
+            last_units: 'Derniers articles',
         },
         nav: {
             home: 'Accueil',
@@ -1024,6 +1032,8 @@ export const translations = {
             checkout: 'Zur Kasse',
             add_error: 'Konnte nicht hinzugefügt werden. Bitte auf der Produktseite versuchen.',
             out_of_stock: 'Nicht auf Lager',
+            select_all_options: 'Wähle alle Optionen aus',
+            last_units: 'Nur noch wenige',
         },
         nav: {
             home: 'Startseite',
@@ -1261,6 +1271,8 @@ export const translations = {
             checkout: 'Vai alla cassa',
             add_error: 'Impossibile aggiungere. Prova dalla scheda prodotto.',
             out_of_stock: 'Esaurito',
+            select_all_options: 'Scegli tutte le opzioni',
+            last_units: 'Ultimi pezzi',
         },
         nav: {
             home: 'Home',

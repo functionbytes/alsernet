@@ -331,6 +331,87 @@ async function addToNativePrestashopCart(idProduct: number, idProductAttribute: 
 }
 
 /**
+ * Combinaciones (talla, color…) de un producto para elegirlas sin salir del
+ * widget: la ficha (`widgetproduct.php`) las incluye cuando el producto
+ * `has_combinations`. Se piden solo al abrir el selector y se cachean en
+ * memoria por producto (misma pestaña).
+ */
+export interface VariantGroupValue {
+    value: string;
+    color_hex?: string | null;
+}
+
+export interface VariantGroup {
+    name: string;
+    type: 'select' | 'radio' | 'color' | string;
+    values: VariantGroupValue[];
+}
+
+export interface VariantOption {
+    id_product_attribute: number;
+    label: string;
+    /** Grupo → valor elegido, p. ej. { Talla: '42', Color: 'Marrón' }. */
+    groups: Record<string, string>;
+    available: boolean;
+    low_stock: boolean;
+    price: number;
+    price_original: number | null;
+    image: string | null;
+    default: boolean;
+}
+
+export interface ProductVariants {
+    groups: VariantGroup[];
+    options: VariantOption[];
+}
+
+const variantsCache = new Map<string, Promise<ProductVariants | null>>();
+
+/** Combinaciones del producto (cacheadas); null si no tiene o no se pudieron cargar. */
+export function getProductVariants(idProduct: string | number): Promise<ProductVariants | null> {
+    const key = String(idProduct);
+    let cached = variantsCache.get(key);
+    if (!cached) {
+        cached = fetchProductVariants(key);
+        variantsCache.set(key, cached);
+    }
+
+    return cached;
+}
+
+async function fetchProductVariants(idProduct: string): Promise<ProductVariants | null> {
+    const productUrl = getShop()?.product_url;
+    if (!productUrl) {
+        return null;
+    }
+
+    try {
+        const url = new URL(productUrl, window.location.href);
+        url.searchParams.set('id', idProduct);
+        const res = await fetch(url.toString(), { credentials: 'same-origin', headers: { Accept: 'application/json' }, cache: 'no-store' });
+        if (!res.ok) {
+            return null;
+        }
+        const json = await res.json() as { product?: { groups?: VariantGroup[]; options?: VariantOption[] } | null };
+        const groups = json?.product?.groups ?? [];
+        const options = json?.product?.options ?? [];
+
+        return groups.length && options.length ? { groups, options } : null;
+    } catch {
+        return null;
+    }
+}
+
+/** La combinación cuya selección de grupos coincide exactamente, o null si falta elegir alguno. */
+export function findVariantOption(variants: ProductVariants, selection: Record<string, string>): VariantOption | null {
+    if (Object.keys(selection).length !== variants.groups.length) {
+        return null;
+    }
+
+    return variants.options.find(o => variants.groups.every(g => o.groups[g.name] === selection[g.name])) ?? null;
+}
+
+/**
  * La cesta cambió desde el servidor (el agente o el bot añadieron un producto
  * vía la tienda): relee la cesta, avisa al latido y refresca el minicarrito.
  */

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { RecommendationProduct } from '../widget-store';
-import { addToCart, canAddToCart, getShop } from '../widget-commerce';
+import { addToCart, canAddToCart, findVariantOption, getProductVariants, getShop, ProductVariants } from '../widget-commerce';
 import { touchChatSession } from '../widget-attribution';
 import { useTranslation } from '../i18n/useLanguage';
+import { VariantPicker } from './VariantPicker';
 
 /**
  * Producto de una tarjeta. Los del catálogo (carrusel enviado por el agente o
@@ -38,6 +39,9 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
     // en vez del icono de imagen rota del navegador.
     const [failed, setFailed] = useState<Record<string, boolean>>({});
     const [addState, setAddState] = useState<Record<string, AddState>>({});
+    // Selector de combinación abierto dentro de la tarjeta (talla, color…).
+    const [variants, setVariants] = useState<Record<string, ProductVariants | null | 'loading'>>({});
+    const [selection, setSelection] = useState<Record<string, Record<string, string>>>({});
 
     if (products.length === 0) {
         return null;
@@ -57,16 +61,29 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
         }
     };
 
-    const handleAdd = async (product: CardProduct) => {
+    const handleAdd = async (product: CardProduct, idProductAttribute?: number) => {
         const key = String(product.id);
         if (addState[key] === 'adding') return;
         setAddState((s) => ({ ...s, [key]: 'adding' }));
-        const res = await addToCart(Number(product.id), product.id_product_attribute ?? 0, 1);
+        const res = await addToCart(Number(product.id), idProductAttribute ?? product.id_product_attribute ?? 0, 1);
         setAddState((s) => ({ ...s, [key]: res.ok ? 'added' : 'error' }));
         if (res.ok) {
             // Añadido desde el chat: la venta se atribuye a esta conversación.
             touchChatSession('cart');
         }
+    };
+
+    // Abre el selector de combinación dentro de la tarjeta y carga sus opciones (una vez por producto).
+    const openVariantPicker = (key: string, idProduct: string | number) => {
+        setVariants((s) => {
+            if (s[key] !== undefined) return s;
+            getProductVariants(idProduct).then((data) => setVariants((s2) => ({ ...s2, [key]: data })));
+            return { ...s, [key]: 'loading' };
+        });
+    };
+
+    const selectVariantValue = (key: string, groupName: string, value: string) => {
+        setSelection((s) => ({ ...s, [key]: { ...(s[key] ?? {}), [groupName]: value } }));
     };
 
     const formatPrice = (price?: number, currency?: string): string | null => {
@@ -94,7 +111,14 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
                     const fromCatalog = typeof product.has_combinations === 'boolean';
                     const unavailable = product.available === false;
                     const canAdd = shopCanAdd && fromCatalog && !product.has_combinations && !unavailable;
-                    const needsOptions = fromCatalog && product.has_combinations && !unavailable && !!product.url;
+                    const canPickVariant = shopCanAdd && fromCatalog && product.has_combinations && !unavailable;
+
+                    const variantData = variants[key];
+                    const pickerOpen = variantData !== undefined;
+                    const matched = variantData && variantData !== 'loading' ? findVariantOption(variantData, selection[key] ?? {}) : null;
+                    const displayPrice = matched ? matched.price : product.price;
+                    const displayPriceOriginal = matched ? matched.price_original ?? undefined : product.price_original;
+                    const displayImage = matched?.image || product.image_url;
 
                     return (
                         <div key={key} className="wgt-rec-item">
@@ -106,9 +130,9 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
                                 disabled={!product.url}
                             >
                                 <div className="wgt-rec-img-wrap">
-                                    {product.image_url && !failed[key] ? (
+                                    {displayImage && !failed[key] ? (
                                         <img
-                                            src={product.image_url}
+                                            src={displayImage}
                                             alt=""
                                             loading="lazy"
                                             className="wgt-rec-img"
@@ -120,11 +144,11 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
                                 </div>
                                 <div className="wgt-rec-info">
                                     <p className="wgt-rec-name">{product.name}</p>
-                                    {product.price != null && (
+                                    {displayPrice != null && (
                                         <p className="wgt-rec-price" style={{ color: primaryColor }}>
-                                            {formatPrice(product.price, product.currency)}
-                                            {product.price_original != null && product.price_original > product.price && (
-                                                <span className="wgt-rec-price-was">{formatPrice(product.price_original, product.currency)}</span>
+                                            {formatPrice(displayPrice, product.currency)}
+                                            {displayPriceOriginal != null && displayPriceOriginal > displayPrice && (
+                                                <span className="wgt-rec-price-was">{formatPrice(displayPriceOriginal, product.currency)}</span>
                                             )}
                                         </p>
                                     )}
@@ -143,8 +167,42 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
                                     >
                                         {state === 'adding' ? t('shop.adding') : state === 'added' ? `✓ ${t('shop.added')}` : t('shop.add_to_cart')}
                                     </button>
-                                ) : needsOptions ? (
-                                    <button type="button" className="wgt-rec-options" onClick={() => openProduct(product, true)}>
+                                ) : canPickVariant && pickerOpen ? (
+                                    <>
+                                        {variantData === 'loading' ? (
+                                            <p className="wgt-variant-hint">{t('shop.loading')}</p>
+                                        ) : variantData ? (
+                                            <>
+                                                <VariantPicker
+                                                    groups={variantData.groups}
+                                                    options={variantData.options}
+                                                    selection={selection[key] ?? {}}
+                                                    onSelect={(group, value) => selectVariantValue(key, group, value)}
+                                                    primaryColor={primaryColor}
+                                                />
+                                                {matched ? (
+                                                    <button
+                                                        type="button"
+                                                        className={`wgt-rec-add is-${state}`}
+                                                        style={state === 'added' ? undefined : { background: primaryColor }}
+                                                        onClick={() => handleAdd(product, matched.id_product_attribute)}
+                                                        disabled={state === 'adding'}
+                                                        aria-live="polite"
+                                                    >
+                                                        {state === 'adding' ? t('shop.adding') : state === 'added' ? `✓ ${t('shop.added')}` : t('shop.add_to_cart')}
+                                                    </button>
+                                                ) : (
+                                                    <p className="wgt-variant-hint">{t('shop.select_all_options')}</p>
+                                                )}
+                                            </>
+                                        ) : product.url ? (
+                                            <button type="button" className="wgt-rec-options" onClick={() => openProduct(product, true)}>
+                                                {t('shop.choose_options')}
+                                            </button>
+                                        ) : null}
+                                    </>
+                                ) : canPickVariant ? (
+                                    <button type="button" className="wgt-rec-options" onClick={() => openVariantPicker(key, product.id)}>
                                         {t('shop.choose_options')}
                                     </button>
                                 ) : product.url ? (
