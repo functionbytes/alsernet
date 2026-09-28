@@ -57,6 +57,15 @@
 {{-- HDCommerce: abrir/cerrar .bv-modal y leer el cliente del .bv-right. --}}
 @include('helpdesk::helpdesk.inbox.partials.modals._commerce-js')
 
+{{-- Los modales de abajo (compartidos con el inbox y Contactos 360) traen
+     sus <link rel="stylesheet"> en línea, dentro del <body> y DELANTE de
+     tickets-app.min.js: un script síncrono espera a las hojas que tiene
+     antes, así que el panel no arrancaba hasta descargar las 23 (QA
+     28-sep-2026). Aquí solo visten modales cerrados —comprobado: sin ellas no
+     cambia la visibilidad ni el tamaño de nada en pantalla—, así que en esta
+     pantalla se cargan sin bloquear. Se reescribe la salida en vez de tocar
+     las vistas porque en el inbox sí pintan paneles visibles. --}}
+@php ob_start(); @endphp
 @if($ercTktPs)
     {{-- JS del tab oculto de la tienda (window.PscStore). En el inbox y en
          Contactos 360 lo empuja el propio tab al renderizarse en servidor;
@@ -77,6 +86,7 @@
 @if($ercTktErp)
     @include('helpdeskerp::modals.order-workspace')
 @endif
+{!! preg_replace('/<link\s+rel="stylesheet"(?![^>]*\smedia=)/i', '<link rel="stylesheet" media="print" onload="this.media=\'all\'"', ob_get_clean()) !!}
 
 @push('scripts')
     <script src="{{ asset('modules/helpdeskerp/js/erp-tickets.js') }}?v={{ @filemtime(public_path('modules/helpdeskerp/js/erp-tickets.js')) }}" defer></script>

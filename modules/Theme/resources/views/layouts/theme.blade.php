@@ -43,6 +43,10 @@
     <title>@hasSection('title')@yield('title') · {{ getSiteName() }}@else{{ getSiteTitle() }}@endif</title>
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
     <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+    {{-- Panel privado y noindex: la descripción no es para buscadores, pero
+         sí la leen lectores de pantalla y previsualizaciones de enlaces
+         compartidos (Lighthouse meta-description, QA 28-sep-2026). --}}
+    <meta name="description" content="{{ trim(strip_tags($__env->yieldContent('description'))) ?: getSiteName().' · '.(trim(strip_tags($__env->yieldContent('title'))) ?: __('Panel de administración')) }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, shrink-to-fit=no"/>
     <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
     <meta name="apple-mobile-web-app-capable" content="yes">
