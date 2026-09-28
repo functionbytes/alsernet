@@ -72,8 +72,18 @@ class TicketMailDetailQueryCountTest extends TestCase
         );
 
         // Techo del coste fijo con cachés calientes (13 medidas el
-        // 28-sep-2026, casi todas del resumen de cliente 360).
-        $this->assertLessThanOrEqual(20, $shortThread);
+        // 28-sep-2026, casi todas del resumen de cliente 360). En frío (Redis
+        // vacío) el mismo panel bajó de 42 a 37 queries el mismo día al
+        // deduplicar en CustomerInsightsService::aggregates() los cuatro
+        // agregados de salud del cliente (avg CSAT, cerradas, última
+        // conversación, sentimiento negativo) que healthScore()/
+        // healthFactors()/lifetimeMetrics() recalculaban cada uno por su
+        // cuenta dentro del mismo resumen — pero esa dedup solo se nota en
+        // frío: ContactAggregatorService::resumen() ya envuelve todo el
+        // bloque en Cache::remember(60s), así que en caliente esas 4 consultas
+        // ni siquiera llegan a ejecutarse (0 en ambos casos, antes y después).
+        // Margen de 2 sobre las 13 medidas, no un techo redondeado a ojo.
+        $this->assertLessThanOrEqual(15, $shortThread);
     }
 
     private function countQueriesForThreadOf(int $size, User $manager): int

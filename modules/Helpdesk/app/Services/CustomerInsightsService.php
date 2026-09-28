@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Conversation;
@@ -10,6 +11,33 @@ use Modules\Helpdesk\Models\Customer;
 
 class CustomerInsightsService
 {
+    /**
+     * Memoria de la petición en curso — mismo patrón que Setting::$memo
+     * (Modules\Helpdesk\Models\Setting). healthScore(), healthFactors() y
+     * lifetimeMetrics() comparten los mismos cuatro agregados (avg CSAT,
+     * conversaciones cerradas, última conversación, sentimiento negativo
+     * reciente); buildResumen() (ContactAggregatorService, panel "Cliente" de
+     * Tickets) los pedía tres veces en la misma petición — medido el
+     * 28-sep-2026: avg(rating) x3, COUNT(closed_at) x2, última conversación
+     * x2, exists(tag_pivot) x2. aggregates() los calcula una sola vez por
+     * cliente y petición. En workers de cola el proceso no muere entre jobs:
+     * HelpdeskServiceProvider::registerSettingMemoReset() la vacía al
+     * terminar cada request y cada job, igual que Setting::$memo.
+     *
+     * @var array<int, array{csat_avg: ?float, closed_conversations_count: int, last_conversation_at: ?string, has_negative_sentiment_30d: bool}>
+     */
+    private static array $aggregatesMemo = [];
+
+    /**
+     * Olvida lo memoizado — igual que Setting::forgetMemo(), la necesitan los
+     * tests (TestCase::setUp()) para no arrastrar agregados de un test al
+     * siguiente dentro del mismo proceso de PHPUnit.
+     */
+    public static function forgetMemo(): void
+    {
+        self::$aggregatesMemo = [];
+    }
+
     /**
      * Calculate a 0-100 health score for a customer.
      *
@@ -48,29 +76,12 @@ class CustomerInsightsService
      */
     public function healthFactors(Customer $customer): array
     {
-        $csatAvg = CsatRating::query()
-            ->where('customer_id', $customer->id)
-            ->whereNotNull('answered_at')
-            ->avg('rating');
+        $aggregates = $this->aggregates($customer);
 
-        $closedCount = Conversation::query()
-            ->where('customer_id', $customer->id)
-            ->whereNotNull('closed_at')
-            ->count();
-
-        $lastConv = Conversation::query()
-            ->where('customer_id', $customer->id)
-            ->latest('created_at')
-            ->value('created_at');
-
-        $hasNegativeSentiment = DB::connection('helpdesk')
-            ->table('helpdesk_conversation_tag_pivot as pivot')
-            ->join('helpdesk_conversation_tags as t', 't.id', '=', 'pivot.tag_id')
-            ->join('helpdesk_conversations as c', 'c.id', '=', 'pivot.conversation_id')
-            ->where('c.customer_id', $customer->id)
-            ->whereIn('t.slug', ['sentiment-negative', 'sentiment_negative'])
-            ->where('pivot.created_at', '>=', now()->subDays(30))
-            ->exists();
+        $csatAvg = $aggregates['csat_avg'];
+        $closedCount = $aggregates['closed_conversations_count'];
+        $lastConv = $aggregates['last_conversation_at'] ? Carbon::parse($aggregates['last_conversation_at']) : null;
+        $hasNegativeSentiment = $aggregates['has_negative_sentiment_30d'];
 
         return [
             ['key' => 'csat', 'label' => 'Satisfacción (CSAT ≥ 4)', 'points' => $csatAvg !== null && $csatAvg >= 4 ? 30 : 0, 'max' => 30],
@@ -78,6 +89,55 @@ class CustomerInsightsService
             ['key' => 'recency', 'label' => 'Contacto en los últimos 6 meses', 'points' => $lastConv && now()->diffInMonths($lastConv, true) > 6 ? -20 : 0, 'max' => 20],
             ['key' => 'sentiment', 'label' => 'Sentimiento negativo (30 días)', 'points' => $hasNegativeSentiment ? -30 : 0, 'max' => 30],
         ];
+    }
+
+    /**
+     * Los cuatro agregados de salud del cliente (avg CSAT, conversaciones
+     * cerradas, última conversación, sentimiento negativo en 30 días),
+     * calculados una sola vez y compartidos por healthFactors()/
+     * calculateHealthScore()/lifetimeMetrics() — ver el porqué en
+     * {@see self::$aggregatesMemo}.
+     *
+     * @return array{csat_avg: ?float, closed_conversations_count: int, last_conversation_at: ?string, has_negative_sentiment_30d: bool}
+     */
+    private function aggregates(Customer $customer): array
+    {
+        // Sin Cache::remember a propósito: lifetimeMetrics() alimenta
+        // CustomerInsightsController en vivo y healthScore() ya cachea su
+        // resultado 900 s por su cuenta — aquí solo se deduplica dentro de
+        // la petición/job en curso.
+        return self::$aggregatesMemo[$customer->id] ??= (function () use ($customer): array {
+            $csatAvg = CsatRating::query()
+                ->where('customer_id', $customer->id)
+                ->whereNotNull('answered_at')
+                ->avg('rating');
+
+            $closedCount = Conversation::query()
+                ->where('customer_id', $customer->id)
+                ->whereNotNull('closed_at')
+                ->count();
+
+            $lastConversationAt = Conversation::query()
+                ->where('customer_id', $customer->id)
+                ->latest('created_at')
+                ->value('created_at');
+
+            $hasNegativeSentiment = DB::connection('helpdesk')
+                ->table('helpdesk_conversation_tag_pivot as pivot')
+                ->join('helpdesk_conversation_tags as t', 't.id', '=', 'pivot.tag_id')
+                ->join('helpdesk_conversations as c', 'c.id', '=', 'pivot.conversation_id')
+                ->where('c.customer_id', $customer->id)
+                ->whereIn('t.slug', ['sentiment-negative', 'sentiment_negative'])
+                ->where('pivot.created_at', '>=', now()->subDays(30))
+                ->exists();
+
+            return [
+                'csat_avg' => $csatAvg !== null ? (float) $csatAvg : null,
+                'closed_conversations_count' => (int) $closedCount,
+                'last_conversation_at' => $lastConversationAt?->toIso8601String(),
+                'has_negative_sentiment_30d' => $hasNegativeSentiment,
+            ];
+        })();
     }
 
     /**
@@ -184,10 +244,9 @@ class CustomerInsightsService
         // panel "Cliente" de Tickets (vía ContactAggregatorService) mostraba
         // el chip "CSAT 0" para clientes que nunca fueron encuestados, como
         // si tuvieran la peor valoración posible.
-        $csatAvg = CsatRating::query()
-            ->where('customer_id', $customer->id)
-            ->whereNotNull('answered_at')
-            ->avg('rating');
+        // Sale de aggregates() (compartido con healthFactors()) en vez de su
+        // propio avg('rating'): era la 3ª vez que se calculaba lo mismo.
+        $csatAvg = $this->aggregates($customer)['csat_avg'];
 
         $avgResponseSeconds = DB::connection('helpdesk')
             ->table('helpdesk_conversations')

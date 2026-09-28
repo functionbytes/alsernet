@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
 use Modules\Core\Models\Setting as CoreSetting;
 use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\CustomerInsightsService;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -108,6 +109,13 @@ abstract class TestCase extends BaseTestCase
 
         if (class_exists(CoreSetting::class)) {
             CoreSetting::forgetMemo();
+        }
+
+        // Mismo motivo que Setting::forgetMemo() arriba: CustomerInsightsService
+        // memoiza avg CSAT/cerradas/última conversación/sentimiento por cliente
+        // en un array estático (self::$aggregatesMemo) que Cache::flush() no toca.
+        if (class_exists(CustomerInsightsService::class)) {
+            CustomerInsightsService::forgetMemo();
         }
 
         // Ningún sitio del proyecto configura un timeout por defecto para

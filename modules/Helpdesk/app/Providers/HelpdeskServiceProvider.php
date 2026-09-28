@@ -68,6 +68,7 @@ use Modules\Helpdesk\Services\CannedReplyService;
 use Modules\Helpdesk\Services\ConversationEmailLogPanelRenderer;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CustomerEmailLogPanelRenderer;
+use Modules\Helpdesk\Services\CustomerInsightsService;
 use Modules\Helpdesk\Services\CustomerStatsService;
 use Modules\Helpdesk\Services\EmailInboundService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
@@ -136,6 +137,11 @@ class HelpdeskServiceProvider extends ServiceProvider
 
         Queue::after(fn () => Setting::forgetMemo());
         Queue::failing(fn () => Setting::forgetMemo());
+
+        // Misma vida útil para los agregados de cliente memoizados.
+        $this->app->terminating(fn () => CustomerInsightsService::forgetMemo());
+        Queue::after(fn () => CustomerInsightsService::forgetMemo());
+        Queue::failing(fn () => CustomerInsightsService::forgetMemo());
     }
 
     /**
