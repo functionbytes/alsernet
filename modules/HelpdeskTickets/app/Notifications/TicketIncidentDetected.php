@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
@@ -14,7 +15,7 @@ use Modules\HelpdeskTickets\Models\Ticket;
  * Va por correo y por base de datos: quien está de guardia mira la campana,
  * quien no está delante del panel necesita el correo.
  */
-class TicketIncidentDetected extends Notification
+class TicketIncidentDetected extends Notification implements ShouldQueue
 {
     use Queueable;
 
