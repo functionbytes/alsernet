@@ -64,13 +64,20 @@ class RelatedBuilder
         // linkedBy()) puede desvincularse desde aquí — desvincular desde el
         // otro extremo requeriría abrir el ticket contrario.
         // subticket_of va en su propia tarjeta (ver WorkBuilder).
-        $ownLinks = $ticket->links()->where('link_type', '!=', 'subticket_of')->with('linkedTicket')->get()
+        //
+        // Vínculos cargados una sola vez para todo el panel (loadMissing):
+        // WorkBuilder::workFor() filtra la misma colección por subticket_of
+        // en vez de volver a consultar helpdesk_ticket_links (eran cuatro
+        // consultas, dos por builder).
+        $ticket->loadMissing(['links.linkedTicket.status', 'linkedBy.ticket.status']);
+
+        $ownLinks = $ticket->links->where('link_type', '!=', 'subticket_of')
             ->map(function ($l) {
                 $this->attachStatus($l->linkedTicket);
 
                 return ['link_id' => $l->id, 'link_type' => $l->link_type, 'ticket' => $l->linkedTicket, 'unlinkable' => true];
             });
-        $reverseLinks = $ticket->linkedBy()->where('link_type', '!=', 'subticket_of')->with('ticket')->get()
+        $reverseLinks = $ticket->linkedBy->where('link_type', '!=', 'subticket_of')
             ->map(function ($l) {
                 $this->attachStatus($l->ticket);
 

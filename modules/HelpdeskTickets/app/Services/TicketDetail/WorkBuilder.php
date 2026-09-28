@@ -28,7 +28,10 @@ class WorkBuilder
             'closed' => $t->closed_at !== null,
         ];
 
-        $parentLink = $ticket->links()->where('link_type', 'subticket_of')->with('linkedTicket.status')->first();
+        // Misma colección que RelatedBuilder::relatedTicketsFor() (loadMissing
+        // no repite la consulta si ya la cargó), filtrada aquí por subticket_of.
+        $ticket->loadMissing(['links.linkedTicket.status', 'linkedBy.ticket.status']);
+        $parentLink = $ticket->links->firstWhere('link_type', 'subticket_of');
 
         return [
             // Definición de los campos de la categoría + valores actuales,
@@ -56,7 +59,7 @@ class WorkBuilder
             ] : null,
             'tasks' => TicketTask::query()->where('ticket_id', $ticket->id)->orderBy('position')->get()
                 ->map(fn (TicketTask $task) => $task->toPanelRow())->all(),
-            'subtickets' => $ticket->linkedBy()->where('link_type', 'subticket_of')->with('ticket.status')->get()
+            'subtickets' => $ticket->linkedBy->where('link_type', 'subticket_of')
                 ->pluck('ticket')->filter()->map($row)->values()->all(),
             'parent' => $parentLink?->linkedTicket ? $row($parentLink->linkedTicket) : null,
         ];
