@@ -4,9 +4,9 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketDetailDataController;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
+use Modules\HelpdeskTickets\Services\TicketDetailDataService;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -39,10 +39,13 @@ class TicketActivityAuthorLabelsTest extends TestCase
 
     private function causerName(?object $causer): ?string
     {
-        $method = new \ReflectionMethod(TicketDetailDataController::class, 'causerName');
+        // Movido de TicketDetailDataController a TicketDetailDataService
+        // (30-sep-2026, refactor estructural que extrajo el ensamblado del
+        // payload del panel de detalle a un servicio propio).
+        $method = new \ReflectionMethod(TicketDetailDataService::class, 'causerName');
         $method->setAccessible(true);
 
-        return $method->invoke(app(TicketDetailDataController::class), $causer);
+        return $method->invoke(app(TicketDetailDataService::class), $causer);
     }
 
     // ─── asignatario en la descripción del historial ─────────────────────────

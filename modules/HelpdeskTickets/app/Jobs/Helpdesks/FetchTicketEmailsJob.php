@@ -10,32 +10,37 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Modules\Core\Models\Setting;
-use Modules\Helpdesk\Models\Customer;
-use Modules\Helpdesk\Services\HelpdeskSettings;
-use Modules\HelpdeskEmailActivity\Services\EmailBounceCorrelatorService;
-use Modules\HelpdeskEmailActivity\Support\DsnMessageParser;
-use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
 use Modules\HelpdeskTickets\Events\MessageAdded;
-use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
-use Modules\HelpdeskTickets\Models\TicketStatus;
-use Modules\HelpdeskTickets\Services\SpamClassifierService;
-use Modules\HelpdeskTickets\Services\TicketAttachmentSecurityService;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Support\EmailReplyQuoteStripper;
+use Modules\HelpdeskTickets\Support\InboundEmailAttachmentStorer;
+use Modules\HelpdeskTickets\Support\InboundEmailBounceRouter;
+use Modules\HelpdeskTickets\Support\InboundEmailMessageParser;
+use Modules\HelpdeskTickets\Support\InboundEmailTicketResolver;
 use Webklex\PHPIMAP\Attachment as ImapAttachment;
 use Webklex\PHPIMAP\Attribute as ImapAttribute;
 use Webklex\PHPIMAP\Client as ImapClient;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message as ImapMessage;
 
+/**
+ * Lectura de buzones IMAP y creación/hilado de tickets a partir del correo
+ * entrante. El parseo de mensajes (InboundEmailMessageParser), el guardado de
+ * adjuntos (InboundEmailAttachmentStorer), el hilado/creación de tickets
+ * (InboundEmailTicketResolver) y la detección de rebotes/quejas
+ * (InboundEmailBounceRouter) viven en app/Support (30-sep-2026, job de 1103
+ * líneas) — este job se queda con la orquestación IMAP (conexión, colas,
+ * reintentos) y delega en esas clases. Los métodos protegidos que exponían
+ * esta lógica se conservan como delegados finos con el mismo nombre/firma:
+ * varios tests la ejercitan directamente (subclase de prueba y
+ * ReflectionMethod), y unserialize() de trabajos ya encolados no debe
+ * romperse.
+ */
 class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -64,6 +69,14 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
     public array $backoff = [30, 60, 120];
 
     protected ?TicketService $ticketService = null;
+
+    private ?InboundEmailMessageParser $emailParser = null;
+
+    private ?InboundEmailAttachmentStorer $attachmentStorer = null;
+
+    private ?InboundEmailTicketResolver $ticketResolver = null;
+
+    private ?InboundEmailBounceRouter $bounceRouter = null;
 
     /**
      * Cuando se define, solo se procesa el canal con este id (usado por el
@@ -497,607 +510,195 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
     }
 
     /**
-     * Detecta si el mensaje entrante es un DSN (bounce)/queja de spam en vez
-     * de correo real de un cliente, y de ser así lo desvía a
-     * EmailBounceCorrelatorService (marca el EmailLog original como
-     * bounced/complained si se puede correlacionar) — devuelve true en
-     * cualquier caso para que el caller NUNCA cree un ticket con esto,
-     * incluso si no hubo correlación (el remitente de un DSN casi siempre es
-     * un MAILER-DAEMON interno, nunca un cliente real).
-     *
-     * Gateado por helpdesk_emaillog_enabled(): con el módulo/integración
-     * apagados, no intenta nada y el DSN sigue el flujo normal de ticket
-     * (comportamiento idéntico al de antes de este cambio).
+     * Ver InboundEmailBounceRouter::routeIfBounceOrComplaint().
      */
     protected function routeIfBounceOrComplaint(ImapMessage $message): bool
     {
-        if (! helpdesk_emaillog_enabled()) {
-            return false;
-        }
-
-        $subject = $this->stringAttribute($message->subject) ?: '';
-        $rawBody = $this->rawSource($message) ?: '';
-
-        if (! DsnMessageParser::looksLikeBounceOrComplaint($subject, $rawBody)) {
-            return false;
-        }
-
-        try {
-            $ownMessageId = $this->stringAttribute($message->message_id) ?: '';
-            $isComplaint = DsnMessageParser::isComplaint($subject, $rawBody);
-            $isHard = DsnMessageParser::isHardBounce($rawBody);
-
-            $correlator = app(EmailBounceCorrelatorService::class);
-            $originalMessageId = DsnMessageParser::findOriginalMessageId($rawBody, $ownMessageId);
-
-            $matched = $originalMessageId
-                && $correlator->correlateByMessageId($originalMessageId, $subject, $isHard, $isComplaint);
-
-            if (! $matched && ($recipient = DsnMessageParser::findFailedRecipient($rawBody))) {
-                $matched = $correlator->correlateByRecipient($recipient, $subject, ['HelpdeskTickets'], $isHard, $isComplaint);
-            }
-
-            Log::info('FetchTicketEmailsJob: mensaje con forma de DSN/queja desviado de la creación de ticket', [
-                'subject' => $subject,
-                'matched' => $matched,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('FetchTicketEmailsJob: fallo correlacionando un DSN/queja', ['error' => $e->getMessage()]);
-        }
-
-        return true;
+        return $this->bounceRouter()->routeIfBounceOrComplaint($message);
     }
 
     /**
-     * Find existing ticket or create new one for email.
+     * Ver InboundEmailTicketResolver::findOrCreateTicket().
      */
     protected function findOrCreateTicket(array $parsed, array $connection = []): ?Ticket
     {
-        // Resolve the sender address up front: it is required both for ticket
-        // threading verification and for customer lookup/creation.
-        $rawFrom = $parsed['from'];
-        if (empty($rawFrom)) {
-            Log::warning('FetchTicketEmailsJob: email without From header, skipping', ['subject' => $parsed['subject']]);
-
-            return null;
-        }
-        $fromEmail = $this->extractEmailAddress($rawFrom);
-
-        // Sender blacklist: block by exact email or by domain (including
-        // subdomains) ANTES de cualquier intento de hilado. Estaba después del
-        // hilado por Message-ID, así que un remitente bloqueado que respondiera
-        // a un hilo existente se colaba entero: no se puede decidir si un
-        // correo entra sin haber mirado antes de quién viene.
-        if ($fromEmail && ($blocked = TicketEmailBlacklist::matches($fromEmail))) {
-            $blocked->registerMatch(
-                $fromEmail,
-                $parsed['subject'] ?? null,
-                $parsed['body_html'] ?? null,
-                $parsed['body_text'] ?? null,
-            );
-            Log::info("FetchTicketEmailsJob: email from {$fromEmail} discarded, sender is blacklisted (rule #{$blocked->id}).");
-
-            return null;
-        }
-
-        // Clasificador de spam: complementa a la lista negra, que solo bloquea
-        // remitentes YA conocidos. RETIENE en cuarentena, no descarta — un
-        // falso positivo aquí es un cliente real cuyo correo desaparece sin
-        // que nadie se entere. Ver SpamClassifierService.
-        if ($fromEmail && app(SpamClassifierService::class)->quarantineIfSpam($fromEmail, $parsed)) {
-            return null;
-        }
-
-        // Boletines y envíos automáticos de remitentes nuevos: a cuarentena,
-        // no a ticket. Antes Hostinger, JetBrains, Oracle o Mailrelay abrían
-        // tickets que además el escalado acababa subiendo a "Urgente".
-        if ($fromEmail && app(SpamClassifierService::class)->quarantineIfBulk($fromEmail, $parsed)) {
-            return null;
-        }
-
-        // Try to find by Message-ID threading first — In-Reply-To es el padre
-        // inmediato; References es la cadena completa del hilo (RFC 5322) y
-        // cubre el caso en que el cliente responde a un mensaje intermedio
-        // que ya no es el último, o un cliente de correo que solo rellena
-        // References y no In-Reply-To.
-        //
-        // La verificación de remitente aplica aquí igual que en el hilado por
-        // asunto de abajo, y por el mismo motivo. Los Message-ID salientes no
-        // son adivinables, pero sí circulan: basta con que el cliente reenvíe
-        // el correo del helpdesk a un tercero para que ese tercero tenga la
-        // cabecera y, respondiendo, escriba dentro de un ticket ajeno.
-        $threadIds = array_filter(array_merge(
-            [$parsed['in_reply_to']],
-            $this->splitReferences($parsed['references'] ?? null),
-        ));
-
-        if ($threadIds !== []) {
-            $existingMail = TicketMail::with('ticket.customer:id,email')
-                ->whereIn('message_id', $threadIds)
-                ->first();
-
-            if ($existingMail?->ticket) {
-                if ($this->senderMatchesTicket($existingMail->ticket, $fromEmail)) {
-                    return $this->threadedTicket($existingMail->ticket);
-                }
-
-                Log::warning('FetchTicketEmailsJob: Message-ID thread sender does not match ticket customer, not threading', [
-                    'ticket_number' => $existingMail->ticket->ticket_number,
-                    'from' => $fromEmail,
-                ]);
-            }
-        }
-
-        // Try to find by ticket number in subject (e.g., "Re: Ticket #TCK-2025-00123").
-        // Only thread into the ticket when the sender matches the ticket customer,
-        // otherwise a third party could inject messages into someone else's ticket.
-        if (preg_match('/#(TCK-\d{4}-\d{5})/', $parsed['subject'], $matches)) {
-            $ticket = Ticket::with('customer:id,email')->where('ticket_number', $matches[1])->first();
-            if ($ticket && $this->senderMatchesTicket($ticket, $fromEmail)) {
-                return $this->threadedTicket($ticket);
-            }
-
-            if ($ticket) {
-                Log::warning('FetchTicketEmailsJob: sender does not match ticket customer, creating new ticket', [
-                    'ticket_number' => $matches[1],
-                    'from' => $fromEmail,
-                ]);
-            }
-        }
-
-        // Llegados aquí no se pudo enlazar con un ticket existente, así que
-        // habría que CREAR uno nuevo. Si esta conexión no permite crear tickets
-        // (solo respuestas), no se crea: se devuelve null y el email se ignora.
-        // Sin conexión (fallback de buzón único) se mantiene el comportamiento previo.
-        if ($connection !== [] && ! ($connection['create_tickets'] ?? false)) {
-            return null;
-        }
-
-        $customer = Customer::where('email', $fromEmail)->first();
-
-        if (! $customer) {
-            // Create new customer
-            $fromName = $this->extractEmailName($parsed['from']);
-            $customer = Customer::create([
-                'email' => $fromEmail,
-                'name' => $fromName ?: $fromEmail,
-            ]);
-            Log::info("Created new customer: {$fromEmail}");
-        }
-
-        // Create new ticket inside a transaction so the lockForUpdate in
-        // generateTicketNumber() is effective and numbers never collide.
-        $ticket = DB::transaction(fn () => Ticket::create([
-            'customer_id' => $customer->id,
-            'subject' => $parsed['subject'],
-            'description' => $parsed['body_text'] ?? $parsed['body_html'],
-            'source' => 'email',
-            'status_id' => TicketStatus::where('is_default', true)->first()?->id ?? 1,
-            'priority' => $this->detectPriority($parsed['subject']),
-            // Explícito (no depender del TicketObserver::creating): el número se
-            // genera aquí, dentro de la transacción que hace efectivo el lockForUpdate.
-            'ticket_number' => Ticket::generateTicketNumber(),
-        ]));
-
-        Log::info("Created new ticket #{$ticket->ticket_number} from email");
-
-        // Sin esto, TicketCreated nunca se disparaba para un ticket nacido de
-        // un correo real: SendCustomerConfirmation (correo "hemos recibido tu
-        // solicitud"), NotifyAgentsOnNewTicket, RunAiAutoClassify, etc. están
-        // suscritos a este evento pero solo lo reciben cuando el ticket se
-        // crea vía TicketService::createTicket() (widget/formulario público),
-        // nunca desde este job — el único canal real de entrada de tickets no
-        // avisaba al cliente que su solicitud había llegado. Mismo patrón que
-        // el MessageAdded::dispatch() de más arriba.
-        TicketCreated::dispatch($ticket);
-
-        // Después del Ticket::create(), no antes: el trabajo lleva el ticket de
-        // origen para que CustomerErpResolved pueda enrutar ESTE ticket y no
-        // todo lo que el cliente tenga abierto.
-        $this->dispatchErpLookup($customer->id, $ticket->id);
-
-        return $ticket;
+        return $this->ticketResolver()->findOrCreateTicket($parsed, $connection);
     }
 
     /**
-     * Un correo que se engancha a un ticket ya abierto también pide la búsqueda.
-     *
-     * Antes solo se pedía en la rama que crea ticket: si el ERP estaba caído
-     * ese día, o el cliente aún no existía en gestión, nada volvía a intentarlo
-     * nunca. El enfriamiento de LinkCustomerToErpJob es lo que evita que esto
-     * consulte el ERP en cada respuesta.
+     * Ver InboundEmailTicketResolver::threadedTicket().
      */
     protected function threadedTicket(Ticket $ticket): Ticket
     {
-        if ($ticket->customer_id) {
-            $this->dispatchErpLookup($ticket->customer_id, $ticket->id);
-        }
-
-        return $ticket;
+        return $this->ticketResolver()->threadedTicket($ticket);
     }
 
     /**
-     * Best-effort y asíncrono: si el email no está en el ERP, o el ERP no
-     * responde, no se vincula nada — nunca bloquea ni descarta el correo.
-     * class_exists() porque HelpdeskErp es un módulo aparte que puede no estar
-     * instalado, y helpdesk_erp_enabled() respeta el toggle de
-     * Ajustes → Integraciones.
+     * Ver InboundEmailTicketResolver::dispatchErpLookup().
      */
     protected function dispatchErpLookup(int $customerId, int $ticketId): void
     {
-        if (! helpdesk_erp_enabled() || ! class_exists(LinkCustomerToErpJob::class)) {
-            return;
-        }
-
-        LinkCustomerToErpJob::dispatch($customerId, 'ticket', $ticketId);
+        $this->ticketResolver()->dispatchErpLookup($customerId, $ticketId);
     }
 
     /**
-     * Determine whether the sender address belongs to the ticket customer.
+     * Ver InboundEmailTicketResolver::senderMatchesTicket().
      */
     protected function senderMatchesTicket(Ticket $ticket, string $fromEmail): bool
     {
-        $customerEmail = $ticket->customer?->email;
-
-        if (! $customerEmail) {
-            return false;
-        }
-
-        return strcasecmp(trim($customerEmail), trim($fromEmail)) === 0;
+        return $this->ticketResolver()->senderMatchesTicket($ticket, $fromEmail);
     }
 
     /**
-     * Parse attachments from email message.
-     *
-     * El disco se lee una sola vez aquí y se pasa a saveAttachment(): antes
-     * este método construía la URL pública asumiendo el disco 'public'
-     * (asset('storage/...')) mientras saveAttachment() escribía siempre en
-     * 'local' — un disco privado sin symlink público, así que la URL
-     * resultante daba 404 siempre. Ahora ambos usan el mismo disco
-     * (config('helpdesk.attachments.disk')) y el adjunto se sirve por la
-     * ruta autorizada existente (ver attachment_urls en processIncomingEmail()).
+     * Ver InboundEmailAttachmentStorer::parseAttachments().
      */
     protected function parseAttachments(ImapMessage $message, array &$skippedAttachments = []): array
     {
-        $attachments = [];
-        $disk = config('helpdesk.attachments.disk', 'local');
-
-        foreach ($message->getAttachments() as $attachment) {
-            try {
-                $filename = $attachment->name ?? 'attachment';
-                $filePath = $this->saveAttachment($attachment, $disk, $skippedAttachments);
-
-                if (! $filePath) {
-                    continue;
-                }
-
-                $attachments[] = [
-                    'filename' => $filename,
-                    'disk' => $disk,
-                    'path' => $filePath,
-                    ...$this->attachmentMetadata($disk, $filePath),
-                ];
-            } catch (\Exception $e) {
-                Log::warning('Error processing attachment: '.$e->getMessage());
-            }
-        }
-
-        return $attachments;
+        return $this->attachmentStorer()->parseAttachments($message, $skippedAttachments);
     }
 
     /**
+     * Ver InboundEmailAttachmentStorer::attachmentMetadata().
+     *
      * @return array{size: ?int, mime: ?string}
      */
     protected function attachmentMetadata(string $disk, string $path): array
     {
-        try {
-            return [
-                'size' => Storage::disk($disk)->size($path),
-                'mime' => Storage::disk($disk)->mimeType($path) ?: null,
-            ];
-        } catch (\Throwable) {
-            // File may not be readable right after writing; metadata stays null.
-            return ['size' => null, 'mime' => null];
-        }
+        return $this->attachmentStorer()->attachmentMetadata($disk, $path);
     }
 
     /**
-     * Save attachment to storage.
+     * Ver InboundEmailAttachmentStorer::saveAttachment().
      */
     protected function saveAttachment(ImapAttachment $attachment, string $disk, array &$skippedAttachments = []): ?string
     {
-        try {
-            $filename = $attachment->name ?? time().'_'.random_int(1000, 9999);
-
-            $allowedExtensions = $this->allowedAttachmentExtensions();
-            $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
-
-            if ($extension === '' || ! in_array($extension, $allowedExtensions, true)) {
-                Log::warning('FetchTicketEmailsJob: skipped attachment with disallowed extension', [
-                    'filename' => $filename,
-                ]);
-
-                // Antes esto se perdía en silencio salvo por el log del
-                // servidor — el agente no tenía forma de saber, desde el
-                // panel, que el correo traía un adjunto que no llegó (bug
-                // real encontrado 4-sep-2026, un .mp3 real descartado sin
-                // rastro). processIncomingEmail() deja una nota de sistema
-                // en el hilo con esta lista.
-                $skippedAttachments[] = $filename;
-
-                return null;
-            }
-
-            $content = $attachment->getContent();
-            $maxBytes = app(HelpdeskSettings::class)->attachmentMaxKilobytes() * 1024;
-            if (strlen($content) > $maxBytes) {
-                $skippedAttachments[] = $filename;
-                Log::warning('FetchTicketEmailsJob: skipped oversized attachment', [
-                    'filename' => $filename,
-                    'size' => strlen($content),
-                    'max_bytes' => $maxBytes,
-                ]);
-
-                return null;
-            }
-
-            $basePath = config('helpdesk.attachments.path', 'helpdesk/attachments');
-            $path = $basePath.'/'.date('Y/m/d').'/'.$filename;
-
-            Storage::disk($disk)->put($path, $content);
-
-            try {
-                app(TicketAttachmentSecurityService::class)->assertSafeStored($disk, $path, $filename);
-            } catch (\Throwable $exception) {
-                Storage::disk($disk)->delete($path);
-                $skippedAttachments[] = $filename;
-                Log::warning('FetchTicketEmailsJob: skipped attachment blocked by malware scan', [
-                    'filename' => $filename,
-                    'error' => $exception->getMessage(),
-                ]);
-
-                return null;
-            }
-
-            return $path;
-        } catch (\Exception $e) {
-            Log::error('Error saving attachment: '.$e->getMessage());
-
-            return null;
-        }
+        return $this->attachmentStorer()->saveAttachment($attachment, $disk, $skippedAttachments);
     }
 
     /**
-     * Lista blanca de extensiones de adjunto entrante, ahora configurable
-     * desde Ajustes → Subida de archivos (Setting uploading.allowed_extensions).
-     * Esa pantalla ya existía y guardaba el valor, pero ningún consumidor lo
-     * leía — un admin podía "guardar" un cambio ahí sin que tuviera ningún
-     * efecto real (bug real encontrado 4-sep-2026). Sin nada guardado, cae al
-     * mismo default fijo de siempre.
+     * Ver InboundEmailAttachmentStorer::allowedAttachmentExtensions().
      *
      * @return list<string>
      */
     private function allowedAttachmentExtensions(): array
     {
-        return app(HelpdeskSettings::class)->attachmentExtensions();
+        return $this->attachmentStorer()->allowedAttachmentExtensions();
     }
 
     /**
-     * Extract email address from name+email format.
+     * Ver InboundEmailMessageParser::extractEmailAddress().
      */
     protected function extractEmailAddress(string $from): string
     {
-        // Handle "Name <email@domain.com>" format
-        if (preg_match('/<(.+?)>/', $from, $matches)) {
-            return $matches[1];
-        }
-
-        // Return as-is if already just email
-        return trim($from);
+        return $this->emailParser()->extractEmailAddress($from);
     }
 
     /**
-     * Extract name from name+email format.
+     * Ver InboundEmailMessageParser::extractEmailName().
      */
     protected function extractEmailName(string $from): ?string
     {
-        // Handle "Name <email@domain.com>" format
-        if (preg_match('/^(.+?)\s*</', $from, $matches)) {
-            return trim($matches[1], ' "\'');
-        }
-
-        return null;
+        return $this->emailParser()->extractEmailName($from);
     }
 
     /**
-     * Extract important headers from message.
+     * Ver InboundEmailMessageParser::extractHeaders().
      */
     protected function extractHeaders(ImapMessage $message): array
     {
-        $headers = [
-            'Message-ID' => $this->stringAttribute($message->message_id),
-            'In-Reply-To' => $this->stringAttribute($message->in_reply_to),
-            'References' => $this->stringAttribute($message->references),
-            'Subject' => $this->stringAttribute($message->subject),
-            'Date' => $this->stringAttribute($message->date),
-        ];
-
-        // Veredicto antispam que ya calculó el servidor de correo entrante
-        // (SpamAssassin, Rspamd y similares lo escriben en estas cabeceras).
-        // Se archiva tal cual llega: el chip del detalle enseña la puntuación
-        // REAL del filtro, no una inventada por nosotros. Los correos que no
-        // pasen por un filtro simplemente no traerán ninguna de las cuatro.
-        // Header::get() normaliza guiones y mayúsculas internamente.
-        $header = $message->getHeader();
-        // List-*, Precedence y Auto-Submitted: marcan boletines, listas y
-        // respuestas automáticas (RFC 2369, 2919, 3834). Los usa
-        // SpamClassifierService::quarantineIfBulk().
-        foreach (['X-Spam-Score', 'X-Spam-Status', 'X-Spam-Level', 'X-Spam-Flag', 'List-Unsubscribe', 'List-Id', 'Precedence', 'Auto-Submitted'] as $name) {
-            $value = $header?->get($name);
-            $value = $value === null ? null : trim((string) $value);
-            if ($value !== null && $value !== '') {
-                $headers[$name] = $value;
-            }
-        }
-
-        return $headers;
+        return $this->emailParser()->extractHeaders($message);
     }
 
     /**
-     * Convierte un Attribute de webklex de un header simple (no de dirección,
-     * p. ej. Message-ID/Subject/Date) a string plano, o null si no hay valor.
-     * Attribute::__toString() ya hace implode(", ", $values) — seguro para
-     * estos headers porque sus valores son escalares, a diferencia de
-     * from/to/cc/bcc (ver formatAddressAttribute()).
-     */
-    /**
+     * Ver InboundEmailMessageParser::splitReferences().
+     *
      * @return array<int, string>
      */
     protected function splitReferences(?string $references): array
     {
-        if (! $references) {
-            return [];
-        }
-
-        // RFC 5322 suele separar References con espacios, aunque algunos
-        // servidores/clientes los entregan separados por comas. Aceptar solo
-        // comas rompía el hilado cuando el correo no traía In-Reply-To y
-        // References venía en su formato habitual: <id1> <id2>.
-        preg_match_all('/<([^<>]+)>|([^\s,<>]+)/', $references, $matches, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL);
-
-        return array_values(array_filter(array_map(
-            static fn (array $match): string => trim((string) ($match[1] ?? $match[2] ?? '')),
-            $matches,
-        ), static fn (string $id): bool => $id !== ''));
-    }
-
-    protected function stringAttribute(?ImapAttribute $attribute): ?string
-    {
-        if ($attribute === null) {
-            return null;
-        }
-
-        $value = (string) $attribute;
-
-        return $value !== '' ? $this->decodeMimeHeader($value) : null;
+        return $this->emailParser()->splitReferences($references);
     }
 
     /**
-     * Fallback de decodificación MIME (RFC 2047, "=?utf-8?b?...?="). El
-     * decoder interno de webklex/php-imap (Decoder\HeaderDecoder) puede dejar
-     * el asunto/nombre sin decodificar cuando ni ext-imap ni su propio
-     * mimeHeaderDecode() lo resuelven (confirmado en este entorno, sin
-     * ext-imap: un asunto real de Hostinger llegaba como
-     * "=?utf-8?b?V2hhdOKAmXM=?= new for developers..." en vez de "What's
-     * new..."). mb_decode_mimeheader() no requiere extensiones y es un no-op
-     * seguro sobre texto que ya está plano.
+     * Ver InboundEmailMessageParser::stringAttribute().
+     */
+    protected function stringAttribute(?ImapAttribute $attribute): ?string
+    {
+        return $this->emailParser()->stringAttribute($attribute);
+    }
+
+    /**
+     * Ver InboundEmailMessageParser::decodeMimeHeader().
      */
     protected function decodeMimeHeader(string $value): string
     {
-        return str_contains($value, '=?') ? mb_decode_mimeheader($value) : $value;
+        return $this->emailParser()->decodeMimeHeader($value);
     }
 
     /**
-     * Convierte un Attribute de dirección (from/to/cc/bcc) al formato
-     * "Nombre <email>" (o solo "email" sin nombre) que ya espera
-     * extractEmailAddress()/extractEmailName() — no se puede usar
-     * Attribute::__toString() aquí porque para estos headers el Attribute
-     * envuelve un array de objetos {personal, mailbox, host}, no strings.
-     * Varias direcciones se unen con ", " (mismo criterio que barbushin/php-imap).
+     * Ver InboundEmailMessageParser::formatAddressAttribute().
      */
     protected function formatAddressAttribute(?ImapAttribute $attribute): ?string
     {
-        if ($attribute === null) {
-            return null;
-        }
-
-        $formatted = collect($attribute->all())
-            ->map(function ($address) {
-                $email = trim(($address->mailbox ?? '').'@'.($address->host ?? ''), '@');
-                $personal = $this->decodeMimeHeader(trim((string) ($address->personal ?? '')));
-
-                if ($email === '') {
-                    return null;
-                }
-
-                return $personal !== '' ? "{$personal} <{$email}>" : $email;
-            })
-            ->filter()
-            ->implode(', ');
-
-        return $formatted !== '' ? $formatted : null;
+        return $this->emailParser()->formatAddressAttribute($attribute);
     }
 
     /**
-     * Fuente cruda del correo (headers + cuerpo), igual al patrón interno de
-     * Message::save() en webklex/php-imap.
+     * Ver InboundEmailMessageParser::rawSource().
      */
     protected function rawSource(ImapMessage $message): ?string
     {
-        $raw = ($message->getHeader()?->raw ?? '')."\r\n\r\n".$message->getRawBody();
-
-        return trim($raw) !== '' ? $raw : null;
+        return $this->emailParser()->rawSource($message);
     }
 
     /**
-     * Detect priority from subject keywords.
+     * Ver InboundEmailMessageParser::detectPriority().
      */
     protected function detectPriority(string $subject): string
     {
-        $subject = strtolower($subject);
-
-        if (str_contains($subject, 'urgent') || str_contains($subject, 'crítico')) {
-            return 'urgent';
-        }
-
-        if (str_contains($subject, 'baja') || str_contains($subject, 'low')) {
-            return 'low';
-        }
-
-        return 'normal';
+        return $this->emailParser()->detectPriority($subject);
     }
 
     /**
-     * Generate a unique Message-ID (fallback para el raro caso de un correo
-     * entrante sin su propio Message-ID). Sin '<' '>' — mismo criterio que el
-     * resto de generadores de message_id del módulo: stringAttribute() ya
-     * guarda los Message-ID/In-Reply-To/References entrantes normalizados sin
-     * corchetes (los quita webklex/php-imap), así que este fallback debe
-     * coincidir en formato para no romper el enganche por comparación exacta.
+     * Ver InboundEmailMessageParser::generateMessageId().
      */
     protected function generateMessageId(): string
     {
-        return uniqid().'@'.config('app.name');
+        return $this->emailParser()->generateMessageId();
     }
 
     /**
-     * Genera una identidad determinista para un mensaje IMAP sin
-     * Message-ID. El UID solo es único dentro de una carpeta, por eso el
-     * namespace incluye id/host/usuario/carpeta del canal. Si el doble de
-     * pruebas o un proveedor IMAP no expone UID, se conserva el fallback
-     * aleatorio de generateMessageId() y no se inventa una deduplicación
-     * basada en asunto/cuerpo (podría borrar dos correos legítimos iguales).
+     * Ver InboundEmailMessageParser::stableImapMessageId().
      */
     protected function stableImapMessageId(ImapMessage $message, array $connection = []): ?string
     {
-        try {
-            $uid = $message->uid;
-        } catch (\Throwable) {
-            return null;
-        }
+        return $this->emailParser()->stableImapMessageId($message, $connection);
+    }
 
-        if (! is_int($uid) && ! (is_string($uid) && ctype_digit($uid))) {
-            return null;
-        }
+    /**
+     * Colaboradores instanciados perezosamente (no en el constructor): así
+     * nunca viajan en el payload serializado del job (siguen null en el
+     * momento del dispatch, igual que $ticketService), y un worker en
+     * ejecución con la clase vieja (deploy en curso) puede seguir
+     * deserializando trabajos ya encolados sin pedir estas dependencias.
+     */
+    private function emailParser(): InboundEmailMessageParser
+    {
+        return $this->emailParser ??= app(InboundEmailMessageParser::class);
+    }
 
-        $config = $connection !== [] ? $connection : (array) config('helpdesk.email.imap', []);
-        $scope = implode('|', [
-            $config['id'] ?? '',
-            $config['server'] ?? $config['host'] ?? '',
-            $config['username'] ?? '',
-            $config['folder'] ?? 'INBOX',
-        ]);
+    private function attachmentStorer(): InboundEmailAttachmentStorer
+    {
+        return $this->attachmentStorer ??= app(InboundEmailAttachmentStorer::class);
+    }
 
-        return 'imap-'.hash('sha256', $scope.'|'.$uid).'@'.config('app.name');
+    private function ticketResolver(): InboundEmailTicketResolver
+    {
+        return $this->ticketResolver ??= app(InboundEmailTicketResolver::class);
+    }
+
+    private function bounceRouter(): InboundEmailBounceRouter
+    {
+        return $this->bounceRouter ??= app(InboundEmailBounceRouter::class);
     }
 }
