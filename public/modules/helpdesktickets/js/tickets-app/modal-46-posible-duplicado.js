@@ -11,7 +11,7 @@
             return '<label class="tkt-option">' +
                 '<input type="radio" name="tkt-dupe-pick" value="' + c.id + '">' +
                 '<span class="tkt-option-body">' +
-                    '<span class="tkt-option-title">' + escapeHtml(c.ticket_number) + ' · ' + escapeHtml(c.subject || '(sin asunto)') + '</span>' +
+                    '<span class="tkt-option-title">' + escapeHtml(c.ticket_number) + ' · ' + escapeHtml(c.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '<span class="tkt-option-sub">' + escapeHtml(c.status || '—') +
                         ' · coincidencia de asunto ' + Math.round(c.similarity * 100) + ' %' +
                         (c.same_customer ? ' · mismo cliente' : '') +
@@ -22,9 +22,9 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-clone',
-            kicker: 'Creación · duplicados',
+            kicker: TKA.t('kicker_creation_duplicates', 'Creación · duplicados'),
             titleChip: t.ticket_number,
-            title: 'Posible duplicado al crear',
+            title: TKA.t('modal_title_possible_duplicate_on_create', 'Posible duplicado al crear'),
             width: 'lg',
             body: '<div class="tkt-cap">Ya existe un ticket similar</div>' +
                 '<div class="tkt-note">Este cliente tiene ' + (candidates.length === 1 ? 'otro ticket abierto' : 'otros tickets abiertos') +
@@ -36,7 +36,7 @@
                 '</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-dupe-merge" disabled>Fusionar con el seleccionado</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-dupe-keep" disabled>Son independientes</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('change', '[name="tkt-dupe-pick"]', function () {

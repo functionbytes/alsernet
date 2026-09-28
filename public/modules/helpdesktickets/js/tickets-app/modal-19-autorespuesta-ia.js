@@ -22,9 +22,9 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-wand-magic-sparkles',
             iconClass: 'ok',
-            kicker: 'IA · borrador',
+            kicker: TKA.t('kicker_ai_draft', 'IA · borrador'),
             titleChip: t.ticket_number,
-            title: 'Auto-respuesta IA',
+            title: TKA.t('modal_title_ai_autoresponse', 'Auto-respuesta IA'),
             width: 'lg',
             body: '<div class="tkt-seg" id="tkt-ai-tones">' +
                     AI_TONES.map(function (x) {

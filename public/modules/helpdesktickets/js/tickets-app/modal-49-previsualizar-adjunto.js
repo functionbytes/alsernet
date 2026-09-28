@@ -20,9 +20,9 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-file',
-            kicker: 'Adjunto · previsualización',
+            kicker: TKA.t('kicker_attachment_preview', 'Adjunto · previsualización'),
             titleChip: file.name || '',
-            title: 'Previsualizar adjunto',
+            title: TKA.t('modal_title_preview_attachment', 'Previsualizar adjunto'),
             width: 'xl',
             body: body +
                 '<div class="tkt-side-rows">' +

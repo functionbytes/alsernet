@@ -34,11 +34,11 @@
             : '<div class="tkt-empty-box">Ahora mismo nadie más está en este ticket.</div>';
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-users', kicker: 'Bandeja · colisión',
+            icon: 'fa-solid fa-users', kicker: TKA.t('kicker_inbox_collision', 'Bandeja · colisión'),
             // 'sm' (340px) se quedaba corto: cada fila lleva avatar + nombre +
             // estado + dos botones ("Asignar"/"Avisar") y el nombre se
             // truncaba de inmediato.
-            title: 'Bandeja compartida', titleChip: t.ticket_number, width: 'xl',
+            title: TKA.t('modal_title_shared_inbox', 'Bandeja compartida'), titleChip: t.ticket_number, width: 'xl',
             body: '<div class="tkt-mailitems">' + rows + '</div>' +
                 '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> La presencia se actualiza mientras la pestaña está abierta; al cerrarla el resto deja de verte.</div>',
             foot: (people.length ? '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-collision-take">Tomar el control</button>' : '') +

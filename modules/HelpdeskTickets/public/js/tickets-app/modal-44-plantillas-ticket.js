@@ -64,15 +64,15 @@
         }
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-clone', kicker: 'Tickets · plantillas',
-            title: 'Plantillas de ticket', width: 'lg',
+            icon: 'fa-solid fa-clone', kicker: TKA.t('kicker_tickets_templates', 'Tickets · plantillas'),
+            title: TKA.t('modal_title_ticket_templates', 'Plantillas de ticket'), width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-ttpl-search" placeholder="Buscar plantilla…" aria-label="Buscar plantilla"></div>' +
                 '<div class="tkt-pick-list" id="tkt-ttpl-list">' + listHtml('') + '</div>' +
                 '<div class="tkt-cap">Vista previa · con datos de ejemplo</div>' +
                 '<div class="tkt-tpl-preview" id="tkt-ttpl-preview">Elige una plantilla para ver el ticket que va a crear.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-ttpl-use" disabled>Crear ticket</button>' +
                   '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.ticketTemplatesIndex || '#') + '">Gestionar plantillas</a>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('input', '#tkt-ttpl-search', function () { $backdrop.find('#tkt-ttpl-list').html(listHtml(this.value)); });

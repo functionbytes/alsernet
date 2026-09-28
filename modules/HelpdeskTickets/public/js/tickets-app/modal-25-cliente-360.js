@@ -16,9 +16,9 @@
         }
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-regular fa-address-card', kicker: 'Cliente · 360',
+            icon: 'fa-regular fa-address-card', kicker: TKA.t('kicker_customer_360', 'Cliente · 360'),
             titleChip: customer.name || '',
-            title: 'Cliente 360', width: 'xl',
+            title: TKA.t('modal_title_customer_360', 'Cliente 360'), width: 'xl',
             body: '<div class="tkt-headline"><div class="t">' + escapeHtml(customer.name || '—') + '</div>' +
                     '<div class="s">' + escapeHtml(customer.company || 'Sin empresa asociada') + '</div></div>' +
                   '<div class="tkt-side-rows">' +

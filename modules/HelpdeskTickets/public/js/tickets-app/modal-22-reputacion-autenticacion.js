@@ -3,8 +3,8 @@
     // ── Modal 22: Reputación y autenticación ──────────────────
     function openReputationModal() {
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-shield-halved', kicker: 'Entregabilidad · reputación',
-            title: 'Reputación y autenticación', width: 'xl',
+            icon: 'fa-solid fa-shield-halved', kicker: TKA.t('kicker_deliverability_reputation', 'Entregabilidad · reputación'),
+            title: TKA.t('modal_title_reputation_auth', 'Reputación y autenticación'), width: 'xl',
             body: '<div id="tkt-rep-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-rep-save">Guardar</button>' +
                 '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',

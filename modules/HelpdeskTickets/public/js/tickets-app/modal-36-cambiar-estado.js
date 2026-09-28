@@ -36,9 +36,9 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-arrow-right-arrow-left',
-            kicker: 'Ticket · estado',
+            kicker: TKA.t('kicker_ticket_status', 'Ticket · estado'),
             titleChip: t.ticket_number,
-            title: 'Cambiar estado',
+            title: TKA.t('modal_title_change_status', 'Cambiar estado'),
             width: 'md',
             body: options +
                 '<div class="tkt-field"><label class="tkt-label" for="tkt-state-note">Nota del cambio <span class="hint">interna</span></label>' +
@@ -46,7 +46,7 @@
                 '<label class="tkt-check"><input type="checkbox" id="tkt-state-notify"> Notificar al cliente por email</label>' +
                 '<div class="tkt-note">El cambio se registra en la actividad con fecha, hora y agente.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-state-save">Guardar estado</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('change', '[name="tkt-state-pick"]', function () {
@@ -60,7 +60,7 @@
 
             var note = ($backdrop.find('#tkt-state-note').val() || '').trim();
             var notify = $backdrop.find('#tkt-state-notify').is(':checked');
-            var $btn = $(this).prop('disabled', true).text('Guardando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_saving', 'Guardando…'));
 
             $.ajax({
                 url: t.url_update,
@@ -98,7 +98,7 @@
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado');
                 tktNotify('error', msg);
-                $btn.prop('disabled', false).text('Guardar estado');
+                $btn.prop('disabled', false).text(TKA.t('btn_save_status', 'Guardar estado'));
             });
         });
     }

@@ -42,8 +42,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-file-lines',
-            kicker: 'Respuestas · plantillas',
-            title: 'Plantillas de email',
+            kicker: TKA.t('kicker_replies_templates', 'Respuestas · plantillas'),
+            title: TKA.t('modal_title_email_templates', 'Plantillas de email'),
             width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-tpl-search" placeholder="Buscar plantilla…" aria-label="Buscar plantilla"></div>' +
                 '<div class="tkt-pick-list" id="tkt-tpl-list">' + listHtml('') + '</div>' +
@@ -107,7 +107,7 @@
         });
         $backdrop.on('click', '#tkt-tpl-duplicate', function () {
             if (!selected || !TKA.urls.cannedDuplicateTemplate) return;
-            var $btn = $(this).prop('disabled', true).text('Duplicando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_duplicating', 'Duplicando…'));
             $.ajax({
                 url: TKA.urls.cannedDuplicateTemplate.replace('__REPLY__', selected.id),
                 method: 'POST',
@@ -130,7 +130,7 @@
                 var msg = apiErrorMessage(xhr, 'No se pudo duplicar la plantilla.');
                 tktNotify('error', msg);
             }).always(function () {
-                $btn.prop('disabled', false).text('Duplicar como mía');
+                $btn.prop('disabled', false).text(TKA.t('btn_duplicate_as_mine', 'Duplicar como mía'));
             });
         });
         $backdrop.on('click', '#tkt-tpl-back', function () {

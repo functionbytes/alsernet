@@ -20,8 +20,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-clock',
-            kicker: 'Ticket · programar envío',
-            title: 'Programar envío',
+            kicker: TKA.t('kicker_ticket_schedule_send', 'Ticket · programar envío'),
+            title: TKA.t('modal_title_schedule_send', 'Programar envío'),
             titleChip: t.ticket_number,
             width: 'md',
             body: '' +
@@ -43,7 +43,7 @@
                 '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Se envía exactamente a la fecha y hora elegidas (hora de tu navegador), sin ajustarse al horario laboral.</div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-sched-cancel"' + (composeDraft && composeDraft.cancelIfReplies ? ' checked' : '') + '> Cancelar si el cliente responde antes</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sched-confirm">Programar</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-sched-cancel-btn">Cancelar</button>',
+                  '<button type="button" class="tkt-btn" id="tkt-sched-cancel-btn">' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         function pick(value) {

@@ -6,13 +6,13 @@
     function openQuickPreviewModal(t) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-eye',
-            kicker: 'Ticket · vista rápida',
-            title: 'Vista previa rápida',
+            kicker: TKA.t('kicker_ticket_quick_view', 'Ticket · vista rápida'),
+            title: TKA.t('modal_title_quick_preview', 'Vista previa rápida'),
             titleChip: t.ticket_number,
             width: 'md',
             body: '<div class="tkt-side-rows">' +
                     sideRow('Cliente', t.customer ? t.customer.name : 'Sin cliente') +
-                    sideRow('Asunto', t.subject || '(sin asunto)') +
+                    sideRow('Asunto', t.subject || TKA.t('no_subject', '(sin asunto)')) +
                     sideRow('Estado', t.status_name || t.status_slug || '—', { strong: true }) +
                     sideRow('Prioridad', priorityLabel(t.priority), { strong: true }) +
                     sideRow('SLA', t.sla_text || '—', { mono: true, last: true }) +

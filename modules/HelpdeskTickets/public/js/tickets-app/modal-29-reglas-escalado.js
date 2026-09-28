@@ -27,8 +27,8 @@
         var listUrl = escUrl('automationsList', 'data-automations-list-url');
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-arrow-up-right-dots', kicker: 'Automatización · escalado',
-            title: 'Reglas de escalado', width: '2xl',
+            icon: 'fa-solid fa-arrow-up-right-dots', kicker: TKA.t('kicker_automation_escalation', 'Automatización · escalado'),
+            title: TKA.t('modal_title_escalation_rules', 'Reglas de escalado'), width: '2xl',
             body: '<div id="tkt-esc-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
@@ -267,7 +267,7 @@
     function escFormFootHtml() {
         return '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-esc-save">Crear regla</button>' +
             '<button type="button" class="tkt-btn" id="tkt-esc-test">Probar regla</button>' +
-            '<button type="button" class="tkt-btn" id="tkt-esc-cancel">Cancelar</button>';
+            '<button type="button" class="tkt-btn" id="tkt-esc-cancel">' + TKA.t('cancel', 'Cancelar') + '</button>';
     }
 
     function escCondHtml(i, cond) {

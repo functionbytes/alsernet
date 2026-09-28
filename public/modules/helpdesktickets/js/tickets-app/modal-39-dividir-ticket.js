@@ -22,8 +22,8 @@
         }
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-scissors', kicker: 'Ticket · dividir',
-            title: 'Dividir ticket', titleChip: t.ticket_number, width: 'lg',
+            icon: 'fa-solid fa-scissors', kicker: TKA.t('kicker_ticket_split', 'Ticket · dividir'),
+            title: TKA.t('modal_title_split_ticket', 'Dividir ticket'), titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Útil cuando el cliente mezcla dos asuntos en la misma conversación. Los mensajes se MUEVEN, no se copian.</div>' +
                 '<div class="tkt-cap">Mensajes a mover</div>' +
                 '<div class="tkt-pick-list" id="tkt-split-list">' + rowsHtml() + '</div>' +
@@ -37,7 +37,7 @@
                 '</div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-split-link" checked> Vincular ambos tickets entre sí</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-split-confirm" disabled>Dividir ticket</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         function refreshConfirm() {
@@ -61,7 +61,7 @@
         $backdrop.on('click', '#tkt-split-confirm', function () {
             var subject = ($('#tkt-split-subject').val() || '').trim();
             if (!subject) { if (window.toastr) toastr.error(TKA.t('new_ticket_subject_required', 'Indica el asunto del nuevo ticket')); return; }
-            var $btn = $(this).prop('disabled', true).text('Dividiendo…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_splitting', 'Dividiendo…'));
             $.ajax({
                 url: t.url_split, method: 'POST',
                 data: {
@@ -79,7 +79,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo dividir el ticket');
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Dividir ticket');
+                    $btn.prop('disabled', false).text(TKA.t('modal_title_split_ticket', 'Dividir ticket'));
                 },
             });
         });

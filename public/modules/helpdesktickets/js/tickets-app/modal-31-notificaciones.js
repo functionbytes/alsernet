@@ -4,21 +4,26 @@
     function openNotificationsModal() {
         // Estado REAL del permiso del navegador.
         var perm = (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
-        var permLabel = { granted: 'Activadas', denied: 'Bloqueadas por el navegador', default: 'Sin conceder', unsupported: 'No compatible' }[perm];
+        var permLabel = {
+            granted: TKA.t('notif_perm_granted', 'Activadas'),
+            denied: TKA.t('notif_perm_denied', 'Bloqueadas por el navegador'),
+            default: TKA.t('notif_perm_default', 'Sin conceder'),
+            unsupported: TKA.t('notif_perm_unsupported', 'No compatible'),
+        }[perm];
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-regular fa-bell', kicker: 'Ajustes · notificaciones',
-            title: 'Notificaciones', width: 'lg',
-            body: '<div class="tkt-side-rows">' + sideRow('Notificaciones del navegador', permLabel, { strong: true, last: true }) + '</div>' +
-                  (perm === 'default' ? '<button type="button" class="tkt-btn tkt-w-100" id="tkt-notif-ask">Permitir notificaciones</button>' : '') +
-                  (perm === 'denied' ? '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> El navegador tiene bloqueadas las notificaciones de este sitio. Hay que reactivarlas desde su configuración, no se puede pedir de nuevo desde aquí.</div>' : '') +
-                  '<div class="tkt-cap tkt-cap-spaced">Avisarme cuando</div>' +
-                  '<div id="tkt-notif-prefs"><div class="tkt-empty-box">Cargando tus preferencias de aviso…</div></div>' +
+            icon: 'fa-regular fa-bell', kicker: TKA.t('kicker_settings_notifications', 'Ajustes · notificaciones'),
+            title: TKA.t('modal_title_notifications', 'Notificaciones'), width: 'lg',
+            body: '<div class="tkt-side-rows">' + sideRow(TKA.t('browser_notifications', 'Notificaciones del navegador'), permLabel, { strong: true, last: true }) + '</div>' +
+                  (perm === 'default' ? '<button type="button" class="tkt-btn tkt-w-100" id="tkt-notif-ask">' + TKA.t('allow_notifications', 'Permitir notificaciones') + '</button>' : '') +
+                  (perm === 'denied' ? '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('notifications_blocked_by_browser', 'El navegador tiene bloqueadas las notificaciones de este sitio. Hay que reactivarlas desde su configuración, no se puede pedir de nuevo desde aquí.') + '</div>' : '') +
+                  '<div class="tkt-cap tkt-cap-spaced">' + TKA.t('notify_me_when', 'Avisarme cuando') + '</div>' +
+                  '<div id="tkt-notif-prefs"><div class="tkt-empty-box">' + TKA.t('loading_notification_prefs', 'Cargando tus preferencias de aviso…') + '</div></div>' +
                   '<div id="tkt-notif-always"></div>' +
                   '<div id="tkt-notif-team-channels"></div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-notif-save" disabled>Guardar preferencias</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-notif-open">Abrir el panel de avisos</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-notif-save" disabled>' + TKA.t('save_preferences', 'Guardar preferencias') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-notif-open">' + TKA.t('open_notifications_panel', 'Abrir el panel de avisos') + '</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         // ── Pintado de la lista de eventos ────────────────────────
@@ -28,7 +33,7 @@
         // enseña un interruptor que el agente mueve sin efecto.
         function prefsHtml(events) {
             if (!events.length) {
-                return '<div class="tkt-empty-box">Ningún aviso de ticket admite ajuste por ahora.</div>';
+                return '<div class="tkt-empty-box">' + TKA.t('no_configurable_ticket_notices', 'Ningún aviso de ticket admite ajuste por ahora.') + '</div>';
             }
 
             return events.map(function (ev) {
@@ -61,7 +66,7 @@
             if (!items || !items.length) return '';
 
             return '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i>' +
-                '<span>Estos avisos llegan siempre y no se pueden desactivar: ' +
+                '<span>' + TKA.t('always_on_notices_prefix', 'Estos avisos llegan siempre y no se pueden desactivar: ') +
                 items.map(function (i) { return escapeHtml(i.charAt(0).toLowerCase() + i.slice(1)); }).join('; ') +
                 '.</span></div>';
         }
@@ -77,22 +82,22 @@
 
             function campo(platform, label, configured) {
                 return '<div class="tkt-field"><label class="tkt-label">' + escapeHtml(label) +
-                    (configured ? ' <span class="tkt-rchip ok">configurado</span>' : '') + '</label>' +
+                    (configured ? ' <span class="tkt-rchip ok">' + TKA.t('configured', 'configurado') + '</span>' : '') + '</label>' +
                     '<input type="url" class="tkt-input" data-team-channel="' + platform + '" placeholder="' +
-                    (configured ? 'Dejar en blanco para no cambiarlo' : 'https://…') + '"></div>';
+                    (configured ? TKA.t('leave_blank_to_keep', 'Dejar en blanco para no cambiarlo') : 'https://…') + '"></div>';
             }
 
-            return '<div class="tkt-cap tkt-cap-spaced">Avisar también al equipo (Slack/Teams)</div>' +
-                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Un único webhook por plataforma para todo el equipo, no por agente. Por ahora solo avisan cuando se incumple un SLA.</div>' +
-                campo('slack', 'Webhook de Slack', tc.slack_configured) +
-                campo('teams', 'Webhook de Teams', tc.teams_configured) +
-                '<button type="button" class="tkt-btn tkt-btn-sm" id="tkt-notif-channels-save">Guardar integraciones</button> ' +
-                ((tc.slack_configured || tc.teams_configured) ? '<button type="button" class="tkt-btn tkt-btn-sm" id="tkt-notif-channels-test">Enviar prueba</button>' : '');
+            return '<div class="tkt-cap tkt-cap-spaced">' + TKA.t('notify_team_too', 'Avisar también al equipo (Slack/Teams)') + '</div>' +
+                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('team_webhook_note', 'Un único webhook por plataforma para todo el equipo, no por agente. Por ahora solo avisan cuando se incumple un SLA.') + '</div>' +
+                campo('slack', TKA.t('slack_webhook', 'Webhook de Slack'), tc.slack_configured) +
+                campo('teams', TKA.t('teams_webhook', 'Webhook de Teams'), tc.teams_configured) +
+                '<button type="button" class="tkt-btn tkt-btn-sm" id="tkt-notif-channels-save">' + TKA.t('save_integrations', 'Guardar integraciones') + '</button> ' +
+                ((tc.slack_configured || tc.teams_configured) ? '<button type="button" class="tkt-btn tkt-btn-sm" id="tkt-notif-channels-test">' + TKA.t('btn_send_test', 'Enviar prueba') + '</button>' : '');
         }
 
         function cargar() {
             if (!TKA.urls.notifPrefs) {
-                $backdrop.find('#tkt-notif-prefs').html('<div class="tkt-empty-box">Las preferencias de aviso no están disponibles en esta instalación.</div>');
+                $backdrop.find('#tkt-notif-prefs').html('<div class="tkt-empty-box">' + TKA.t('notification_prefs_unavailable', 'Las preferencias de aviso no están disponibles en esta instalación.') + '</div>');
 
                 return;
             }
@@ -108,7 +113,7 @@
                 // filas iguales a lo que ya hay.
                 $backdrop.find('#tkt-notif-save').prop('disabled', true);
             }).fail(function () {
-                $backdrop.find('#tkt-notif-prefs').html('<div class="tkt-empty-box">No se han podido cargar tus preferencias de aviso.</div>');
+                $backdrop.find('#tkt-notif-prefs').html('<div class="tkt-empty-box">' + TKA.t('notification_prefs_load_failed', 'No se han podido cargar tus preferencias de aviso.') + '</div>');
             });
         }
 
@@ -127,21 +132,21 @@
                     cargar();
                 })
                 .fail(function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
+                    var msg = apiErrorMessage(xhr, TKA.t('save_failed_generic', 'No se pudo guardar.'));
                     tktNotify('error', msg);
                 })
                 .always(function () { $btn.prop('disabled', false); });
         });
 
         $backdrop.on('click', '#tkt-notif-channels-test', function () {
-            var $btn = $(this).prop('disabled', true).text('Enviando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_sending', 'Enviando…'));
             $.post(TKA.urls.notifTeamChannelsTest).done(function (resp) {
                 tktNotify('success', (resp && resp.message) || TKA.t('test_sent', 'Prueba enviada'));
             }).fail(function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo enviar la prueba.');
+                var msg = apiErrorMessage(xhr, TKA.t('test_send_failed', 'No se pudo enviar la prueba.'));
                 tktNotify('error', msg);
             }).always(function () {
-                $btn.prop('disabled', false).text('Enviar prueba');
+                $btn.prop('disabled', false).text(TKA.t('btn_send_test', 'Enviar prueba'));
             });
         });
 
@@ -177,11 +182,11 @@
                 headers: { Accept: 'application/json' },
                 data: { preferences: preferences },
             }).done(function (res) {
-                var msg = (res && res.message) ? res.message : 'Preferencias de aviso guardadas.';
+                var msg = (res && res.message) ? res.message : TKA.t('notification_prefs_saved_alt', 'Preferencias de aviso guardadas.');
                 tktNotify('success', msg);
                 closeModal();
             }).fail(function (xhr) {
-                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se han podido guardar las preferencias.';
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : TKA.t('notification_prefs_save_failed_alt', 'No se han podido guardar las preferencias.');
                 tktNotify('error', msg);
                 $btn.prop('disabled', false);
             });

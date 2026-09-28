@@ -3,9 +3,9 @@
     // ── Modal 21: Editor de plantilla ─────────────────────────
     function openTemplateEditorModal(reply, onSaved) {
         var $backdrop = openModal(modalShell({
-            icon: 'fa-regular fa-pen-to-square', kicker: 'Plantillas · editar',
+            icon: 'fa-regular fa-pen-to-square', kicker: TKA.t('kicker_templates_edit', 'Plantillas · editar'),
             titleChip: reply.title || '',
-            title: 'Editor de plantilla', width: 'lg',
+            title: TKA.t('modal_title_template_editor', 'Editor de plantilla'), width: 'lg',
             body: '<div class="tkt-field-row">' +
                     '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-title">Nombre<span class="req">*</span></label>' +
                         '<input type="text" class="tkt-input" id="tkt-tpled-title" value="' + escapeHtml(reply.title || '') + '"></div>' +
@@ -30,7 +30,7 @@
             var title = ($('#tkt-tpled-title').val() || '').trim();
             var content = ($('#tkt-tpled-body').val() || '').trim();
             if (!title || !content) { if (window.toastr) toastr.error(TKA.t('name_and_content_required', 'El nombre y el contenido son obligatorios')); return; }
-            var $btn = $(this).prop('disabled', true).text('Guardando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_saving', 'Guardando…'));
             $.ajax({
                 // POST + _method=PUT: un PUT real por AJAX devuelve 405 en este
                 // entorno Docker aunque route:list lo registre.
@@ -47,7 +47,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo guardar la plantilla');
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Guardar plantilla');
+                    $btn.prop('disabled', false).text(TKA.t('btn_save_template', 'Guardar plantilla'));
                 },
             });
         });

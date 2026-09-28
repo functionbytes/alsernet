@@ -5,12 +5,12 @@
         var attCount = (mail.attachments || []).length;
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-rotate-right',
-            kicker: 'Correo · reenvío',
-            title: 'Reenviar email',
+            kicker: TKA.t('kicker_mail_resend', 'Correo · reenvío'),
+            title: TKA.t('modal_title_forward_email', 'Reenviar email'),
             titleChip: t.ticket_number,
             width: 'md',
             body: '<div class="tkt-headline">' +
-                    '<div class="t">' + escapeHtml(mail.subject || '(sin asunto)') + '</div>' +
+                    '<div class="t">' + escapeHtml(mail.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                     '<div class="s">' + escapeHtml(mail.sent_at_human || mail.created_at_human || '') +
                         (attCount ? ' · ' + attCount + (attCount === 1 ? ' adjunto' : ' adjuntos') : '') + '</div>' +
                   '</div>' +
@@ -26,7 +26,7 @@
                   '</div>' +
                   '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Se generará un nuevo Message-ID enlazado al hilo original mediante <span class="mono">In-Reply-To</span>.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-resend-confirm">Reenviar ahora</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('change', '[name="tkt-resend-mode"]', function () {
@@ -57,7 +57,7 @@
                 return;
             }
 
-            var $btn = $(this).prop('disabled', true).text('Reenviando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_resending', 'Reenviando…'));
             $.ajax({
                 url: mail.url_resend,
                 method: 'POST',
@@ -71,7 +71,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo reenviar el correo');
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Reenviar ahora');
+                    $btn.prop('disabled', false).text(TKA.t('btn_resend_now', 'Reenviar ahora'));
                 },
             });
         });

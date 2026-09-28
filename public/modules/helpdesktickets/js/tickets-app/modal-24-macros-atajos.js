@@ -9,15 +9,15 @@
     function openMacrosModal(t) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-bolt',
-            kicker: 'Redactor · macros',
+            kicker: TKA.t('kicker_composer_macros', 'Redactor · macros'),
             titleChip: t.ticket_number,
-            title: 'Macros y atajos',
+            title: TKA.t('modal_title_macros_shortcuts', 'Macros y atajos'),
             width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-macro-search" placeholder="Buscar macro…" aria-label="Buscar macro"></div>' +
-                  '<div id="tkt-macro-list"><div class="tkt-empty-box">Cargando…</div></div>',
+                  '<div id="tkt-macro-list"><div class="tkt-empty-box">' + TKA.t('loading', 'Cargando…') + '</div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-macro-apply" disabled>Aplicar macro</button>' +
                   '<a href="' + TKA.urls.macrosIndex + '" class="tkt-btn tkt-link-plain">Editar macros</a>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         loadMacros(function (macros) {

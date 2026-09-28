@@ -34,8 +34,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-language',
-            kicker: 'Idioma · traducir',
-            title: 'Traducir respuesta',
+            kicker: TKA.t('kicker_language_translate', 'Idioma · traducir'),
+            title: TKA.t('modal_title_translate_reply', 'Traducir respuesta'),
             titleChip: t.ticket_number,
             width: 'lg',
             body: '<div class="tkt-field"><label class="tkt-label" for="tkt-tr-target">Idioma del cliente' +
@@ -51,22 +51,22 @@
                   '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> La traducción sustituye el cuerpo del redactor; el texto original solo se conserva si marcas la casilla.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tr-use" disabled>Usar traducción</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-tr-run">Traducir</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-tr-back">Cancelar</button>',
+                  '<button type="button" class="tkt-btn" id="tkt-tr-back">' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         var translated = null;
 
         $backdrop.on('click', '#tkt-tr-run', function () {
-            var $btn = $(this).prop('disabled', true).text('Traduciendo…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_translating', 'Traduciendo…'));
             $.ajax({
                 url: t.url_translate_text,
                 method: 'POST',
                 data: { text: source, target_lang: $('#tkt-tr-target').val() },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    $btn.prop('disabled', false).text('Volver a traducir');
+                    $btn.prop('disabled', false).text(TKA.t('btn_translate_again', 'Volver a traducir'));
                     if (!resp || !resp.translated) {
-                        $backdrop.find('#tkt-tr-out').text('El motor de traducción no devolvió resultado para este texto.');
+                        $backdrop.find('#tkt-tr-out').text(TKA.t('translation_engine_no_result', 'El motor de traducción no devolvió resultado para este texto.'));
                         return;
                     }
                     translated = resp.text;
@@ -74,7 +74,7 @@
                     $backdrop.find('#tkt-tr-use').prop('disabled', false);
                 },
                 error: function (xhr) {
-                    $btn.prop('disabled', false).text('Traducir');
+                    $btn.prop('disabled', false).text(TKA.t('btn_translate', 'Traducir'));
                     var msg = apiErrorMessage(xhr, 'No se pudo traducir el texto');
                     tktNotify('error', msg);
                 },
@@ -153,8 +153,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-pen',
-            kicker: 'Ticket · responder',
-            title: 'Redactar email',
+            kicker: TKA.t('kicker_ticket_reply', 'Ticket · responder'),
+            title: TKA.t('modal_title_compose_email', 'Redactar email'),
             titleChip: t.ticket_number,
             width: 'xl',
             body: '' +

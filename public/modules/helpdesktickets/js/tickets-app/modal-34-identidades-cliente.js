@@ -20,8 +20,8 @@
             : '<div class="tkt-empty-box">Este contacto no tiene ningún canal registrado todavía.</div>';
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-fingerprint', kicker: 'Cliente · identidad',
-            title: 'Identidades del cliente', width: 'md',
+            icon: 'fa-solid fa-fingerprint', kicker: TKA.t('kicker_customer_identity', 'Cliente · identidad'),
+            title: TKA.t('modal_title_customer_identities', 'Identidades del cliente'), width: 'md',
             body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Un mismo cliente puede escribir por formulario, email, WhatsApp o portal: todo se une bajo una sola ficha.</div>' +
                 '<div class="tkt-mailitems">' + rows + '</div>' +
                 '<div class="tkt-note"><i class="fa-solid fa-triangle-exclamation"></i> Las direcciones marcadas como "detectado en el hilo" no están en la ficha: pulsa "Vincular" si son del mismo cliente, o "Fusionar duplicado" si en realidad pertenecen a otro contacto ya existente.</div>',

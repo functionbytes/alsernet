@@ -22,11 +22,11 @@
     function openCsatModal(t) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-face-smile',
-            kicker: 'Ticket · satisfacción',
+            kicker: TKA.t('kicker_ticket_satisfaction', 'Ticket · satisfacción'),
             titleChip: t.ticket_number,
-            title: 'Encuesta CSAT',
+            title: TKA.t('modal_title_csat_survey', 'Encuesta CSAT'),
             width: 'sm',
-            body: '<div class="tkt-empty-box">Cargando…</div>',
+            body: '<div class="tkt-empty-box">' + TKA.t('loading', 'Cargando…') + '</div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
 
@@ -68,7 +68,7 @@
         });
 
         $backdrop.on('click', '#tkt-csat-resend', function () {
-            var $btn = $(this).prop('disabled', true).text('Enviando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_sending', 'Enviando…'));
             $.ajax({
                 url: t.url_send_csat,
                 method: 'POST',
@@ -79,7 +79,7 @@
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo reenviar la encuesta.');
                 tktNotify('error', msg);
-                $btn.prop('disabled', false).text('Reenviar encuesta de satisfacción');
+                $btn.prop('disabled', false).text(TKA.t('btn_resend_csat_survey', 'Reenviar encuesta de satisfacción'));
             });
         });
     }

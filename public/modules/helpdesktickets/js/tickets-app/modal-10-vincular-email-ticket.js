@@ -9,7 +9,7 @@
             return list.map(function (o) {
                 return '<button type="button" class="tkt-pick' + (chosen && chosen.id === o.id ? ' on' : '') + '" data-target="' + o.id + '">' +
                     '<span class="tkt-shortcode mono">' + escapeHtml(o.ticket_number) + '</span>' +
-                    '<span class="who"><span class="n">' + escapeHtml(o.subject || '(sin asunto)') + '</span>' +
+                    '<span class="who"><span class="n">' + escapeHtml(o.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '<span class="s">' + escapeHtml([o.status_name || o.status_slug, o.customer ? o.customer.name : null].filter(Boolean).join(' · ')) + '</span></span>' +
                     (chosen && chosen.id === o.id ? '<i class="fa-solid fa-check"></i>' : '') +
                 '</button>';
@@ -27,11 +27,11 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-link',
-            kicker: 'Tickets · vinculación',
-            title: 'Vincular email a ticket',
+            kicker: TKA.t('kicker_tickets_linking', 'Tickets · vinculación'),
+            title: TKA.t('modal_title_link_email_to_ticket', 'Vincular email a ticket'),
             width: 'md',
             body: '<div class="tkt-headline">' +
-                    '<div class="t">' + escapeHtml(mail.subject || '(sin asunto)') + '</div>' +
+                    '<div class="t">' + escapeHtml(mail.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                     '<div class="s">' + escapeHtml((mail.direction === 'inbound' ? 'De ' : 'Para ') + (mail.direction === 'inbound' ? (mail.from || '—') : (mail.to || '—'))) + '</div>' +
                   '</div>' +
                   '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-link-search" placeholder="Buscar por número, cliente o asunto…" aria-label="Buscar ticket"></div>' +
@@ -39,7 +39,7 @@
                   '<div class="tkt-pick-list" id="tkt-link-list">' + resultsHtml(sameCustomer(), 'Sin otros tickets de este cliente en la página actual.') + '</div>' +
                   '<label class="tkt-check"><input type="checkbox" id="tkt-link-thread"> Mover también el resto del hilo</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-link-confirm" disabled>Vincular</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('input', '#tkt-link-search', function () {
@@ -65,7 +65,7 @@
 
         $backdrop.on('click', '#tkt-link-confirm', function () {
             if (!chosen) return;
-            var $btn = $(this).prop('disabled', true).text('Vinculando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_linking', 'Vinculando…'));
             $.ajax({
                 url: mail.url_link,
                 method: 'POST',
@@ -79,7 +79,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo vincular el correo');
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Vincular');
+                    $btn.prop('disabled', false).text(TKA.t('btn_link', 'Vincular'));
                 },
             });
         });

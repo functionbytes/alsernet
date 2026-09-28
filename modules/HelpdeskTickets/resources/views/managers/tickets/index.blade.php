@@ -48,8 +48,11 @@
 
     // El ticket preseleccionado (?ticket=) puede no estar en la página/filtro
     // actual del listado: se antepone al payload para que el JS lo encuentre.
+    // outside_filter: la fila se pinta marcada como "fuera del filtro" para
+    // que no parezca que cumple la pestaña activa (QA 28-sep-2026: el ticket
+    // recién asignado seguía en "Sin asignar" con 25 filas y "24 tickets").
     if ($selectedTicket && ! $ticketsPayload->contains('id', $selectedTicket->id)) {
-        $ticketsPayload->prepend($selectedTicket->toListRow());
+        $ticketsPayload->prepend($selectedTicket->toListRow() + ['outside_filter' => true]);
     }
 
     // Plantillas de las URLs de acción del listado (PERF-09): una sola
@@ -539,7 +542,7 @@
                      tema (#notifications-dropdown) — no es un sistema de avisos propio de
                      Helpdesk (no existe ninguno en el código), así que en vez de inventar uno
                      nuevo se da un atajo real al que ya existe y ya funciona. --}}
-                <button type="button" id="tkt-pill-notices" title="{{ __('helpdesktickets::helpdesktickets.tickets_index.ops_notices_title') }}" aria-label="{{ __('helpdesktickets::helpdesktickets.tickets_index.ops_notices_title') }}"><i class="fa-regular fa-bell" aria-hidden="true"></i>{{ __('helpdesktickets::helpdesktickets.tickets_index.ops_notices') }}</button>
+                <button type="button" id="tkt-pill-notices" title="{{ __('helpdesktickets::helpdesktickets.tickets_index.ops_notices_title') }}"><i class="fa-regular fa-bell" aria-hidden="true"></i>{{ __('helpdesktickets::helpdesktickets.tickets_index.ops_notices') }}</button>
                 {{-- Modales 16/29/30: buzones, reglas de escalado y recurrencias.
                      Van como iconos sin texto para no romper el ancho del grupo
                      de cuatro que define el mockup. --}}
@@ -659,7 +662,7 @@
             </div>
 
             <button type="button" class="tkt-split-resizer" id="tkt-resizer-list" data-resize-target="list"
-                    role="separator" aria-orientation="vertical" aria-label="{{ __('helpdesktickets::helpdesktickets.tickets_index.resize_list_aria') }}"
+                    role="separator" aria-orientation="vertical" aria-valuemin="320" aria-valuemax="520" aria-valuenow="380" aria-label="{{ __('helpdesktickets::helpdesktickets.tickets_index.resize_list_aria') }}"
                     title="{{ __('helpdesktickets::helpdesktickets.tickets_index.resize_list_title') }}"></button>
 
             {{-- Columna: detalle --}}
@@ -682,7 +685,7 @@
             </div>
 
             <button type="button" class="tkt-split-resizer" id="tkt-resizer-side" data-resize-target="side"
-                    role="separator" aria-orientation="vertical" aria-label="{{ __('helpdesktickets::helpdesktickets.tickets_index.resize_side_aria') }}"
+                    role="separator" aria-orientation="vertical" aria-valuemin="290" aria-valuemax="460" aria-valuenow="316" aria-label="{{ __('helpdesktickets::helpdesktickets.tickets_index.resize_side_aria') }}"
                     title="{{ __('helpdesktickets::helpdesktickets.tickets_index.resize_side_title') }}"></button>
 
             {{-- Columna: panel lateral — Fase C: las 8 pestañas ya tienen

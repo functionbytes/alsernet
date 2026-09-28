@@ -24,8 +24,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-route',
-            kicker: 'Correo · entrega',
-            title: 'Detalle de entrega',
+            kicker: TKA.t('kicker_mail_delivery', 'Correo · entrega'),
+            title: TKA.t('modal_title_delivery_detail', 'Detalle de entrega'),
             titleChip: t.ticket_number,
             width: 'lg',
             body: '<div class="tkt-headline' + (mail.status === 'bounced' || mail.status === 'failed' ? ' bad' : '') + '">' +

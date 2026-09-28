@@ -30,8 +30,8 @@
         var autoApplyOn = !!d.ai_auto_apply_high_confidence;
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-tags', kicker: 'IA · clasificación',
-            title: 'Etiquetado automático', titleChip: t.ticket_number, width: 'md',
+            icon: 'fa-solid fa-tags', kicker: TKA.t('kicker_ai_classification', 'IA · clasificación'),
+            title: TKA.t('modal_title_auto_tagging', 'Etiquetado automático'), titleChip: t.ticket_number, width: 'md',
             body: '<div class="tkt-side-rows">' +
                     sideRowWithChip('Categoría sugerida', (suggestion.category && suggestion.category.name) || '—',
                         suggestion.category ? confidenceChip(suggestion.category.confidence) : '', { strong: true }) +
@@ -45,7 +45,7 @@
                   '<label class="tkt-check"><input type="checkbox" id="tkt-tag-autoapply"' + (autoApplyOn ? ' checked' : '') + '> Aplicar automáticamente las próximas sugerencias con más del 90% de confianza</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tag-apply">Aplicar sugerencias</button>' +
                   '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">Ajustar reglas</a>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('change', '#tkt-tag-autoapply', function () {

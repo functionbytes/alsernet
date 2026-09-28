@@ -25,10 +25,10 @@
                 ].filter(Boolean).join(' · ');
                 return '<div class="tkt-mailitem">' +
                     '<span class="av">' + escapeHtml(m.initials || '··') + '</span>' +
-                    '<span class="who"><span class="n">' + escapeHtml(m.subject || '(sin asunto)') + '</span>' +
+                    '<span class="who"><span class="n">' + escapeHtml(m.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '<span class="s">' + escapeHtml(meta) + '</span></span>' +
                     (m.status === 'scheduled'
-                        ? '<button type="button" class="tkt-link-btn" data-cancel-sched="' + i + '">Cancelar</button>' : '') +
+                        ? '<button type="button" class="tkt-link-btn" data-cancel-sched="' + i + '">' + TKA.t('cancel', 'Cancelar') + '</button>' : '') +
                     '<button type="button" class="tkt-link-btn" data-link-mail="' + i + '">Mover</button>' +
                 '</div>';
             }).join('');
@@ -49,8 +49,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-envelope-open',
-            kicker: 'Ticket · correos',
-            title: 'Emails del ticket',
+            kicker: TKA.t('kicker_ticket_emails', 'Ticket · correos'),
+            title: TKA.t('modal_title_ticket_emails', 'Emails del ticket'),
             titleChip: t.ticket_number,
             width: 'lg',
             body: '<div id="tkt-mails-tabs">' + tabsHtml() + '</div>' +
@@ -113,8 +113,8 @@
     // Reverb (el mismo canal de presencia que ya abre openTicketPresence()),
     // agentes en línea reusa TKA.urls.workloadOverview (modal 24 "Carga de
     // agentes"), y SLA/resueltos reusan TKA.state.tabCounts, que ya llega
-    // hidratado en el initTicketsApp y se mantiene fresco por recomputeTabCounts()
-    // y cada refetch del listado.
+    // hidratado en el initTicketsApp y se mantiene fresco por paintTabCounts()
+    // en cada refetch del listado.
     function bindStatusBar() {
         if (!$('#tkt-status-bar').length) return;
 
@@ -141,8 +141,8 @@
      * SLA en riesgo / resueltos de la barra: mismos números que ya pintan
      * los tabs de arriba (TKA.state.tabCounts), no un cálculo aparte —
      * llamarla junto a cada sitio que ya actualiza esos tabs evita que la
-     * barra se desincronice de ellos (mismo bug de fondo que
-     * recomputeTabCounts() ya documenta para "Todos"/"Resueltos").
+     * barra se desincronice de ellos (mismo bug de fondo que paintTabCounts()
+     * ya documenta para "Todos"/"Resueltos").
      */
     function renderStatusCounts() {
         var c = TKA.state.tabCounts || {};
@@ -164,7 +164,14 @@
 
         function paint(state) {
             $dot.removeClass('on connecting off');
-            if (state === 'connected') { $dot.addClass('on'); $text.text('Conectado'); } else if (state === 'connecting' || state === 'unavailable') { $dot.addClass('connecting'); $text.text('Conectando…'); } else { $dot.addClass('off'); $text.text('Sin conexión en vivo'); }
+            if (state === 'connected') { $dot.addClass('on'); $text.text(TKA.t('status_connected', 'Conectado')); } else if (state === 'connecting' || state === 'unavailable') { $dot.addClass('connecting'); $text.text(TKA.t('status_connecting', 'Conectando…')); } else { $dot.addClass('off'); $text.text(TKA.t('status_no_live_connection', 'Sin conexión en vivo')); }
+            // Único sitio que actualiza TKA.state.echoConnected: paint() se
+            // llama en cada transición real del socket (aquí abajo, en
+            // state_change y en los listeners online/offline), así que
+            // arrancar/parar el sondeo de respaldo de 15 s queda centralizado
+            // en vez de repetido en cada punto de llamada.
+            TKA.state.echoConnected = state === 'connected';
+            if (typeof syncTicketListRefreshFallback === 'function') syncTicketListRefreshFallback();
         }
 
         var connectWaits = 0;
@@ -184,6 +191,13 @@
             TKA.state.statusConnectionBound = true;
             var pusher = window.Echo.connector.pusher;
             var previous = pusher.connection.state;
+            // Solo cuenta como "reconexión" (con refetch de recuperación) la
+            // conexión que llega DESPUÉS de haber estado conectados alguna
+            // vez. La primera conexión del socket tras cargar la página no
+            // es una recuperación: el SSR ya trae la lista y los contadores
+            // al día, y disparar aquí el mismo refetch duplicaba la carga
+            // inicial (?page=1&fresh_counts=1 de sobra — QA real 24-sep-2026).
+            var everConnected = previous === 'connected';
             paint(previous);
 
             pusher.connection.bind('state_change', function (states) {
@@ -194,7 +208,7 @@
                 // recuperar el socket se sincronizan lista, contadores y el
                 // ticket abierto; el refetch respeta filtros y no modifica
                 // el historial del navegador.
-                if (current === 'connected' && previous !== 'connected') {
+                if (current === 'connected' && previous !== 'connected' && everConnected) {
                     var ticket = TKA.state.currentTicket || null;
                     if (typeof queueTicketListRefresh === 'function') {
                         queueTicketListRefresh('reconnected', ticket, {
@@ -207,6 +221,7 @@
                     }
                 }
 
+                if (current === 'connected') everConnected = true;
                 previous = current;
             });
 

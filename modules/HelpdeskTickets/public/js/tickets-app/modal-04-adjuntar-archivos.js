@@ -17,8 +17,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-paperclip',
-            kicker: 'Ticket · adjuntos',
-            title: 'Adjuntar archivos',
+            kicker: TKA.t('kicker_ticket_attachments', 'Ticket · adjuntos'),
+            title: TKA.t('modal_title_attach_files', 'Adjuntar archivos'),
             titleChip: t.ticket_number,
             width: 'md',
             body: '<label class="tkt-dropzone" id="tkt-dropzone">' +

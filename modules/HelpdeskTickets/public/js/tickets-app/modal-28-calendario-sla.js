@@ -36,8 +36,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-calendar',
-            kicker: 'SLA · calendario',
-            title: 'Calendario y SLA',
+            kicker: TKA.t('kicker_sla_calendar', 'SLA · calendario'),
+            title: TKA.t('modal_title_sla_calendar', 'Calendario y SLA'),
             titleChip: ticket ? ticket.ticket_number : null,
             width: '2xl',
             body: '<div id="tkt-slacal-body"><div class="tkt-skeleton"></div><div class="tkt-skeleton"></div></div>',

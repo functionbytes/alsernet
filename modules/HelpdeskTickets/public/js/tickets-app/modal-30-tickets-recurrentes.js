@@ -5,8 +5,8 @@
     function openRecurringModal() {
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-repeat',
-            kicker: 'Tickets · recurrentes',
-            title: 'Tickets recurrentes',
+            kicker: TKA.t('kicker_tickets_recurring', 'Tickets · recurrentes'),
+            title: TKA.t('modal_title_recurring_tickets', 'Tickets recurrentes'),
             width: '2xl',
             body: '<div class="tkt-skeleton"></div><div class="tkt-skeleton"></div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',

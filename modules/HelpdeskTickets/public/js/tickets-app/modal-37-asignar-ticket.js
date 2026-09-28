@@ -61,12 +61,12 @@
         }
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-user-plus', kicker: 'Ticket · asignación',
-            title: 'Asignar ticket', titleChip: t.ticket_number, width: 'lg',
+            icon: 'fa-solid fa-user-plus', kicker: TKA.t('kicker_ticket_assignment', 'Ticket · asignación'),
+            title: TKA.t('modal_title_assign_ticket', 'Asignar ticket'), titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-assign-search" placeholder="Buscar agente…" aria-label="Buscar agente"></div>' +
                 '<div class="tkt-pick-list" id="tkt-assign-list">' + agentRows('') + '</div>' +
                 (currentId ? '<button type="button" class="tkt-btn tkt-btn-start tkt-w-100" id="tkt-assign-none">Dejar sin asignar</button>' : ''),
-            foot: '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+            foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('input', '#tkt-assign-search', function () {

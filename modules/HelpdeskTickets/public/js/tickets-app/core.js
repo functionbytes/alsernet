@@ -25,6 +25,11 @@
             listRefreshInFlight: false,
             listRefreshQueued: false,
             listRefreshInterval: null,
+            // Estado real del socket Echo/Reverb — lo mantiene al día
+            // bindStatusConnection() (modal-14-emails-del-ticket.js) y lo lee
+            // syncTicketListRefreshFallback() para decidir si el sondeo de
+            // respaldo de 15s debe estar activo.
+            echoConnected: false,
             splitLayout: null,
             listDensity: 'normal',
             mobilePane: 'list',
@@ -121,6 +126,15 @@
         split.style.setProperty('--tkt-side-width', layout.sideWidth + 'px');
         split.classList.toggle('side-collapsed', layout.sideCollapsed);
         if (side) side.classList.toggle('is-collapsed', layout.sideCollapsed);
+        // role="separator" enfocable exige aria-valuenow/min/max (Lighthouse
+        // aria-required-attr): mismos límites en px que resizeSplit().
+        [['tkt-resizer-list', layout.listWidth, 320, 520], ['tkt-resizer-side', layout.sideWidth, 290, 460]].forEach(function (r) {
+            var h = document.getElementById(r[0]);
+            if (!h) return;
+            h.setAttribute('aria-valuenow', String(Math.round(r[1])));
+            h.setAttribute('aria-valuemin', String(r[2]));
+            h.setAttribute('aria-valuemax', String(r[3]));
+        });
         // Nombre de cada pestaña del riel con el tooltip del tema
         // (Tooltip.js, data-tooltip) en vez del title nativo, que tarda ~1 s:
         // debajo con el panel abierto y a la izquierda con él plegado.
@@ -1026,9 +1040,18 @@
     // El segundo argumento es SIEMPRE el texto español original: si la clave
     // no llega (blade viejo en caché, entorno sin recompilar) el toast sigue
     // funcionando exactamente igual que antes de esta traducción.
-    TKA.t = function (key, fallback) {
+    // replace (opcional): objeto { ':marcador': valor } aplicado sobre el
+    // texto ya resuelto (traducido o fallback) — mismo mecanismo que usa
+    // Laravel en los ficheros de lang, para no tener que concatenar strings
+    // sueltos alrededor de TKA.t() en cada punto de llamada.
+    TKA.t = function (key, fallback, replace) {
         var value = TKA.i18n && TKA.i18n[key];
-        return (typeof value === 'string' && value) ? value : fallback;
+        var text = (typeof value === 'string' && value) ? value : fallback;
+        if (!replace) return text;
+        Object.keys(replace).forEach(function (marker) {
+            text = text.split(marker).join(replace[marker]);
+        });
+        return text;
     };
 
     // Settings → Helpdesk · Tickets → Funcionalidades (14-sep-2026). Mismo
@@ -1151,7 +1174,18 @@
 
         $.ajax({ url: requestUrl, dataType: 'json', headers: { Accept: 'application/json' } })
             .done(function (res) {
-                var nextTickets = (res.tickets || []).map(hydrateTicketUrls);
+                // TicketsCrudController::index() antepone el ticket seleccionado
+                // como fila de contexto cuando ya no pertenece a la pestaña activa
+                // (para que un refetch automático no le quite la selección de
+                // debajo del detalle mientras pagina). Pero si dejó de cumplir el
+                // filtro por un cambio real (p.ej. se asignó desde "Sin asignar"),
+                // esa fila de más descuadraba lista y contador ("25 filas" con "24
+                // tickets" — QA real). Se descarta aquí: el detalle sigue abierto
+                // (currentTicket/currentDetail no dependen de este array), solo
+                // deja de aparecer como fila de la lista.
+                var nextTickets = (res.tickets || []).map(hydrateTicketUrls).filter(function (t) {
+                    return String(t.id) !== String(TKA.state.selected) || passesFilter(t);
+                });
                 var nextCounts = res.tab_counts || TKA.state.tabCounts;
                 var nextSignature = listSignature(nextTickets, nextCounts);
                 shouldRender = !opts.skipIfUnchanged || previousSignature !== nextSignature;
@@ -1171,8 +1205,12 @@
                 TKA.state.reassignedCount = 0;
                 $('#tkt-new-banner').remove();
 
+                // Pestañas/pill/hint de SLA/pie: SIEMPRE con lo que acaba de traer
+                // el servidor, aunque la firma no haya cambiado y no se repinte la
+                // lista — antes se quedaban congelados si shouldRender daba false.
+                paintTabCounts();
+
                 if (shouldRender) {
-                    renderStatusCounts();
                     syncFilterControls(params);
                     renderTabs();
                     renderList();
@@ -1187,7 +1225,11 @@
                 TKA.state.listSignature = nextSignature;
 
                 if (window.history && window.history.pushState) {
-                    if (opts.pushHistory !== false) window.history.pushState({ tktRefetch: true }, '', url);
+                    // replaceHistory: la búsqueda en vivo cambia la URL a cada
+                    // pausa al teclear; apilar una entrada por pausa llenaría
+                    // el historial (y popstate recarga la página).
+                    if (opts.replaceHistory) window.history.replaceState({ tktRefetch: true }, '', url);
+                    else if (opts.pushHistory !== false) window.history.pushState({ tktRefetch: true }, '', url);
                 }
                 if (opts.onDone) opts.onDone(res, { changed: shouldRender });
             })
@@ -1268,9 +1310,20 @@
         state.listRefreshPreserveBulk = opts.preserveBulk !== false;
         state.listRefreshTicket = ticket || state.listRefreshTicket || null;
 
+        // Gana el plazo MÁS CERCANO: antes cada llamada reiniciaba el
+        // temporizador, así que una ráfaga de eventos Echo (1,5 s de espera
+        // cada uno) iba aplazando el refresco de 100 ms que pidió el propio
+        // agente al asignar — la lista tardaba ~14 s en reflejarlo (QA
+        // 28-sep-2026). Las opciones ya quedan fusionadas arriba en state.
+        var delay = opts.delay == null ? 100 : opts.delay;
+        var due = Date.now() + delay;
+        if (state.listRefreshTimer && state.listRefreshDue && state.listRefreshDue <= due) return;
+
         if (state.listRefreshTimer) clearTimeout(state.listRefreshTimer);
+        state.listRefreshDue = due;
         state.listRefreshTimer = setTimeout(function () {
             state.listRefreshTimer = null;
+            state.listRefreshDue = null;
             if (state.listRefreshInFlight) {
                 state.listRefreshQueued = true;
                 return;
@@ -1326,23 +1379,39 @@
                     }
                 },
             });
-        }, opts.delay == null ? 100 : opts.delay);
+        }, delay);
     }
 
-    // Respaldo cuando no hay Echo/Reverb disponible. La petición es la misma
-    // consulta JSON del listado, pero solo repinta si cambia la firma.
-    function startTicketListRefresh() {
+    // Respaldo SOLO cuando Echo/Reverb no está conectado — con el socket
+    // conectado, listenForNewTickets() ya cubre altas/asignaciones/cambios en
+    // tiempo real, así que sondear cada 15 s además era doble trabajo contra
+    // el mismo endpoint (QA real: refetch de sobra con Reverb arriba).
+    // syncTicketListRefreshFallback() (ver bindStatusConnection en
+    // modal-14-emails-del-ticket.js) arranca/para este intervalo cada vez que
+    // cambia el estado de conexión. Sin freshCounts: ese recuento pesado ya
+    // lo trae cada evento real vía Echo; este sondeo es solo red de
+    // seguridad para filas/orden mientras no hay socket.
+    function stopTicketListRefreshFallback() {
         if (TKA.state.listRefreshInterval) clearInterval(TKA.state.listRefreshInterval);
+        TKA.state.listRefreshInterval = null;
+    }
+
+    function startTicketListRefreshFallback() {
+        if (TKA.state.listRefreshInterval) return;
         TKA.state.listRefreshInterval = setInterval(function () {
             if (document.hidden || $('#tkt-modal-backdrop.on').length || !TKA.state.networkOnline || navigator.onLine === false) return;
             queueTicketListRefresh('poll', TKA.state.currentTicket, {
                 refreshDetail: true,
-                freshCounts: true,
                 silent: true,
                 preserveBulk: true,
                 delay: 0,
             });
         }, 15000);
+    }
+
+    function syncTicketListRefreshFallback() {
+        if (TKA.state.echoConnected) stopTicketListRefreshFallback();
+        else startTicketListRefreshFallback();
     }
 
     // Los dos formularios de filtro pintan el MISMO estado desde ángulos
@@ -1380,8 +1449,8 @@
         var hasRange = !!(params.created_from || params.created_to);
         $('#tkt-daterange-open').closest('.tkt-fdate').toggleClass('on', hasRange);
         if (!hasRange) {
-            $('#tkt-daterange-open .tkt-fchip-value').text('Cualquier fecha');
-            $('#htk-f-created-range .tkt-daterange-text').removeClass('on').text('Cualquier fecha');
+            $('#tkt-daterange-open .tkt-fchip-value').text(TKA.t('label_any_date', 'Cualquier fecha'));
+            $('#htk-f-created-range .tkt-daterange-text').removeClass('on').text(TKA.t('label_any_date', 'Cualquier fecha'));
         }
     }
 
@@ -1396,6 +1465,15 @@
     // filtros activos, y meterla igualmente sería mentir sobre lo que la
     // pantalla dice estar mostrando. Se avisa y se deja que el agente decida —
     // el refetch respeta filtros, pestaña, orden y página.
+    // Ráfagas del mismo evento (p.ej. una campaña que asigna 15 tickets
+    // seguidos) antes coalescían en un solo refetch, pero con un margen de
+    // solo 100 ms (el delay por defecto de queueTicketListRefresh) — casi
+    // cualquier ráfaga real dispara varios refetches. Cada listener de aquí
+    // pide 1.5 s de margen: sigue siendo un solo refetch por ráfaga sin
+    // notarse frente al tiempo real (el propio evento ya actualizó el
+    // ticket afectado vía applyLocalTicketField antes de encolar).
+    var ECHO_REFRESH_DEBOUNCE_MS = 1500;
+
     function listenForNewTickets() {
         if (typeof window.Echo === 'undefined') return;
 
@@ -1403,7 +1481,7 @@
             var channel = window.Echo.private('helpdesk.tickets');
             channel
                 .listen('.ticket.created', function () {
-                    queueTicketListRefresh('ticket-created', null, { freshCounts: true });
+                    queueTicketListRefresh('ticket-created', null, { freshCounts: true, delay: ECHO_REFRESH_DEBOUNCE_MS });
                 })
                 .listen('.message.added', function (e) {
                     // Un correo entrante también se emite en el canal global
@@ -1415,13 +1493,14 @@
                         freshCounts: true,
                         preserveBulk: true,
                         refreshDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                        delay: ECHO_REFRESH_DEBOUNCE_MS,
                     });
                 })
                 .listen('.assigned', function (e) {
-                    queueTicketListRefresh('ticket-assigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true });
+                    queueTicketListRefresh('ticket-assigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true, delay: ECHO_REFRESH_DEBOUNCE_MS });
                 })
                 .listen('.unassigned', function (e) {
-                    queueTicketListRefresh('ticket-unassigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true });
+                    queueTicketListRefresh('ticket-unassigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true, delay: ECHO_REFRESH_DEBOUNCE_MS });
                 })
                 .listen('.ticket.status.changed', function (e) {
                     var statusTicket = e && e.ticket_id ? findTicketById(e.ticket_id) : null;
@@ -1436,6 +1515,7 @@
                         freshCounts: true,
                         refreshDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
                         forceDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                        delay: ECHO_REFRESH_DEBOUNCE_MS,
                     });
                 })
                 .listen('.ticket.updated', function (e) {
@@ -1457,6 +1537,7 @@
                     queueTicketListRefresh('ticket-updated', changedUpdatedTicket, {
                         freshCounts: true,
                         refreshDetail: !!(id && isSelectedTicket(id)),
+                        delay: ECHO_REFRESH_DEBOUNCE_MS,
                     });
                 });
         } catch (e) {
@@ -1565,37 +1646,21 @@
         $('#tkt-crumb-tab').text(crumbLabel);
     }
 
-    // Recalcula los contadores de tabs/vistas a partir de TKA.state.tickets
-    // (mismo criterio que passesFilter) — necesario tras el Kanban, cuyo
-    // "soltar" cambia el estado sin recargar la página (a diferencia de
-    // bulk/Gestión, que sí recargan y traen los conteos frescos del
-    // servidor). Sin esto, "Pendientes/Resueltos"/"SLA en riesgo" quedaban
-    // desactualizados después de arrastrar una tarjeta — bug real
-    // encontrado al probar el drag&drop.
-    function recomputeTabCounts() {
-        // 'all' se preserva del total real que ya trajo el servidor
-        // (TKA.state.tabCounts.all, cargado en initTicketsApp()) en vez de
-        // recalcularlo como TKA.state.tickets.length: el array del cliente
-        // solo contiene la página actual, así que "recalcularlo" aquí hacía
-        // que el tab "Todos" bajara (p.ej. de 12 a 11) tras la primera
-        // interacción de Kanban sin que el número de tickets reales hubiera
-        // cambiado — discrepancia real encontrada en QA.
-        var c = { open: 0, urgent: 0, mine: 0, unassigned: 0, pending: 0, resolved: 0, closed: 0, sla_risk: 0, all: TKA.state.tabCounts.all };
-        TKA.state.tickets.forEach(function (t) {
-            if (t.status_slug === 'open' || t.status_slug === 'progress') c.open++;
-            if (t.priority === 'urgent' || t.sla_kind === 'breach') c.urgent++;
-            if (t.assignee && t.assignee.id === TKA.state.currentUserId) c.mine++;
-            if (!t.assignee) c.unassigned++;
-            if (t.status_slug === 'pending') c.pending++;
-            if (t.status_slug === 'resolved') c.resolved++;
-            if (t.status_slug === 'closed') c.closed++;
-            if (t.sla_kind === 'warn' || t.sla_kind === 'breach') c.sla_risk++;
-        });
-        TKA.state.tabCounts = c;
+    // Único punto que pinta los contadores de tabs/vistas/pie a partir de
+    // TKA.state.tabCounts — SIEMPRE los del servidor (ver refetchList), que
+    // ya vienen filtrados sobre TODOS los tickets, no solo la página
+    // visible. Antes esto lo recalculaba recomputeTabCounts() recorriendo
+    // TKA.state.tickets (la página actual, 50 tickets como mucho): "Abiertos
+    // 11/Pendientes 14" en vez de los 54/35 reales en cuanto se tocaba el
+    // Kanban o se editaba un ticket — bug real de QA (14-sep-2026). El
+    // cliente ya no inventa números: si necesita un recuento al día pide un
+    // refetch con freshCounts (ver queueTicketListRefresh/patchTicketSilent).
+    function paintTabCounts() {
+        var c = TKA.state.tabCounts || {};
         Object.keys(c).forEach(function (k) {
             $('.tkt-state-tab[data-filter="' + k + '"] .c, .tkt-view-pill[data-filter="' + k + '"] .mono').text(c[k]);
         });
-        $('.tkt-queue-hint').text('SLA en riesgo: ' + c.sla_risk);
+        if (c.sla_risk != null) $('.tkt-queue-hint').text('SLA en riesgo: ' + c.sla_risk);
         renderStatusCounts();
     }
 
@@ -1645,7 +1710,7 @@
             : 'Sin cliente';
         var slaChipCls = t.sla_kind === 'breach' ? 'sla-breach' : (t.sla_kind === 'warn' ? 'sla-warn' : 'sla-ok');
         var $row = $(
-            '<div class="tkt-ticket-row ' + statusRowClass + (t.assignee ? '' : ' s-unassigned') + (t.unread_count > 0 ? ' unread' : '') + (isActive ? ' on' : '') + '" data-id="' + t.id + '" tabindex="0" role="listitem" aria-label="Abrir ticket ' + escapeHtml(t.ticket_number + ': ' + (t.subject || 'sin asunto')) + '">' +
+            '<div class="tkt-ticket-row ' + statusRowClass + (t.assignee ? '' : ' s-unassigned') + (t.unread_count > 0 ? ' unread' : '') + (isActive ? ' on' : '') + '" data-id="' + t.id + '" tabindex="0" role="listitem" aria-label="' + escapeHtml(TKA.t('open_ticket_aria', 'Abrir ticket :ticket', { ':ticket': t.ticket_number + ': ' + (t.subject || TKA.t('no_subject_lower', 'sin asunto')) })) + '">' +
             '<label class="tkt-ticket-checkzone">' +
                 '<input type="checkbox" class="tkt-ticket-check" data-check="' + t.id + '" aria-label="Seleccionar ticket ' + escapeHtml(t.ticket_number) + '" ' + checked + '>' +
             '</label>' +
@@ -1654,10 +1719,15 @@
                     '<span class="tkt-ticket-id mono">' + escapeHtml(t.ticket_number) + '</span>' +
                     '<span class="tkt-ticket-time mono">' + timeLabel + '</span>' +
                 '</div>' +
-                '<div class="tkt-ticket-subject">' + escapeHtml(t.subject || '(sin asunto)') + '</div>' +
+                '<div class="tkt-ticket-subject">' + escapeHtml(t.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                 '<div class="tkt-ticket-customer">' + escapeHtml(customerLine) + '</div>' +
                 (t.last_message_snippet ? '<div class="tkt-ticket-last">' + escapeHtml(t.last_message_snippet) + '</div>' : '') +
                 '<div class="tkt-ticket-metarow">' +
+                    // Ticket abierto que ya no cumple el filtro activo (p. ej.
+                    // recién asignado desde "Sin asignar"): el servidor lo
+                    // conserva como contexto del detalle, pero no cuenta en
+                    // el total — se marca para que no parezca uno más.
+                    (t.outside_filter ? '<span class="tkt-rchip outside" title="' + escapeHtml(TKA.t('outside_filter_title', 'Se muestra porque lo tienes abierto; no cumple el filtro actual')) + '">' + escapeHtml(TKA.t('outside_filter', 'Fuera del filtro')) + '</span>' : '') +
                     '<span class="tkt-rchip">' + escapeHtml(statusLabel) + '</span>' +
                     // Canal de origen: iba ausente de esta fila (solo se
                     // pintaba en Kanban/detalle) — mismo mapa ORIGIN_LABELS
@@ -1836,7 +1906,7 @@
             ? risky.map(function (t) {
                 return '<button type="button" class="tkt-qsum-row" data-qsum-ticket="' + escapeHtml(String(t.id)) + '">' +
                     '<span class="tkt-qsum-dot ' + (t.sla_kind === 'breach' ? 'breach' : 'warn') + '"></span>' +
-                    '<span class="tkt-qsum-subject">' + escapeHtml(t.subject || '(sin asunto)') + '</span>' +
+                    '<span class="tkt-qsum-subject">' + escapeHtml(t.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '<span class="tkt-qsum-sla">' + escapeHtml(t.sla_text || '') + '</span></button>';
             }).join('')
             : '<div class="tkt-empty-box">Ningún ticket de esta página tiene el SLA en riesgo.</div>';
@@ -1900,7 +1970,7 @@
             : '';
         var $card = $(
             '<div class="tkt-kcard" draggable="true" data-id="' + t.id + '">' +
-                '<div class="tkt-kcard-title">' + escapeHtml(t.subject || '(sin asunto)') + '</div>' +
+                '<div class="tkt-kcard-title">' + escapeHtml(t.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                 '<div class="tkt-kcard-sub tkt-trunc">' + escapeHtml(t.customer ? t.customer.name : 'Sin cliente') + '</div>' +
                 '<div class="tkt-kcard-meta">' +
                     '<span class="tkt-chip-mono">' + escapeHtml(t.ticket_number) + '</span>' +
@@ -2041,7 +2111,6 @@
                     refreshDetail: true,
                     forceDetail: true,
                 });
-                recomputeTabCounts();
                 renderTabs();
                 renderList();
             },
@@ -2065,7 +2134,7 @@
     function saveCurrentView(source) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-bookmark',
-            title: 'Guardar vista',
+            title: TKA.t('modal_title_save_view', 'Guardar vista'),
             width: 'sm',
             body:
                 '<div class="tkt-field">' +
@@ -2077,7 +2146,7 @@
                     '<span>Compartir con el equipo<span class="hint">el resto de agentes la verá en su barra de vistas</span></span>' +
                 '</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-save-view-confirm">Guardar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.find('#tkt-save-view-name').trigger('focus');
@@ -2276,8 +2345,8 @@
             title: opts.title,
             width: 'sm',
             body: '<p class="tkt-confirm-msg">' + escapeHtml(opts.message) + '</p>',
-            foot: '<button type="button" class="tkt-btn ' + (opts.danger ? 'tkt-btn-danger' : 'tkt-btn-primary') + '" id="tkt-confirm-ok">' + escapeHtml(opts.confirmLabel || 'Confirmar') + '</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+            foot: '<button type="button" class="tkt-btn ' + (opts.danger ? 'tkt-btn-danger' : 'tkt-btn-primary') + '" id="tkt-confirm-ok">' + escapeHtml(opts.confirmLabel || TKA.t('confirm', 'Confirmar')) + '</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
         $backdrop.on('click', '#tkt-confirm-ok', function () {
             closeModal();
@@ -2372,6 +2441,9 @@
             TKA.state.threadLoadingMore = false;
             TKA.state.editConflictMessage = '';
             TKA.state.editConflictFields = [];
+            // La caché de loadTimeCard() es por ticket: al cambiar de ticket
+            // no vale reutilizar el tiempo imputado del anterior.
+            TKA.state.timeCardCache = null;
         }
         TKA.state.selected = t.id;
         $('.tkt-ticket-row').removeClass('on');
@@ -2508,7 +2580,7 @@
                 '</div>' +
                 '<div class="tkt-detail-head-row">' +
                     '<div class="tkt-detail-title-col">' +
-                        '<div class="tkt-detail-title">' + escapeHtml(t.subject || '(sin asunto)') + '</div>' +
+                        '<div class="tkt-detail-title">' + escapeHtml(t.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                         '<div class="tkt-detail-chips">' +
                             deliveryChip +
                             '<span class="tkt-chip-id">' + escapeHtml(t.ticket_number) + '</span>' +
@@ -2801,7 +2873,13 @@
                     if ($oldRow.length) $oldRow.replaceWith(renderRow(t));
                 }
                 renderThreadPane(d.thread || []);
-                renderWorkCards(t);
+                // renderWorkCards(t) YA se llama justo debajo, dentro de
+                // renderActiveSidePane() → renderGestionPane() cuando la
+                // pestaña lateral activa es "gestion" (la de por defecto):
+                // llamarlo aquí también duplicaba tareas/subtickets/campos en
+                // cada apertura de ticket sin motivo (QA real 24-sep-2026).
+                // Si la pestaña activa es otra, renderWorkCards() no tiene
+                // nada que pintar (sus tarjetas solo existen en Gestión).
                 renderActivityPane(d.activity || [], d.activity_total_count);
                 renderFilesPane(d.files || [], t);
                 renderMailPane(d.mail);
@@ -3241,7 +3319,10 @@
         if (TKA.state.threadHasMore) {
             var loaded = (Number(TKA.state.threadPage) || 1) * (Number(TKA.state.threadPerPage) || 30);
             var remaining = Math.max(0, (Number(TKA.state.threadTotal) || loaded) - loaded);
-            html += '<button type="button" class="tkt-thread-load-more" data-thread-load-more' + (TKA.state.threadLoadingMore ? ' disabled' : '') + '><i class="fa-solid fa-clock-rotate-left"></i> ' + (TKA.state.threadLoadingMore ? 'Cargando…' : 'Cargar mensajes anteriores' + (remaining ? ' · quedan ' + remaining : '')) + '</button>';
+            var loadMoreLabel = TKA.state.threadLoadingMore
+                ? TKA.t('loading', 'Cargando…')
+                : TKA.t('load_previous_messages', 'Cargar mensajes anteriores') + (remaining ? TKA.t('remaining_count_suffix', ' · quedan :count', { ':count': remaining }) : '');
+            html += '<button type="button" class="tkt-thread-load-more" data-thread-load-more' + (TKA.state.threadLoadingMore ? ' disabled' : '') + '><i class="fa-solid fa-clock-rotate-left"></i> ' + loadMoreLabel + '</button>';
         }
 
         if (!items.length) {
@@ -3478,9 +3559,9 @@
             // el navegador bloqueado (ver el comentario de esa función).
             openConfirmModal({
                 icon: 'fa-solid fa-rotate-right',
-                title: 'Reenviar este correo',
-                message: 'Se reenviará a su destinatario original. Es un correo real y no se puede retirar una vez enviado.',
-                confirmLabel: 'Reenviar',
+                title: TKA.t('confirm_resend_mail_title', 'Reenviar este correo'),
+                message: TKA.t('confirm_resend_mail_message', 'Se reenviará a su destinatario original. Es un correo real y no se puede retirar una vez enviado.'),
+                confirmLabel: TKA.t('resend', 'Reenviar'),
                 onConfirm: function () {
                     // El CSRF lo añade el $.ajaxSetup global del layout, igual
                     // que en el resto de llamadas de este archivo.
@@ -3737,8 +3818,13 @@
             }
         });
 
+        // Antes se pedía un borrador de IA (POST facturado) cada vez que se
+        // abría un ticket, se hubiera pedido o no — QA real 24-sep-2026.
+        // Ahora solo se genera cuando el agente pulsa el botón "IA" del
+        // composer (abre el modal de Auto-respuesta IA, que ya llama al
+        // mismo endpoint solo al abrirse/regenerar — ver openAiDraftModal en
+        // modal-19-autorespuesta-ia.js).
         bindComposerAi($c, $body);
-        requestAiDraft(TKA.state.currentTicket, false);
     }
 
     // Las macros no tienen modal propio: se despliegan en un <select> nativo
@@ -3794,7 +3880,7 @@
         var $box = $('#tkt-comp-ai');
         if (refresh) {
             $box.removeAttr('hidden');
-            $('#tkt-comp-ai-text').text('Generando un borrador…');
+            $('#tkt-comp-ai-text').text(TKA.t('btn_generating_draft', 'Generando un borrador…'));
             $('#tkt-comp-ai-tpl, #tkt-comp-ai-conf').attr('hidden', true);
         }
         $.ajax({
@@ -3847,8 +3933,8 @@
         var dominio = email.split('@').pop();
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-ban', iconClass: 'danger', kicker: 'Remitente · lista negra',
-            title: 'Pasar a lista negra', titleChip: t.ticket_number, width: 'lg',
+            icon: 'fa-solid fa-ban', iconClass: 'danger', kicker: TKA.t('kicker_sender_blacklist', 'Remitente · lista negra'),
+            title: TKA.t('modal_title_add_to_blacklist', 'Pasar a lista negra'), titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i>' +
                     '<span>Los correos que lleguen desde lo que bloquees dejarán de abrir tickets. ' +
                     'La regla se puede quitar luego en <strong>Ajustes › Tickets › Lista negra</strong>.</span>' +
@@ -3874,7 +3960,7 @@
                   '<label class="tkt-unify-notify"><input type="checkbox" id="tkt-bl-delete" checked> ' +
                       'Eliminar este ticket al bloquear</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-danger" id="tkt-bl-go">Bloquear</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         // Resalte de la opción marcada, igual que el resto de .tkt-option.
@@ -3892,7 +3978,7 @@
                 return;
             }
 
-            $btn.prop('disabled', true).text('Bloqueando…');
+            $btn.prop('disabled', true).text(TKA.t('btn_blocking', 'Bloqueando…'));
 
             $.ajax({
                 url: t.url_blacklist,
@@ -3913,7 +3999,7 @@
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, TKA.t('sender_block_failed', 'No se pudo bloquear el remitente.'));
                 tktNotify('error', msg);
-                $btn.prop('disabled', false).text('Bloquear');
+                $btn.prop('disabled', false).text(TKA.t('btn_block', 'Bloquear'));
             });
         });
     }
@@ -3928,10 +4014,10 @@
         if (!t || !t.url_unify_summary) return;
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-object-group', kicker: 'Duplicados · unificar',
-            title: 'Unificar tickets del cliente', titleChip: t.ticket_number, width: '2xl',
+            icon: 'fa-solid fa-object-group', kicker: TKA.t('kicker_duplicates_merge', 'Duplicados · unificar'),
+            title: TKA.t('modal_title_merge_customer_tickets', 'Unificar tickets del cliente'), titleChip: t.ticket_number, width: '2xl',
             body: '<div class="tkt-skeleton"></div>',
-            foot: '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+            foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $.getJSON(t.url_unify_summary).done(function (res) {
@@ -3995,7 +4081,7 @@
                     '<span class="tkt-unify-when">' + escapeHtml(x.created_at || '—') + '</span>' +
                     (esSuperviviente ? '' : '<button type="button" class="tkt-btn tkt-btn-mini tkt-unify-keep-btn" data-keep="' + x.id + '">Conservar este</button>') +
                 '</div>' +
-                '<div class="tkt-unify-subject">' + escapeHtml(x.subject || '(sin asunto)') + '</div>' +
+                '<div class="tkt-unify-subject">' + escapeHtml(x.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                 '<div class="tkt-unify-meta">' +
                     x.messages + (x.messages === 1 ? ' mensaje' : ' mensajes') +
                     (x.assignee ? ' · ' + escapeHtml(x.assignee) : ' · sin asignar') +
@@ -4026,7 +4112,7 @@
             '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-unify-go"' + (cuantos ? '' : ' disabled') + '>' +
                 (cuantos ? 'Unificar ' + cuantos + (cuantos === 1 ? ' ticket' : ' tickets') : 'Selecciona qué unificar') +
             '</button>' +
-            '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>'
+            '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>'
         );
     }
 
@@ -4068,7 +4154,7 @@
 
         if (!survivorId || !ids.length) return;
 
-        $btn.prop('disabled', true).text('Unificando…');
+        $btn.prop('disabled', true).text(TKA.t('btn_merging', 'Unificando…'));
 
         $.ajax({
             url: t.url_unify,
@@ -4088,7 +4174,7 @@
         }).fail(function (xhr) {
             var msg = apiErrorMessage(xhr, TKA.t('tickets_merge_failed', 'No se pudieron unificar los tickets.'));
             tktNotify('error', msg);
-            $btn.prop('disabled', false).text('Unificar');
+            $btn.prop('disabled', false).text(TKA.t('btn_merge', 'Unificar'));
         });
     });
 
@@ -4162,10 +4248,25 @@
 
     // Aviso discreto sobre el detalle. Solo aparece si hay candidatos reales;
     // sin ellos no se pinta nada (nunca "0 duplicados").
-    function checkDuplicates(t) {
-        dismissDuplicateBanner();
-        if (!t || !t.url_duplicates) return;
+    //
+    // fetchDetailData() llama a esto una vez por cada applyDetail() que
+    // ejecuta — y aplica dos veces seguidas al abrir un ticket con precarga
+    // (el hover ya cacheó datos: se pintan al instante y el /data real los
+    // repinta encima). Sin guardia, eso eran dos peticiones a url_duplicates
+    // por apertura, y la segunda desmontaba+repintaba el aviso ya visible
+    // (QA real: "ai/duplicates se repite en cada refresco"). Se ignora una
+    // repetición inmediata para el MISMO ticket; un cambio real de ticket
+    // (o pasado ese margen) sí vuelve a comprobar.
+    var DUPLICATES_CHECK_DEBOUNCE_MS = 2000;
 
+    function checkDuplicates(t) {
+        if (!t || !t.url_duplicates) { dismissDuplicateBanner(); return; }
+
+        var last = TKA.state.duplicatesCheckedAt;
+        if (last && String(last.ticketId) === String(t.id) && Date.now() - last.at < DUPLICATES_CHECK_DEBOUNCE_MS) return;
+        TKA.state.duplicatesCheckedAt = { ticketId: t.id, at: Date.now() };
+
+        dismissDuplicateBanner();
         $.getJSON(t.url_duplicates).done(function (res) {
             var list = (res && res.duplicates) || [];
             if (!list.length) return;
@@ -4236,13 +4337,13 @@
         var verbo = escribiendo.length > 1 ? 'están redactando respuestas' : 'está redactando una respuesta';
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-triangle-exclamation', kicker: 'Bandeja · colisión',
-            title: 'Otro agente está respondiendo', titleChip: t.ticket_number, width: 'sm',
+            icon: 'fa-solid fa-triangle-exclamation', kicker: TKA.t('kicker_inbox_collision', 'Bandeja · colisión'),
+            title: TKA.t('modal_title_other_agent_replying', 'Otro agente está respondiendo'), titleChip: t.ticket_number, width: 'sm',
             body: '<div class="tkt-note"><i class="fa-solid fa-pen"></i> <strong>' + escapeHtml(quien) + '</strong> ' +
                     escapeHtml(verbo) + ' en este ticket ahora mismo.</div>' +
                 '<p class="tkt-presence-hint">Si envías la tuya, el cliente puede recibir dos respuestas seguidas.</p>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-collision-send-anyway">Enviar igualmente</button>' +
-                '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('click', '#tkt-collision-send-anyway', function () {
@@ -4369,8 +4470,8 @@
         }).join('') + '</div>' : '<div class="tkt-empty-box">No hay respuestas pendientes.</div>';
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-cloud-arrow-up',
-            kicker: 'Persistencia local',
-            title: 'Cola offline de respuestas',
+            kicker: TKA.t('kicker_local_persistence', 'Persistencia local'),
+            title: TKA.t('modal_title_offline_reply_queue', 'Cola offline de respuestas'),
             width: 'lg',
             body: body + '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Las respuestas se mantienen en este navegador hasta que el servidor confirme su recepción y caducan a las 24 horas. Hay un máximo de ' + TKT_OFFLINE_MAX_ENTRIES + ' pendientes. Los reintentos usan espera progresiva para no saturar la conexión.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-offline-retry-all">Reintentar todo</button><button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
@@ -5378,7 +5479,7 @@
                 // los adjuntos del hilo, y su handler se quedaba con el clic.
                 return '<button type="button" class="tkt-ctk' + (r.is_current ? ' is-current' : '') + '" data-ticket-preview="' + r.id + '">' +
                         '<span class="line1">' +
-                            '<span class="subj">' + escapeHtml(r.subject || '(sin asunto)') + '</span>' +
+                            '<span class="subj">' + escapeHtml(r.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                             (r.is_current
                                 ? '<span class="tkt-ctk-badge current">Actual</span>'
                                 : '<span class="tkt-ctk-badge">' + escapeHtml(r.status_name || r.status_slug || '') + '</span>') +
@@ -5464,12 +5565,12 @@
 
         openModal(modalShell({
             icon: 'fa-regular fa-eye',
-            kicker: 'TICKET · VISTA RÁPIDA',
+            kicker: TKA.t('kicker_ticket_quick_view_caps', 'TICKET · VISTA RÁPIDA'),
             titleChip: row.ticket_number,
-            title: 'Vista previa',
+            title: TKA.t('modal_title_preview', 'Vista previa'),
             width: 'md',
             body: '<table class="tkt-info-table">' +
-                    '<tr><th>Asunto</th><td>' + escapeHtml(row.subject || '(sin asunto)') + '</td></tr>' +
+                    '<tr><th>Asunto</th><td>' + escapeHtml(row.subject || TKA.t('no_subject', '(sin asunto)')) + '</td></tr>' +
                     '<tr><th>Estado</th><td>' + escapeHtml(estado) + '</td></tr>' +
                     (row.agent_name ? '<tr><th>Agente</th><td>' + escapeHtml(row.agent_name) + '</td></tr>' : '') +
                     (row.created_at_human ? '<tr><th>Creado</th><td>' + escapeHtml(row.created_at_human) + '</td></tr>' : '') +
@@ -5709,7 +5810,7 @@
             assigneeCard +
             slaCard +
             (featureEnabled('mgmt_csat_card') ? renderCsatCard(csat) : '') +
-            (featureEnabled('mgmt_time_card') && t.url_time_entries ? '<div class="tkt-side-card" id="tkt-time-card"><div class="tkt-side-card-head">Tiempo invertido</div><div class="tkt-side-card-body"><div class="tkt-meta-xs">Cargando…</div></div></div>' : '') +
+            (featureEnabled('mgmt_time_card') && t.url_time_entries ? '<div class="tkt-side-card" id="tkt-time-card"><div class="tkt-side-card-head">' + TKA.t('time_spent', 'Tiempo invertido') + '</div><div class="tkt-side-card-body"><div class="tkt-meta-xs">' + TKA.t('loading', 'Cargando…') + '</div></div></div>' : '') +
             (t.url_custom_fields ? '<div class="tkt-side-card" id="tkt-cfields-card" hidden></div>' : '') +
             (t.url_dispute_review ? '<div class="tkt-side-card" id="tkt-review-card" hidden></div>' : '') +
             (featureEnabled('mgmt_tasks_card') && t.url_tasks_store ? '<div class="tkt-side-card" id="tkt-tasks-card"></div>' : '') +
@@ -5730,17 +5831,17 @@
 
         $c.find('#tkt-open-csat').on('click', function () { openCsatModal(t); });
         $c.find('#tkt-act-csat-resend').on('click', function () {
-            var $btn = $(this).prop('disabled', true).text('Enviando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_sending', 'Enviando…'));
             $.ajax({
                 url: t.url_send_csat, method: 'POST', headers: { Accept: 'application/json' },
                 success: function (resp) {
                     if (window.toastr) toastr.success((resp && resp.message) || TKA.t('survey_sent', 'Encuesta enviada'));
-                    $btn.text('Enviada').prop('disabled', true);
+                    $btn.text(TKA.t('status_sent_fem', 'Enviada')).prop('disabled', true);
                 },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('survey_send_failed', 'No se pudo enviar la encuesta'));
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Reenviar encuesta de satisfacción');
+                    $btn.prop('disabled', false).text(TKA.t('btn_resend_csat_survey', 'Reenviar encuesta de satisfacción'));
                 },
             });
         });
@@ -5808,7 +5909,7 @@
                     $results.html(filas.map(function (f) {
                         return '<button type="button" class="tkt-pick" data-ticket-pick="' + f.id + '">' +
                             '<span class="who"><span class="n">' + escapeHtml(f.ticket_number) + ' · ' +
-                                escapeHtml(f.subject || '(sin asunto)') + '</span>' +
+                                escapeHtml(f.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                             '<span class="s">' + escapeHtml([f.customer_name, f.status_name, f.updated_at_human]
                                 .filter(Boolean).join(' · ')) + '</span></span></button>';
                     }).join(''));
@@ -5834,9 +5935,9 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-code-merge',
             iconClass: 'danger',
-            kicker: 'Tickets · fusión',
+            kicker: TKA.t('kicker_tickets_merge', 'Tickets · fusión'),
             titleChip: t.ticket_number,
-            title: 'Fusionar tickets',
+            title: TKA.t('modal_title_merge_tickets', 'Fusionar tickets'),
             // 'sm' (340px) apretaba el panel comparado (.tkt-merge-pair, dos
             // columnas lado a lado) y la lista de resultados de búsqueda.
             width: 'xl',
@@ -5851,7 +5952,7 @@
                     '<div class="tkt-merge-side losing">' +
                         '<span class="tkt-cap">Se fusiona y cierra</span>' +
                         '<span class="n mono">' + escapeHtml(t.ticket_number) + '</span>' +
-                        '<span class="s tkt-trunc">' + escapeHtml(t.subject || '(sin asunto)') + '</span>' +
+                        '<span class="s tkt-trunc">' + escapeHtml(t.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '</div>' +
                     '<i class="fa-solid fa-arrow-right tkt-merge-arrow"></i>' +
                     '<div class="tkt-merge-side winning" id="tkt-merge-winner">' +
@@ -5867,7 +5968,7 @@
                 '<div class="tkt-note danger">Se moverán al ticket destino los <strong>mensajes, correos, adjuntos, notas, comentarios, tiempos, seguidores y enlaces</strong> de ' + escapeHtml(t.ticket_number) + '. No se puede deshacer.</div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-merge-ack"> Entiendo que esta acción no se puede deshacer</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-merge-confirm" disabled>Fusionar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         // Al elegir destino se pinta en la vista comparada, para que quede a
@@ -5951,9 +6052,9 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-clock',
-            kicker: 'Ticket · aplazar',
+            kicker: TKA.t('kicker_ticket_snooze', 'Ticket · aplazar'),
             titleChip: t.ticket_number,
-            title: 'Aplazar ticket',
+            title: TKA.t('modal_title_snooze_ticket', 'Aplazar ticket'),
             width: 'md',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Cuándo</label>' +
@@ -5973,7 +6074,7 @@
                     'Pausar el SLA mientras está aplazado</label>' +
                 '<div class="tkt-note">El ticket saldrá de las colas activas y volverá a aparecer automáticamente en esta fecha.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-snooze-confirm">Posponer</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('click', '[data-snooze-shortcut]', function () {
@@ -6174,7 +6275,7 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-code-merge',
             kicker: customer.name,
-            title: 'Fusionar contacto duplicado',
+            title: TKA.t('modal_title_merge_duplicate_contact', 'Fusionar contacto duplicado'),
             width: 'md',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Buscar el contacto duplicado</label>' +
@@ -6182,7 +6283,7 @@
                 '<div id="tkt-merge-search-results"></div>' +
                 '<div id="tkt-merge-preview"></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-merge-execute-btn" disabled>Fusionar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         var searchUrl = TKA.urls.contactsMergeSearchTemplate.replace('__CUSTOMER__', customer.id);
@@ -6370,9 +6471,9 @@
 
         openModal(modalShell({
             icon: 'fa-regular fa-rectangle-list',
-            kicker: 'PrestaShop · formulario',
+            kicker: TKA.t('kicker_prestashop_form', 'PrestaShop · formulario'),
             titleChip: t.ticket_number,
-            title: 'Datos del formulario',
+            title: TKA.t('modal_title_form_data', 'Datos del formulario'),
             width: 'lg',
             body: (form.message ? '<blockquote class="tkt-form-quote">' + escapeHtml(form.message) + '</blockquote>' : '') +
                 '<table class="tkt-info-table">' + tableRows(submitted) + '</table>' +
@@ -6516,9 +6617,9 @@
         $c.find('#tkt-followup-cancel-all').on('click', function () {
             openConfirmModal({
                 icon: 'fa-regular fa-bell-slash',
-                title: 'Cancelar la secuencia',
-                message: 'Se cancelarán todos los pasos que aún no se han avisado.',
-                confirmLabel: 'Cancelar la secuencia',
+                title: TKA.t('confirm_cancel_sequence_title', 'Cancelar la secuencia'),
+                message: TKA.t('confirm_cancel_sequence_message', 'Se cancelarán todos los pasos que aún no se han avisado.'),
+                confirmLabel: TKA.t('confirm_cancel_sequence_title', 'Cancelar la secuencia'),
                 danger: true,
                 onConfirm: function () {
                     $.ajax({
@@ -6597,9 +6698,9 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-users',
-            kicker: 'Ticket · seguidores',
+            kicker: TKA.t('kicker_ticket_followers', 'Ticket · seguidores'),
             titleChip: t.ticket_number,
-            title: 'Seguidores del ticket',
+            title: TKA.t('modal_title_ticket_followers', 'Seguidores del ticket'),
             width: 'md',
             body: '<div id="tkt-followers-list">' + rowsHtml() + '</div>' +
                 '<div class="tkt-field"><label class="tkt-label">Añadir compañero</label>' +
@@ -6689,7 +6790,7 @@
             icon: 'fa-solid fa-trash',
             iconClass: 'danger',
             kicker: t.ticket_number,
-            title: 'Eliminar ticket',
+            title: TKA.t('modal_title_delete_ticket', 'Eliminar ticket'),
             width: 'md',
             body: '' +
                 '<label class="tkt-option on" data-delete-option="archive"><input type="radio" name="tkt-delete-mode" value="archive" checked class="tkt-m0">' +
@@ -6698,7 +6799,7 @@
                     '<span><span class="tkt-option-title">Eliminar</span><br><span class="tkt-option-sub">Borrado (recuperable solo desde la papelera técnica)</span></span></label>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-delete-ack"> Entiendo lo que va a pasar</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-danger" id="tkt-delete-confirm" disabled>Confirmar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('click', '[data-delete-option]', function () {
@@ -6735,10 +6836,10 @@
     function openQueueModal() {
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-layer-group',
-            kicker: 'Operación · Cola',
-            title: 'Cola y reintentos',
+            kicker: TKA.t('kicker_operation_queue', 'Operación · Cola'),
+            title: TKA.t('modal_title_queue_and_retries', 'Cola y reintentos'),
             width: 'md',
-            body: '<div class="tkt-empty-box">Cargando…</div>',
+            body: '<div class="tkt-empty-box">' + TKA.t('loading', 'Cargando…') + '</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-queue-retry-all">Reintentar todos</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-queue-flush">Purgar dead-letters</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
@@ -6813,9 +6914,9 @@
             openConfirmModal({
                 icon: 'fa-solid fa-trash',
                 danger: true,
-                title: 'Purgar la dead-letter',
-                message: 'Se eliminarán todos los jobs fallidos. No se pueden recuperar ni reintentar después.',
-                confirmLabel: 'Purgar',
+                title: TKA.t('confirm_purge_dead_letter_title', 'Purgar la dead-letter'),
+                message: TKA.t('confirm_purge_dead_letter_message', 'Se eliminarán todos los jobs fallidos. No se pueden recuperar ni reintentar después.'),
+                confirmLabel: TKA.t('purge', 'Purgar'),
                 onConfirm: function () {
                     $.ajax({
                         url: TKA.urls.queueFlush,
@@ -6852,10 +6953,10 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-scale-balanced',
-            kicker: 'Equipo · carga',
-            title: 'Reparto y capacidad',
+            kicker: TKA.t('kicker_team_workload', 'Equipo · carga'),
+            title: TKA.t('modal_title_distribution_capacity', 'Reparto y capacidad'),
             width: 'xl',
-            body: '<div class="tkt-empty-box">Cargando…</div>',
+            body: '<div class="tkt-empty-box">' + TKA.t('loading', 'Cargando…') + '</div>',
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
 
@@ -7181,7 +7282,7 @@
         });
 
         $backdrop.on('click', '#tkt-wl-save', function () {
-            var $btn = $(this).prop('disabled', true).text('Guardando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_saving', 'Guardando…'));
 
             $.ajax({
                 url: TKA.urls.workloadAssignment,
@@ -7200,7 +7301,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('workload_distribution_save_failed', 'No se pudo guardar el reparto.'));
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Reintentar');
+                    $btn.prop('disabled', false).text(TKA.t('retry', 'Reintentar'));
                 },
             });
         });
@@ -7224,7 +7325,7 @@
 
             window.clearTimeout(confirmTimer);
             confirmandoReparto = false;
-            $btn.prop('disabled', true).removeClass('tkt-wl-confirm').text('Repartiendo…');
+            $btn.prop('disabled', true).removeClass('tkt-wl-confirm').text(TKA.t('btn_distributing', 'Repartiendo…'));
 
             $.ajax({
                 url: TKA.urls.workloadDistribute,
@@ -7237,7 +7338,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('workload_distribute_failed', 'No se pudo repartir'));
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Reintentar');
+                    $btn.prop('disabled', false).text(TKA.t('retry', 'Reintentar'));
                 },
             });
         });
@@ -7272,8 +7373,8 @@
 
         var $modal = openModal(modalShell({
             icon: 'fa-solid fa-download',
-            kicker: 'Tickets · exportar',
-            title: 'Exportar tickets',
+            kicker: TKA.t('kicker_tickets_export', 'Tickets · exportar'),
+            title: TKA.t('modal_title_export_tickets', 'Exportar tickets'),
             width: 'lg',
             body: '<div class="tkt-field"><label class="tkt-label">Alcance</label>' +
                     '<label class="tkt-option' + (seleccionados.length ? ' on' : '') + '" data-scope-option>' +
@@ -7299,11 +7400,11 @@
                 '</div>' +
                 '<div class="tkt-field" id="tkt-export-cols-wrap">' +
                     '<label class="tkt-label">Columnas<span class="hint">solo CSV</span></label>' +
-                    '<div class="tkt-colgrid" id="tkt-export-cols"><span class="tkt-note">Cargando…</span></div>' +
+                    '<div class="tkt-colgrid" id="tkt-export-cols"><span class="tkt-note">' + TKA.t('loading', 'Cargando…') + '</span></div>' +
                 '</div>' +
                 '<div class="tkt-note" id="tkt-export-count">Calculando cuántos tickets se exportarán…</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-export-confirm">Exportar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         // Cuántas filas van a salir, ANTES de descargarlas: una exportación
@@ -7312,7 +7413,7 @@
             if (!TKA.urls.exportEstimate) { $modal.find('#tkt-export-count').remove(); return; }
 
             var params = paramsDeAlcance();
-            $modal.find('#tkt-export-count').text('Calculando…');
+            $modal.find('#tkt-export-count').text(TKA.t('btn_calculating', 'Calculando…'));
 
             $.getJSON(TKA.urls.exportEstimate + '?' + params.toString()).done(function (res) {
                 var n = (res && res.total) || 0;
@@ -7326,7 +7427,7 @@
                         (c.default ? ' checked' : '') + '> ' + escapeHtml(c.label) + '</label>';
                 }).join(''));
             }).fail(function () {
-                $modal.find('#tkt-export-count').text('No se pudo calcular el total.');
+                $modal.find('#tkt-export-count').text(TKA.t('total_calculation_failed', 'No se pudo calcular el total.'));
             });
         }
 
@@ -7404,9 +7505,9 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-bell',
-            kicker: 'Automatización · seguimientos',
+            kicker: TKA.t('kicker_automation_followups', 'Automatización · seguimientos'),
             titleChip: t.ticket_number,
-            title: 'Secuencia de seguimiento',
+            title: TKA.t('modal_title_followup_sequence', 'Secuencia de seguimiento'),
             width: 'lg',
             body: '' +
                 (yaProgramados.length
@@ -7441,7 +7542,7 @@
                 '<label class="tkt-check"><input type="checkbox" id="tkt-followup-stop" checked> ' +
                     'Detener la secuencia si el cliente responde</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-followup-confirm">Programar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
             footTwoCol: false,
         }));
 
@@ -7484,9 +7585,9 @@
     function cancelFollowup(t, followupId) {
         openConfirmModal({
             icon: 'fa-regular fa-clock',
-            title: 'Cancelar seguimiento',
-            message: '¿Cancelar este seguimiento programado?',
-            confirmLabel: 'Cancelar seguimiento',
+            title: TKA.t('confirm_cancel_followup_title', 'Cancelar seguimiento'),
+            message: TKA.t('confirm_cancel_followup_message', '¿Cancelar este seguimiento programado?'),
+            confirmLabel: TKA.t('confirm_cancel_followup_title', 'Cancelar seguimiento'),
             danger: true,
             onConfirm: function () {
                 $.ajax({
@@ -7513,7 +7614,7 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-people-arrows',
             kicker: t.ticket_number,
-            title: 'Conversación paralela',
+            title: TKA.t('modal_title_side_conversation', 'Conversación paralela'),
             width: 'md',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Asunto<span class="req">*</span></label>' +
@@ -7527,7 +7628,7 @@
                 '<div class="tkt-field"><label class="tkt-label">Mensaje inicial<span class="req">*</span></label>' +
                     '<textarea class="tkt-input tkt-input-md" id="tkt-side-body" maxlength="20000"></textarea></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-side-confirm">Crear</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('change', '#tkt-side-type', function () {
@@ -7575,11 +7676,11 @@
     function addSideConversationMessage(t, sideId) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-comment-dots',
-            title: 'Responder en la conversación paralela',
+            title: TKA.t('modal_title_reply_side_conversation', 'Responder en la conversación paralela'),
             width: 'sm',
             body: '<div class="tkt-field"><label class="tkt-label">Mensaje<span class="req">*</span></label><textarea class="tkt-input" id="tkt-side-msg-body" rows="4" placeholder="Escribe el mensaje…"></textarea></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-side-msg-confirm">Enviar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
         $backdrop.find('#tkt-side-msg-body').trigger('focus');
 
@@ -7902,9 +8003,9 @@
             if (!$noteInput.val()) return;
             openConfirmModal({
                 icon: 'fa-regular fa-note-sticky',
-                title: 'Descartar la nota',
-                message: 'Se perderá lo que has escrito. No se puede deshacer.',
-                confirmLabel: 'Descartar',
+                title: TKA.t('confirm_discard_note_title', 'Descartar la nota'),
+                message: TKA.t('confirm_discard_note_message', 'Se perderá lo que has escrito. No se puede deshacer.'),
+                confirmLabel: TKA.t('discard', 'Descartar'),
                 danger: true,
                 onConfirm: function () {
                     $noteInput.val('').trigger('input');
@@ -7952,9 +8053,9 @@
     function deleteNote(t, noteId) {
         openConfirmModal({
             icon: 'fa-solid fa-trash',
-            title: 'Eliminar nota interna',
-            message: 'No se puede deshacer.',
-            confirmLabel: 'Eliminar',
+            title: TKA.t('confirm_delete_note_title', 'Eliminar nota interna'),
+            message: TKA.t('cannot_be_undone', 'No se puede deshacer.'),
+            confirmLabel: TKA.t('delete', 'Eliminar'),
             danger: true,
             onConfirm: function () {
                 $.ajax({
@@ -8024,9 +8125,9 @@
             openConfirmModal({
                 icon: 'fa-solid fa-tag',
                 danger: true,
-                title: 'Eliminar etiqueta',
-                message: 'Se eliminará la etiqueta "' + tag + '" de este ticket. No se puede deshacer.',
-                confirmLabel: 'Eliminar',
+                title: TKA.t('confirm_delete_tag_title', 'Eliminar etiqueta'),
+                message: TKA.t('confirm_delete_tag_message', 'Se eliminará la etiqueta ":tag" de este ticket. No se puede deshacer.', { ':tag': tag }),
+                confirmLabel: TKA.t('delete', 'Eliminar'),
                 onConfirm: function () { patchTags(t, null, tag); },
             });
         });
@@ -8153,9 +8254,9 @@
             var unlinkUrl = $(this).data('unlink-url');
             openConfirmModal({
                 icon: 'fa-solid fa-link-slash',
-                title: 'Desvincular ticket',
-                message: 'El enlace entre ambos tickets se eliminará.',
-                confirmLabel: 'Desvincular',
+                title: TKA.t('confirm_unlink_ticket_title', 'Desvincular ticket'),
+                message: TKA.t('confirm_unlink_ticket_message', 'El enlace entre ambos tickets se eliminará.'),
+                confirmLabel: TKA.t('unlink', 'Desvincular'),
                 danger: true,
                 onConfirm: function () {
                     var t = TKA.state.currentTicket;
@@ -8181,10 +8282,10 @@
     // backend (LinkTicketRequest→TicketLink, con exists+self-link guard) es
     // el real; solo el picker es más simple.
     var LINK_TYPES = [
-        { value: 'related', title: 'Relacionado', sub: 'Los dos tickets tratan del mismo asunto' },
-        { value: 'duplicate_of', title: 'Es un duplicado de', sub: 'Este ticket repite el otro' },
-        { value: 'blocks', title: 'Bloquea a', sub: 'Este ticket debe cerrarse antes que el otro' },
-        { value: 'blocked_by', title: 'Bloqueado por', sub: 'No se puede cerrar hasta que el otro se resuelva' },
+        { value: 'related', title: TKA.t('label_related', 'Relacionado'), sub: 'Los dos tickets tratan del mismo asunto' },
+        { value: 'duplicate_of', title: TKA.t('label_is_duplicate_of', 'Es un duplicado de'), sub: 'Este ticket repite el otro' },
+        { value: 'blocks', title: TKA.t('label_blocks', 'Bloquea a'), sub: 'Este ticket debe cerrarse antes que el otro' },
+        { value: 'blocked_by', title: TKA.t('label_blocked_by', 'Bloqueado por'), sub: 'No se puede cerrar hasta que el otro se resuelva' },
     ];
 
     // El picker de participante en vivo del mockup se sustituye por un ID
@@ -8203,7 +8304,7 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-link',
             kicker: t.ticket_number,
-            title: 'Vincular ticket',
+            title: TKA.t('modal_title_link_ticket', 'Vincular ticket'),
             width: 'md',
             body: '' +
                 '<div class="tkt-field"><label class="tkt-label">Ticket a vincular<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
@@ -8211,7 +8312,7 @@
                     '<div class="tkt-pick-list sm" id="tkt-link-results"></div></div>' +
                 '<div class="tkt-stack-6">' + options + '</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-link-confirm">Vincular</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         bindTicketSearch($backdrop, { input: '#tkt-link-target', results: '#tkt-link-results', excludeId: t.id });
@@ -8291,7 +8392,7 @@
         var fieldsHtml = fields.length ? '<div class="tkt-note"><i class="fa-solid fa-list-check"></i><span>Campos implicados: <b>' + escapeHtml(fields.join(', ')) + '</b>. La acción se detuvo hasta que confirmes la versión correcta.</span></div>' : '';
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-code-compare',
-            title: 'Revisar cambios del ticket',
+            title: TKA.t('modal_title_review_ticket_changes', 'Revisar cambios del ticket'),
             kicker: t ? '#' + t.id : 'Edición concurrente',
             width: 'xl',
             body: '<div class="tkt-note warn"><i class="fa-solid fa-shield-halved"></i><span>' + escapeHtml(message) + '</span></div>' + fieldsHtml +
@@ -8351,6 +8452,7 @@
         TKA.state.pulseLast = null;
         // Ciclos seguidos sin novedad. Alimenta el espaciado de abajo.
         TKA.state.pulseQuiet = 0;
+        TKA.state.pulseTick = 0;
 
         TKA.state.pulseTimer = setInterval(function () {
             // Con la pestaña en segundo plano no se pregunta: el agente no está
@@ -8364,10 +8466,17 @@
             // websocket entrega, así que preguntar cada 3 segundos para siempre
             // es gastar 1.200 peticiones por agente y jornada sin necesidad.
             // Un cambio detectado reinicia el contador y vuelve a los 3s.
+            //
+            // El módulo se calcula sobre un contador de ticks propio y no
+            // sobre pulseQuiet: pulseQuiet solo sube cuando la sonda llega a
+            // preguntar, así que con quieto=11 y saltar=1 el `return` se
+            // repetía para siempre y la sonda moría a los ~33s en vez de
+            // espaciarse (QA 28-sep-2026).
+            TKA.state.pulseTick = (TKA.state.pulseTick || 0) + 1;
             var quieto = TKA.state.pulseQuiet || 0;
             var saltar = quieto > 40 ? 4 : (quieto > 20 ? 2 : (quieto > 10 ? 1 : 0));
 
-            if (saltar && (quieto % (saltar + 1)) !== 0) return;
+            if (saltar && (TKA.state.pulseTick % (saltar + 1)) !== 0) return;
 
             var current = TKA.state.currentTicket;
             if (!current || current.id !== TKA.state.pulseTicketId) {
@@ -9079,9 +9188,9 @@
 
         var $modal = openModal(modalShell({
             icon: 'fa-solid fa-lock',
-            kicker: 'Ticket · cierre',
+            kicker: TKA.t('kicker_ticket_closing', 'Ticket · cierre'),
             titleChip: t.ticket_number || String(t.id),
-            title: 'Motivo de cierre',
+            title: TKA.t('modal_title_close_reason', 'Motivo de cierre'),
             body:
                 '<div class="tkt-field">' +
                     '<label class="tkt-label">Motivo (opcional)</label>' +
@@ -9115,7 +9224,7 @@
                     '<input type="checkbox" id="tkt-close-skip-survey"> No enviar la encuesta de satisfacción' +
                 '</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-close-confirm">Cerrar ticket</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $modal.on('click', '[data-reason-option]', function () {
@@ -9175,50 +9284,56 @@
     // openBulkMoveTeamModal (ya existente para assign_group).
     var BULK_EXTRA_CONFIG = {
         assign: {
-            icon: 'fa-solid fa-user-check', title: 'Asignar agente', field: 'agent_id', confirmLabel: 'Asignar',
-            emptyError: 'Selecciona un agente',
+            icon: 'fa-solid fa-user-check', title: TKA.t('bulk_assign_title', 'Asignar agente'), field: 'agent_id', confirmLabel: TKA.t('assign', 'Asignar'),
+            emptyError: TKA.t('bulk_assign_empty_error', 'Selecciona un agente'),
             body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">Agente</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">Selecciona un agente…</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>';
+                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('agent', 'Agente') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_agent_placeholder', 'Selecciona un agente…') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>';
             },
         },
         add_tag: {
-            icon: 'fa-solid fa-tag', title: 'Añadir etiqueta', field: 'tag', confirmLabel: 'Añadir',
-            emptyError: 'Escribe una etiqueta',
+            icon: 'fa-solid fa-tag', title: TKA.t('bulk_add_tag_title', 'Añadir etiqueta'), field: 'tag', confirmLabel: TKA.t('add', 'Añadir'),
+            emptyError: TKA.t('bulk_add_tag_empty_error', 'Escribe una etiqueta'),
             body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">Etiqueta</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="Ej: urgente-cliente"></div>';
+                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
             },
         },
         change_priority: {
-            icon: 'fa-solid fa-flag', title: 'Cambiar prioridad', field: 'priority', confirmLabel: 'Cambiar',
-            emptyError: 'Selecciona una prioridad',
+            icon: 'fa-solid fa-flag', title: TKA.t('bulk_change_priority_title', 'Cambiar prioridad'), field: 'priority', confirmLabel: TKA.t('change', 'Cambiar'),
+            emptyError: TKA.t('bulk_change_priority_empty_error', 'Selecciona una prioridad'),
             body: function () {
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">Prioridad</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">Selecciona una prioridad…</option>' +
+                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('priority', 'Prioridad') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_priority_placeholder', 'Selecciona una prioridad…') + '</option>' +
                     ['low', 'normal', 'high', 'urgent'].map(function (p) { return '<option value="' + p + '">' + escapeHtml(priorityLabel(p)) + '</option>'; }).join('') +
                     '</select></div>';
             },
         },
         remove_tag: {
-            icon: 'fa-solid fa-tag', title: 'Quitar etiqueta', field: 'tag', confirmLabel: 'Quitar',
-            emptyError: 'Escribe la etiqueta que quieres quitar',
+            icon: 'fa-solid fa-tag', title: TKA.t('bulk_remove_tag_title', 'Quitar etiqueta'), field: 'tag', confirmLabel: TKA.t('remove', 'Quitar'),
+            emptyError: TKA.t('bulk_remove_tag_empty_error', 'Escribe la etiqueta que quieres quitar'),
             body: function () {
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">Etiqueta</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="Ej: urgente-cliente"></div>';
+                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
             },
         },
         snooze: {
-            icon: 'fa-regular fa-clock', title: 'Posponer', field: 'snooze_hours', confirmLabel: 'Posponer',
-            emptyError: 'Elige hasta cuándo',
+            icon: 'fa-regular fa-clock', title: TKA.t('bulk_snooze_title', 'Posponer'), field: 'snooze_hours', confirmLabel: TKA.t('bulk_snooze_title', 'Posponer'),
+            emptyError: TKA.t('bulk_snooze_empty_error', 'Elige hasta cuándo'),
             body: function () {
-                var opts = [[1, '1 hora'], [4, '4 horas'], [24, 'Mañana a esta hora'], [72, '3 días'], [168, '1 semana']];
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">Posponer durante</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">Selecciona…</option>' +
+                var opts = [
+                    [1, TKA.t('snooze_1_hour', '1 hora')],
+                    [4, TKA.t('snooze_4_hours', '4 horas')],
+                    [24, TKA.t('snooze_tomorrow_same_time', 'Mañana a esta hora')],
+                    [72, TKA.t('snooze_3_days', '3 días')],
+                    [168, TKA.t('snooze_1_week', '1 semana')],
+                ];
+                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('snooze_for', 'Posponer durante') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_placeholder', 'Selecciona…') + '</option>' +
                     opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
-                    '</select><div class="tkt-hint">Vuelven a la cola solos al terminar, o antes si el cliente responde.</div></div>';
+                    '</select><div class="tkt-hint">' + TKA.t('snooze_hint', 'Vuelven a la cola solos al terminar, o antes si el cliente responde.') + '</div></div>';
             },
         },
         change_status: {
-            icon: 'fa-solid fa-arrow-right-arrow-left', title: 'Cambiar estado', field: 'status_id', confirmLabel: 'Cambiar',
-            emptyError: 'Selecciona un estado',
+            icon: 'fa-solid fa-arrow-right-arrow-left', title: TKA.t('bulk_change_status_title', 'Cambiar estado'), field: 'status_id', confirmLabel: TKA.t('change', 'Cambiar'),
+            emptyError: TKA.t('bulk_change_status_empty_error', 'Selecciona un estado'),
             body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">Estado</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">Selecciona un estado…</option>' + optionsHtml(TKA.state.statuses, 'id', '') + '</select></div>';
+                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('status', 'Estado') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_status_placeholder', 'Selecciona un estado…') + '</option>' + optionsHtml(TKA.state.statuses, 'id', '') + '</select></div>';
             },
         },
     };
@@ -9230,12 +9345,12 @@
 
         var $modal = openModal(modalShell({
             icon: config.icon,
-            kicker: 'Tickets · selección',
-            titleChip: ids.length + (ids.length === 1 ? ' ticket' : ' tickets'),
+            kicker: TKA.t('tickets_selection_kicker', 'Tickets · selección'),
+            titleChip: ids.length + (ids.length === 1 ? TKA.t('ticket_singular_suffix', ' ticket') : TKA.t('ticket_plural_suffix', ' tickets')),
             title: config.title,
             body: config.body(),
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bulk-extra-confirm">' + config.confirmLabel + '</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $modal.on('click', '#tkt-bulk-extra-confirm', function () {
@@ -9334,15 +9449,15 @@
         var canBlock = TKA.state.canBlockSenders !== false;
         var $modal = openModal(modalShell({
             icon: 'fa-solid fa-ban',
-            kicker: 'Tickets · selección',
+            kicker: TKA.t('tickets_selection_kicker', 'Tickets · selección'),
             titleChip: ids.length + (ids.length === 1 ? ' ticket' : ' tickets'),
-            title: 'Marcar como spam',
+            title: TKA.t('modal_title_mark_as_spam', 'Marcar como spam'),
             body: '<p class="tkt-hint">Se cierran con el motivo «Spam / no procede» y sin encuesta de satisfacción.</p>' +
                 (canBlock
                     ? '<label class="tkt-check"><input type="checkbox" id="tkt-bulk-spam-block" checked> Bloquear también a sus remitentes (lista negra de correo)</label>'
                     : ''),
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bulk-spam-confirm">Marcar como spam</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
         $modal.on('click', '#tkt-bulk-spam-confirm', function () {
             var block = $('#tkt-bulk-spam-block').is(':checked') ? 1 : 0;
@@ -9368,12 +9483,12 @@
             '</div>';
         var foot =
             '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bulk-group-confirm">Mover</button>' +
-            '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>';
+            '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>';
 
         var $modal = openModal(modalShell({
             icon: 'fa-solid fa-people-group',
             kicker: ids.length + (ids.length === 1 ? ' ticket seleccionado' : ' tickets seleccionados'),
-            title: 'Mover a equipo',
+            title: TKA.t('modal_title_move_to_team', 'Mover a equipo'),
             body: body,
             foot: foot,
         }));
@@ -9402,7 +9517,7 @@
         var $modal = openModal(modalShell({
             icon: 'fa-solid fa-link',
             kicker: ids.length + (ids.length === 1 ? ' ticket seleccionado' : ' tickets seleccionados'),
-            title: 'Vincular a un ticket',
+            title: TKA.t('modal_title_link_to_ticket', 'Vincular a un ticket'),
             width: 'md',
             body: '<div class="tkt-field"><label class="tkt-label">Ticket destino<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-bulk-link-target" placeholder="Nº de ticket, asunto o ID…">' +
@@ -9410,7 +9525,7 @@
                 '<div class="tkt-note danger">Se moverá el hilo completo (mensajes, correos, adjuntos, notas, comentarios, tiempos, seguidores y enlaces) de cada ticket seleccionado al destino. Los orígenes se cierran y se borran. No se puede deshacer.</div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-bulk-link-ack"> Entiendo que esta acción no se puede deshacer</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bulk-link-confirm" disabled>Vincular</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         var targetId = null;
@@ -9527,7 +9642,7 @@
             var link = function (x) {
                 return '<a class="tkt-line-link" href="' + TKA.urls.index + '?ticket=' + x.id + '">' +
                     '<span class="mono tkt-meta-xs">' + escapeHtml(x.ticket_number) + '</span>' +
-                    '<span class="tkt-trunc tkt-fill">' + escapeHtml(x.subject || '(sin asunto)') + '</span>' +
+                    '<span class="tkt-trunc tkt-fill">' + escapeHtml(x.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     chip(x.status_name || STATUS_LABEL_FALLBACK[x.status_slug] || '—', statusChipClass(x.status_slug)) +
                 '</a>';
             };
@@ -9654,14 +9769,14 @@
     function openSubticketModal(t) {
         var $modal = openModal(modalShell({
             icon: 'fa-solid fa-diagram-project',
-            kicker: 'Ticket · ' + escapeHtml(t.ticket_number || ''),
-            title: 'Nuevo subticket',
+            kicker: TKA.t('kicker_ticket_prefix', 'Ticket · ') + escapeHtml(t.ticket_number || ''),
+            title: TKA.t('modal_title_new_subticket', 'Nuevo subticket'),
             body: '<div class="tkt-field"><label class="tkt-label" for="tkt-sub-subject">Asunto</label><input type="text" class="tkt-input" id="tkt-sub-subject" maxlength="255"></div>' +
                 '<div class="tkt-field"><label class="tkt-label" for="tkt-sub-desc">Descripción</label><textarea class="tkt-input tkt-input-md" id="tkt-sub-desc" maxlength="5000"></textarea></div>' +
                 '<div class="tkt-field"><label class="tkt-label" for="tkt-sub-assignee">Asignar a</label><select class="tkt-select" id="tkt-sub-assignee"><option value="">Sin asignar</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>' +
                 '<div class="tkt-hint">Mismo cliente, equipo y prioridad que ' + escapeHtml(t.ticket_number || 'el ticket') + '. El cliente no recibe aviso.</div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sub-confirm">Crear</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $modal.on('click', '#tkt-sub-confirm', function () {
@@ -9700,10 +9815,24 @@
     // Tarjeta del panel de gestión sobre TimeEntriesController, que existía
     // sin ninguna interfaz (24-sep-2026). Total, las cinco últimas
     // imputaciones y un alta rápida en minutos.
-    function loadTimeCard(t, $card) {
+    // renderGestionPane() se pinta dos veces por apertura de ticket (una vez
+    // al seleccionar, sin datos todavía; otra cuando llega /data) y las dos
+    // llaman a loadTimeCard con la MISMA url_time_entries — QA real: "time-
+    // entries se piden 2 veces". Se cachea por ticket hasta que una
+    // mutación real (imputar/eliminar, más abajo) o un cambio de ticket
+    // (selectTicket()) la invalida explícitamente.
+    function loadTimeCard(t, $card, force) {
+        var cache = TKA.state.timeCardCache;
+        if (!force && cache && String(cache.ticketId) === String(t.id)) {
+            renderTimeCard(t, $card, cache.data);
+            return;
+        }
         $.ajax({
             url: t.url_time_entries, method: 'GET', headers: { Accept: 'application/json' },
-            success: function (resp) { renderTimeCard(t, $card, resp || {}); },
+            success: function (resp) {
+                TKA.state.timeCardCache = { ticketId: t.id, data: resp || {} };
+                renderTimeCard(t, $card, resp || {});
+            },
             error: function () { $card.find('.tkt-side-card-body').html('<div class="tkt-meta-xs">No se pudo cargar el tiempo imputado.</div>'); },
         });
     }
@@ -9720,7 +9849,7 @@
             '</div>';
         }).join('');
 
-        $card.find('.tkt-side-card-head').html('Tiempo invertido<span class="tkt-spacer tkt-side-tag mono">' + escapeHtml(data.formatted_total || '0 min') + '</span>');
+        $card.find('.tkt-side-card-head').html(TKA.t('time_spent', 'Tiempo invertido') + '<span class="tkt-spacer tkt-side-tag mono">' + escapeHtml(data.formatted_total || '0 min') + '</span>');
         $card.find('.tkt-side-card-body').html(
             (rows || '<div class="tkt-meta-xs">Aún no hay tiempo imputado.</div>') +
             '<form class="tkt-time-form" novalidate>' +
@@ -9744,7 +9873,7 @@
             $.ajax({
                 url: t.url_time_entries, method: 'POST', headers: { Accept: 'application/json' },
                 data: { minutes: minutes, description: $card.find('#tkt-time-desc').val() },
-                success: function () { loadTimeCard(t, $card); },
+                success: function () { loadTimeCard(t, $card, true); },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('time_log_failed', 'No se pudo imputar el tiempo'));
                     tktNotify('error', msg);
@@ -9757,7 +9886,7 @@
             var url = (t.url_time_entry_destroy_template || '').replace('__ENTRY__', $(this).data('time-delete'));
             $.ajax({
                 url: url, method: 'DELETE', headers: { Accept: 'application/json' },
-                success: function () { loadTimeCard(t, $card); },
+                success: function () { loadTimeCard(t, $card, true); },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('delete_failed', 'No se pudo eliminar'));
                     tktNotify('error', msg);
@@ -9915,7 +10044,7 @@
         });
 
         listenForNewTickets();
-        startTicketListRefresh();
+        syncTicketListRefreshFallback();
 
         // Rango de fechas — el chip de la barra y el campo "Creado entre" del
         // modal "Más filtros". Los dos usaban <input type="date">, cuyo
@@ -10019,7 +10148,7 @@
                     .text(picker.startDate.format('DD/MM/YYYY') + ' – ' + picker.endDate.format('DD/MM/YYYY'));
             },
             onCancel: function (el) {
-                $(el).find('.tkt-daterange-text').removeClass('on').text('Cualquier fecha');
+                $(el).find('.tkt-daterange-text').removeClass('on').text(TKA.t('label_any_date', 'Cualquier fecha'));
             },
         });
 
@@ -10076,15 +10205,15 @@
         $('#tkt-bulk-export').on('click', openExportModal);
 
         var BULK_DIRECT_LABELS = {
-            resolve: { title: 'Marcar como resuelto', message: '¿Marcar como resuelto?', confirmLabel: 'Resolver', danger: false },
-            close: { title: 'Cerrar tickets', message: '¿Cerrar los tickets seleccionados?', confirmLabel: 'Cerrar', danger: false },
-            delete: { title: 'Eliminar tickets', message: 'Esta acción no se puede deshacer.', confirmLabel: 'Eliminar', danger: true },
+            resolve: { title: TKA.t('bulk_resolve_title', 'Marcar como resuelto'), message: TKA.t('bulk_resolve_message', '¿Marcar como resuelto?'), confirmLabel: TKA.t('resolve', 'Resolver'), danger: false },
+            close: { title: TKA.t('bulk_close_title', 'Cerrar tickets'), message: TKA.t('bulk_close_message', '¿Cerrar los tickets seleccionados?'), confirmLabel: TKA.t('close', 'Cerrar'), danger: false },
+            delete: { title: TKA.t('bulk_delete_title', 'Eliminar tickets'), message: TKA.t('cannot_be_undone_action', 'Esta acción no se puede deshacer.'), confirmLabel: TKA.t('delete', 'Eliminar'), danger: true },
             // "Reintentar envío (solo fallidos)" del mockup: no hace falta
             // valor adicional (a diferencia de assign/add_tag/change_status),
             // así que entra por el mismo camino directo que resolver/cerrar,
             // no por BULK_EXTRA_CONFIG. Los tickets sin correo saliente
             // fallido simplemente no cuentan (ver BulkTicketsController).
-            retry_failed_mail: { title: 'Reintentar envío', message: 'Solo se reintentan los correos de salida marcados como fallidos.', confirmLabel: 'Reintentar', danger: false },
+            retry_failed_mail: { title: TKA.t('bulk_retry_failed_mail_title', 'Reintentar envío'), message: TKA.t('bulk_retry_failed_mail_message', 'Solo se reintentan los correos de salida marcados como fallidos.'), confirmLabel: TKA.t('retry', 'Reintentar'), danger: false },
         };
         // Menú "Más acciones" de la barra de selección.
         var closeBulkMore = function () {
@@ -10111,11 +10240,14 @@
             if (BULK_EXTRA_CONFIG[action]) { openBulkExtraModal(action); return; }
 
             var ids = Object.keys(TKA.state.bulk).map(Number);
-            var l = BULK_DIRECT_LABELS[action] || { title: 'Confirmar acción', message: '¿Aplicar esta acción?', confirmLabel: 'Confirmar', danger: false };
+            var l = BULK_DIRECT_LABELS[action] || { title: TKA.t('confirm_action_title', 'Confirmar acción'), message: TKA.t('confirm_action_message', '¿Aplicar esta acción?'), confirmLabel: TKA.t('confirm', 'Confirmar'), danger: false };
+            var scope = ids.length === 1
+                ? TKA.t('bulk_scope_one', ':count ticket seleccionado. ', { ':count': ids.length })
+                : TKA.t('bulk_scope_many', ':count tickets seleccionados. ', { ':count': ids.length });
             openConfirmModal({
                 icon: l.danger ? 'fa-solid fa-trash' : 'fa-solid fa-check',
                 title: l.title,
-                message: ids.length + (ids.length === 1 ? ' ticket seleccionado. ' : ' tickets seleccionados. ') + l.message,
+                message: scope + l.message,
                 confirmLabel: l.confirmLabel,
                 danger: l.danger,
                 onConfirm: function () { runBulkAction(action); },
@@ -10125,12 +10257,27 @@
         $('#tkt-bulk-move-team').on('click', openBulkMoveTeamModal);
         $('#tkt-bulk-link-ticket').on('click', openBulkLinkToTicketModal);
 
-        $('#tkt-search').on('keydown', function (ev) {
+        // Búsqueda en vivo por el mismo refetch AJAX que usan pestañas y chips
+        // (antes solo con Enter y recargando la página entera, ~420 KB). Con
+        // 1 carácter no se busca: un "p" suelto casa con medio listado y solo
+        // gasta una consulta LIKE. Enter fuerza la búsqueda sin esperar.
+        var searchTimer = null;
+        var lastSearch = String($('#tkt-search').val() || '').trim();
+        var runSearch = function (val) {
+            clearTimeout(searchTimer);
+            if (val === lastSearch) return;
+            lastSearch = val;
+            refetchList(currentListParams({ search: val || null, page: null }), { replaceHistory: true });
+        };
+        $('#tkt-search').on('input', function () {
+            var val = String($(this).val() || '').trim();
+            clearTimeout(searchTimer);
+            if (val.length === 1) return;
+            searchTimer = setTimeout(function () { runSearch(val); }, 350);
+        }).on('keydown', function (ev) {
             if (ev.key !== 'Enter') return;
-            var params = new URLSearchParams(window.location.search);
-            var val = $(this).val();
-            if (val) params.set('search', val); else params.delete('search');
-            window.location = TKA.urls.index + '?' + params.toString();
+            ev.preventDefault();
+            runSearch(String($(this).val() || '').trim());
         });
     }
 
@@ -10187,8 +10334,8 @@
         }).join('') + '</div>';
 
         openModal(modalShell({
-            icon: 'fa-solid fa-keyboard', kicker: 'Ayuda',
-            title: 'Atajos de teclado', width: '2xl',
+            icon: 'fa-solid fa-keyboard', kicker: TKA.t('kicker_help', 'Ayuda'),
+            title: TKA.t('modal_title_keyboard_shortcuts', 'Atajos de teclado'), width: '2xl',
             body: body,
             foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
@@ -10216,8 +10363,8 @@
             '</button>';
         }).join('');
         var $modal = openModal(modalShell({
-            icon: 'fa-solid fa-command', kicker: 'Acciones rápidas',
-            title: 'Paleta de acciones', titleChip: t.ticket_number, width: 'lg',
+            icon: 'fa-solid fa-command', kicker: TKA.t('kicker_quick_actions', 'Acciones rápidas'),
+            title: TKA.t('modal_title_action_palette', 'Paleta de acciones'), titleChip: t.ticket_number, width: 'lg',
             body: '<input type="search" class="tkt-input tkt-palette-search" id="tkt-palette-search" placeholder="Buscar una acción…" aria-label="Buscar una acción" autocomplete="off">' +
                 '<div class="tkt-palette-list" id="tkt-palette-list">' + listHtml + '</div>',
             foot: '<span class="tkt-palette-hint"><kbd class="tkt-kbd">Esc</kbd> cerrar</span><button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
@@ -10382,7 +10529,7 @@
 
         if (!url || $btn.prop('disabled')) { return; }
 
-        $btn.prop('disabled', true).text('Buscando…');
+        $btn.prop('disabled', true).text(TKA.t('btn_searching', 'Buscando…'));
 
         $.ajax({
             url: url,
@@ -10399,7 +10546,7 @@
 
             // Asíncrono: el resultado llega cuando el trabajo sale de la cola
             // helpdesk-erp, así que aquí solo se confirma el envío.
-            $btn.text('Enviado');
+            $btn.text(TKA.t('status_sent', 'Enviado'));
         }).fail(function (xhr, textStatus) {
             var msg;
 
@@ -10413,6 +10560,6 @@
 
             if (window.toastr) { window.toastr.error(msg); }
 
-            $btn.prop('disabled', false).text('Reintentar');
+            $btn.prop('disabled', false).text(TKA.t('retry', 'Reintentar'));
         });
     });

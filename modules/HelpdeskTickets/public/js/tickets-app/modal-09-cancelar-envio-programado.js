@@ -4,12 +4,12 @@
     function openCancelScheduledModal(t, mail) {
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-calendar-xmark',
-            kicker: 'Envíos programados',
-            title: 'Cancelar envío programado',
+            kicker: TKA.t('kicker_scheduled_sends', 'Envíos programados'),
+            title: TKA.t('modal_title_cancel_scheduled_send', 'Cancelar envío programado'),
             titleChip: t.ticket_number,
             width: 'md',
             body: '<div class="tkt-headline">' +
-                    '<div class="t">' + escapeHtml(mail.subject || '(sin asunto)') + '</div>' +
+                    '<div class="t">' + escapeHtml(mail.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                     '<div class="s">Para ' + escapeHtml(mail.to || '—') +
                         (mail.scheduled_at_human ? ' · saldrá el ' + escapeHtml(mail.scheduled_at_human) : '') + '</div>' +
                   '</div>' +

@@ -25,10 +25,10 @@
                 ].filter(Boolean).join(' · ');
                 return '<div class="tkt-mailitem">' +
                     '<span class="av">' + escapeHtml(m.initials || '··') + '</span>' +
-                    '<span class="who"><span class="n">' + escapeHtml(m.subject || '(sin asunto)') + '</span>' +
+                    '<span class="who"><span class="n">' + escapeHtml(m.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '<span class="s">' + escapeHtml(meta) + '</span></span>' +
                     (m.status === 'scheduled'
-                        ? '<button type="button" class="tkt-link-btn" data-cancel-sched="' + i + '">Cancelar</button>' : '') +
+                        ? '<button type="button" class="tkt-link-btn" data-cancel-sched="' + i + '">' + TKA.t('cancel', 'Cancelar') + '</button>' : '') +
                     '<button type="button" class="tkt-link-btn" data-link-mail="' + i + '">Mover</button>' +
                 '</div>';
             }).join('');
@@ -49,8 +49,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-envelope-open',
-            kicker: 'Ticket · correos',
-            title: 'Emails del ticket',
+            kicker: TKA.t('kicker_ticket_emails', 'Ticket · correos'),
+            title: TKA.t('modal_title_ticket_emails', 'Emails del ticket'),
             titleChip: t.ticket_number,
             width: 'lg',
             body: '<div id="tkt-mails-tabs">' + tabsHtml() + '</div>' +
@@ -164,7 +164,7 @@
 
         function paint(state) {
             $dot.removeClass('on connecting off');
-            if (state === 'connected') { $dot.addClass('on'); $text.text('Conectado'); } else if (state === 'connecting' || state === 'unavailable') { $dot.addClass('connecting'); $text.text('Conectando…'); } else { $dot.addClass('off'); $text.text('Sin conexión en vivo'); }
+            if (state === 'connected') { $dot.addClass('on'); $text.text(TKA.t('status_connected', 'Conectado')); } else if (state === 'connecting' || state === 'unavailable') { $dot.addClass('connecting'); $text.text(TKA.t('status_connecting', 'Conectando…')); } else { $dot.addClass('off'); $text.text(TKA.t('status_no_live_connection', 'Sin conexión en vivo')); }
         }
 
         var connectWaits = 0;

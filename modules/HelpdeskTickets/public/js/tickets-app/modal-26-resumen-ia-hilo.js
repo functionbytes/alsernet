@@ -3,8 +3,8 @@
     // ── Modal 26: Resumen IA del hilo ─────────────────────────
     function openAiSummaryModal(t) {
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-wand-magic-sparkles', iconClass: 'ok', kicker: 'IA · resumen',
-            title: 'Resumen IA del hilo', titleChip: t.ticket_number, width: 'lg',
+            icon: 'fa-solid fa-wand-magic-sparkles', iconClass: 'ok', kicker: TKA.t('kicker_ai_summary', 'IA · resumen'),
+            title: TKA.t('modal_title_ai_thread_summary', 'Resumen IA del hilo'), titleChip: t.ticket_number, width: 'lg',
             body: '<div id="tkt-sum-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sum-copy" disabled>Copiar resumen</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-sum-regen">Regenerar</button>' +

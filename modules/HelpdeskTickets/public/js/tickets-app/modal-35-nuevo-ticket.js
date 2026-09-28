@@ -13,8 +13,8 @@
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-plus',
-            kicker: 'Tickets · nuevo',
-            title: 'Nuevo ticket',
+            kicker: TKA.t('kicker_tickets_new', 'Tickets · nuevo'),
+            title: TKA.t('modal_title_new_ticket', 'Nuevo ticket'),
             width: 'md',
             body:
                 '<div class="tkt-field-row">' +
@@ -52,7 +52,7 @@
                     '<textarea class="tkt-input" id="tkt-new-description" rows="4" placeholder="Qué ha contado el cliente…"></textarea></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-new-create">Crear y abrir</button>' +
                   '<a href="' + TKA.urls.ticketCreate + '" class="tkt-btn tkt-link-plain">Formulario completo</a>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         // Aviso de duplicado en cuanto hay asunto y cliente: es el momento en
@@ -96,7 +96,7 @@
             if (!customerId) { if (window.toastr) toastr.error(TKA.t('choose_a_customer', 'Elige un cliente')); return; }
             if (!description) { if (window.toastr) toastr.error(TKA.t('write_the_description', 'Escribe la descripción')); return; }
 
-            var $btn = $(this).prop('disabled', true).text('Creando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_creating', 'Creando…'));
 
             $.ajax({
                 url: TKA.urls.ticketStore,
@@ -124,7 +124,7 @@
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message
                     || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo crear el ticket';
                 tktNotify('error', msg);
-                $btn.prop('disabled', false).text('Crear y abrir');
+                $btn.prop('disabled', false).text(TKA.t('btn_create_and_open', 'Crear y abrir'));
             });
         });
     }

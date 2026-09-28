@@ -38,8 +38,8 @@
         var currentId = null;
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-solid fa-inbox', kicker: 'Ajustes · correo',
-            title: 'Buzones de entrada', width: 'xl',
+            icon: 'fa-solid fa-inbox', kicker: TKA.t('kicker_settings_mail', 'Ajustes · correo'),
+            title: TKA.t('modal_title_inboxes', 'Buzones de entrada'), width: 'xl',
             body: '<div id="tkt-mbx-body"><div class="tkt-skeleton"></div></div>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-mbx-save" disabled>Guardar</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-mbx-test" disabled>Probar conexión</button>' +
@@ -153,7 +153,7 @@
 
             var tickets = $backdrop.find('#tkt-mbx-tickets').is(':checked');
             var replies = $backdrop.find('#tkt-mbx-replies').is(':checked');
-            var $btn = $(this).prop('disabled', true).text('Guardando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_saving', 'Guardando…'));
 
             $.ajax({
                 // POST y no PUT: un PUT real por AJAX devuelve 405 en este entorno
@@ -178,7 +178,7 @@
                     tktNotify('error', msg);
                 },
                 complete: function () {
-                    $btn.prop('disabled', !canManage).text('Guardar');
+                    $btn.prop('disabled', !canManage).text(TKA.t('save', 'Guardar'));
                 },
             });
         });
@@ -187,7 +187,7 @@
             var b = current();
             if (!b || !TKA.urls.mailboxTestTemplate) return;
 
-            var $btn = $(this).prop('disabled', true).text('Probando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_testing', 'Probando…'));
             note('', 'Conectando con ' + [b.host, b.port].filter(Boolean).join(':') + '…');
 
             $.ajax({
@@ -203,7 +203,7 @@
                     note('danger', apiErrorMessage(xhr, 'No se pudo probar la conexión.'));
                 },
                 complete: function () {
-                    $btn.prop('disabled', !canManage).text('Probar conexión');
+                    $btn.prop('disabled', !canManage).text(TKA.t('btn_test_connection', 'Probar conexión'));
                 },
             });
         });

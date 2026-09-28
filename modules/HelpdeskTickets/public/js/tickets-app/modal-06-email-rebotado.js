@@ -5,8 +5,8 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-arrow-rotate-left',
             iconClass: 'danger',
-            kicker: 'Correo · rebote',
-            title: 'Email rebotado',
+            kicker: TKA.t('kicker_mail_bounce', 'Correo · rebote'),
+            title: TKA.t('modal_title_bounced_email', 'Email rebotado'),
             titleChip: t.ticket_number,
             width: 'md',
             body: '<div class="tkt-headline bad">' +
@@ -36,7 +36,7 @@
                 if (window.toastr) toastr.error(TKA.t('recipient_same_as_bounced', 'El destinatario es el mismo que rebotó: corrígelo antes de reenviar'));
                 return;
             }
-            var $btn = $(this).prop('disabled', true).text('Reenviando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_resending', 'Reenviando…'));
             $.ajax({
                 url: mail.url_fix_bounce,
                 method: 'POST',
@@ -54,7 +54,7 @@
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo corregir el rebote');
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text('Corregir y reenviar');
+                    $btn.prop('disabled', false).text(TKA.t('btn_fix_and_resend', 'Corregir y reenviar'));
                 },
             });
         });

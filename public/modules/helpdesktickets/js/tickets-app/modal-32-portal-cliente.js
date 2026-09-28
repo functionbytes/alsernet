@@ -17,8 +17,8 @@
         var hidden = thread.length - visible.length;
 
         var $backdrop = openModal(modalShell({
-            icon: 'fa-regular fa-window-maximize', kicker: 'Portal · vista cliente',
-            title: 'Portal del cliente', titleChip: t.ticket_number, width: 'lg',
+            icon: 'fa-regular fa-window-maximize', kicker: TKA.t('kicker_portal_customer_view', 'Portal · vista cliente'),
+            title: TKA.t('modal_title_customer_portal', 'Portal del cliente'), titleChip: t.ticket_number, width: 'lg',
             body: '<div class="tkt-portal"><div class="tkt-portal-head">Ticket ' + escapeHtml(t.ticket_number) + ' · ' + escapeHtml(t.subject || '') + '</div>' + bubbles + '</div>' +
                   (hidden > 0 ? '<div class="tkt-note"><i class="fa-solid fa-eye-slash"></i> ' + hidden + (hidden === 1 ? ' nota interna' : ' notas internas') + ' no se muestran al cliente.</div>' : ''),
             foot: (t.url_shared_ticket ? '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(t.url_shared_ticket) + '" target="_blank" rel="noopener">Abrir la vista real</a>' : '') +
@@ -36,14 +36,14 @@
         // no el enlace de solo lectura de "Copiar enlace" — ese es un link
         // firmado sin sesión, este crea una sesión real del cliente.
         $backdrop.on('click', '#tkt-portal-send-access', function () {
-            var $btn = $(this).prop('disabled', true).text('Enviando…');
+            var $btn = $(this).prop('disabled', true).text(TKA.t('btn_sending', 'Enviando…'));
             $.post(t.url_portal_send_access).done(function (resp) {
                 if (window.toastr) toastr.success((resp && resp.message) || TKA.t('access_sent', 'Acceso enviado'));
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo enviar el acceso.');
                 tktNotify('error', msg);
             }).always(function () {
-                $btn.prop('disabled', false).text('Enviar acceso al cliente');
+                $btn.prop('disabled', false).text(TKA.t('btn_send_customer_access', 'Enviar acceso al cliente'));
             });
         });
     }
