@@ -107,7 +107,7 @@ class ErpModelSyncService
                 // cambiados en Gestión — mismo forget que ya hace retryModelFromErp().
                 Cache::forget("product:detailed:{$erpModelId}");
 
-                $response = Http::erpApi()->timeout(60)->get("{$this->erpBaseUrl()}/products/{$erpModelId}/detailed");
+                $response = Http::timeout(60)->get("{$this->erpBaseUrl()}/products/{$erpModelId}/detailed");
 
                 if (! $response->successful()) {
                     $stats['errors'][] = "ERP API error: {$response->status()}";
@@ -417,7 +417,7 @@ class ErpModelSyncService
         $pageSize = $maxItems !== null ? min($maxItems, $this->pageSize) : $this->pageSize;
 
         while ($hasMore) {
-            $response = Http::erpApi()->timeout($timeout)->get($url, array_merge($params, [
+            $response = Http::timeout($timeout)->get($url, array_merge($params, [
                 'limit' => $pageSize,
                 'offset' => $offset,
             ]));
@@ -1163,7 +1163,7 @@ class ErpModelSyncService
         try {
             Cache::forget("product:detailed:{$erpModelId}");
 
-            $response = Http::erpApi()->timeout(60)->get("{$this->erpBaseUrl()}/products/{$erpModelId}/detailed");
+            $response = Http::timeout(60)->get("{$this->erpBaseUrl()}/products/{$erpModelId}/detailed");
 
             if (! $response->successful()) {
                 return ['success' => false, 'product' => null, 'error' => "ERP API error: {$response->status()}"];
