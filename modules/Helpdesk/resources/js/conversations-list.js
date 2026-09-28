@@ -704,11 +704,26 @@
         // ya ve el agente en el sidebar — $sidebarInboxes viene del controller
         // ya filtrado por ConversationsController::getUserInboxIds(), el mismo
         // criterio que usa el canal para autorizar.
-        const inboxIds = window.BvSidebarInboxIds || [];
-        const inboxChannels = inboxIds.map(function (id) {
-            return window.Echo.private('helpdesk.inbox.' + id);
-        });
-        console.log('[Inbox] Subscribing to', inboxChannels.length, 'private helpdesk.inbox.{id} channel(s)');
+        // 'helpdesk-agent-restricted' (perfiles, 21-sep-2026): el canal de
+        // bandeja transporta TODOS los mensajes de esa bandeja, incluidos
+        // los de conversaciones de otros agentes — antes este rol se
+        // suscribía igual que cualquiera y solo se descartaban en cliente
+        // (el payload ya había llegado por la red). En su lugar se suscribe
+        // a su canal personal 'user.{id}': ConversationInboxItemCreated::
+        // broadcastOn() solo lo agrega ahí cuando la conversación es suya
+        // (ver ese evento), así que lo que no es suyo ya ni siquiera se
+        // transmite hacia él.
+        let inboxChannels;
+        if (window.BvRestrictedToOwnConversations) {
+            inboxChannels = [window.Echo.private('user.' + myId)];
+            console.log('[Inbox] Restricted agent: subscribing to personal channel only');
+        } else {
+            const inboxIds = window.BvSidebarInboxIds || [];
+            inboxChannels = inboxIds.map(function (id) {
+                return window.Echo.private('helpdesk.inbox.' + id);
+            });
+            console.log('[Inbox] Subscribing to', inboxChannels.length, 'private helpdesk.inbox.{id} channel(s)');
+        }
 
         // BANDEJAS/EQUIPOS/ETIQUETAS del sidebar (contadores agregados, no
         // solo la conversación tocada) — patchea por id en vez de recargar
@@ -828,6 +843,16 @@
             if (msg.user_id && parseInt(msg.user_id, 10) === myId) return;
 
             const conv = e.conversation || {};
+
+            // 'helpdesk-agent-restricted': el canal es por-bandeja, así que este
+            // evento pudo ser de una conversación de OTRO agente. El servidor ya
+            // no se la muestra en el listado HTTP; aquí se descarta también en
+            // vivo para no refrescar la lista ni disparar un push por algo que
+            // nunca va a aparecer en su vista (ver window.BvRestrictedToOwnConversations
+            // en inbox/index.blade.php).
+            if (window.BvRestrictedToOwnConversations && parseInt(conv.assignee_id, 10) !== myId) {
+                return;
+            }
             const isNew = !!e.is_new_conversation;
             const isViewing = parseInt(new URLSearchParams(window.location.search).get('selected') || '0', 10) === parseInt(conv.id, 10);
 
@@ -838,9 +863,14 @@
                 scheduleRefresh();
             }
 
-            // Push notification when message is incoming and agent is not viewing it
+            // Push notification when message is incoming and agent is not viewing it.
+            // Solo cubre "no la tengo abierta": si SÍ la tengo abierta pero la
+            // pestaña está oculta, la notifica el listener por-conversación de
+            // conversations-thread.js (que escucha el mismo evento en el canal
+            // 'helpdesk.conversation.{id}') — antes ambos evaluaban a true con
+            // la pestaña oculta y el mensaje llegaba duplicado.
             const isIncoming = !msg.user_id && (msg.author_id || msg.is_incoming);
-            if (isIncoming && (document.visibilityState === 'hidden' || !isViewing)) {
+            if (isIncoming && !isViewing) {
                 const customerName = conv.customer_name || conv.subject || 'Nuevo mensaje';
                 const preview = (msg.body || '').slice(0, 100);
                 const avatar = conv.customer_avatar || null;
@@ -853,6 +883,22 @@
         inboxChannels.forEach(function (channel) {
             channel.listen('.item.created', handleInboxItemCreated);
         });
+
+        // 'helpdesk-agent-restricted': ya no está en el canal de bandeja, así
+        // que si un supervisor le reasigna una conversación SIN que medie un
+        // mensaje nuevo (nadie ha escrito todavía), no hay ningún '.item.created'
+        // que dispare el refresh — sin esto, la conversación no aparecería en su
+        // lista hasta que recargara la página. InboxItemChanged (evento
+        // 'inbox.changed') ya se dispara en Conversation::assignTo() vía
+        // broadcastInboxChanged('assigned') hacia el nuevo assignee; solo
+        // faltaba escucharlo en algún lado.
+        if (window.BvRestrictedToOwnConversations) {
+            inboxChannels[0].listen('.inbox.changed', function (e) {
+                if (e && e.change_type === 'assigned') {
+                    scheduleRefresh();
+                }
+            });
+        }
 
         // QA tiempo real (18-sep-2026), area 2: cambiar prioridad/estado desde
         // OTRA pestaña no tocaba la fila de la lista salvo que esa conversación

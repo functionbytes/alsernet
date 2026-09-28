@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Notifications\MessageReceivedNotification;
-use Spatie\Permission\Models\Role;
 
 class SendMessageReceivedNotification implements ShouldQueue
 {
@@ -26,12 +25,29 @@ class SendMessageReceivedNotification implements ShouldQueue
         $conversation = $event->conversation;
         $message = $event->message;
 
-        // Notify the assigned agent, or all admins/managers if unassigned
+        // MessageReceived se dispara para CUALQUIER item no interno (entrante
+        // del cliente Y saliente del agente — BroadcastOutboundMessageJob lo
+        // reutiliza para alimentar el widget del cliente en ambos sentidos).
+        // Sin este corte, un agente que responde una conversación se
+        // auto-notificaba "Nuevo mensaje del cliente" mostrando su propio
+        // mensaje — más visible aún desde que responder auto-asigna la
+        // conversación al propio agente (ver ConversationMessageService::store).
+        if ($message->isFromAgent()) {
+            return;
+        }
+
+        // Notify the assigned agent, or all admins/managers if unassigned.
+        // Filtra por el permiso 'helpdesk.conversations.reply' (los 4 roles
+        // de conversaciones lo dan — ver HelpdeskRolesSeeder) en vez del
+        // nombre de rol 'helpdesk-agent' a secas, que dejaba fuera a
+        // 'helpdesk-agent-restricted'/'helpdesk-supervisor' (perfiles,
+        // 21-sep-2026).
         if ($conversation->assignee_id) {
             $recipients = User::where('id', $conversation->assignee_id)->get();
         } else {
-            $agentRoles = array_filter(['helpdesk-agent', 'administrative', 'manager'], fn ($r) => Role::where('name', $r)->where('guard_name', 'web')->exists());
-            $recipients = $agentRoles ? User::role(array_values($agentRoles))->get() : collect();
+            $recipients = User::permission('helpdesk.conversations.reply')
+                ->orWhereHas('roles', fn ($q) => $q->whereIn('name', ['administrative', 'manager']))
+                ->get();
         }
 
         if ($recipients->isEmpty()) {

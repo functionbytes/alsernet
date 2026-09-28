@@ -69,9 +69,14 @@ class ConversationInboxMetricsService
 
     /**
      * @param  array<int>|null  $userInboxIds
+     * @param  bool  $restrictToOwn  'helpdesk-agent-restricted': cada contador
+     *                               (unassigned/pending/archived/closed/blocked/spam/por canal/vip/bot...)
+     *                               se calcula solo sobre SUS conversaciones — si no, el sidebar mostraría
+     *                               totales de toda la bandeja mientras la lista de abajo solo renderiza
+     *                               lo suyo.
      * @return array<string, int>
      */
-    public function sidebarCounters(?int $userId, ?array $userInboxIds): array
+    public function sidebarCounters(?int $userId, ?array $userInboxIds, bool $restrictToOwn = false): array
     {
         // Cache::flexible (SWR de Laravel 12) evita el stampede: sirve el
         // valor "stale" mientras recalcula en background. Por usuario para
@@ -79,9 +84,10 @@ class ConversationInboxMetricsService
         return Cache::flexible(
             'helpdesk:inbox:counters:'.($userId ?? 'guest'),
             [45, 120],
-            function () use ($userId, $userInboxIds) {
+            function () use ($userId, $userInboxIds, $restrictToOwn) {
                 $base = Conversation::query()
-                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds));
+                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+                    ->when($restrictToOwn && $userId, fn ($q) => $q->where('assignee_id', $userId));
 
                 // Inbox counters exclude conversations the bot is still handling.
                 $inbox = (clone $base)->withoutActiveBot();
@@ -322,6 +328,14 @@ class ConversationInboxMetricsService
         // inbox era una lista casi infinita en vez de los agentes reales del
         // equipo. Mismo rol que ya usa HelpdeskTickets\Services\
         // AssignmentService::getAvailableAgents()/CatalogCacheService::agents().
+        //
+        // Filtra por el permiso 'helpdesk.conversations.reply' (que dan los
+        // 4 roles de conversaciones: agent, agent-restricted, supervisor,
+        // admin — ver HelpdeskRolesSeeder) en vez del nombre de rol
+        // 'helpdesk-agent' a secas: con el nombre fijo, crear
+        // 'helpdesk-agent-restricted'/'helpdesk-supervisor' (perfiles,
+        // 21-sep-2026) hacía desaparecer a esos agentes de "Asignar agente"
+        // — tenían permiso para responder pero ya no ese nombre de rol exacto.
         return User::query()
             ->leftJoin('helpdesk_agent_settings', 'helpdesk_agent_settings.user_id', '=', 'users.id')
             ->select([
@@ -339,7 +353,7 @@ class ConversationInboxMetricsService
             // adopta, Eloquent aplicara el scope global por su cuenta — un
             // whereNull manual solo volveria a romperse cuando el esquema y el
             // codigo se separen.
-            ->whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
+            ->permission('helpdesk.conversations.reply')
             ->get()
             ->each(fn (User $agent) => $agent->setAttribute('open_count', (int) ($openCounts[$agent->id] ?? 0)))
             ->sortBy([['open_count', 'asc'], ['firstname', 'asc']])

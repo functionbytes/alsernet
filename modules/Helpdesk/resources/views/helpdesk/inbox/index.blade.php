@@ -19,25 +19,15 @@
     .bv-day-sep span,
     .bv-conv .preview,
     .r-tag.r-tag-muted { color: #636369; }
-
-    /* Toastr: el CSS del tema no aplica background-color a los tipos de toast, así
-       que salían con fondo blanco y texto ilegible. Forzamos fondo oscuro + texto
-       blanco + un color por tipo, de forma independiente al CSS del tema. */
-    #toast-container > div {
-        background-color: #18181b !important;
-        color: #fff !important;
-        opacity: 1 !important;
-        border-radius: 10px !important;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, .28) !important;
-    }
-    #toast-container > .toast-success { background-color: #15803d !important; }
-    #toast-container > .toast-error   { background-color: #b91c1c !important; }
-    #toast-container > .toast-warning { background-color: #b45309 !important; }
-    #toast-container > .toast-info    { background-color: #1d4ed8 !important; }
-    #toast-container > div .toast-title,
-    #toast-container > div .toast-message,
-    #toast-container > div .toast-close-button { color: #fff !important; }
     </style>
+    {{-- Los estilos de toastr (#toast-container) se movieron a
+         layouts/theme.blade.php — el toast de éxito/error/info salía
+         ilegible (fondo blanco, texto blanco) en cualquier página FUERA de
+         este inbox, porque toastr.js genera class="toast toast-error" y el
+         componente .toast de Bootstrap 5 (fondo blanco semitransparente)
+         le ganaba la cascada a .toast-error donde no existía este bloque
+         con !important. Este bloque solo cubría el inbox; ahora aplica en
+         todo el panel. --}}
 @endpush
 
 @section('content_full_width', true)
@@ -386,6 +376,17 @@
     <script>
     window.BvSidebarInboxIds = @json($sidebarInboxes->pluck('id')->values());
     window.BvSelectedConversationId = @json($selectedConversationId ?? null);
+    {{-- 'helpdesk-agent-restricted': el canal Echo es por-bandeja (no
+         per-agente, ver routes/channels.php), así que este rol SÍ recibe en
+         tiempo real eventos de conversaciones de otros agentes de su misma
+         bandeja — este flag le dice a conversations-list.js que los descarte
+         en el cliente (handleInboxItemCreated). El servidor ya los filtra de
+         verdad en el listado HTTP y en ConversationPolicy. --}}
+    window.BvRestrictedToOwnConversations = @json(
+        auth()->user()->can('helpdesk.conversations.view-assigned-only')
+        && ! auth()->user()->can('helpdesk.conversations.view-all')
+        && ! auth()->user()->can('helpdesk.manage')
+    );
     </script>
 
     {{-- conversations.js (7.138 líneas) se dividió por responsabilidad para que sea más

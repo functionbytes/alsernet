@@ -88,11 +88,26 @@ class ConversationsController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->can('helpdesk.manage')) {
+        if ($user->can('helpdesk.manage') || $user->can('helpdesk.conversations.view-all')) {
             return null;
         }
 
         return AgentInboxCapacity::where('user_id', $user->id)->pluck('inbox_id')->all();
+    }
+
+    /**
+     * 'helpdesk-agent-restricted': ve unicamente conversaciones con
+     * assignee_id = el mismo dentro de sus bandejas — nunca las de otros
+     * agentes ni las sin asignar. view-all/helpdesk.manage siempre ganan
+     * (mismo criterio que ConversationPolicy::isRestrictedToOwn).
+     */
+    private function isRestrictedToOwnConversations(): bool
+    {
+        $user = auth()->user();
+
+        return $user->can('helpdesk.conversations.view-assigned-only')
+            && ! $user->can('helpdesk.conversations.view-all')
+            && ! $user->can('helpdesk.manage');
     }
 
     /**
@@ -139,6 +154,7 @@ class ConversationsController extends Controller
         // las abiertas"), no con el total absoluto incluyendo cerradas/archivadas.
         $totalConversations = Conversation::query()
             ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+            ->when($this->isRestrictedToOwnConversations(), fn ($q) => $q->where('assignee_id', $userId))
             ->withoutActiveBot()
             ->defaultViewVisible()
             ->count();
@@ -148,7 +164,7 @@ class ConversationsController extends Controller
         // mezclaba filtrado de query con 5 bloques de cache independientes).
         $inboxTags = $this->inboxMetrics->inboxTags();
         $statusbarMetrics = $this->inboxMetrics->statusbarMetrics();
-        $sidebarCounters = $this->inboxMetrics->sidebarCounters($userId, $userInboxIds);
+        $sidebarCounters = $this->inboxMetrics->sidebarCounters($userId, $userInboxIds, $this->isRestrictedToOwnConversations());
         $inboxes = $this->inboxMetrics->sidebarInboxes($userInboxIds);
 
         // Sin ?selected= explícito no se auto-selecciona la primera
@@ -387,6 +403,10 @@ class ConversationsController extends Controller
             ])
             ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])
             ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+            // 'helpdesk-agent-restricted': forzado siempre, no depende del chip
+            // "Mías" (?mine=1) de más abajo — ese chip es opcional para el resto
+            // de agentes, pero para este rol es la única vista que existe.
+            ->when($this->isRestrictedToOwnConversations(), fn ($q) => $q->where('assignee_id', $userId))
             ->when($request->input('view') === 'deleted', fn ($q) => $q->onlyTrashed());
 
         // Conversations the chatbot is handling stay out of the inbox until it
@@ -501,6 +521,11 @@ class ConversationsController extends Controller
             function () use ($userInboxIds, $userId): array {
                 $baseCount = Conversation::query()
                     ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+                    // 'helpdesk-agent-restricted': los contadores del sidebar deben
+                    // coincidir con lo que el listado realmente le muestra (solo lo
+                    // suyo) — si no, "Todas" mostraría el total de la bandeja
+                    // mientras la lista solo renderiza sus propias conversaciones.
+                    ->when($this->isRestrictedToOwnConversations(), fn ($q) => $q->where('assignee_id', $userId))
                     ->withoutActiveBot();
 
                 // Conversation::scopeDefaultViewVisible()/scopeUnreadFor() — única
@@ -1402,6 +1427,12 @@ class ConversationsController extends Controller
         }
 
         if ($request->wantsJson()) {
+            // store() (arriba) pudo haber auto-asignado $conversation vía
+            // assignTo() — misma instancia, assignee_id ya está al día, pero
+            // la relación 'assignee' se recarga por si ya estaba en caché
+            // desde antes de la auto-asignación (p.ej. sin assignee previo).
+            $conversation->load('assignee');
+
             // Preview OpenGraph (si hay URL): GenerateLinkPreviewJob lo genera
             // fuera del hilo HTTP y re-emite ConversationMessageCreated al
             // terminar (el panel reemplaza la burbuja existente por id) —
@@ -1432,6 +1463,19 @@ class ConversationsController extends Controller
                     'reply_to' => $replyMeta,
                     'attachment_urls' => $item?->attachment_urls ?? [],
                     'metadata' => $item?->metadata ?? [],
+                ],
+                // El propio agente que responde puede haber disparado la
+                // auto-asignación (ConversationMessageService::store) — el
+                // panel derecho no lo refresca solo via WebSocket porque el
+                // listener de '.conversation.updated' ignora los cambios
+                // hechos por uno mismo (asume que su UI ya está optimista).
+                // El JS del composer usa este campo para actualizar el
+                // desplegable "Agente" sin esperar ese evento ni recargar.
+                'conversation' => [
+                    'assignee' => $conversation->assignee ? [
+                        'id' => $conversation->assignee->id,
+                        'name' => trim($conversation->assignee->firstname.' '.$conversation->assignee->lastname),
+                    ] : null,
                 ],
             ], 201);
         }

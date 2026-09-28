@@ -27,7 +27,10 @@ class SendEscalationNotification implements ShouldQueue
         $recipients = User::role('helpdesk-manager')->get();
 
         if ($recipients->isEmpty()) {
-            $recipients = User::role('helpdesk-agent')->get();
+            // Permiso, no nombre de rol: 'helpdesk-agent' a secas dejaba fuera
+            // a 'helpdesk-agent-restricted'/'helpdesk-supervisor'/'helpdesk-admin'
+            // (perfiles, 21-sep-2026) — ver ConversationInboxMetricsService::agentWorkload.
+            $recipients = User::permission('helpdesk.conversations.reply')->get();
         }
 
         if ($recipients->isEmpty()) {

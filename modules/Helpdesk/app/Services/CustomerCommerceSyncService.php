@@ -3,7 +3,6 @@
 namespace Modules\Helpdesk\Services;
 
 use App\Helpers\PiiMasker;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskErp\Services\ErpCustomerLinkerService;
@@ -128,9 +127,9 @@ class CustomerCommerceSyncService
     }
 
     /**
-     * Variante que propaga el fallo de la BD de PrestaShop en lugar de
-     * degradarlo a [] — la usa el driver de integraciones para poder mostrar
-     * "la plataforma no respondió" en vez de un falso "sin resultados".
+     * Variante que propaga el fallo del bridge en lugar de degradarlo a []
+     * — la usa el driver de integraciones para poder mostrar "la plataforma
+     * no respondió" en vez de un falso "sin resultados".
      *
      * @return list<array{id: string, name: string, email: string, meta: string}>
      *
@@ -155,126 +154,54 @@ class CustomerCommerceSyncService
             };
         }
 
-        // Conexión dedicada 'prestashop' (servidor remoto, ver config/DB_*_PRESTASHOP
-        // en .env) — antes usaba la conexión local 'mysql' con sintaxis de
-        // base de datos cruzada `{db}`.tabla, que solo funciona si ambas bases
-        // viven en el mismo servidor MySQL. No es el caso: PrestaShop está en
-        // un host aparte (213.134.40.101), así que esa consulta fallaba siempre
-        // con "Incorrect database name" en cuanto HELPDESK_PS_DB estaba vacío
-        // (y aunque no lo estuviera, jamás iba a alcanzar la base remota).
-        $ps = DB::connection('prestashop');
+        // Vía el bridge (acción customer.search), no una conexión directa a
+        // la BD de PrestaShop desde Laravel — esa conexión (host remoto,
+        // ver config/DB_*_PRESTASHOP) no es alcanzable en la mayoría de
+        // entornos y exigía tener credenciales de esa BD en el .env de
+        // Laravel. El bridge corre local a esa BD, sin ese problema.
+        $limit = $type === 'id' ? 5 : 10;
 
-        // Dirección más reciente del cliente (subquery determinista por
-        // id_address, evita el problema de ONLY_FULL_GROUP_BY de un JOIN +
-        // GROUP BY simple) — de ahí salen DNI/teléfono/ciudad, que no viven
-        // en aalv_customer.
-        $addressJoin = 'LEFT JOIN aalv_address a
-                           ON a.id_address = (
-                                SELECT a2.id_address FROM aalv_address a2
-                                 WHERE a2.id_customer = c.id_customer AND a2.deleted = 0
-                                 ORDER BY a2.date_add DESC LIMIT 1
-                           )';
-        $cols = 'c.id_customer, c.firstname, c.lastname, c.email, c.date_add, c.active, '.
-                'a.dni, a.phone, a.phone_mobile, a.city';
-
-        $rows = match ($type) {
-            'id' => $ps->select(
-                "SELECT {$cols}
-                   FROM aalv_customer c
-                   {$addressJoin}
-                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND c.id_customer = ?
-                  LIMIT 5",
-                [(int) $query]
-            ),
-            'name' => $ps->select(
-                "SELECT {$cols}
-                   FROM aalv_customer c
-                   {$addressJoin}
-                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1
-                    AND CONCAT(c.firstname, ' ', c.lastname) LIKE ?
-                  ORDER BY c.id_customer DESC
-                  LIMIT 10",
-                [$query.'%']
-            ),
-            'nif' => $ps->select(
-                "SELECT {$cols}
-                   FROM aalv_customer c
-                   {$addressJoin}
-                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND a.dni = ?
-                  ORDER BY c.id_customer DESC
-                  LIMIT 10",
-                [$query]
-            ),
-            // Texto que no es email ni solo dígitos (búsqueda "auto"): puede
-            // ser un NIF/DNI o un nombre, no hay forma de saberlo de antemano
-            // — se prueban ambos y se combinan resultados.
-            'name_or_nif' => $ps->select(
-                "SELECT {$cols}
-                   FROM aalv_customer c
-                   {$addressJoin}
-                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1
-                    AND (a.dni = ? OR CONCAT(c.firstname, ' ', c.lastname) LIKE ?)
-                  ORDER BY c.id_customer DESC
-                  LIMIT 10",
-                [$query, $query.'%']
-            ),
-            default => $ps->select(
-                "SELECT {$cols}
-                   FROM aalv_customer c
-                   {$addressJoin}
-                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND c.email = ?
-                  ORDER BY c.id_customer DESC
-                  LIMIT 10",
-                [$query]
-            ),
-        };
-
-        return array_map(fn ($row) => [
-            'id' => (string) $row->id_customer,
-            'name' => trim($row->firstname.' '.$row->lastname),
-            'email' => $row->email,
-            'meta' => 'PS-#'.$row->id_customer,
-            'nif' => $row->dni ?: null,
-            'phone' => $row->phone ?: $row->phone_mobile ?: null,
-            'city' => $row->city ?: null,
-            'active' => (bool) $row->active,
-            'created_at' => $row->date_add,
-        ], $rows);
+        return array_map(fn (array $c) => [
+            'id' => $c['id'],
+            'name' => $c['name'],
+            'email' => $c['email'],
+            'meta' => $c['meta'],
+            'nif' => $c['nif'],
+            'phone' => $c['phone'],
+            'city' => $c['city'],
+            'active' => $c['active'],
+            'created_at' => $c['created_at'],
+        ], $this->ps->searchCustomers($query, $type, $limit));
     }
 
     /**
-     * Busca el cliente en la BD de PrestaShop por email y su id de gestión.
+     * Busca el cliente en PrestaShop por email y su id de gestión, vía el
+     * bridge (acción customer.search) — antes era una conexión directa a la
+     * BD de PrestaShop desde Laravel (DB::connection('prestashop')), que en
+     * la mayoría de entornos no es alcanzable y exigía tener credenciales de
+     * esa BD en el .env de Laravel.
      *
      * @return array{id_customer: int, gestion_id: ?int}|null
      */
     private function lookupInPrestashop(string $email): ?array
     {
         try {
-            $row = DB::connection('prestashop')->selectOne(
-                'SELECT c.id_customer,
-                        (SELECT MAX(sp.id_cliente_gestion)
-                           FROM aalv_orders o
-                           JOIN seguimiento_pedidos sp ON sp.id_internet = o.id_order AND sp.id_cliente_gestion > 0
-                          WHERE o.id_customer = c.id_customer) AS gestion_id
-                   FROM aalv_customer c
-                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND c.email = ?
-               ORDER BY c.id_customer DESC
-                  LIMIT 1',
-                [$email]
-            );
+            $matches = $this->ps->searchCustomers($email, 'email', 1);
         } catch (\Throwable $e) {
             Log::warning('CustomerCommerceSync: fallo al consultar PrestaShop', ['error' => $e->getMessage()]);
 
             return null;
         }
 
-        if (! $row || ! $row->id_customer) {
+        $match = $matches[0] ?? null;
+
+        if (! $match || ! $match['id']) {
             return null;
         }
 
         return [
-            'id_customer' => (int) $row->id_customer,
-            'gestion_id' => $row->gestion_id ? (int) $row->gestion_id : null,
+            'id_customer' => (int) $match['id'],
+            'gestion_id' => $match['gestion_id'] ? (int) $match['gestion_id'] : null,
         ];
     }
 }

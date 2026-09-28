@@ -176,6 +176,10 @@ class HelpdeskRolesSeeder extends Seeder
         $permissions = Permission::where('guard_name', 'web')
             ->where(function ($query) {
                 $query->where('name', 'like', 'helpdesk.%')
+                    // syncPermissions() de abajo pisa lo que HelpdeskAccessSeeder
+                    // dio por 'helpdesk%': sin esto se pierde helpdeskprestashop.*
+                    // (p. ej. carts.manage) al re-ejecutar este seeder.
+                    ->orWhere('name', 'like', 'helpdeskprestashop.%')
                     // No empiezan por 'helpdesk.' pero son funcionalidad del
                     // módulo: visibilidad en el menú, alertas operativas
                     // (SendSlaBreachNotification y similares) y el modal

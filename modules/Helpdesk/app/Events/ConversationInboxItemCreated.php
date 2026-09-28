@@ -55,15 +55,33 @@ class ConversationInboxItemCreated implements ShouldBroadcastNow
             return [];
         }
 
-        $inboxId = $this->item->conversation?->inbox_id;
+        $this->item->loadMissing('conversation.assignee');
+        $conversation = $this->item->conversation;
+        $inboxId = $conversation?->inbox_id;
 
         if (! $inboxId) {
             return [];
         }
 
-        return [
+        $channels = [
             new PrivateChannel('helpdesk.inbox.'.$inboxId),
         ];
+
+        // 'helpdesk-agent-restricted' (perfiles, 21-sep-2026) ya no se
+        // suscribe al canal de bandeja de arriba (ve conversaciones de otros
+        // agentes ahí) — conversations-list.js lo suscribe en su lugar a su
+        // canal personal 'user.{id}', así que si la conversación es suya se
+        // le manda también por ahí. El canal de bandeja se mantiene igual
+        // para agent/supervisor/admin, que sí deben ver todo.
+        $assignee = $conversation->assignee;
+        if ($assignee && $assignee->hasPermissionTo('helpdesk.conversations.view-assigned-only')
+            && ! $assignee->hasPermissionTo('helpdesk.conversations.view-all')
+            && ! $assignee->hasPermissionTo('helpdesk.manage')
+        ) {
+            $channels[] = new PrivateChannel('user.'.$assignee->id);
+        }
+
+        return $channels;
     }
 
     /**
@@ -94,6 +112,10 @@ class ConversationInboxItemCreated implements ShouldBroadcastNow
                 'channel' => $conversation?->channel,
                 'subject' => $conversation?->subject,
                 'priority' => $conversation?->priority,
+                // Usado en cliente por 'helpdesk-agent-restricted' para
+                // descartar eventos de conversaciones que no son suyas — el
+                // canal es por-bandeja, no per-agente (ver routes/channels.php).
+                'assignee_id' => $conversation?->assignee_id,
                 'last_message_at' => $conversation?->last_message_at?->toIso8601String() ?? $this->item->created_at?->toIso8601String(),
                 // "Contadores" ligeros del sidebar: total de mensajes de la
                 // conversación (no personalizado por usuario — el badge de no

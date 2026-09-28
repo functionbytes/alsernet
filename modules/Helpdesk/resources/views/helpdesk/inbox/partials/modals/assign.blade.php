@@ -87,8 +87,8 @@
             <div class="asgn-notify">
                 <div class="asgn-notify-lbl">{{ __('helpdesk::helpdesk.inbox.modals.assign_notify_label') }}</div>
                 <div class="asgn-notify-opts">
-                    <label class="asgn-notify-opt on">
-                        <input type="checkbox" id="asgn-notify-email" checked>
+                    <label class="asgn-notify-opt">
+                        <input type="checkbox" id="asgn-notify-email">
                         <i class="far fa-envelope"></i>
                         <span>{{ __('helpdesk::helpdesk.inbox.modals.assign_notify_email') }}</span>
                     </label>

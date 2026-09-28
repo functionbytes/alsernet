@@ -823,6 +823,24 @@
                     reconcilePendingBubble($pending, resp?.item, isInternal);
                     $(document).trigger('bv:message:sent', resp?.item);
                     // Sin toast: el bubble que aparece en el thread es la confirmación visual
+
+                    // Responder a una conversación sin asignar te la auto-asigna
+                    // (ver ConversationMessageService::store). El listener de
+                    // '.conversation.updated' de más abajo ignora los cambios
+                    // hechos por uno mismo (asume que su propia UI ya está al
+                    // día), pero aquí nada actualiza el panel derecho de forma
+                    // optimista — sin esto, "Agente" seguía en "Sin asignar"
+                    // hasta recargar la página.
+                    const newAssignee = resp?.conversation?.assignee;
+                    const $assignBtn = $('.rsp-kv-ctrl [data-bv-modal="assign"]');
+                    const currentAssigneeId = parseInt($assignBtn.attr('data-bv-assignee-id'), 10) || null;
+                    const newAssigneeId = newAssignee?.id ?? null;
+                    if ($assignBtn.length && newAssigneeId && newAssigneeId !== currentAssigneeId) {
+                        const convId = $('.bv-composer').data('bv-conversation-id');
+                        if (convId && typeof window.bvLoadConversationPane === 'function') {
+                            window.bvLoadConversationPane(convId, null, { push: false });
+                        }
+                    }
                 })
                 .fail(function (xhr) {
                     const msg = xhr?.responseJSON?.errors?.body?.[0]
@@ -3877,10 +3895,14 @@
         window.bvUnbindConversation();
         currentConvId = convId;
 
-        if (typeof window.Echo === 'undefined' || !window.Echo) return;
-
-        // Marcar como leída + limpiar el badge en la lista.
+        // Marcar como leída + limpiar el badge en la lista. Es un POST HTTP
+        // normal, no depende de Reverb: antes vivía después del guard de
+        // window.Echo de abajo, así que si el WebSocket tardaba en conectar
+        // (o estaba caído) el click en la conversación nunca la marcaba como
+        // leída ni limpiaba el contador de no leídos en el listado.
         markConversationRead(convId);
+
+        if (typeof window.Echo === 'undefined' || !window.Echo) return;
 
         convChannel = window.Echo.private('helpdesk.conversation.' + convId);
 
@@ -3961,7 +3983,9 @@
 
             window.dispatchEvent(new CustomEvent('inbox:incoming-message', { detail: msg }));
 
-            // Push notification for per-conversation listener (agent on page, tab hidden)
+            // Push notification for per-conversation listener (agent on page, tab hidden).
+            // Cubre "la tengo abierta pero cambié de pestaña" — el caso de "no la
+            // tengo abierta" lo cubre el listener de bandeja en conversations-list.js.
             if (isCustomerMessage && document.visibilityState === 'hidden') {
                 const conv = e.conversation || {};
                 const customerName = conv.customer_name || 'Nuevo mensaje';

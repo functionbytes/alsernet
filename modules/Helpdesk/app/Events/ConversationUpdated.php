@@ -47,6 +47,14 @@ class ConversationUpdated implements ShouldBroadcast
      * ya suscrito por conversations-list.js para 'item.created', para que esa
      * misma lista pueda parchear la fila (ver handler '.conversation.updated'
      * en setupInboxListener()).
+     *
+     * Fuga menor de agente (perfiles, 21-sep-2026): 'helpdesk-agent-restricted'
+     * ya no se suscribe al canal de bandeja de arriba (vease
+     * ConversationInboxItemCreated::broadcastOn() para el razonamiento
+     * completo) — conversations-list.js lo suscribe en su lugar a su canal
+     * personal 'user.{id}'. Sin este bloque, un cambio de prioridad/estado
+     * hecho por otro agente desde la bandeja jamas le llegaria: la fila de
+     * su lista se quedaria con el valor viejo hasta recargar la pagina.
      */
     public function broadcastOn(): array
     {
@@ -56,6 +64,15 @@ class ConversationUpdated implements ShouldBroadcast
 
         if ($this->conversation->inbox_id) {
             $channels[] = new PrivateChannel('helpdesk.inbox.'.$this->conversation->inbox_id);
+        }
+
+        $this->conversation->loadMissing('assignee');
+        $assignee = $this->conversation->assignee;
+        if ($assignee && $assignee->hasPermissionTo('helpdesk.conversations.view-assigned-only')
+            && ! $assignee->hasPermissionTo('helpdesk.conversations.view-all')
+            && ! $assignee->hasPermissionTo('helpdesk.manage')
+        ) {
+            $channels[] = new PrivateChannel('user.'.$assignee->id);
         }
 
         return $channels;

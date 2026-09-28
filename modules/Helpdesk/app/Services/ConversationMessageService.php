@@ -67,6 +67,18 @@ class ConversationMessageService
             'scheduled_by' => $isScheduled ? $authorId : null,
         ]);
 
+        // Un agente que responde (o deja una nota) en vivo en una conversación
+        // sin asignar se está haciendo cargo del caso: se la auto-asigna en vez
+        // de dejarla huérfana hasta que alguien la tome manualmente. Usa
+        // auth()->id() (no $authorId): SendMessageAction (auto-reply, saludo
+        // fuera de horario) pasa 'user_id' resuelto al assignee/default de la
+        // bandeja o, en último caso, a un admin arbitrario (resolveSenderId) —
+        // auto-asignarle la conversación a ESE admin por un mensaje automático
+        // que nunca escribió sería el bug contrario al que se busca arreglar.
+        if (auth()->id() && $conversation->assignee_id === null) {
+            $conversation->assignTo(auth()->id());
+        }
+
         // Si es un envío programado a futuro, no enviamos ni disparamos eventos ahora.
         if ($isScheduled) {
             return [$item, 'Mensaje programado.'];

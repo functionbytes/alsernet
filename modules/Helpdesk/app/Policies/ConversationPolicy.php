@@ -15,6 +15,10 @@ class ConversationPolicy
 
     public function view(User $user, Conversation $conversation): bool
     {
+        if ($this->isRestrictedToOwn($user)) {
+            return $conversation->assignee_id === $user->id && $this->canAccessInbox($user, $conversation);
+        }
+
         if (! $user->hasPermissionTo('helpdesk.conversations.view') && $conversation->assignee_id !== $user->id) {
             return false;
         }
@@ -29,6 +33,15 @@ class ConversationPolicy
 
     public function update(User $user, Conversation $conversation): bool
     {
+        // El rol 'helpdesk-agent-restricted' tiene 'helpdesk.conversations.update'
+        // (necesita poder responder/adjuntar en SUS conversaciones) — sin este
+        // corte explícito, ese permiso por sí solo habría bypaseado el chequeo
+        // de assignee de abajo y le habría permitido editar cualquier
+        // conversación de su bandeja, no solo las suyas.
+        if ($this->isRestrictedToOwn($user)) {
+            return $conversation->assignee_id === $user->id && $this->canAccessInbox($user, $conversation);
+        }
+
         if (! $user->hasPermissionTo('helpdesk.conversations.update') && $conversation->assignee_id !== $user->id) {
             return false;
         }
@@ -54,16 +67,30 @@ class ConversationPolicy
     }
 
     /**
-     * Managers see all inboxes; agents are restricted to their assigned inboxes.
+     * Managers (and supervisors, via view-all) see all inboxes; agents are
+     * restricted to their assigned inboxes.
      */
     protected function canAccessInbox(User $user, Conversation $conversation): bool
     {
-        if ($user->hasPermissionTo('helpdesk.manage')) {
+        if ($user->hasPermissionTo('helpdesk.manage') || $user->hasPermissionTo('helpdesk.conversations.view-all')) {
             return true;
         }
 
         return AgentInboxCapacity::where('user_id', $user->id)
             ->where('inbox_id', $conversation->inbox_id)
             ->exists();
+    }
+
+    /**
+     * 'helpdesk-agent-restricted': solo ve/actúa sobre conversaciones que le
+     * asignaron a él mismo, nunca las de otro agente de su misma bandeja.
+     * view-all y helpdesk.manage siempre ganan (un supervisor/admin con
+     * view-assigned-only heredado de otro rol no debe quedar restringido).
+     */
+    protected function isRestrictedToOwn(User $user): bool
+    {
+        return $user->hasPermissionTo('helpdesk.conversations.view-assigned-only')
+            && ! $user->hasPermissionTo('helpdesk.conversations.view-all')
+            && ! $user->hasPermissionTo('helpdesk.manage');
     }
 }

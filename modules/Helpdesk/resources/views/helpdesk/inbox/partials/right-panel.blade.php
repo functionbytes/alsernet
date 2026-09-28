@@ -882,6 +882,29 @@
                 @endif
             </div>
 
+            {{-- Live commerce: producto actual, cesta en vivo y vistos. Lo pinta
+                 conversations-panel.js y lo refresca con widget.session.updated. --}}
+            <div class="rsp-section bv-live-commerce" id="bv-live-commerce"
+                 data-initial="{{ json_encode([
+                     'current_product' => $rpWidgetSession->current_product,
+                     'cart' => $rpWidgetSession->cart_snapshot,
+                     'cart_known' => $rpWidgetSession->cart_updated_at !== null,
+                     'cart_updated_at' => $rpWidgetSession->cart_updated_at?->toIso8601String(),
+                     'viewed_products' => $rpWidgetSession->viewed_products,
+                 ]) }}"
+                 data-i18n="{{ json_encode([
+                     'product' => __('helpdesk::helpdesk.inbox.right.live_product_heading'),
+                     'cart' => __('helpdesk::helpdesk.inbox.right.live_cart_heading'),
+                     'cartEmpty' => __('helpdesk::helpdesk.inbox.right.live_cart_empty'),
+                     'cartUnknown' => __('helpdesk::helpdesk.inbox.right.live_cart_unknown'),
+                     'total' => __('helpdesk::helpdesk.inbox.right.live_cart_total'),
+                     'items' => __('helpdesk::helpdesk.inbox.right.live_cart_items'),
+                     'guest' => __('helpdesk::helpdesk.inbox.right.live_cart_guest'),
+                     'customer' => __('helpdesk::helpdesk.inbox.right.live_cart_customer'),
+                     'viewed' => __('helpdesk::helpdesk.inbox.right.live_viewed_heading'),
+                     'updated' => __('helpdesk::helpdesk.inbox.right.live_updated'),
+                 ]) }}"></div>
+
             {{-- Página actual — URL en la que está el visitante ahora --}}
             @php
                 $rpCurrentUrl = $rpWidgetSession->current_url ?? null;

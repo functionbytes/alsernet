@@ -12,13 +12,10 @@
     'use strict';
 
     $(function () {
-        // ─── Browser notification permission ─────────────────────────
-        if (window.Notification && Notification.permission === 'default') {
-            $(document).one('click', function () {
-                Notification.requestPermission();
-            });
-        }
-
+        // La solicitud de permiso de notificaciones vive únicamente en
+        // conversations-core.js (requestPermissionOnce, junto al botón real
+        // #bv-notif-toggle del statusbar) — aquí había un segundo listener
+        // duplicado pidiendo el mismo permiso en el primer click de la página.
 
         // ─── Dropzone overlay (drag de archivos sobre todo el thread) ─
         let dragCounter = 0;
@@ -120,112 +117,16 @@
 
         // closeAllMenus() ahora vive en conversations-core.js (ver comentario allí).
 
-        // ─── Notification permission toggle button ───────────────────
-        // Inject button if there's a topbar/header to host it
-        function ensureNotifBtn() {
-            if (document.getElementById('bv-toggle-notifications')) return;
-            // Find topbar bell icon container
-            const $bell = $('.bv-topbtn .fa-bell, .topbar .fa-bell').first().closest('button');
-            if (!$bell.length) {
-                // Fallback: prepend to thread head actions
-                const $head = $('.bv-th-head .actions').first();
-                if ($head.length) {
-                    $head.prepend(
-                        '<button class="bv-th-action" id="bv-toggle-notifications" title="Activar notificaciones">' +
-                            '<i class="far fa-bell"></i>' +
-                            '<span class="bad bv-hidden">!</span>' +
-                        '</button>'
-                    );
-                }
-                return;
-            }
-            $bell.attr('id', 'bv-toggle-notifications');
-        }
-        ensureNotifBtn();
-
-        function updateNotifBtn() {
-            const $btn = $('#bv-toggle-notifications');
-            if (!$btn.length || typeof Notification === 'undefined') return;
-            $btn.removeClass('granted denied default');
-            $btn.addClass(Notification.permission || 'default');
-            const titleMap = {
-                granted: 'Notificaciones activadas',
-                denied: 'Notificaciones bloqueadas — clic para ayuda',
-                default: 'Activar notificaciones',
-            };
-            $btn.attr('title', titleMap[Notification.permission] || titleMap.default);
-            // Switch icon to "bell" when granted, "bell-slash" when denied
-            const $icon = $btn.find('i').first();
-            if ($icon.length) {
-                $icon.removeClass('fa-bell fa-bell-slash');
-                $icon.addClass(Notification.permission === 'denied' ? 'fa-bell-slash' : 'fa-bell');
-            }
-        }
-        updateNotifBtn();
-
-        $(document).on('click', '#bv-toggle-notifications', async function (e) {
-            if (typeof Notification === 'undefined') return;
-            if (Notification.permission === 'granted') {
-                return;
-            }
-            if (Notification.permission === 'denied') {
-                e.preventDefault();
-                e.stopPropagation();
-                showNotifDeniedHelp();
-                return;
-            }
-            const result = await Notification.requestPermission();
-            updateNotifBtn();
-            if (result === 'granted') {
-                new Notification('🔔 Notificaciones activadas', { body: 'Recibirás alertas de nuevos mensajes' });
-            } else if (result === 'denied') {
-                showNotifDeniedHelp();
-            }
-        });
-
-        function showNotifDeniedHelp() {
-            $('#bv-notif-denied').remove();
-            const $modal = $(
-                '<div id="bv-notif-denied" class="bv-mic-denied-overlay">' +
-                    '<div class="bv-mic-denied-card">' +
-                        '<div class="bv-mic-denied-icon" style="background:#fef3c7;color:#d97706"><i class="fas fa-bell-slash"></i></div>' +
-                        '<div class="bv-mic-denied-title">Notificaciones bloqueadas</div>' +
-                        '<div class="bv-mic-denied-body">' +
-                            'Para recibir alertas de nuevos mensajes en tiempo real:' +
-                            '<ol class="bv-mic-denied-steps">' +
-                                '<li>Haz clic en el icono <strong>🔒</strong> de la barra de direcciones</li>' +
-                                '<li>Busca <strong>Notificaciones</strong></li>' +
-                                '<li>Cambia a <strong>Permitir</strong></li>' +
-                                '<li>Recarga la página</li>' +
-                            '</ol>' +
-                        '</div>' +
-                        '<div class="bv-mic-denied-actions">' +
-                            '<button class="bv-mic-denied-btn" id="bv-notif-retry"><i class="fas fa-bell"></i> Reintentar permiso</button>' +
-                            '<button class="bv-mic-denied-btn-secondary" id="bv-notif-close">Entendido</button>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>'
-            );
-            $('body').append($modal);
-        }
-
-        $(document).on('click', '#bv-notif-close', function () {
-            $('#bv-notif-denied').remove();
-        });
-
-        $(document).on('click', '#bv-notif-retry', async function () {
-            try {
-                const result = await Notification.requestPermission();
-                if (result === 'granted') {
-                    $('#bv-notif-denied').remove();
-                    updateNotifBtn();
-                } else {
-                    if (window.toastr) toastr.error('Sigue bloqueado. Usa el icono 🔒 de la URL para activarlo.', '', { timeOut: 8000 });
-                }
-            } catch (e) {
-                if (window.toastr) toastr.error('Error al pedir permiso');
-            }
-        });
+        // El botón/toggle real de notificaciones es #bv-notif-toggle, en el
+        // statusbar del inbox (conversations-core.js). Aquí había un SEGUNDO
+        // botón de campana (#bv-toggle-notifications) que ensureNotifBtn()
+        // intentaba inyectar reutilizando un ".bv-topbtn .fa-bell"/".topbar
+        // .fa-bell" que no existe en este layout, así que siempre caía al
+        // fallback y creaba un botón fantasma en el header del hilo — con su
+        // propio estado (basado solo en Notification.permission, sin mirar
+        // el flag real bv:notif:enabled) que no controlaba nada: showInboxPushNotif
+        // solo consulta el toggle real. Un agente que lo usara para "apagar"
+        // notificaciones seguía recibiéndolas igual.
 
         // ─── Lightbox de imágenes (estilo WhatsApp) ─────────────────
         const lightbox = {

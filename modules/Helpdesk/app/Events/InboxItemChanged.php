@@ -21,8 +21,12 @@ class InboxItemChanged implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
+        // 'user.{id}' (routes/channels.php) — ya autorizado y ya lo escucha
+        // el frontend general del panel (módulo Notification). Antes era
+        // 'helpdesk.user.{id}', un canal sin autorizador que nadie
+        // suscribía nunca — este evento no le llegaba a nadie.
         return [
-            new PrivateChannel('helpdesk.user.'.$this->userId),
+            new PrivateChannel('user.'.$this->userId),
         ];
     }
 

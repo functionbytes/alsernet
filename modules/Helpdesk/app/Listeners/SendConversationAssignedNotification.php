@@ -20,6 +20,12 @@ class SendConversationAssignedNotification implements ShouldQueue
 
     public function handle(ConversationAssigned $event): void
     {
+        // No auto-notificarse: el agente que se autoasigna al responder (ver
+        // ConversationMessageService::store) ya sabe que tomó la conversación.
+        if ($event->byUserId === $event->assignee->id) {
+            return;
+        }
+
         $event->assignee->notify(new ConversationAssignedNotification($event->conversation));
     }
 

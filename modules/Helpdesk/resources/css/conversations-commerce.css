@@ -2732,7 +2732,10 @@ a.bv-om-pc-name-link i {
    Tokens: verde #90bb13 (primario), grises neutros del inbox.
    ============================================================ */
 .bv-po-dialog { width: 96vw; max-width: 1140px; }
-.bv-po-body { padding: 0; }
+/* position:relative → ancla las hojas .ps-sheet (position:absolute; inset:0)
+   de devolución/dirección para que se recorten al cuerpo del modal y no
+   tapen cabecera/pie; ningún ancestro entre .bv-modal y aquí tiene position. */
+.bv-po-body { padding: 0; position: relative; }
 .bv-po-status { margin-left: auto; margin-right: 8px; }
 .bv-po-pill {
     display: inline-flex; align-items: center;

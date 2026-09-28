@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Notifications;
 
+use App\Notifications\Channels\WebPushChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -19,7 +20,17 @@ class NewConversationNotification extends Notification implements ShouldQueue
 
     public function via(mixed $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', WebPushChannel::class];
+    }
+
+    public function toWebPush(mixed $notifiable): array
+    {
+        return [
+            'title' => 'Nueva conversación sin asignar',
+            'body' => "#{$this->conversation->id}: {$this->conversation->subject}",
+            'url' => route('manager.helpdesk.conversations.show', $this->conversation),
+            'tag' => 'helpdesk-conversation-'.$this->conversation->id,
+        ];
     }
 
     public function toArray(mixed $notifiable): array

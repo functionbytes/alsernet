@@ -86,6 +86,153 @@
         window.bvInitRightPanelTabs = initRightPanelTabs;
         initRightPanelTabs();
 
+        // ─── Live commerce: producto actual, cesta en vivo y vistos ───────
+        // Sección #bv-live-commerce de la pestaña Tecnología. Pinta los datos
+        // iniciales (data-initial) y se refresca con widget.session.updated.
+        // Todo con textContent: los datos vienen del navegador del visitante.
+        var lcBound = { convId: null, handler: null };
+
+        function lcEl(tag, cls, text) {
+            var el = document.createElement(tag);
+            if (cls) { el.className = cls; }
+            if (text !== undefined && text !== null) { el.textContent = String(text); }
+            return el;
+        }
+
+        function lcSafeUrl(url) {
+            return typeof url === 'string' && /^(https?:)?\/\//i.test(url) ? url : null;
+        }
+
+        function lcMoney(value, currency) {
+            if (typeof value !== 'number' || isNaN(value)) { return ''; }
+            try {
+                return new Intl.NumberFormat(document.documentElement.lang || 'es', {
+                    style: 'currency', currency: currency || 'EUR',
+                }).format(value);
+            } catch (_) {
+                return value.toFixed(2) + ' ' + (currency || '');
+            }
+        }
+
+        function lcProductRow(p, meta, currency) {
+            var url = lcSafeUrl(p.url);
+            var row = lcEl(url ? 'a' : 'div', 'bv-lc-item');
+            if (url) { row.href = url; row.target = '_blank'; row.rel = 'noopener noreferrer'; }
+            var img = lcSafeUrl(p.image_url);
+            var thumb = lcEl('span', 'bv-lc-thumb');
+            if (img) {
+                var im = document.createElement('img');
+                im.alt = ''; im.loading = 'lazy';
+                im.onerror = function () { thumb.textContent = ''; thumb.appendChild(lcEl('i', 'fas fa-box')); };
+                im.src = img;
+                thumb.appendChild(im);
+            } else {
+                thumb.appendChild(lcEl('i', 'fas fa-box'));
+            }
+            row.appendChild(thumb);
+            var body = lcEl('span', 'bv-lc-body');
+            body.appendChild(lcEl('span', 'bv-lc-name', p.title || p.name || ('#' + (p.id || p.id_product))));
+            var sub = lcEl('span', 'bv-lc-meta', meta || '');
+            body.appendChild(sub);
+            row.appendChild(body);
+            var price = typeof p.total === 'number' ? p.total : p.price;
+            if (typeof price === 'number') {
+                row.appendChild(lcEl('span', 'bv-lc-price', lcMoney(price, p.currency || currency)));
+            }
+            return row;
+        }
+
+        function renderLiveCommerce(data) {
+            var root = document.getElementById('bv-live-commerce');
+            if (!root) { return; }
+            var t = {};
+            try { t = JSON.parse(root.dataset.i18n || '{}'); } catch (_) {}
+            if (!data) {
+                try { data = JSON.parse(root.dataset.initial || '{}'); } catch (_) { data = {}; }
+            }
+            root.textContent = '';
+
+            var product = data.current_product;
+            if (product && product.id) {
+                root.appendChild(lcEl('div', 'lbl', t.product));
+                var ref = product.id_product_attribute ? ('#' + product.id + ' · ' + product.id_product_attribute) : ('#' + product.id);
+                root.appendChild(lcProductRow(product, ref, product.currency));
+            }
+
+            root.appendChild(lcEl('div', 'lbl', t.cart));
+            var cart = data.cart;
+            var cartKnown = data.cart_known !== undefined ? data.cart_known : ('cart' in data && data.cart_updated_at);
+            if (!cartKnown) {
+                root.appendChild(lcEl('div', 'bv-lc-empty', t.cartUnknown));
+            } else if (!cart || !cart.lines || !cart.lines.length) {
+                root.appendChild(lcEl('div', 'bv-lc-empty', t.cartEmpty));
+            } else {
+                var head = lcEl('div', 'bv-lc-cart-head');
+                head.appendChild(lcEl('span', 'bv-lc-badge', cart.customer_logged ? t.customer : t.guest));
+                head.appendChild(lcEl('span', 'bv-lc-meta', '#' + cart.id + ' · ' + String(t.items || ':count').replace(':count', cart.products_count)));
+                root.appendChild(head);
+                cart.lines.forEach(function (line) {
+                    var meta = line.qty + ' × ' + lcMoney(line.price, cart.currency) + (line.attributes ? ' · ' + line.attributes : '');
+                    root.appendChild(lcProductRow(line, meta, cart.currency));
+                });
+                var total = lcEl('div', 'bv-lc-total');
+                total.appendChild(lcEl('span', null, t.total));
+                total.appendChild(lcEl('strong', null, lcMoney(cart.total, cart.currency)));
+                root.appendChild(total);
+            }
+            if (data.cart_updated_at) {
+                var when = new Date(data.cart_updated_at);
+                if (!isNaN(when)) {
+                    root.appendChild(lcEl('div', 'bv-lc-updated', (t.updated || '') + ' ' + when.toLocaleTimeString()));
+                }
+            }
+
+            var viewed = (data.viewed_products || []).filter(function (v) { return !product || String(v.id) !== String(product.id); });
+            if (viewed.length) {
+                root.appendChild(lcEl('div', 'lbl', t.viewed));
+                viewed.slice(0, 10).forEach(function (v) {
+                    var when = v.viewed_at ? new Date(v.viewed_at) : null;
+                    root.appendChild(lcProductRow(v, when && !isNaN(when) ? when.toLocaleString() : '', v.currency));
+                });
+            }
+        }
+
+        function bindLiveCommerce() {
+            renderLiveCommerce();
+            var techTabEl = document.querySelector('[data-bv-tab-content="technology"]');
+            var convId = techTabEl ? techTabEl.dataset.convId : null;
+            if (!window.Echo || !convId || lcBound.convId === convId) { return; }
+            if (lcBound.convId && lcBound.handler) {
+                try { window.Echo.private('helpdesk.conversation.' + lcBound.convId).stopListening('.widget.session.updated', lcBound.handler); } catch (_) {}
+            }
+            lcBound.convId = convId;
+            lcBound.handler = function (data) {
+                if (!data) { return; }
+                renderLiveCommerce({
+                    current_product: data.current_product,
+                    cart: data.cart,
+                    cart_known: !!data.cart_updated_at,
+                    cart_updated_at: data.cart_updated_at,
+                    viewed_products: data.viewed_products,
+                });
+            };
+            window.Echo.private('helpdesk.conversation.' + convId).listen('.widget.session.updated', lcBound.handler);
+        }
+
+        window.bvRenderLiveCommerce = renderLiveCommerce;
+        bindLiveCommerce();
+        // Echo puede cargar después de este script, y el pane se sustituye al
+        // cambiar de conversación (SPA): re-enlazar en ambos casos.
+        (function waitEcho(tries) {
+            if (window.Echo) { bindLiveCommerce(); return; }
+            if (tries < 60) { setTimeout(function () { waitEcho(tries + 1); }, 250); }
+        }(0));
+        var origInitTabs = window.bvInitRightPanelTabs;
+        window.bvInitRightPanelTabs = function () {
+            origInitTabs.apply(this, arguments);
+            bindLiveCommerce();
+        };
+
 
         // ─── Panel cliente: menú "Más" ────────────────────────────────
         $(document).on('click', '.rsp-more-toggle', function (e) {
@@ -828,6 +975,7 @@
                     var oldTab = document.querySelector('[data-bv-tab-content="technology"]');
                     if (freshTab && oldTab) {
                         oldTab.innerHTML = freshTab.innerHTML;
+                        if (window.bvRenderLiveCommerce) { window.bvRenderLiveCommerce(); }
                     }
 
                     if (typeof window.toastr !== 'undefined') {
@@ -923,6 +1071,7 @@
                                 var doc = new DOMParser().parseFromString(html, 'text/html');
                                 var fresh = doc.querySelector('[data-bv-tab-content="technology"]');
                                 if (fresh) { techTab.innerHTML = fresh.innerHTML; }
+                                if (window.bvRenderLiveCommerce) { window.bvRenderLiveCommerce(); }
                             }).catch(function () {});
                         }
                     });
@@ -1654,7 +1803,7 @@
 
         // Exponer helpers compartidos con conversations-list.js / conversations-thread.js
         window.getConvUrls = getConvUrls;
-        window.initRightPanelTabs = initRightPanelTabs;
+        window.initRightPanelTabs = window.bvInitRightPanelTabs;
 
     });
 })(jQuery);
