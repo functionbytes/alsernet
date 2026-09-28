@@ -15,7 +15,7 @@
                 var preview = String(m.body || '').replace(/<[^>]+>/g, '').trim().slice(0, 70);
                 return '<label class="tkt-pick as-option' + (picked[m.id] ? ' on' : '') + '">' +
                     '<input type="checkbox" data-split-item="' + m.id + '"' + (picked[m.id] ? ' checked' : '') + '>' +
-                    '<span class="who"><span class="n">' + escapeHtml(preview || '(sin texto)') + '</span>' +
+                    '<span class="who"><span class="n">' + escapeHtml(preview || TKA.t('modal_39_no_text_fallback', '(sin texto)')) + '</span>' +
                     '<span class="s">' + escapeHtml([m.sender_name, m.created_at_human].filter(Boolean).join(' · ')) + '</span></span>' +
                 '</label>';
             }).join('');
@@ -24,19 +24,19 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-scissors', kicker: TKA.t('kicker_ticket_split', 'Ticket · dividir'),
             title: TKA.t('modal_title_split_ticket', 'Dividir ticket'), titleChip: t.ticket_number, width: 'lg',
-            body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Útil cuando el cliente mezcla dos asuntos en la misma conversación. Los mensajes se MUEVEN, no se copian.</div>' +
-                '<div class="tkt-cap">Mensajes a mover</div>' +
+            body: '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_39_intro_note', 'Útil cuando el cliente mezcla dos asuntos en la misma conversación. Los mensajes se MUEVEN, no se copian.') + '</div>' +
+                '<div class="tkt-cap">' + TKA.t('modal_39_messages_to_move_label', 'Mensajes a mover') + '</div>' +
                 '<div class="tkt-pick-list" id="tkt-split-list">' + rowsHtml() + '</div>' +
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-split-subject">Asunto del nuevo ticket<span class="req">*</span></label>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-split-subject">' + TKA.t('modal_39_new_subject_label', 'Asunto del nuevo ticket') + '<span class="req">*</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-split-subject" value="' + escapeHtml(t.subject || '') + '"></div>' +
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-split-category">Categoría</label>' +
-                        '<select class="tkt-input" id="tkt-split-category" data-no-select2><option value="">La misma</option>' + optionsHtml(TKA.state.categories, 'id', t.category_id) + '</select></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-split-assignee">Agente</label>' +
-                        '<select class="tkt-input" id="tkt-split-assignee" data-no-select2><option value="">Sin asignar</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-split-category">' + TKA.t('modal_39_category_label', 'Categoría') + '</label>' +
+                        '<select class="tkt-input" id="tkt-split-category" data-no-select2><option value="">' + TKA.t('modal_39_same_category_option', 'La misma') + '</option>' + optionsHtml(TKA.state.categories, 'id', t.category_id) + '</select></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-split-assignee">' + TKA.t('modal_39_agent_label', 'Agente') + '</label>' +
+                        '<select class="tkt-input" id="tkt-split-assignee" data-no-select2><option value="">' + TKA.t('modal_39_unassigned_option', 'Sin asignar') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>' +
                 '</div>' +
-                '<label class="tkt-check"><input type="checkbox" id="tkt-split-link" checked> Vincular ambos tickets entre sí</label>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-split-confirm" disabled>Dividir ticket</button>' +
+                '<label class="tkt-check"><input type="checkbox" id="tkt-split-link" checked> ' + TKA.t('modal_39_link_tickets_label', 'Vincular ambos tickets entre sí') + '</label>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-split-confirm" disabled>' + TKA.t('modal_title_split_ticket', 'Dividir ticket') + '</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -44,10 +44,12 @@
             var n = Object.keys(picked).length;
             $backdrop.find('#tkt-split-confirm')
                 .prop('disabled', n === 0 || n >= thread.length)
-                .text(n ? 'Mover ' + n + (n === 1 ? ' mensaje' : ' mensajes') : 'Dividir ticket');
+                .text(n
+                    ? (n === 1 ? TKA.t('modal_39_move_count_singular', 'Mover :n mensaje', { ':n': n }) : TKA.t('modal_39_move_count_plural', 'Mover :n mensajes', { ':n': n }))
+                    : TKA.t('modal_title_split_ticket', 'Dividir ticket'));
             $backdrop.find('#tkt-split-warn').remove();
             if (n >= thread.length) {
-                $backdrop.find('#tkt-split-list').after('<div class="tkt-note" id="tkt-split-warn"><i class="fa-solid fa-triangle-exclamation"></i> Deja al menos un mensaje en el ticket original.</div>');
+                $backdrop.find('#tkt-split-list').after('<div class="tkt-note" id="tkt-split-warn"><i class="fa-solid fa-triangle-exclamation"></i> ' + TKA.t('modal_39_keep_one_message_note', 'Deja al menos un mensaje en el ticket original.') + '</div>');
             }
         }
 
@@ -77,7 +79,7 @@
                     window.location = TKA.urls.index + '?ticket=' + resp.ticket_id;
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo dividir el ticket');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_39_split_failed', 'No se pudo dividir el ticket'));
                     tktNotify('error', msg);
                     $btn.prop('disabled', false).text(TKA.t('modal_title_split_ticket', 'Dividir ticket'));
                 },

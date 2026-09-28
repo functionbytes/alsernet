@@ -28,21 +28,21 @@
                 '<div class="tkt-pick-list">' +
                     '<button type="button" class="tkt-pick" data-slot="' + iso(tomorrow) + '">' +
                         '<span class="av light"><i class="fa-solid fa-mug-hot"></i></span>' +
-                        '<span class="who"><span class="n">Mañana por la mañana</span><span class="s">' + human(tomorrow) + '</span></span></button>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_02_tomorrow_morning', 'Mañana por la mañana') + '</span><span class="s">' + human(tomorrow) + '</span></span></button>' +
                     '<button type="button" class="tkt-pick" data-slot="' + iso(endOfDay) + '">' +
                         '<span class="av light"><i class="fa-solid fa-business-time"></i></span>' +
-                        '<span class="who"><span class="n">Hoy al final del día</span><span class="s">' + human(endOfDay) + '</span></span></button>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_02_end_of_day', 'Hoy al final del día') + '</span><span class="s">' + human(endOfDay) + '</span></span></button>' +
                     '<button type="button" class="tkt-pick" id="tkt-sched-custom">' +
                         '<span class="av light"><i class="fa-regular fa-calendar"></i></span>' +
-                        '<span class="who"><span class="n">Fecha personalizada</span><span class="s">Elegir día y hora</span></span></button>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_02_custom_date', 'Fecha personalizada') + '</span><span class="s">' + TKA.t('modal_02_choose_date_time', 'Elegir día y hora') + '</span></span></button>' +
                 '</div>' +
                 '<div class="tkt-field-row" id="tkt-sched-custom-row" hidden>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-sched-date">Fecha</label><input type="date" class="tkt-input" id="tkt-sched-date"></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-sched-time">Hora</label><input type="time" class="tkt-input" id="tkt-sched-time" value="18:00"></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-sched-date">' + TKA.t('modal_02_date_label', 'Fecha') + '</label><input type="date" class="tkt-input" id="tkt-sched-date"></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-sched-time">' + TKA.t('modal_02_time_label', 'Hora') + '</label><input type="time" class="tkt-input" id="tkt-sched-time" value="18:00"></div>' +
                 '</div>' +
-                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Se envía exactamente a la fecha y hora elegidas (hora de tu navegador), sin ajustarse al horario laboral.</div>' +
-                '<label class="tkt-check"><input type="checkbox" id="tkt-sched-cancel"' + (composeDraft && composeDraft.cancelIfReplies ? ' checked' : '') + '> Cancelar si el cliente responde antes</label>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sched-confirm">Programar</button>' +
+                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_02_schedule_note', 'Se envía exactamente a la fecha y hora elegidas (hora de tu navegador), sin ajustarse al horario laboral.') + '</div>' +
+                '<label class="tkt-check"><input type="checkbox" id="tkt-sched-cancel"' + (composeDraft && composeDraft.cancelIfReplies ? ' checked' : '') + '> ' + TKA.t('modal_02_cancel_if_replies', 'Cancelar si el cliente responde antes') + '</label>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-sched-confirm">' + TKA.t('modal_02_schedule_btn', 'Programar') + '</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-sched-cancel-btn">' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 

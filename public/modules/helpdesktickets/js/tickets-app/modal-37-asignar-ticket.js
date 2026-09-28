@@ -11,24 +11,27 @@
         var carga = TKA.state.agentWorkload || null;
 
         function subtitulo(a, isCurrent) {
-            if (isCurrent) return 'Asignado actualmente';
+            if (isCurrent) return TKA.t('modal_37_currently_assigned', 'Asignado actualmente');
 
             // El estado manda sobre la carga: "0 abiertos" en alguien que no ha
             // entrado nunca al panel invita justo al error que se quiere evitar.
-            if (a.available === false) return a.status_label || 'No disponible';
+            if (a.available === false) return a.status_label || TKA.t('modal_37_not_available', 'No disponible');
 
             var w = carga && carga[a.id];
             var cargaTexto = w
-                ? w.open_tickets + (w.open_tickets === 1 ? ' abierto' : ' abiertos') + (w.at_risk ? ' · ' + w.at_risk + ' en riesgo' : '')
+                ? (w.open_tickets === 1
+                    ? TKA.t('modal_37_open_tickets_singular', ':n abierto', { ':n': w.open_tickets })
+                    : TKA.t('modal_37_open_tickets_plural', ':n abiertos', { ':n': w.open_tickets })
+                  ) + (w.at_risk ? ' · ' + TKA.t('modal_37_at_risk_count', ':n en riesgo', { ':n': w.at_risk }) : '')
                 : '';
 
-            return [a.status_label, cargaTexto].filter(Boolean).join(' · ') || 'Agente';
+            return [a.status_label, cargaTexto].filter(Boolean).join(' · ') || TKA.t('modal_37_agent_fallback', 'Agente');
         }
 
         function agentRows(filter) {
             var q = String(filter || '').trim().toLowerCase();
             var list = agents.filter(function (a) { return !q || String(a.name).toLowerCase().indexOf(q) !== -1; });
-            if (!list.length) return '<div class="tkt-empty-box">Ningún agente coincide con la búsqueda.</div>';
+            if (!list.length) return '<div class="tkt-empty-box">' + TKA.t('modal_37_no_agent_matches', 'Ningún agente coincide con la búsqueda.') + '</div>';
 
             // Primero quien puede atenderlo, y dentro de ellos el menos
             // ocupado. Antes solo se ordenaba por carga, así que los agentes
@@ -63,9 +66,9 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-user-plus', kicker: TKA.t('kicker_ticket_assignment', 'Ticket · asignación'),
             title: TKA.t('modal_title_assign_ticket', 'Asignar ticket'), titleChip: t.ticket_number, width: 'lg',
-            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-assign-search" placeholder="Buscar agente…" aria-label="Buscar agente"></div>' +
+            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-assign-search" placeholder="' + escapeHtml(TKA.t('modal_37_search_agent_placeholder', 'Buscar agente…')) + '" aria-label="' + escapeHtml(TKA.t('modal_37_search_agent_aria', 'Buscar agente')) + '"></div>' +
                 '<div class="tkt-pick-list" id="tkt-assign-list">' + agentRows('') + '</div>' +
-                (currentId ? '<button type="button" class="tkt-btn tkt-btn-start tkt-w-100" id="tkt-assign-none">Dejar sin asignar</button>' : ''),
+                (currentId ? '<button type="button" class="tkt-btn tkt-btn-start tkt-w-100" id="tkt-assign-none">' + TKA.t('modal_37_unassign_btn', 'Dejar sin asignar') + '</button>' : ''),
             foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -89,7 +92,7 @@
             patchTicketSilent(t, 'assignee_id', agentId || '', function () {
                 var agent = agents.find(function (a) { return String(a.id) === String(agentId); });
                 t.assignee = agent ? { id: agent.id, name: agent.name } : null;
-                if (d && d.assignment) d.assignment.assigned_at_human = 'hace un momento';
+                if (d && d.assignment) d.assignment.assigned_at_human = TKA.t('modal_16_time_ago_moment', 'hace un momento');
                 closeModal();
                 renderDetail(t);
                 renderSidePanel(t);

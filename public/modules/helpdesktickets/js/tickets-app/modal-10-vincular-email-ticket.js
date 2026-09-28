@@ -32,13 +32,13 @@
             width: 'md',
             body: '<div class="tkt-headline">' +
                     '<div class="t">' + escapeHtml(mail.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
-                    '<div class="s">' + escapeHtml((mail.direction === 'inbound' ? 'De ' : 'Para ') + (mail.direction === 'inbound' ? (mail.from || '—') : (mail.to || '—'))) + '</div>' +
+                    '<div class="s">' + escapeHtml((mail.direction === 'inbound' ? TKA.t('modal_10_from_prefix', 'De') : TKA.t('modal_10_to_prefix', 'Para')) + ' ' + (mail.direction === 'inbound' ? (mail.from || '—') : (mail.to || '—'))) + '</div>' +
                   '</div>' +
-                  '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-link-search" placeholder="Buscar por número, cliente o asunto…" aria-label="Buscar ticket"></div>' +
-                  '<div class="tkt-cap">Coincidencias del mismo cliente</div>' +
-                  '<div class="tkt-pick-list" id="tkt-link-list">' + resultsHtml(sameCustomer(), 'Sin otros tickets de este cliente en la página actual.') + '</div>' +
-                  '<label class="tkt-check"><input type="checkbox" id="tkt-link-thread"> Mover también el resto del hilo</label>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-link-confirm" disabled>Vincular</button>' +
+                  '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-link-search" placeholder="' + TKA.t('modal_10_search_ticket_placeholder', 'Buscar por número, cliente o asunto…') + '" aria-label="' + TKA.t('modal_10_search_ticket_aria', 'Buscar ticket') + '"></div>' +
+                  '<div class="tkt-cap">' + TKA.t('modal_10_same_customer_matches', 'Coincidencias del mismo cliente') + '</div>' +
+                  '<div class="tkt-pick-list" id="tkt-link-list">' + resultsHtml(sameCustomer(), TKA.t('modal_10_no_other_tickets', 'Sin otros tickets de este cliente en la página actual.')) + '</div>' +
+                  '<label class="tkt-check"><input type="checkbox" id="tkt-link-thread"> ' + TKA.t('modal_10_move_rest_of_thread', 'Mover también el resto del hilo') + '</label>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-link-confirm" disabled>' + TKA.t('btn_link', 'Vincular') + '</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -52,7 +52,7 @@
                         String(x.customer ? x.customer.name : '').toLowerCase().indexOf(q) !== -1);
                   })
                 : sameCustomer();
-            $backdrop.find('#tkt-link-list').html(resultsHtml(list, 'Ningún ticket coincide con la búsqueda.'));
+            $backdrop.find('#tkt-link-list').html(resultsHtml(list, TKA.t('modal_10_no_ticket_matches', 'Ningún ticket coincide con la búsqueda.')));
         });
 
         $backdrop.on('click', '[data-target]', function () {

@@ -11,20 +11,20 @@
             titleChip: t.ticket_number,
             width: 'md',
             body: '<div class="tkt-side-rows">' +
-                    sideRow('Cliente', t.customer ? t.customer.name : 'Sin cliente') +
-                    sideRow('Asunto', t.subject || TKA.t('no_subject', '(sin asunto)')) +
-                    sideRow('Estado', t.status_name || t.status_slug || '—', { strong: true }) +
-                    sideRow('Prioridad', priorityLabel(t.priority), { strong: true }) +
+                    sideRow(TKA.t('modal_12_customer_label', 'Cliente'), t.customer ? t.customer.name : TKA.t('modal_12_no_customer', 'Sin cliente')) +
+                    sideRow(TKA.t('modal_12_subject_label', 'Asunto'), t.subject || TKA.t('no_subject', '(sin asunto)')) +
+                    sideRow(TKA.t('status', 'Estado'), t.status_name || t.status_slug || '—', { strong: true }) +
+                    sideRow(TKA.t('priority', 'Prioridad'), priorityLabel(t.priority), { strong: true }) +
                     sideRow('SLA', t.sla_text || '—', { mono: true, last: true }) +
                   '</div>' +
                   (t.last_message_snippet
-                    ? '<div class="tkt-field"><label class="tkt-label">Último mensaje</label>' +
+                    ? '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_12_last_message_label', 'Último mensaje') + '</label>' +
                       '<div class="tkt-tpl-preview">' + escapeHtml(t.last_message_snippet) + '</div></div>'
                     : '') +
-                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Navega con <span class="mono">J</span> / <span class="mono">K</span> sin cerrar la vista previa.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-qp-open">Abrir completo</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-qp-reply">Responder</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_12_navigate_note', 'Navega con :j / :k sin cerrar la vista previa.', { ':j': '<span class="mono">J</span>', ':k': '<span class="mono">K</span>' }) + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-qp-open">' + TKA.t('modal_12_open_full_btn', 'Abrir completo') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-qp-reply">' + TKA.t('modal_12_reply_btn', 'Responder') + '</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         $backdrop.on('click', '#tkt-qp-open', function () { closeModal(); selectTicket(t); });

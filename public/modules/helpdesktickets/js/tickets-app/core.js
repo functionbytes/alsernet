@@ -25,6 +25,11 @@
             listRefreshInFlight: false,
             listRefreshQueued: false,
             listRefreshInterval: null,
+            // Estado real del socket Echo/Reverb — lo mantiene al día
+            // bindStatusConnection() (modal-14-emails-del-ticket.js) y lo lee
+            // syncTicketListRefreshFallback() para decidir si el sondeo de
+            // respaldo de 15s debe estar activo.
+            echoConnected: false,
             splitLayout: null,
             listDensity: 'normal',
             mobilePane: 'list',
@@ -121,6 +126,15 @@
         split.style.setProperty('--tkt-side-width', layout.sideWidth + 'px');
         split.classList.toggle('side-collapsed', layout.sideCollapsed);
         if (side) side.classList.toggle('is-collapsed', layout.sideCollapsed);
+        // role="separator" enfocable exige aria-valuenow/min/max (Lighthouse
+        // aria-required-attr): mismos límites en px que resizeSplit().
+        [['tkt-resizer-list', layout.listWidth, 320, 520], ['tkt-resizer-side', layout.sideWidth, 290, 460]].forEach(function (r) {
+            var h = document.getElementById(r[0]);
+            if (!h) return;
+            h.setAttribute('aria-valuenow', String(Math.round(r[1])));
+            h.setAttribute('aria-valuemin', String(r[2]));
+            h.setAttribute('aria-valuemax', String(r[3]));
+        });
         // Nombre de cada pestaña del riel con el tooltip del tema
         // (Tooltip.js, data-tooltip) en vez del title nativo, que tarda ~1 s:
         // debajo con el panel abierto y a la izquierda con él plegado.
@@ -1160,7 +1174,18 @@
 
         $.ajax({ url: requestUrl, dataType: 'json', headers: { Accept: 'application/json' } })
             .done(function (res) {
-                var nextTickets = (res.tickets || []).map(hydrateTicketUrls);
+                // TicketsCrudController::index() antepone el ticket seleccionado
+                // como fila de contexto cuando ya no pertenece a la pestaña activa
+                // (para que un refetch automático no le quite la selección de
+                // debajo del detalle mientras pagina). Pero si dejó de cumplir el
+                // filtro por un cambio real (p.ej. se asignó desde "Sin asignar"),
+                // esa fila de más descuadraba lista y contador ("25 filas" con "24
+                // tickets" — QA real). Se descarta aquí: el detalle sigue abierto
+                // (currentTicket/currentDetail no dependen de este array), solo
+                // deja de aparecer como fila de la lista.
+                var nextTickets = (res.tickets || []).map(hydrateTicketUrls).filter(function (t) {
+                    return String(t.id) !== String(TKA.state.selected) || passesFilter(t);
+                });
                 var nextCounts = res.tab_counts || TKA.state.tabCounts;
                 var nextSignature = listSignature(nextTickets, nextCounts);
                 shouldRender = !opts.skipIfUnchanged || previousSignature !== nextSignature;
@@ -1180,11 +1205,16 @@
                 TKA.state.reassignedCount = 0;
                 $('#tkt-new-banner').remove();
 
+                // Pestañas/pill/hint de SLA/pie: SIEMPRE con lo que acaba de traer
+                // el servidor, aunque la firma no haya cambiado y no se repinte la
+                // lista — antes se quedaban congelados si shouldRender daba false.
+                paintTabCounts();
+
                 if (shouldRender) {
-                    renderStatusCounts();
                     syncFilterControls(params);
                     renderTabs();
                     renderList();
+                    TKA.state.pagination = res.pagination || null;
                     renderFoot(res.pagination || {});
                     renderBulkBar();
                     // En modo Kanban la lista está oculta y las columnas se pintan
@@ -1196,7 +1226,11 @@
                 TKA.state.listSignature = nextSignature;
 
                 if (window.history && window.history.pushState) {
-                    if (opts.pushHistory !== false) window.history.pushState({ tktRefetch: true }, '', url);
+                    // replaceHistory: la búsqueda en vivo cambia la URL a cada
+                    // pausa al teclear; apilar una entrada por pausa llenaría
+                    // el historial (y popstate recarga la página).
+                    if (opts.replaceHistory) window.history.replaceState({ tktRefetch: true }, '', url);
+                    else if (opts.pushHistory !== false) window.history.pushState({ tktRefetch: true }, '', url);
                 }
                 if (opts.onDone) opts.onDone(res, { changed: shouldRender });
             })
@@ -1277,9 +1311,20 @@
         state.listRefreshPreserveBulk = opts.preserveBulk !== false;
         state.listRefreshTicket = ticket || state.listRefreshTicket || null;
 
+        // Gana el plazo MÁS CERCANO: antes cada llamada reiniciaba el
+        // temporizador, así que una ráfaga de eventos Echo (1,5 s de espera
+        // cada uno) iba aplazando el refresco de 100 ms que pidió el propio
+        // agente al asignar — la lista tardaba ~14 s en reflejarlo (QA
+        // 28-sep-2026). Las opciones ya quedan fusionadas arriba en state.
+        var delay = opts.delay == null ? 100 : opts.delay;
+        var due = Date.now() + delay;
+        if (state.listRefreshTimer && state.listRefreshDue && state.listRefreshDue <= due) return;
+
         if (state.listRefreshTimer) clearTimeout(state.listRefreshTimer);
+        state.listRefreshDue = due;
         state.listRefreshTimer = setTimeout(function () {
             state.listRefreshTimer = null;
+            state.listRefreshDue = null;
             if (state.listRefreshInFlight) {
                 state.listRefreshQueued = true;
                 return;
@@ -1335,23 +1380,39 @@
                     }
                 },
             });
-        }, opts.delay == null ? 100 : opts.delay);
+        }, delay);
     }
 
-    // Respaldo cuando no hay Echo/Reverb disponible. La petición es la misma
-    // consulta JSON del listado, pero solo repinta si cambia la firma.
-    function startTicketListRefresh() {
+    // Respaldo SOLO cuando Echo/Reverb no está conectado — con el socket
+    // conectado, listenForNewTickets() ya cubre altas/asignaciones/cambios en
+    // tiempo real, así que sondear cada 15 s además era doble trabajo contra
+    // el mismo endpoint (QA real: refetch de sobra con Reverb arriba).
+    // syncTicketListRefreshFallback() (ver bindStatusConnection en
+    // modal-14-emails-del-ticket.js) arranca/para este intervalo cada vez que
+    // cambia el estado de conexión. Sin freshCounts: ese recuento pesado ya
+    // lo trae cada evento real vía Echo; este sondeo es solo red de
+    // seguridad para filas/orden mientras no hay socket.
+    function stopTicketListRefreshFallback() {
         if (TKA.state.listRefreshInterval) clearInterval(TKA.state.listRefreshInterval);
+        TKA.state.listRefreshInterval = null;
+    }
+
+    function startTicketListRefreshFallback() {
+        if (TKA.state.listRefreshInterval) return;
         TKA.state.listRefreshInterval = setInterval(function () {
             if (document.hidden || $('#tkt-modal-backdrop.on').length || !TKA.state.networkOnline || navigator.onLine === false) return;
             queueTicketListRefresh('poll', TKA.state.currentTicket, {
                 refreshDetail: true,
-                freshCounts: true,
                 silent: true,
                 preserveBulk: true,
                 delay: 0,
             });
         }, 15000);
+    }
+
+    function syncTicketListRefreshFallback() {
+        if (TKA.state.echoConnected) stopTicketListRefreshFallback();
+        else startTicketListRefreshFallback();
     }
 
     // Los dos formularios de filtro pintan el MISMO estado desde ángulos
@@ -1405,6 +1466,15 @@
     // filtros activos, y meterla igualmente sería mentir sobre lo que la
     // pantalla dice estar mostrando. Se avisa y se deja que el agente decida —
     // el refetch respeta filtros, pestaña, orden y página.
+    // Ráfagas del mismo evento (p.ej. una campaña que asigna 15 tickets
+    // seguidos) antes coalescían en un solo refetch, pero con un margen de
+    // solo 100 ms (el delay por defecto de queueTicketListRefresh) — casi
+    // cualquier ráfaga real dispara varios refetches. Cada listener de aquí
+    // pide 1.5 s de margen: sigue siendo un solo refetch por ráfaga sin
+    // notarse frente al tiempo real (el propio evento ya actualizó el
+    // ticket afectado vía applyLocalTicketField antes de encolar).
+    var ECHO_REFRESH_DEBOUNCE_MS = 1500;
+
     function listenForNewTickets() {
         if (typeof window.Echo === 'undefined') return;
 
@@ -1412,7 +1482,7 @@
             var channel = window.Echo.private('helpdesk.tickets');
             channel
                 .listen('.ticket.created', function () {
-                    queueTicketListRefresh('ticket-created', null, { freshCounts: true });
+                    queueTicketListRefresh('ticket-created', null, { freshCounts: true, delay: ECHO_REFRESH_DEBOUNCE_MS });
                 })
                 .listen('.message.added', function (e) {
                     // Un correo entrante también se emite en el canal global
@@ -1424,13 +1494,14 @@
                         freshCounts: true,
                         preserveBulk: true,
                         refreshDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                        delay: ECHO_REFRESH_DEBOUNCE_MS,
                     });
                 })
                 .listen('.assigned', function (e) {
-                    queueTicketListRefresh('ticket-assigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true });
+                    queueTicketListRefresh('ticket-assigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true, delay: ECHO_REFRESH_DEBOUNCE_MS });
                 })
                 .listen('.unassigned', function (e) {
-                    queueTicketListRefresh('ticket-unassigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true });
+                    queueTicketListRefresh('ticket-unassigned', e && e.ticket_id ? findTicketById(e.ticket_id) : null, { freshCounts: true, delay: ECHO_REFRESH_DEBOUNCE_MS });
                 })
                 .listen('.ticket.status.changed', function (e) {
                     var statusTicket = e && e.ticket_id ? findTicketById(e.ticket_id) : null;
@@ -1445,6 +1516,7 @@
                         freshCounts: true,
                         refreshDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
                         forceDetail: !!(e && e.ticket_id && isSelectedTicket(e.ticket_id)),
+                        delay: ECHO_REFRESH_DEBOUNCE_MS,
                     });
                 })
                 .listen('.ticket.updated', function (e) {
@@ -1466,6 +1538,7 @@
                     queueTicketListRefresh('ticket-updated', changedUpdatedTicket, {
                         freshCounts: true,
                         refreshDetail: !!(id && isSelectedTicket(id)),
+                        delay: ECHO_REFRESH_DEBOUNCE_MS,
                     });
                 });
         } catch (e) {
@@ -1574,37 +1647,21 @@
         $('#tkt-crumb-tab').text(crumbLabel);
     }
 
-    // Recalcula los contadores de tabs/vistas a partir de TKA.state.tickets
-    // (mismo criterio que passesFilter) — necesario tras el Kanban, cuyo
-    // "soltar" cambia el estado sin recargar la página (a diferencia de
-    // bulk/Gestión, que sí recargan y traen los conteos frescos del
-    // servidor). Sin esto, "Pendientes/Resueltos"/"SLA en riesgo" quedaban
-    // desactualizados después de arrastrar una tarjeta — bug real
-    // encontrado al probar el drag&drop.
-    function recomputeTabCounts() {
-        // 'all' se preserva del total real que ya trajo el servidor
-        // (TKA.state.tabCounts.all, cargado en initTicketsApp()) en vez de
-        // recalcularlo como TKA.state.tickets.length: el array del cliente
-        // solo contiene la página actual, así que "recalcularlo" aquí hacía
-        // que el tab "Todos" bajara (p.ej. de 12 a 11) tras la primera
-        // interacción de Kanban sin que el número de tickets reales hubiera
-        // cambiado — discrepancia real encontrada en QA.
-        var c = { open: 0, urgent: 0, mine: 0, unassigned: 0, pending: 0, resolved: 0, closed: 0, sla_risk: 0, all: TKA.state.tabCounts.all };
-        TKA.state.tickets.forEach(function (t) {
-            if (t.status_slug === 'open' || t.status_slug === 'progress') c.open++;
-            if (t.priority === 'urgent' || t.sla_kind === 'breach') c.urgent++;
-            if (t.assignee && t.assignee.id === TKA.state.currentUserId) c.mine++;
-            if (!t.assignee) c.unassigned++;
-            if (t.status_slug === 'pending') c.pending++;
-            if (t.status_slug === 'resolved') c.resolved++;
-            if (t.status_slug === 'closed') c.closed++;
-            if (t.sla_kind === 'warn' || t.sla_kind === 'breach') c.sla_risk++;
-        });
-        TKA.state.tabCounts = c;
+    // Único punto que pinta los contadores de tabs/vistas/pie a partir de
+    // TKA.state.tabCounts — SIEMPRE los del servidor (ver refetchList), que
+    // ya vienen filtrados sobre TODOS los tickets, no solo la página
+    // visible. Antes esto lo recalculaba recomputeTabCounts() recorriendo
+    // TKA.state.tickets (la página actual, 50 tickets como mucho): "Abiertos
+    // 11/Pendientes 14" en vez de los 54/35 reales en cuanto se tocaba el
+    // Kanban o se editaba un ticket — bug real de QA (14-sep-2026). El
+    // cliente ya no inventa números: si necesita un recuento al día pide un
+    // refetch con freshCounts (ver queueTicketListRefresh/patchTicketSilent).
+    function paintTabCounts() {
+        var c = TKA.state.tabCounts || {};
         Object.keys(c).forEach(function (k) {
             $('.tkt-state-tab[data-filter="' + k + '"] .c, .tkt-view-pill[data-filter="' + k + '"] .mono').text(c[k]);
         });
-        $('.tkt-queue-hint').text('SLA en riesgo: ' + c.sla_risk);
+        if (c.sla_risk != null) $('.tkt-queue-hint').text('SLA en riesgo: ' + c.sla_risk);
         renderStatusCounts();
     }
 
@@ -1667,6 +1724,11 @@
                 '<div class="tkt-ticket-customer">' + escapeHtml(customerLine) + '</div>' +
                 (t.last_message_snippet ? '<div class="tkt-ticket-last">' + escapeHtml(t.last_message_snippet) + '</div>' : '') +
                 '<div class="tkt-ticket-metarow">' +
+                    // Ticket abierto que ya no cumple el filtro activo (p. ej.
+                    // recién asignado desde "Sin asignar"): el servidor lo
+                    // conserva como contexto del detalle, pero no cuenta en
+                    // el total — se marca para que no parezca uno más.
+                    (t.outside_filter ? '<span class="tkt-rchip outside" title="' + escapeHtml(TKA.t('outside_filter_title', 'Se muestra porque lo tienes abierto; no cumple el filtro actual')) + '">' + escapeHtml(TKA.t('outside_filter', 'Fuera del filtro')) + '</span>' : '') +
                     '<span class="tkt-rchip">' + escapeHtml(statusLabel) + '</span>' +
                     // Canal de origen: iba ausente de esta fila (solo se
                     // pintaba en Kanban/detalle) — mismo mapa ORIGIN_LABELS
@@ -1805,21 +1867,13 @@
             $list[0].appendChild(fragment);
         }
 
-        // "6 tickets" a secas, como el mockup — el "en esta página" sobra
-        // ahora que el pie de la lista dice el rango exacto.
-        $('#tkt-count').text(rows.length + (rows.length === 1 ? ' ticket' : ' tickets'));
-
-        // El pie de paginación ('1–N de N') es un partial Blade estático,
-        // renderizado una sola vez por el servidor con el total SIN filtrar
-        // — los tabs/chips de estado son 100% client-side, así que quedaba
-        // congelado y podía contradecir directamente al empty-state (p.ej.
-        // "1–11 de 11" a la vez que "No hay tickets" en el mismo pantallazo,
-        // verificado en vivo con el tab "Resueltos"). Se actualiza aquí con
-        // el conteo real ya filtrado, mismo criterio que #tkt-count arriba.
-        var $footCount = $('.tkt-list-foot > span').first();
-        if ($footCount.length) {
-            $footCount.text((rows.length ? '1–' + rows.length : '0–0') + ' de ' + rows.length + ' tickets');
-        }
+        // Contador y pie salen SIEMPRE de la paginación del servidor
+        // (renderFoot): las pestañas ya filtran en el servidor, y contar las
+        // filas pintadas decía "50 tickets · 1–50 de 50" con 100 tickets en
+        // dos páginas (QA 28-sep-2026, visible en cuanto el arranque dejó de
+        // repetir la petición inicial). Sin paginación todavía (primera
+        // carga) se deja el texto que ya pintó el Blade con $tickets->total().
+        if (TKA.state.pagination) renderFoot(TKA.state.pagination);
 
         if (!TKA.state.currentTicket) renderQueueSummary();
     }
@@ -2050,7 +2104,6 @@
                     refreshDetail: true,
                     forceDetail: true,
                 });
-                recomputeTabCounts();
                 renderTabs();
                 renderList();
             },
@@ -2381,6 +2434,9 @@
             TKA.state.threadLoadingMore = false;
             TKA.state.editConflictMessage = '';
             TKA.state.editConflictFields = [];
+            // La caché de loadTimeCard() es por ticket: al cambiar de ticket
+            // no vale reutilizar el tiempo imputado del anterior.
+            TKA.state.timeCardCache = null;
         }
         TKA.state.selected = t.id;
         $('.tkt-ticket-row').removeClass('on');
@@ -2810,7 +2866,13 @@
                     if ($oldRow.length) $oldRow.replaceWith(renderRow(t));
                 }
                 renderThreadPane(d.thread || []);
-                renderWorkCards(t);
+                // renderWorkCards(t) YA se llama justo debajo, dentro de
+                // renderActiveSidePane() → renderGestionPane() cuando la
+                // pestaña lateral activa es "gestion" (la de por defecto):
+                // llamarlo aquí también duplicaba tareas/subtickets/campos en
+                // cada apertura de ticket sin motivo (QA real 24-sep-2026).
+                // Si la pestaña activa es otra, renderWorkCards() no tiene
+                // nada que pintar (sus tarjetas solo existen en Gestión).
                 renderActivityPane(d.activity || [], d.activity_total_count);
                 renderFilesPane(d.files || [], t);
                 renderMailPane(d.mail);
@@ -3749,8 +3811,13 @@
             }
         });
 
+        // Antes se pedía un borrador de IA (POST facturado) cada vez que se
+        // abría un ticket, se hubiera pedido o no — QA real 24-sep-2026.
+        // Ahora solo se genera cuando el agente pulsa el botón "IA" del
+        // composer (abre el modal de Auto-respuesta IA, que ya llama al
+        // mismo endpoint solo al abrirse/regenerar — ver openAiDraftModal en
+        // modal-19-autorespuesta-ia.js).
         bindComposerAi($c, $body);
-        requestAiDraft(TKA.state.currentTicket, false);
     }
 
     // Las macros no tienen modal propio: se despliegan en un <select> nativo
@@ -4174,10 +4241,25 @@
 
     // Aviso discreto sobre el detalle. Solo aparece si hay candidatos reales;
     // sin ellos no se pinta nada (nunca "0 duplicados").
-    function checkDuplicates(t) {
-        dismissDuplicateBanner();
-        if (!t || !t.url_duplicates) return;
+    //
+    // fetchDetailData() llama a esto una vez por cada applyDetail() que
+    // ejecuta — y aplica dos veces seguidas al abrir un ticket con precarga
+    // (el hover ya cacheó datos: se pintan al instante y el /data real los
+    // repinta encima). Sin guardia, eso eran dos peticiones a url_duplicates
+    // por apertura, y la segunda desmontaba+repintaba el aviso ya visible
+    // (QA real: "ai/duplicates se repite en cada refresco"). Se ignora una
+    // repetición inmediata para el MISMO ticket; un cambio real de ticket
+    // (o pasado ese margen) sí vuelve a comprobar.
+    var DUPLICATES_CHECK_DEBOUNCE_MS = 2000;
 
+    function checkDuplicates(t) {
+        if (!t || !t.url_duplicates) { dismissDuplicateBanner(); return; }
+
+        var last = TKA.state.duplicatesCheckedAt;
+        if (last && String(last.ticketId) === String(t.id) && Date.now() - last.at < DUPLICATES_CHECK_DEBOUNCE_MS) return;
+        TKA.state.duplicatesCheckedAt = { ticketId: t.id, at: Date.now() };
+
+        dismissDuplicateBanner();
         $.getJSON(t.url_duplicates).done(function (res) {
             var list = (res && res.duplicates) || [];
             if (!list.length) return;
@@ -8136,7 +8218,7 @@
                 '<a href="' + TKA.urls.index + '?ticket=' + r.id + '" class="tkt-line-link">' +
                     '<span class="mono tkt-meta-xs">' + escapeHtml(r.ticket_number) + '</span>' +
                     '<span class="tkt-trunc tkt-fill">' + escapeHtml(r.subject) + '</span>' +
-                    (r.link_type ? chip(LINK_TYPE_LABELS[r.link_type] || r.link_type, 'tkt-chip-info') : '') +
+                    (r.link_type ? chip(linkTypeLabel(r.link_type) || r.link_type, 'tkt-chip-info') : '') +
                     chip(r.status_name || STATUS_LABEL_FALLBACK[r.status_slug] || '—', statusChipClass(r.status_slug)) +
                 '</a>' +
                 (r.url_unlink ? '<button type="button" class="tkt-btn-icon" data-unlink="' + r.id + '" data-unlink-url="' + r.url_unlink + '" title="Desvincular"><i class="fa-solid fa-link-slash"></i></button>' : '') +
@@ -8186,18 +8268,31 @@
         });
     }
 
-    var LINK_TYPE_LABELS = { related: 'Relacionado', duplicate_of: 'Duplicado de', blocks: 'Bloquea a', blocked_by: 'Bloqueado por' };
+    // Funciones y no constantes: este fichero se evalúa ANTES de
+    // initTicketsApp(), que es quien rellena TKA.i18n — un objeto con TKA.t()
+    // construido aquí arriba se quedaría fijo en el texto de respaldo (es).
+    function linkTypeLabel(type) {
+        var labels = {
+            related: TKA.t('label_related', 'Relacionado'),
+            duplicate_of: TKA.t('label_duplicate_of_short', 'Duplicado de'),
+            blocks: TKA.t('label_blocks', 'Bloquea a'),
+            blocked_by: TKA.t('label_blocked_by', 'Bloqueado por'),
+        };
+        return labels[type];
+    }
 
     // Versión simplificada del modal "Vincular ticket" del mockup (que
     // busca por texto en vivo): pide el número de ticket por prompt. El
     // backend (LinkTicketRequest→TicketLink, con exists+self-link guard) es
     // el real; solo el picker es más simple.
-    var LINK_TYPES = [
-        { value: 'related', title: TKA.t('label_related', 'Relacionado'), sub: 'Los dos tickets tratan del mismo asunto' },
-        { value: 'duplicate_of', title: TKA.t('label_is_duplicate_of', 'Es un duplicado de'), sub: 'Este ticket repite el otro' },
-        { value: 'blocks', title: TKA.t('label_blocks', 'Bloquea a'), sub: 'Este ticket debe cerrarse antes que el otro' },
-        { value: 'blocked_by', title: TKA.t('label_blocked_by', 'Bloqueado por'), sub: 'No se puede cerrar hasta que el otro se resuelva' },
-    ];
+    function linkTypes() {
+        return [
+            { value: 'related', title: TKA.t('label_related', 'Relacionado'), sub: TKA.t('link_sub_related', 'Los dos tickets tratan del mismo asunto') },
+            { value: 'duplicate_of', title: TKA.t('label_is_duplicate_of', 'Es un duplicado de'), sub: TKA.t('link_sub_duplicate_of', 'Este ticket repite el otro') },
+            { value: 'blocks', title: TKA.t('label_blocks', 'Bloquea a'), sub: TKA.t('link_sub_blocks', 'Este ticket debe cerrarse antes que el otro') },
+            { value: 'blocked_by', title: TKA.t('label_blocked_by', 'Bloqueado por'), sub: TKA.t('link_sub_blocked_by', 'No se puede cerrar hasta que el otro se resuelva') },
+        ];
+    }
 
     // El picker de participante en vivo del mockup se sustituye por un ID
     // numérico (mismo criterio que Aplazar/Fusionar) — el backend real
@@ -8205,7 +8300,7 @@
     // auto-enlace. `blocks`/`blocked_by` tienen efecto real:
     // Ticket::openBlockers() impide cerrar el ticket bloqueado.
     function linkTicketPrompt(t) {
-        var options = LINK_TYPES.map(function (lt, i) {
+        var options = linkTypes().map(function (lt, i) {
             return '<label class="tkt-option' + (i === 0 ? ' on' : '') + ' tkt-pointer" data-link-type-option="' + lt.value + '" >' +
                 '<input type="radio" name="tkt-link-type" value="' + lt.value + '"' + (i === 0 ? ' checked' : '') + ' class="tkt-m0">' +
                 '<span><span class="tkt-option-title">' + escapeHtml(lt.title) + '</span><br><span class="tkt-option-sub">' + escapeHtml(lt.sub) + '</span></span>' +
@@ -8363,6 +8458,7 @@
         TKA.state.pulseLast = null;
         // Ciclos seguidos sin novedad. Alimenta el espaciado de abajo.
         TKA.state.pulseQuiet = 0;
+        TKA.state.pulseTick = 0;
 
         TKA.state.pulseTimer = setInterval(function () {
             // Con la pestaña en segundo plano no se pregunta: el agente no está
@@ -8376,10 +8472,17 @@
             // websocket entrega, así que preguntar cada 3 segundos para siempre
             // es gastar 1.200 peticiones por agente y jornada sin necesidad.
             // Un cambio detectado reinicia el contador y vuelve a los 3s.
+            //
+            // El módulo se calcula sobre un contador de ticks propio y no
+            // sobre pulseQuiet: pulseQuiet solo sube cuando la sonda llega a
+            // preguntar, así que con quieto=11 y saltar=1 el `return` se
+            // repetía para siempre y la sonda moría a los ~33s en vez de
+            // espaciarse (QA 28-sep-2026).
+            TKA.state.pulseTick = (TKA.state.pulseTick || 0) + 1;
             var quieto = TKA.state.pulseQuiet || 0;
             var saltar = quieto > 40 ? 4 : (quieto > 20 ? 2 : (quieto > 10 ? 1 : 0));
 
-            if (saltar && (quieto % (saltar + 1)) !== 0) return;
+            if (saltar && (TKA.state.pulseTick % (saltar + 1)) !== 0) return;
 
             var current = TKA.state.currentTicket;
             if (!current || current.id !== TKA.state.pulseTicketId) {
@@ -9185,65 +9288,69 @@
     // propio modal con el control correcto (select de agente/estado, input
     // de texto) en vez de un prompt(). Mismo patrón que
     // openBulkMoveTeamModal (ya existente para assign_group).
-    var BULK_EXTRA_CONFIG = {
-        assign: {
-            icon: 'fa-solid fa-user-check', title: TKA.t('bulk_assign_title', 'Asignar agente'), field: 'agent_id', confirmLabel: TKA.t('assign', 'Asignar'),
-            emptyError: TKA.t('bulk_assign_empty_error', 'Selecciona un agente'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('agent', 'Agente') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_agent_placeholder', 'Selecciona un agente…') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>';
+    // Función por el mismo motivo que linkTypes(): TKA.i18n aún no existe
+    // cuando se evalúa este fichero.
+    function bulkExtraConfig() {
+        return {
+            assign: {
+                icon: 'fa-solid fa-user-check', title: TKA.t('bulk_assign_title', 'Asignar agente'), field: 'agent_id', confirmLabel: TKA.t('assign', 'Asignar'),
+                emptyError: TKA.t('bulk_assign_empty_error', 'Selecciona un agente'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('agent', 'Agente') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_agent_placeholder', 'Selecciona un agente…') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>';
+                },
             },
-        },
-        add_tag: {
-            icon: 'fa-solid fa-tag', title: TKA.t('bulk_add_tag_title', 'Añadir etiqueta'), field: 'tag', confirmLabel: TKA.t('add', 'Añadir'),
-            emptyError: TKA.t('bulk_add_tag_empty_error', 'Escribe una etiqueta'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+            add_tag: {
+                icon: 'fa-solid fa-tag', title: TKA.t('bulk_add_tag_title', 'Añadir etiqueta'), field: 'tag', confirmLabel: TKA.t('add', 'Añadir'),
+                emptyError: TKA.t('bulk_add_tag_empty_error', 'Escribe una etiqueta'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+                },
             },
-        },
-        change_priority: {
-            icon: 'fa-solid fa-flag', title: TKA.t('bulk_change_priority_title', 'Cambiar prioridad'), field: 'priority', confirmLabel: TKA.t('change', 'Cambiar'),
-            emptyError: TKA.t('bulk_change_priority_empty_error', 'Selecciona una prioridad'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('priority', 'Prioridad') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_priority_placeholder', 'Selecciona una prioridad…') + '</option>' +
-                    ['low', 'normal', 'high', 'urgent'].map(function (p) { return '<option value="' + p + '">' + escapeHtml(priorityLabel(p)) + '</option>'; }).join('') +
-                    '</select></div>';
+            change_priority: {
+                icon: 'fa-solid fa-flag', title: TKA.t('bulk_change_priority_title', 'Cambiar prioridad'), field: 'priority', confirmLabel: TKA.t('change', 'Cambiar'),
+                emptyError: TKA.t('bulk_change_priority_empty_error', 'Selecciona una prioridad'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('priority', 'Prioridad') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_priority_placeholder', 'Selecciona una prioridad…') + '</option>' +
+                        ['low', 'normal', 'high', 'urgent'].map(function (p) { return '<option value="' + p + '">' + escapeHtml(priorityLabel(p)) + '</option>'; }).join('') +
+                        '</select></div>';
+                },
             },
-        },
-        remove_tag: {
-            icon: 'fa-solid fa-tag', title: TKA.t('bulk_remove_tag_title', 'Quitar etiqueta'), field: 'tag', confirmLabel: TKA.t('remove', 'Quitar'),
-            emptyError: TKA.t('bulk_remove_tag_empty_error', 'Escribe la etiqueta que quieres quitar'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+            remove_tag: {
+                icon: 'fa-solid fa-tag', title: TKA.t('bulk_remove_tag_title', 'Quitar etiqueta'), field: 'tag', confirmLabel: TKA.t('remove', 'Quitar'),
+                emptyError: TKA.t('bulk_remove_tag_empty_error', 'Escribe la etiqueta que quieres quitar'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+                },
             },
-        },
-        snooze: {
-            icon: 'fa-regular fa-clock', title: TKA.t('bulk_snooze_title', 'Posponer'), field: 'snooze_hours', confirmLabel: TKA.t('bulk_snooze_title', 'Posponer'),
-            emptyError: TKA.t('bulk_snooze_empty_error', 'Elige hasta cuándo'),
-            body: function () {
-                var opts = [
-                    [1, TKA.t('snooze_1_hour', '1 hora')],
-                    [4, TKA.t('snooze_4_hours', '4 horas')],
-                    [24, TKA.t('snooze_tomorrow_same_time', 'Mañana a esta hora')],
-                    [72, TKA.t('snooze_3_days', '3 días')],
-                    [168, TKA.t('snooze_1_week', '1 semana')],
-                ];
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('snooze_for', 'Posponer durante') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_placeholder', 'Selecciona…') + '</option>' +
-                    opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
-                    '</select><div class="tkt-hint">' + TKA.t('snooze_hint', 'Vuelven a la cola solos al terminar, o antes si el cliente responde.') + '</div></div>';
+            snooze: {
+                icon: 'fa-regular fa-clock', title: TKA.t('bulk_snooze_title', 'Posponer'), field: 'snooze_hours', confirmLabel: TKA.t('bulk_snooze_title', 'Posponer'),
+                emptyError: TKA.t('bulk_snooze_empty_error', 'Elige hasta cuándo'),
+                body: function () {
+                    var opts = [
+                        [1, TKA.t('snooze_1_hour', '1 hora')],
+                        [4, TKA.t('snooze_4_hours', '4 horas')],
+                        [24, TKA.t('snooze_tomorrow_same_time', 'Mañana a esta hora')],
+                        [72, TKA.t('snooze_3_days', '3 días')],
+                        [168, TKA.t('snooze_1_week', '1 semana')],
+                    ];
+                    return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('snooze_for', 'Posponer durante') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_placeholder', 'Selecciona…') + '</option>' +
+                        opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+                        '</select><div class="tkt-hint">' + TKA.t('snooze_hint', 'Vuelven a la cola solos al terminar, o antes si el cliente responde.') + '</div></div>';
+                },
             },
-        },
-        change_status: {
-            icon: 'fa-solid fa-arrow-right-arrow-left', title: TKA.t('bulk_change_status_title', 'Cambiar estado'), field: 'status_id', confirmLabel: TKA.t('change', 'Cambiar'),
-            emptyError: TKA.t('bulk_change_status_empty_error', 'Selecciona un estado'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('status', 'Estado') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_status_placeholder', 'Selecciona un estado…') + '</option>' + optionsHtml(TKA.state.statuses, 'id', '') + '</select></div>';
+            change_status: {
+                icon: 'fa-solid fa-arrow-right-arrow-left', title: TKA.t('bulk_change_status_title', 'Cambiar estado'), field: 'status_id', confirmLabel: TKA.t('change', 'Cambiar'),
+                emptyError: TKA.t('bulk_change_status_empty_error', 'Selecciona un estado'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('status', 'Estado') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_status_placeholder', 'Selecciona un estado…') + '</option>' + optionsHtml(TKA.state.statuses, 'id', '') + '</select></div>';
+                },
             },
-        },
-    };
+        };
+    }
 
     function openBulkExtraModal(action) {
         var ids = Object.keys(TKA.state.bulk).map(Number);
-        var config = BULK_EXTRA_CONFIG[action];
+        var config = bulkExtraConfig()[action];
         if (!ids.length || !config) return;
 
         var $modal = openModal(modalShell({
@@ -9718,10 +9825,24 @@
     // Tarjeta del panel de gestión sobre TimeEntriesController, que existía
     // sin ninguna interfaz (24-sep-2026). Total, las cinco últimas
     // imputaciones y un alta rápida en minutos.
-    function loadTimeCard(t, $card) {
+    // renderGestionPane() se pinta dos veces por apertura de ticket (una vez
+    // al seleccionar, sin datos todavía; otra cuando llega /data) y las dos
+    // llaman a loadTimeCard con la MISMA url_time_entries — QA real: "time-
+    // entries se piden 2 veces". Se cachea por ticket hasta que una
+    // mutación real (imputar/eliminar, más abajo) o un cambio de ticket
+    // (selectTicket()) la invalida explícitamente.
+    function loadTimeCard(t, $card, force) {
+        var cache = TKA.state.timeCardCache;
+        if (!force && cache && String(cache.ticketId) === String(t.id)) {
+            renderTimeCard(t, $card, cache.data);
+            return;
+        }
         $.ajax({
             url: t.url_time_entries, method: 'GET', headers: { Accept: 'application/json' },
-            success: function (resp) { renderTimeCard(t, $card, resp || {}); },
+            success: function (resp) {
+                TKA.state.timeCardCache = { ticketId: t.id, data: resp || {} };
+                renderTimeCard(t, $card, resp || {});
+            },
             error: function () { $card.find('.tkt-side-card-body').html('<div class="tkt-meta-xs">No se pudo cargar el tiempo imputado.</div>'); },
         });
     }
@@ -9762,7 +9883,7 @@
             $.ajax({
                 url: t.url_time_entries, method: 'POST', headers: { Accept: 'application/json' },
                 data: { minutes: minutes, description: $card.find('#tkt-time-desc').val() },
-                success: function () { loadTimeCard(t, $card); },
+                success: function () { loadTimeCard(t, $card, true); },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('time_log_failed', 'No se pudo imputar el tiempo'));
                     tktNotify('error', msg);
@@ -9775,7 +9896,7 @@
             var url = (t.url_time_entry_destroy_template || '').replace('__ENTRY__', $(this).data('time-delete'));
             $.ajax({
                 url: url, method: 'DELETE', headers: { Accept: 'application/json' },
-                success: function () { loadTimeCard(t, $card); },
+                success: function () { loadTimeCard(t, $card, true); },
                 error: function (xhr) {
                     var msg = apiErrorMessage(xhr, TKA.t('delete_failed', 'No se pudo eliminar'));
                     tktNotify('error', msg);
@@ -9933,7 +10054,7 @@
         });
 
         listenForNewTickets();
-        startTicketListRefresh();
+        syncTicketListRefreshFallback();
 
         // Rango de fechas — el chip de la barra y el campo "Creado entre" del
         // modal "Más filtros". Los dos usaban <input type="date">, cuyo
@@ -10100,7 +10221,7 @@
             // "Reintentar envío (solo fallidos)" del mockup: no hace falta
             // valor adicional (a diferencia de assign/add_tag/change_status),
             // así que entra por el mismo camino directo que resolver/cerrar,
-            // no por BULK_EXTRA_CONFIG. Los tickets sin correo saliente
+            // no por bulkExtraConfig(). Los tickets sin correo saliente
             // fallido simplemente no cuentan (ver BulkTicketsController).
             retry_failed_mail: { title: TKA.t('bulk_retry_failed_mail_title', 'Reintentar envío'), message: TKA.t('bulk_retry_failed_mail_message', 'Solo se reintentan los correos de salida marcados como fallidos.'), confirmLabel: TKA.t('retry', 'Reintentar'), danger: false },
         };
@@ -10126,7 +10247,7 @@
 
         $('[data-bulk-action]').on('click', function () {
             var action = $(this).data('bulk-action');
-            if (BULK_EXTRA_CONFIG[action]) { openBulkExtraModal(action); return; }
+            if (bulkExtraConfig()[action]) { openBulkExtraModal(action); return; }
 
             var ids = Object.keys(TKA.state.bulk).map(Number);
             var l = BULK_DIRECT_LABELS[action] || { title: TKA.t('confirm_action_title', 'Confirmar acción'), message: TKA.t('confirm_action_message', '¿Aplicar esta acción?'), confirmLabel: TKA.t('confirm', 'Confirmar'), danger: false };
@@ -10146,12 +10267,27 @@
         $('#tkt-bulk-move-team').on('click', openBulkMoveTeamModal);
         $('#tkt-bulk-link-ticket').on('click', openBulkLinkToTicketModal);
 
-        $('#tkt-search').on('keydown', function (ev) {
+        // Búsqueda en vivo por el mismo refetch AJAX que usan pestañas y chips
+        // (antes solo con Enter y recargando la página entera, ~420 KB). Con
+        // 1 carácter no se busca: un "p" suelto casa con medio listado y solo
+        // gasta una consulta LIKE. Enter fuerza la búsqueda sin esperar.
+        var searchTimer = null;
+        var lastSearch = String($('#tkt-search').val() || '').trim();
+        var runSearch = function (val) {
+            clearTimeout(searchTimer);
+            if (val === lastSearch) return;
+            lastSearch = val;
+            refetchList(currentListParams({ search: val || null, page: null }), { replaceHistory: true });
+        };
+        $('#tkt-search').on('input', function () {
+            var val = String($(this).val() || '').trim();
+            clearTimeout(searchTimer);
+            if (val.length === 1) return;
+            searchTimer = setTimeout(function () { runSearch(val); }, 350);
+        }).on('keydown', function (ev) {
             if (ev.key !== 'Enter') return;
-            var params = new URLSearchParams(window.location.search);
-            var val = $(this).val();
-            if (val) params.set('search', val); else params.delete('search');
-            window.location = TKA.urls.index + '?' + params.toString();
+            ev.preventDefault();
+            runSearch(String($(this).val() || '').trim());
         });
     }
 

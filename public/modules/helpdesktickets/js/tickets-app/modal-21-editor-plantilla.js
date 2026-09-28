@@ -7,21 +7,21 @@
             titleChip: reply.title || '',
             title: TKA.t('modal_title_template_editor', 'Editor de plantilla'), width: 'lg',
             body: '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-title">Nombre<span class="req">*</span></label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-title">' + TKA.t('modal_21_name_label', 'Nombre') + '<span class="req">*</span></label>' +
                         '<input type="text" class="tkt-input" id="tkt-tpled-title" value="' + escapeHtml(reply.title || '') + '"></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-code">Atajo</label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-code">' + TKA.t('modal_21_shortcut_label', 'Atajo') + '</label>' +
                         '<input type="text" class="tkt-input" id="tkt-tpled-code" value="' + escapeHtml(reply.short_code || '') + '" placeholder="/doc"></div>' +
                   '</div>' +
-                  '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-body">Contenido<span class="req">*</span>' +
+                  '<div class="tkt-field"><label class="tkt-label" for="tkt-tpled-body">' + TKA.t('modal_21_content_label', 'Contenido') + '<span class="req">*</span>' +
                     // Sintaxis real de TicketVariableInterpolator (fuente única
                     // de variables): snake_case plano, nunca con puntos —
                     // {{cliente.nombre}} nunca se sustituía (bug 11-sep-2026).
-                    '<span class="hint">variables: {{customer_name}} {{ticket_number}} {{agent_name}}</span></label>' +
+                    '<span class="hint">' + TKA.t('modal_21_variables_hint', 'variables: {{customer_name}} {{ticket_number}} {{agent_name}}') + '</span></label>' +
                     '<textarea class="tkt-input tkt-input-lg" id="tkt-tpled-body">' + escapeHtml(reply.content || '') + '</textarea></div>' +
-                  '<div class="tkt-cap">Vista previa</div>' +
+                  '<div class="tkt-cap">' + TKA.t('modal_21_preview_label', 'Vista previa') + '</div>' +
                   '<div class="tkt-tpl-preview" id="tkt-tpled-preview">' + escapeHtml(reply.content || '') + '</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tpled-save">Guardar plantilla</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-tpled-back">Volver</button>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tpled-save">' + TKA.t('btn_save_template', 'Guardar plantilla') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-tpled-back">' + TKA.t('modal_21_back_btn', 'Volver') + '</button>',
         }));
 
         $backdrop.on('input', '#tkt-tpled-body', function () { $backdrop.find('#tkt-tpled-preview').text(this.value); });

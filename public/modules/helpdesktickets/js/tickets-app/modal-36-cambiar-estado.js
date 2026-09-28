@@ -15,8 +15,8 @@
     function statusEffect(st) {
         var parts = [];
         if (st.description) parts.push(st.description);
-        if (st.stops_sla) parts.push('pausa el reloj del SLA');
-        if (st.is_closed) parts.push('no admite más respuestas del cliente');
+        if (st.stops_sla) parts.push(TKA.t('modal_36_effect_pauses_sla', 'pausa el reloj del SLA'));
+        if (st.is_closed) parts.push(TKA.t('modal_36_effect_no_more_replies', 'no admite más respuestas del cliente'));
 
         return parts.join(' · ');
     }
@@ -41,11 +41,11 @@
             title: TKA.t('modal_title_change_status', 'Cambiar estado'),
             width: 'md',
             body: options +
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-state-note">Nota del cambio <span class="hint">interna</span></label>' +
-                    '<textarea class="tkt-input" id="tkt-state-note" rows="2" placeholder="Por qué cambia de estado…"></textarea></div>' +
-                '<label class="tkt-check"><input type="checkbox" id="tkt-state-notify"> Notificar al cliente por email</label>' +
-                '<div class="tkt-note">El cambio se registra en la actividad con fecha, hora y agente.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-state-save">Guardar estado</button>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-state-note">' + TKA.t('modal_36_change_note_label', 'Nota del cambio') + ' <span class="hint">' + TKA.t('modal_36_internal_hint', 'interna') + '</span></label>' +
+                    '<textarea class="tkt-input" id="tkt-state-note" rows="2" placeholder="' + escapeHtml(TKA.t('modal_36_change_note_placeholder', 'Por qué cambia de estado…')) + '"></textarea></div>' +
+                '<label class="tkt-check"><input type="checkbox" id="tkt-state-notify"> ' + TKA.t('modal_36_notify_customer_checkbox', 'Notificar al cliente por email') + '</label>' +
+                '<div class="tkt-note">' + TKA.t('modal_36_activity_log_note', 'El cambio se registra en la actividad con fecha, hora y agente.') + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-state-save">' + TKA.t('btn_save_status', 'Guardar estado') + '</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -96,7 +96,7 @@
                     if (window.toastr) toastr.warning(TKA.t('status_saved_note_failed', 'El estado se guardó, pero no se pudo añadir la nota.'));
                 }).always(done);
             }).fail(function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado');
+                var msg = apiErrorMessage(xhr, TKA.t('modal_36_change_status_failed', 'No se pudo cambiar el estado'));
                 tktNotify('error', msg);
                 $btn.prop('disabled', false).text(TKA.t('btn_save_status', 'Guardar estado'));
             });

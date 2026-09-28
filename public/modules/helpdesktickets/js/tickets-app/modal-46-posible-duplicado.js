@@ -13,8 +13,8 @@
                 '<span class="tkt-option-body">' +
                     '<span class="tkt-option-title">' + escapeHtml(c.ticket_number) + ' · ' + escapeHtml(c.subject || TKA.t('no_subject', '(sin asunto)')) + '</span>' +
                     '<span class="tkt-option-sub">' + escapeHtml(c.status || '—') +
-                        ' · coincidencia de asunto ' + Math.round(c.similarity * 100) + ' %' +
-                        (c.same_customer ? ' · mismo cliente' : '') +
+                        TKA.t('modal_46_subject_match_suffix', ' · coincidencia de asunto ') + Math.round(c.similarity * 100) + ' %' +
+                        (c.same_customer ? TKA.t('modal_46_same_customer_suffix', ' · mismo cliente') : '') +
                     '</span>' +
                 '</span>' +
             '</label>';
@@ -26,16 +26,18 @@
             titleChip: t.ticket_number,
             title: TKA.t('modal_title_possible_duplicate_on_create', 'Posible duplicado al crear'),
             width: 'lg',
-            body: '<div class="tkt-cap">Ya existe un ticket similar</div>' +
-                '<div class="tkt-note">Este cliente tiene ' + (candidates.length === 1 ? 'otro ticket abierto' : 'otros tickets abiertos') +
-                    ' con un asunto muy parecido dentro de la ventana de detección.</div>' +
+            body: '<div class="tkt-cap">' + TKA.t('modal_46_similar_ticket_caption', 'Ya existe un ticket similar') + '</div>' +
+                '<div class="tkt-note">' + (candidates.length === 1
+                    ? TKA.t('modal_46_intro_singular', 'Este cliente tiene otro ticket abierto con un asunto muy parecido dentro de la ventana de detección.')
+                    : TKA.t('modal_46_intro_plural', 'Este cliente tiene otros tickets abiertos con un asunto muy parecido dentro de la ventana de detección.')) +
+                '</div>' +
                 rows +
                 '<div class="tkt-kv-grid">' +
-                    '<span>ventana</span><span>' + (windowDays ? 'últimos ' + windowDays + ' días' : '—') + '</span>' +
-                    '<span>criterio</span><span>asunto y cliente</span>' +
+                    '<span>' + TKA.t('modal_46_window_label', 'ventana') + '</span><span>' + (windowDays ? TKA.t('modal_46_window_value', 'últimos :n días', { ':n': windowDays }) : '—') + '</span>' +
+                    '<span>' + TKA.t('modal_46_criteria_label', 'criterio') + '</span><span>' + TKA.t('modal_46_criteria_value', 'asunto y cliente') + '</span>' +
                 '</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-dupe-merge" disabled>Fusionar con el seleccionado</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-dupe-keep" disabled>Son independientes</button>' +
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-dupe-merge" disabled>' + TKA.t('modal_46_merge_btn', 'Fusionar con el seleccionado') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-dupe-keep" disabled>' + TKA.t('modal_46_keep_independent_btn', 'Son independientes') + '</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -67,7 +69,7 @@
                 closeModal();
                 dismissDuplicateBanner();
             }).fail(function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo guardar la relación.');
+                var msg = apiErrorMessage(xhr, TKA.t('modal_46_link_save_failed', 'No se pudo guardar la relación.'));
                 tktNotify('error', msg);
             });
         });

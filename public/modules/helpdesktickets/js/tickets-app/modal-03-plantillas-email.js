@@ -27,7 +27,7 @@
                 return !q || String(r.title).toLowerCase().indexOf(q) !== -1 ||
                     String(r.short_code || '').toLowerCase().indexOf(q) !== -1;
             });
-            if (!list.length) return '<div class="tkt-empty-box">Ninguna plantilla coincide con la búsqueda.</div>';
+            if (!list.length) return '<div class="tkt-empty-box">' + TKA.t('modal_03_no_template_matches', 'Ninguna plantilla coincide con la búsqueda.') + '</div>';
             return list.map(function (r) {
                 return '<button type="button" class="tkt-pick' + (selected && selected.id === r.id ? ' on' : '') + '" data-tpl="' + r.id + '">' +
                     // short_code se guarda unas veces con "/" y otras sin él,
@@ -45,13 +45,13 @@
             kicker: TKA.t('kicker_replies_templates', 'Respuestas · plantillas'),
             title: TKA.t('modal_title_email_templates', 'Plantillas de email'),
             width: 'lg',
-            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-tpl-search" placeholder="Buscar plantilla…" aria-label="Buscar plantilla"></div>' +
+            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-tpl-search" placeholder="' + TKA.t('modal_03_search_template_placeholder', 'Buscar plantilla…') + '" aria-label="' + TKA.t('modal_03_search_template_placeholder', 'Buscar plantilla…') + '"></div>' +
                 '<div class="tkt-pick-list" id="tkt-tpl-list">' + listHtml('') + '</div>' +
-                '<div class="tkt-tpl-preview" id="tkt-tpl-preview">Elige una plantilla para ver su contenido.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tpl-insert" disabled>Insertar plantilla</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-tpl-duplicate" disabled>Duplicar como mía</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-tpl-edit">Editar</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-tpl-back">Volver</button>',
+                '<div class="tkt-tpl-preview" id="tkt-tpl-preview">' + TKA.t('modal_03_choose_template_hint', 'Elige una plantilla para ver su contenido.') + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tpl-insert" disabled>' + TKA.t('modal_03_insert_template_btn', 'Insertar plantilla') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-tpl-duplicate" disabled>' + TKA.t('btn_duplicate_as_mine', 'Duplicar como mía') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-tpl-edit">' + TKA.t('modal_03_edit_btn', 'Editar') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-tpl-back">' + TKA.t('modal_03_back_btn', 'Volver') + '</button>',
         }));
 
         // Se pide aparte (no viaja con el resto del listado) porque hay que

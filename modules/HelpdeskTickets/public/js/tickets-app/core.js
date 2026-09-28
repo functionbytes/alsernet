@@ -8218,7 +8218,7 @@
                 '<a href="' + TKA.urls.index + '?ticket=' + r.id + '" class="tkt-line-link">' +
                     '<span class="mono tkt-meta-xs">' + escapeHtml(r.ticket_number) + '</span>' +
                     '<span class="tkt-trunc tkt-fill">' + escapeHtml(r.subject) + '</span>' +
-                    (r.link_type ? chip(LINK_TYPE_LABELS[r.link_type] || r.link_type, 'tkt-chip-info') : '') +
+                    (r.link_type ? chip(linkTypeLabel(r.link_type) || r.link_type, 'tkt-chip-info') : '') +
                     chip(r.status_name || STATUS_LABEL_FALLBACK[r.status_slug] || '—', statusChipClass(r.status_slug)) +
                 '</a>' +
                 (r.url_unlink ? '<button type="button" class="tkt-btn-icon" data-unlink="' + r.id + '" data-unlink-url="' + r.url_unlink + '" title="Desvincular"><i class="fa-solid fa-link-slash"></i></button>' : '') +
@@ -8268,18 +8268,31 @@
         });
     }
 
-    var LINK_TYPE_LABELS = { related: 'Relacionado', duplicate_of: 'Duplicado de', blocks: 'Bloquea a', blocked_by: 'Bloqueado por' };
+    // Funciones y no constantes: este fichero se evalúa ANTES de
+    // initTicketsApp(), que es quien rellena TKA.i18n — un objeto con TKA.t()
+    // construido aquí arriba se quedaría fijo en el texto de respaldo (es).
+    function linkTypeLabel(type) {
+        var labels = {
+            related: TKA.t('label_related', 'Relacionado'),
+            duplicate_of: TKA.t('label_duplicate_of_short', 'Duplicado de'),
+            blocks: TKA.t('label_blocks', 'Bloquea a'),
+            blocked_by: TKA.t('label_blocked_by', 'Bloqueado por'),
+        };
+        return labels[type];
+    }
 
     // Versión simplificada del modal "Vincular ticket" del mockup (que
     // busca por texto en vivo): pide el número de ticket por prompt. El
     // backend (LinkTicketRequest→TicketLink, con exists+self-link guard) es
     // el real; solo el picker es más simple.
-    var LINK_TYPES = [
-        { value: 'related', title: TKA.t('label_related', 'Relacionado'), sub: 'Los dos tickets tratan del mismo asunto' },
-        { value: 'duplicate_of', title: TKA.t('label_is_duplicate_of', 'Es un duplicado de'), sub: 'Este ticket repite el otro' },
-        { value: 'blocks', title: TKA.t('label_blocks', 'Bloquea a'), sub: 'Este ticket debe cerrarse antes que el otro' },
-        { value: 'blocked_by', title: TKA.t('label_blocked_by', 'Bloqueado por'), sub: 'No se puede cerrar hasta que el otro se resuelva' },
-    ];
+    function linkTypes() {
+        return [
+            { value: 'related', title: TKA.t('label_related', 'Relacionado'), sub: TKA.t('link_sub_related', 'Los dos tickets tratan del mismo asunto') },
+            { value: 'duplicate_of', title: TKA.t('label_is_duplicate_of', 'Es un duplicado de'), sub: TKA.t('link_sub_duplicate_of', 'Este ticket repite el otro') },
+            { value: 'blocks', title: TKA.t('label_blocks', 'Bloquea a'), sub: TKA.t('link_sub_blocks', 'Este ticket debe cerrarse antes que el otro') },
+            { value: 'blocked_by', title: TKA.t('label_blocked_by', 'Bloqueado por'), sub: TKA.t('link_sub_blocked_by', 'No se puede cerrar hasta que el otro se resuelva') },
+        ];
+    }
 
     // El picker de participante en vivo del mockup se sustituye por un ID
     // numérico (mismo criterio que Aplazar/Fusionar) — el backend real
@@ -8287,7 +8300,7 @@
     // auto-enlace. `blocks`/`blocked_by` tienen efecto real:
     // Ticket::openBlockers() impide cerrar el ticket bloqueado.
     function linkTicketPrompt(t) {
-        var options = LINK_TYPES.map(function (lt, i) {
+        var options = linkTypes().map(function (lt, i) {
             return '<label class="tkt-option' + (i === 0 ? ' on' : '') + ' tkt-pointer" data-link-type-option="' + lt.value + '" >' +
                 '<input type="radio" name="tkt-link-type" value="' + lt.value + '"' + (i === 0 ? ' checked' : '') + ' class="tkt-m0">' +
                 '<span><span class="tkt-option-title">' + escapeHtml(lt.title) + '</span><br><span class="tkt-option-sub">' + escapeHtml(lt.sub) + '</span></span>' +
@@ -9275,65 +9288,69 @@
     // propio modal con el control correcto (select de agente/estado, input
     // de texto) en vez de un prompt(). Mismo patrón que
     // openBulkMoveTeamModal (ya existente para assign_group).
-    var BULK_EXTRA_CONFIG = {
-        assign: {
-            icon: 'fa-solid fa-user-check', title: TKA.t('bulk_assign_title', 'Asignar agente'), field: 'agent_id', confirmLabel: TKA.t('assign', 'Asignar'),
-            emptyError: TKA.t('bulk_assign_empty_error', 'Selecciona un agente'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('agent', 'Agente') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_agent_placeholder', 'Selecciona un agente…') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>';
+    // Función por el mismo motivo que linkTypes(): TKA.i18n aún no existe
+    // cuando se evalúa este fichero.
+    function bulkExtraConfig() {
+        return {
+            assign: {
+                icon: 'fa-solid fa-user-check', title: TKA.t('bulk_assign_title', 'Asignar agente'), field: 'agent_id', confirmLabel: TKA.t('assign', 'Asignar'),
+                emptyError: TKA.t('bulk_assign_empty_error', 'Selecciona un agente'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('agent', 'Agente') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_agent_placeholder', 'Selecciona un agente…') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id', '') + '</select></div>';
+                },
             },
-        },
-        add_tag: {
-            icon: 'fa-solid fa-tag', title: TKA.t('bulk_add_tag_title', 'Añadir etiqueta'), field: 'tag', confirmLabel: TKA.t('add', 'Añadir'),
-            emptyError: TKA.t('bulk_add_tag_empty_error', 'Escribe una etiqueta'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+            add_tag: {
+                icon: 'fa-solid fa-tag', title: TKA.t('bulk_add_tag_title', 'Añadir etiqueta'), field: 'tag', confirmLabel: TKA.t('add', 'Añadir'),
+                emptyError: TKA.t('bulk_add_tag_empty_error', 'Escribe una etiqueta'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+                },
             },
-        },
-        change_priority: {
-            icon: 'fa-solid fa-flag', title: TKA.t('bulk_change_priority_title', 'Cambiar prioridad'), field: 'priority', confirmLabel: TKA.t('change', 'Cambiar'),
-            emptyError: TKA.t('bulk_change_priority_empty_error', 'Selecciona una prioridad'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('priority', 'Prioridad') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_priority_placeholder', 'Selecciona una prioridad…') + '</option>' +
-                    ['low', 'normal', 'high', 'urgent'].map(function (p) { return '<option value="' + p + '">' + escapeHtml(priorityLabel(p)) + '</option>'; }).join('') +
-                    '</select></div>';
+            change_priority: {
+                icon: 'fa-solid fa-flag', title: TKA.t('bulk_change_priority_title', 'Cambiar prioridad'), field: 'priority', confirmLabel: TKA.t('change', 'Cambiar'),
+                emptyError: TKA.t('bulk_change_priority_empty_error', 'Selecciona una prioridad'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('priority', 'Prioridad') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_priority_placeholder', 'Selecciona una prioridad…') + '</option>' +
+                        ['low', 'normal', 'high', 'urgent'].map(function (p) { return '<option value="' + p + '">' + escapeHtml(priorityLabel(p)) + '</option>'; }).join('') +
+                        '</select></div>';
+                },
             },
-        },
-        remove_tag: {
-            icon: 'fa-solid fa-tag', title: TKA.t('bulk_remove_tag_title', 'Quitar etiqueta'), field: 'tag', confirmLabel: TKA.t('remove', 'Quitar'),
-            emptyError: TKA.t('bulk_remove_tag_empty_error', 'Escribe la etiqueta que quieres quitar'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+            remove_tag: {
+                icon: 'fa-solid fa-tag', title: TKA.t('bulk_remove_tag_title', 'Quitar etiqueta'), field: 'tag', confirmLabel: TKA.t('remove', 'Quitar'),
+                emptyError: TKA.t('bulk_remove_tag_empty_error', 'Escribe la etiqueta que quieres quitar'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('tag', 'Etiqueta') + '</label><input type="text" class="tkt-input" id="tkt-bulk-extra" maxlength="50" placeholder="' + TKA.t('tag_placeholder_example', 'Ej: urgente-cliente') + '"></div>';
+                },
             },
-        },
-        snooze: {
-            icon: 'fa-regular fa-clock', title: TKA.t('bulk_snooze_title', 'Posponer'), field: 'snooze_hours', confirmLabel: TKA.t('bulk_snooze_title', 'Posponer'),
-            emptyError: TKA.t('bulk_snooze_empty_error', 'Elige hasta cuándo'),
-            body: function () {
-                var opts = [
-                    [1, TKA.t('snooze_1_hour', '1 hora')],
-                    [4, TKA.t('snooze_4_hours', '4 horas')],
-                    [24, TKA.t('snooze_tomorrow_same_time', 'Mañana a esta hora')],
-                    [72, TKA.t('snooze_3_days', '3 días')],
-                    [168, TKA.t('snooze_1_week', '1 semana')],
-                ];
-                return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('snooze_for', 'Posponer durante') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_placeholder', 'Selecciona…') + '</option>' +
-                    opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
-                    '</select><div class="tkt-hint">' + TKA.t('snooze_hint', 'Vuelven a la cola solos al terminar, o antes si el cliente responde.') + '</div></div>';
+            snooze: {
+                icon: 'fa-regular fa-clock', title: TKA.t('bulk_snooze_title', 'Posponer'), field: 'snooze_hours', confirmLabel: TKA.t('bulk_snooze_title', 'Posponer'),
+                emptyError: TKA.t('bulk_snooze_empty_error', 'Elige hasta cuándo'),
+                body: function () {
+                    var opts = [
+                        [1, TKA.t('snooze_1_hour', '1 hora')],
+                        [4, TKA.t('snooze_4_hours', '4 horas')],
+                        [24, TKA.t('snooze_tomorrow_same_time', 'Mañana a esta hora')],
+                        [72, TKA.t('snooze_3_days', '3 días')],
+                        [168, TKA.t('snooze_1_week', '1 semana')],
+                    ];
+                    return '<div class="tkt-field"><label class="tkt-label" for="tkt-bulk-extra">' + TKA.t('snooze_for', 'Posponer durante') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_placeholder', 'Selecciona…') + '</option>' +
+                        opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+                        '</select><div class="tkt-hint">' + TKA.t('snooze_hint', 'Vuelven a la cola solos al terminar, o antes si el cliente responde.') + '</div></div>';
+                },
             },
-        },
-        change_status: {
-            icon: 'fa-solid fa-arrow-right-arrow-left', title: TKA.t('bulk_change_status_title', 'Cambiar estado'), field: 'status_id', confirmLabel: TKA.t('change', 'Cambiar'),
-            emptyError: TKA.t('bulk_change_status_empty_error', 'Selecciona un estado'),
-            body: function () {
-                return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('status', 'Estado') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_status_placeholder', 'Selecciona un estado…') + '</option>' + optionsHtml(TKA.state.statuses, 'id', '') + '</select></div>';
+            change_status: {
+                icon: 'fa-solid fa-arrow-right-arrow-left', title: TKA.t('bulk_change_status_title', 'Cambiar estado'), field: 'status_id', confirmLabel: TKA.t('change', 'Cambiar'),
+                emptyError: TKA.t('bulk_change_status_empty_error', 'Selecciona un estado'),
+                body: function () {
+                    return '<div class="tkt-field"><label class="tkt-label">' + TKA.t('status', 'Estado') + '</label><select id="tkt-bulk-extra" class="tkt-select"><option value="">' + TKA.t('select_status_placeholder', 'Selecciona un estado…') + '</option>' + optionsHtml(TKA.state.statuses, 'id', '') + '</select></div>';
+                },
             },
-        },
-    };
+        };
+    }
 
     function openBulkExtraModal(action) {
         var ids = Object.keys(TKA.state.bulk).map(Number);
-        var config = BULK_EXTRA_CONFIG[action];
+        var config = bulkExtraConfig()[action];
         if (!ids.length || !config) return;
 
         var $modal = openModal(modalShell({
@@ -10204,7 +10221,7 @@
             // "Reintentar envío (solo fallidos)" del mockup: no hace falta
             // valor adicional (a diferencia de assign/add_tag/change_status),
             // así que entra por el mismo camino directo que resolver/cerrar,
-            // no por BULK_EXTRA_CONFIG. Los tickets sin correo saliente
+            // no por bulkExtraConfig(). Los tickets sin correo saliente
             // fallido simplemente no cuentan (ver BulkTicketsController).
             retry_failed_mail: { title: TKA.t('bulk_retry_failed_mail_title', 'Reintentar envío'), message: TKA.t('bulk_retry_failed_mail_message', 'Solo se reintentan los correos de salida marcados como fallidos.'), confirmLabel: TKA.t('retry', 'Reintentar'), danger: false },
         };
@@ -10230,7 +10247,7 @@
 
         $('[data-bulk-action]').on('click', function () {
             var action = $(this).data('bulk-action');
-            if (BULK_EXTRA_CONFIG[action]) { openBulkExtraModal(action); return; }
+            if (bulkExtraConfig()[action]) { openBulkExtraModal(action); return; }
 
             var ids = Object.keys(TKA.state.bulk).map(Number);
             var l = BULK_DIRECT_LABELS[action] || { title: TKA.t('confirm_action_title', 'Confirmar acción'), message: TKA.t('confirm_action_message', '¿Aplicar esta acción?'), confirmLabel: TKA.t('confirm', 'Confirmar'), danger: false };

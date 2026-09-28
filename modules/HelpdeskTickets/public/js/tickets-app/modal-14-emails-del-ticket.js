@@ -15,13 +15,13 @@
 
         function rowsHtml() {
             var list = visibleList();
-            if (!list.length) return '<div class="tkt-empty-box">No hay correos en esta pestaña.</div>';
+            if (!list.length) return '<div class="tkt-empty-box">' + TKA.t('modal_14_no_emails_in_tab', 'No hay correos en esta pestaña.') + '</div>';
             return list.map(function (m, i) {
                 var meta = [
-                    m.direction === 'inbound' ? 'Entrante' : 'Saliente',
+                    m.direction === 'inbound' ? TKA.t('modal_14_inbound_label', 'Entrante') : TKA.t('modal_14_outbound_label', 'Saliente'),
                     m.created_at_human,
                     m.status,
-                    m.attachment_count ? m.attachment_count + (m.attachment_count === 1 ? ' adjunto' : ' adjuntos') : null,
+                    m.attachment_count ? m.attachment_count + (m.attachment_count === 1 ? TKA.t('modal_14_attachment_singular_suffix', ' adjunto') : TKA.t('modal_14_attachment_plural_suffix', ' adjuntos')) : null,
                 ].filter(Boolean).join(' · ');
                 return '<div class="tkt-mailitem">' +
                     '<span class="av">' + escapeHtml(m.initials || '··') + '</span>' +
@@ -29,7 +29,7 @@
                     '<span class="s">' + escapeHtml(meta) + '</span></span>' +
                     (m.status === 'scheduled'
                         ? '<button type="button" class="tkt-link-btn" data-cancel-sched="' + i + '">' + TKA.t('cancel', 'Cancelar') + '</button>' : '') +
-                    '<button type="button" class="tkt-link-btn" data-link-mail="' + i + '">Mover</button>' +
+                    '<button type="button" class="tkt-link-btn" data-link-mail="' + i + '">' + TKA.t('modal_14_move_btn', 'Mover') + '</button>' +
                 '</div>';
             }).join('');
         }
@@ -41,9 +41,9 @@
                 outbound: all.filter(function (m) { return m.direction !== 'inbound'; }).length,
             };
             return '<div class="tkt-seg-tabs">' +
-                '<button type="button" class="' + (filter === 'all' ? 'on' : '') + '" data-mfilter="all">Todos · ' + c.all + '</button>' +
-                '<button type="button" class="' + (filter === 'inbound' ? 'on' : '') + '" data-mfilter="inbound">Entrantes · ' + c.inbound + '</button>' +
-                '<button type="button" class="' + (filter === 'outbound' ? 'on' : '') + '" data-mfilter="outbound">Salientes · ' + c.outbound + '</button>' +
+                '<button type="button" class="' + (filter === 'all' ? 'on' : '') + '" data-mfilter="all">' + TKA.t('modal_14_tab_all', 'Todos') + ' · ' + c.all + '</button>' +
+                '<button type="button" class="' + (filter === 'inbound' ? 'on' : '') + '" data-mfilter="inbound">' + TKA.t('modal_14_tab_inbound', 'Entrantes') + ' · ' + c.inbound + '</button>' +
+                '<button type="button" class="' + (filter === 'outbound' ? 'on' : '') + '" data-mfilter="outbound">' + TKA.t('modal_14_tab_outbound', 'Salientes') + ' · ' + c.outbound + '</button>' +
             '</div>';
         }
 
@@ -55,10 +55,10 @@
             width: 'lg',
             body: '<div id="tkt-mails-tabs">' + tabsHtml() + '</div>' +
                 '<div class="tkt-mailitems" id="tkt-mails-rows">' + rowsHtml() + '</div>' +
-                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Cada correo entrante del hilo se anexa al ticket conservando su <span class="mono">message_id</span>.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-mails-compose">Redactar respuesta</button>' +
-                  '<a href="' + TKA.urls.emailsIndex + '?search=' + encodeURIComponent(t.ticket_number) + '" class="tkt-btn">Ver en la bandeja completa</a>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_14_thread_append_note', 'Cada correo entrante del hilo se anexa al ticket conservando su :field.', { ':field': '<span class="mono">message_id</span>' }) + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-mails-compose">' + TKA.t('modal_14_compose_reply_btn', 'Redactar respuesta') + '</button>' +
+                  '<a href="' + TKA.urls.emailsIndex + '?search=' + encodeURIComponent(t.ticket_number) + '" class="tkt-btn">' + TKA.t('modal_14_view_full_inbox_btn', 'Ver en la bandeja completa') + '</a>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         function refresh() {
@@ -96,7 +96,7 @@
             if (!st || !st.queues) return;
             var n = st.queues.emails;
             if (n == null) return;
-            $('#tkt-mail-queue-hint').text(' · cola de correo: ' + n);
+            $('#tkt-mail-queue-hint').text(' · ' + TKA.t('modal_14_mail_queue_label', 'cola de correo: :count', { ':count': n }));
             var $badge = $('#tkt-ops-queue-badge');
             if (n > 0) $badge.text(n).prop('hidden', false);
             else $badge.prop('hidden', true);
@@ -146,8 +146,8 @@
      */
     function renderStatusCounts() {
         var c = TKA.state.tabCounts || {};
-        if (c.sla_risk != null) $('#tkt-status-sla').html('<i class="fa-regular fa-clock"></i> SLA en riesgo: ' + c.sla_risk);
-        if (c.resolved != null) $('#tkt-status-resolved').html('<i class="fa-solid fa-circle-check"></i> ' + c.resolved + ' resueltos');
+        if (c.sla_risk != null) $('#tkt-status-sla').html('<i class="fa-regular fa-clock"></i> ' + TKA.t('modal_14_sla_at_risk_label', 'SLA en riesgo: :count', { ':count': c.sla_risk }));
+        if (c.resolved != null) $('#tkt-status-resolved').html('<i class="fa-solid fa-circle-check"></i> ' + TKA.t('modal_14_resolved_count_label', ':count resueltos', { ':count': c.resolved }));
     }
 
     /**
@@ -267,7 +267,7 @@
         $.getJSON(TKA.urls.agentPresenceAgents).done(function (res) {
             var agentes = (res && res.agents) || [];
             var enLinea = agentes.filter(function (a) { return a.presence_state && a.presence_state !== 'offline'; }).length;
-            $el.html('<i class="fa-solid fa-users"></i> ' + enLinea + (enLinea === 1 ? ' agente en línea' : ' agentes en línea'));
+            $el.html('<i class="fa-solid fa-users"></i> ' + enLinea + (enLinea === 1 ? TKA.t('modal_14_agent_online_singular_suffix', ' agente en línea') : TKA.t('modal_14_agent_online_plural_suffix', ' agentes en línea')));
         }).fail(function () {
             $el.hide();
         });

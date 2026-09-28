@@ -10,21 +10,21 @@
             width: 'md',
             body: '<div class="tkt-headline">' +
                     '<div class="t">' + escapeHtml(mail.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
-                    '<div class="s">Para ' + escapeHtml(mail.to || '—') +
-                        (mail.scheduled_at_human ? ' · saldrá el ' + escapeHtml(mail.scheduled_at_human) : '') + '</div>' +
+                    '<div class="s">' + TKA.t('modal_09_to_prefix', 'Para') + ' ' + escapeHtml(mail.to || '—') +
+                        (mail.scheduled_at_human ? ' · ' + TKA.t('modal_09_will_go_out_on', 'saldrá el :date', { ':date': escapeHtml(mail.scheduled_at_human) }) : '') + '</div>' +
                   '</div>' +
                   '<div class="tkt-pick-list">' +
                     '<button type="button" class="tkt-pick" data-cancel-mode="draft">' +
                         '<span class="av light"><i class="fa-regular fa-file-lines"></i></span>' +
-                        '<span class="who"><span class="n">Guardar como borrador</span>' +
-                        '<span class="s">Se conserva el contenido y deja de tener hora de envío</span></span></button>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_09_save_as_draft', 'Guardar como borrador') + '</span>' +
+                        '<span class="s">' + TKA.t('modal_09_save_as_draft_hint', 'Se conserva el contenido y deja de tener hora de envío') + '</span></span></button>' +
                     '<button type="button" class="tkt-pick" data-cancel-mode="delete">' +
                         '<span class="av light"><i class="fa-regular fa-trash-can"></i></span>' +
-                        '<span class="who"><span class="n">Eliminar definitivamente</span>' +
-                        '<span class="s">El correo desaparece del ticket</span></span></button>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_09_delete_permanently', 'Eliminar definitivamente') + '</span>' +
+                        '<span class="s">' + TKA.t('modal_09_delete_permanently_hint', 'El correo desaparece del ticket') + '</span></span></button>' +
                   '</div>' +
-                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Si la automatización que lo generó sigue activa, podría volver a programarse.</div>',
-            foot: '<button type="button" class="tkt-btn" data-modal-close>Volver</button>',
+                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_09_automation_note', 'Si la automatización que lo generó sigue activa, podría volver a programarse.') + '</div>',
+            foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('modal_09_back_btn', 'Volver') + '</button>',
         }));
 
         $backdrop.on('click', '[data-cancel-mode]', function () {

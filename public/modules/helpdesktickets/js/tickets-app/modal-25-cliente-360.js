@@ -20,25 +20,25 @@
             titleChip: customer.name || '',
             title: TKA.t('modal_title_customer_360', 'Cliente 360'), width: 'xl',
             body: '<div class="tkt-headline"><div class="t">' + escapeHtml(customer.name || '—') + '</div>' +
-                    '<div class="s">' + escapeHtml(customer.company || 'Sin empresa asociada') + '</div></div>' +
+                    '<div class="s">' + escapeHtml(customer.company || TKA.t('modal_25_no_company', 'Sin empresa asociada')) + '</div></div>' +
                   '<div class="tkt-side-rows">' +
-                    sideRow('email', customer.email || '—', { mono: true }) +
-                    sideRow('teléfono', customer.phone || '—', { mono: true }) +
-                    sideRow('cliente desde', customer.customer_since_year || '—', { mono: true }) +
-                    sideRow('idioma', customer.language || '—', { mono: true }) +
-                    sideRow('id externo', customer.external_id || '—', { mono: true, last: true }) +
+                    sideRow(TKA.t('modal_25_email_label', 'email'), customer.email || '—', { mono: true }) +
+                    sideRow(TKA.t('modal_25_phone_label', 'teléfono'), customer.phone || '—', { mono: true }) +
+                    sideRow(TKA.t('modal_25_customer_since_label', 'cliente desde'), customer.customer_since_year || '—', { mono: true }) +
+                    sideRow(TKA.t('modal_25_language_label', 'idioma'), customer.language || '—', { mono: true }) +
+                    sideRow(TKA.t('modal_25_external_id_label', 'id externo'), customer.external_id || '—', { mono: true, last: true }) +
                   '</div>' +
-                  (integraciones ? '<div class="tkt-cap">Integraciones</div><div class="tkt-chiprow">' + integraciones + '</div>' : '') +
-                  '<div class="tkt-cap">Historial de soporte</div>' +
+                  (integraciones ? '<div class="tkt-cap">' + TKA.t('modal_25_integrations_label', 'Integraciones') + '</div><div class="tkt-chiprow">' + integraciones + '</div>' : '') +
+                  '<div class="tkt-cap">' + TKA.t('modal_25_support_history_label', 'Historial de soporte') + '</div>' +
                   '<div class="tkt-stats three">' +
-                    '<div class="tkt-stat"><span class="n">' + (customer.tickets_count != null ? customer.tickets_count : '—') + '</span><span class="l">tickets</span></div>' +
-                    '<div class="tkt-stat"><span class="n">' + (customer.avg_csat != null ? customer.avg_csat : '—') + '</span><span class="l">CSAT medio</span></div>' +
-                    '<div class="tkt-stat"><span class="n">' + escapeHtml(firstResponse) + '</span><span class="l">1ª respuesta</span></div>' +
+                    '<div class="tkt-stat"><span class="n">' + (customer.tickets_count != null ? customer.tickets_count : '—') + '</span><span class="l">' + TKA.t('modal_25_stat_tickets', 'tickets') + '</span></div>' +
+                    '<div class="tkt-stat"><span class="n">' + (customer.avg_csat != null ? customer.avg_csat : '—') + '</span><span class="l">' + TKA.t('modal_25_stat_avg_csat', 'CSAT medio') + '</span></div>' +
+                    '<div class="tkt-stat"><span class="n">' + escapeHtml(firstResponse) + '</span><span class="l">' + TKA.t('modal_25_stat_first_response', '1ª respuesta') + '</span></div>' +
                   '</div>' +
-                  (customer.is_banned ? '<div class="tkt-note"><i class="fa-solid fa-ban"></i> Este contacto está bloqueado.</div>' : '') +
+                  (customer.is_banned ? '<div class="tkt-note"><i class="fa-solid fa-ban"></i> ' + TKA.t('modal_25_contact_blocked_note', 'Este contacto está bloqueado.') + '</div>' : '') +
                   '<div id="tkt-c360-orders"></div>',
-            foot: (customer.url_c360 ? '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(customer.url_c360) + '">Abrir ficha completa</a>' : '') +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+            foot: (customer.url_c360 ? '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(customer.url_c360) + '">' + TKA.t('modal_25_open_full_profile_btn', 'Abrir ficha completa') + '</a>' : '') +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         // Pedidos PrestaShop: bajo demanda (llama al bridge en vivo), no
@@ -53,7 +53,7 @@
                         (o.total != null ? '<span class="mono">' + escapeHtml(String(o.total)) + ' ' + escapeHtml(o.currency_sign || '€') + '</span>' : '') +
                         '</div>';
                 }).join('');
-                $backdrop.find('#tkt-c360-orders').html('<div class="tkt-cap">Pedidos PrestaShop</div><div class="tkt-mailitems">' + rows + '</div>');
+                $backdrop.find('#tkt-c360-orders').html('<div class="tkt-cap">' + TKA.t('modal_25_prestashop_orders_label', 'Pedidos PrestaShop') + '</div><div class="tkt-mailitems">' + rows + '</div>');
             });
         }
     }

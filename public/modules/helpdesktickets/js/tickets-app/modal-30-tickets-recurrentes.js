@@ -9,7 +9,7 @@
             title: TKA.t('modal_title_recurring_tickets', 'Tickets recurrentes'),
             width: '2xl',
             body: '<div class="tkt-skeleton"></div><div class="tkt-skeleton"></div>',
-            foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+            foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         // Lista + catálogos de los desplegables, ambos de la misma petición.
@@ -39,22 +39,25 @@
         function filaHtml(r) {
             var meta = [
                 r.frequency_label,
-                r.next_run_at_human ? 'próxima ' + r.next_run_at_human : 'sin próxima ejecución',
-                r.tickets_created ? r.tickets_created + ' creados' : null,
+                r.next_run_at_human ? TKA.t('modal_30_next_run_prefix', 'próxima :when', { ':when': r.next_run_at_human }) : TKA.t('modal_30_no_next_run', 'sin próxima ejecución'),
+                r.tickets_created ? TKA.t('modal_30_created_count', ':n creados', { ':n': r.tickets_created }) : null,
             ].filter(Boolean).join(' · ');
+
+            var pauseResumeLabel = r.is_active ? TKA.t('modal_30_pause_action', 'Pausar') : TKA.t('modal_30_resume_action', 'Reanudar');
+            var editLabel = TKA.t('modal_30_edit_action', 'Editar');
 
             return '<div class="tkt-mailitem tkt-rec-row' + (r.is_active ? '' : ' off') + '">' +
                 '<span class="av light"><i class="fa-solid fa-repeat"></i></span>' +
                 '<span class="who"><span class="n">' + escapeHtml(r.name || r.subject) + '</span>' +
                     '<span class="s">' + escapeHtml(meta) + '</span></span>' +
-                (r.is_active ? '' : chip('Pausada', 'tkt-chip-muted')) +
+                (r.is_active ? '' : chip(TKA.t('modal_30_paused_chip', 'Pausada'), 'tkt-chip-muted')) +
                 '<span class="tkt-rec-actions">' +
                     '<button type="button" class="tkt-btn-icon sm" data-rec-toggle="' + r.id + '" ' +
-                        'title="' + (r.is_active ? 'Pausar' : 'Reanudar') + '" ' +
-                        'aria-label="' + (r.is_active ? 'Pausar' : 'Reanudar') + ' ' + escapeHtml(r.name || '') + '">' +
+                        'title="' + pauseResumeLabel + '" ' +
+                        'aria-label="' + pauseResumeLabel + ' ' + escapeHtml(r.name || '') + '">' +
                         '<i class="fa-solid ' + (r.is_active ? 'fa-pause' : 'fa-play') + '"></i></button>' +
                     '<button type="button" class="tkt-btn-icon sm" data-rec-edit="' + r.id + '" ' +
-                        'title="Editar" aria-label="Editar ' + escapeHtml(r.name || '') + '">' +
+                        'title="' + editLabel + '" aria-label="' + editLabel + ' ' + escapeHtml(r.name || '') + '">' +
                         '<i class="fa-solid fa-pen"></i></button>' +
                 '</span></div>';
         }
@@ -64,22 +67,22 @@
 
             var cuerpo = lista.length
                 ? '<div class="tkt-mailitems">' + lista.map(filaHtml).join('') + '</div>'
-                : '<div class="tkt-empty-box">No hay ninguna recurrencia programada. Una recurrencia crea un ticket cada día, semana o mes sin que nadie tenga que acordarse.</div>';
+                : '<div class="tkt-empty-box">' + TKA.t('modal_30_no_recurrences_note', 'No hay ninguna recurrencia programada. Una recurrencia crea un ticket cada día, semana o mes sin que nadie tenga que acordarse.') + '</div>';
 
             pintar(
                 cuerpo,
-                '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-rec-new">Programar recurrencia</button>' +
-                '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.recurring || '#') + '">Gestionar en Ajustes</a>' +
-                '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>'
+                '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-rec-new">' + TKA.t('modal_30_schedule_recurrence_btn', 'Programar recurrencia') + '</button>' +
+                '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.recurring || '#') + '">' + TKA.t('modal_30_manage_in_settings_link', 'Gestionar en Ajustes') + '</a>' +
+                '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>'
             );
         }
 
         // ── Pantalla 2: el formulario ─────────────────────────
         function opcionesFrecuencia(r) {
             var todas = (catalogos && catalogos.frequencies) || [
-                { value: 'daily', label: 'Diaria' },
-                { value: 'weekly', label: 'Semanal' },
-                { value: 'monthly', label: 'Mensual' },
+                { value: 'daily', label: TKA.t('modal_30_freq_daily', 'Diaria') },
+                { value: 'weekly', label: TKA.t('modal_30_freq_weekly', 'Semanal') },
+                { value: 'monthly', label: TKA.t('modal_30_freq_monthly', 'Mensual') },
             ];
             // 'custom' solo se ofrece si la recurrencia YA lo era: el modal no
             // edita expresiones cron (el backend rechaza crearlas desde aquí),
@@ -99,7 +102,7 @@
             // rol, o dejó de estar disponible): sin esto el <select> lo perdería
             // en silencio al primer guardado.
             if (r && r.assignee_id && !agentes.some(function (a) { return String(a.id) === String(r.assignee_id); })) {
-                agentes.unshift({ id: r.assignee_id, name: r.assignee_name || ('Usuario #' + r.assignee_id) });
+                agentes.unshift({ id: r.assignee_id, name: r.assignee_name || TKA.t('modal_30_user_fallback_name', 'Usuario #:id', { ':id': r.assignee_id }) });
             }
             return agentes;
         }
@@ -117,69 +120,68 @@
                 // crear, donde ahorra teclear, y no al editar, donde machacaría
                 // lo que ya hay.
                 (!r && plantillas.length
-                    ? '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-tpl">Plantilla de ticket' +
-                        '<span class="hint">solo rellena los campos</span></label>' +
-                        '<select class="tkt-select" id="tkt-rec-tpl"><option value="">Empezar en blanco…</option>' +
+                    ? '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-tpl">' + TKA.t('modal_30_template_label', 'Plantilla de ticket') +
+                        '<span class="hint">' + TKA.t('modal_30_template_hint', 'solo rellena los campos') + '</span></label>' +
+                        '<select class="tkt-select" id="tkt-rec-tpl"><option value="">' + TKA.t('modal_30_start_blank_option', 'Empezar en blanco…') + '</option>' +
                         optionsHtml(plantillas, 'id', '') + '</select></div>'
                     : '') +
 
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-name">Nombre<span class="req">*</span></label>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-name">' + TKA.t('modal_30_name_label', 'Nombre') + '<span class="req">*</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-rec-name" maxlength="255" ' +
-                    'placeholder="Control diario de pedidos sin salir" value="' + escapeHtml(r ? r.name : '') + '"></div>' +
+                    'placeholder="' + escapeHtml(TKA.t('modal_30_name_placeholder', 'Control diario de pedidos sin salir')) + '" value="' + escapeHtml(r ? r.name : '') + '"></div>' +
 
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-subject">Asunto del ticket<span class="req">*</span></label>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-subject">' + TKA.t('modal_30_subject_label', 'Asunto del ticket') + '<span class="req">*</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-rec-subject" maxlength="255" ' +
                     'value="' + escapeHtml(r ? r.subject : '') + '"></div>' +
 
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-desc">Descripción</label>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-desc">' + TKA.t('modal_30_description_label', 'Descripción') + '</label>' +
                     '<textarea class="tkt-input" id="tkt-rec-desc" rows="3" maxlength="5000">' +
                     escapeHtml(r ? (r.description || '') : '') + '</textarea></div>' +
 
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-freq">Frecuencia<span class="req">*</span></label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-freq">' + TKA.t('modal_30_frequency_label', 'Frecuencia') + '<span class="req">*</span></label>' +
                         '<select class="tkt-select" id="tkt-rec-freq">' + opcionesFrecuencia(r) + '</select></div>' +
                     '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-next">' +
-                        (r ? 'Próxima ejecución' : 'Primera ejecución') + '</label>' +
+                        (r ? TKA.t('modal_30_next_run_label', 'Próxima ejecución') : TKA.t('modal_30_first_run_label', 'Primera ejecución')) + '</label>' +
                         '<input type="datetime-local" class="tkt-input" id="tkt-rec-next" ' +
                         'value="' + escapeHtml(r ? (r.next_run_at || '') : '') + '"></div>' +
                 '</div>' +
 
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-cat">Categoría</label>' +
-                        '<select class="tkt-select" id="tkt-rec-cat"><option value="">Sin categoría</option>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-cat">' + TKA.t('modal_30_category_label', 'Categoría') + '</label>' +
+                        '<select class="tkt-select" id="tkt-rec-cat"><option value="">' + TKA.t('modal_30_no_category_option', 'Sin categoría') + '</option>' +
                         optionsHtml(categorias, 'id', r ? r.category_id : '') + '</select></div>' +
                     (prioridades.length
-                        ? '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-pri">Prioridad</label>' +
-                            '<select class="tkt-select" id="tkt-rec-pri"><option value="">Sin prioridad</option>' +
+                        ? '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-pri">' + TKA.t('modal_30_priority_label', 'Prioridad') + '</label>' +
+                            '<select class="tkt-select" id="tkt-rec-pri"><option value="">' + TKA.t('modal_30_no_priority_option', 'Sin prioridad') + '</option>' +
                             optionsHtml(prioridades, 'id', r ? r.priority_id : '') + '</select></div>'
                         : '') +
                 '</div>' +
 
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-agent">Agente asignado</label>' +
-                    '<select class="tkt-select" id="tkt-rec-agent"><option value="">Sin asignar</option>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-rec-agent">' + TKA.t('modal_30_assignee_label', 'Agente asignado') + '</label>' +
+                    '<select class="tkt-select" id="tkt-rec-agent"><option value="">' + TKA.t('modal_30_unassigned_option', 'Sin asignar') + '</option>' +
                     optionsHtml(agentesConAsignado(r), 'id', r ? r.assignee_id : '') + '</select></div>' +
 
                 (r && r.frequency === 'custom'
-                    ? '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Esta recurrencia se rige por una expresión cron (' +
-                        escapeHtml(r.cron_expression || '—') + '). Se cambia desde Ajustes; aquí se conserva tal cual.</div>'
+                    ? '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_30_cron_note', 'Esta recurrencia se rige por una expresión cron (:expr). Se cambia desde Ajustes; aquí se conserva tal cual.', { ':expr': escapeHtml(r.cron_expression || '—') }) + '</div>'
                     : '') +
 
                 // Solo con datos reales: en una recurrencia nueva no hay próxima
                 // ejecución ni contador que enseñar, así que no se pinta la caja.
                 (r
                     ? '<div class="tkt-kv-grid">' +
-                        '<span>próxima ejecución</span><span>' + escapeHtml(r.next_run_at_label || 'sin programar') + '</span>' +
-                        '<span>creados</span><span>' + (r.tickets_created || 0) + ' tickets</span>' +
-                        (r.last_run_at_human ? '<span>última</span><span>' + escapeHtml(r.last_run_at_human) + '</span>' : '') +
+                        '<span>' + TKA.t('modal_30_next_run_kv_label', 'próxima ejecución') + '</span><span>' + escapeHtml(r.next_run_at_label || TKA.t('modal_30_unscheduled', 'sin programar')) + '</span>' +
+                        '<span>' + TKA.t('modal_30_created_kv_label', 'creados') + '</span><span>' + TKA.t('modal_30_tickets_count', ':n tickets', { ':n': r.tickets_created || 0 }) + '</span>' +
+                        (r.last_run_at_human ? '<span>' + TKA.t('modal_30_last_run_kv_label', 'última') + '</span><span>' + escapeHtml(r.last_run_at_human) + '</span>' : '') +
                       '</div>'
-                    : '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> El ticket se crea con el asunto y la descripción de arriba. Si no indicas la primera ejecución, se programa a partir de la frecuencia elegida.</div>');
+                    : '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_30_new_recurrence_note', 'El ticket se crea con el asunto y la descripción de arriba. Si no indicas la primera ejecución, se programa a partir de la frecuencia elegida.') + '</div>');
 
             pintar(
                 cuerpo,
-                '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-rec-save">Guardar recurrencia</button>' +
+                '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-rec-save">' + TKA.t('modal_30_save_recurrence_btn', 'Guardar recurrencia') + '</button>' +
                 (r ? '<button type="button" class="tkt-btn" id="tkt-rec-pause" data-rec-toggle="' + r.id + '">' +
-                    (r.is_active ? 'Pausar' : 'Reanudar') + '</button>' : '') +
-                '<button type="button" class="tkt-btn" id="tkt-rec-back">' + (r ? 'Volver' : 'Cancelar') + '</button>'
+                    (r.is_active ? TKA.t('modal_30_pause_action', 'Pausar') : TKA.t('modal_30_resume_action', 'Reanudar')) + '</button>' : '') +
+                '<button type="button" class="tkt-btn" id="tkt-rec-back">' + (r ? TKA.t('modal_30_back_btn', 'Volver') : TKA.t('cancel', 'Cancelar')) + '</button>'
             );
         }
 
@@ -193,8 +195,8 @@
                 })
                 .fail(function () {
                     pintar(
-                        '<div class="tkt-empty-box">No se pudieron cargar las recurrencias.</div>',
-                        '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>'
+                        '<div class="tkt-empty-box">' + TKA.t('modal_30_load_failed', 'No se pudieron cargar las recurrencias.') + '</div>',
+                        '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>'
                     );
                 });
         }
@@ -235,7 +237,7 @@
                     $save.prop('disabled', false);
                     var json = xhr.responseJSON || {};
                     var primerError = json.errors ? json.errors[Object.keys(json.errors)[0]][0] : null;
-                    var msg = primerError || json.message || 'No se pudo guardar la recurrencia';
+                    var msg = primerError || json.message || TKA.t('modal_30_save_failed', 'No se pudo guardar la recurrencia');
                     tktNotify('error', msg);
                 },
             });
@@ -259,7 +261,7 @@
                 },
                 error: function (xhr) {
                     $backdrop.find('[data-rec-toggle="' + id + '"]').prop('disabled', false);
-                    var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado de la recurrencia');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_30_toggle_failed', 'No se pudo cambiar el estado de la recurrencia'));
                     tktNotify('error', msg);
                 },
             });
@@ -295,13 +297,13 @@
                             return '<div class="tkt-mailitem"><span class="av light"><i class="fa-solid fa-repeat"></i></span>' +
                                 '<span class="who"><span class="n">' + escapeHtml(r.name || r.subject) + '</span>' +
                                 '<span class="s">' + escapeHtml([r.frequency,
-                                    r.next_run_at_human ? 'próxima ' + r.next_run_at_human : null,
-                                    r.tickets_created ? r.tickets_created + ' creados' : null].filter(Boolean).join(' · ')) +
+                                    r.next_run_at_human ? TKA.t('modal_30_next_run_prefix', 'próxima :when', { ':when': r.next_run_at_human }) : null,
+                                    r.tickets_created ? TKA.t('modal_30_created_count', ':n creados', { ':n': r.tickets_created }) : null].filter(Boolean).join(' · ')) +
                                 '</span></span></div>';
                         }).join('') + '</div>'
-                        : '<div class="tkt-empty-box">No hay ninguna recurrencia activa.</div>',
-                    '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(TKA.urls.recurring || '#') + '">Programar recurrencia</a>' +
-                    '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>'
+                        : '<div class="tkt-empty-box">' + TKA.t('modal_30_no_active_recurrences', 'No hay ninguna recurrencia activa.') + '</div>',
+                    '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(TKA.urls.recurring || '#') + '">' + TKA.t('modal_30_schedule_recurrence_btn', 'Programar recurrencia') + '</a>' +
+                    '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>'
                 );
             });
             return;

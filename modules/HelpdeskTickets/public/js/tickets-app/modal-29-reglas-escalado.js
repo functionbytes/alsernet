@@ -30,7 +30,7 @@
             icon: 'fa-solid fa-arrow-up-right-dots', kicker: TKA.t('kicker_automation_escalation', 'Automatización · escalado'),
             title: TKA.t('modal_title_escalation_rules', 'Reglas de escalado'), width: '2xl',
             body: '<div id="tkt-esc-body"><div class="tkt-skeleton"></div></div>',
-            foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+            foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         // Sin endpoint (rutas aún no registradas) se conserva el comportamiento
@@ -48,7 +48,7 @@
             TKT_ESC.catalog = (d && d.catalog) || null;
             escRender($backdrop);
         }).fail(function () {
-            $backdrop.find('#tkt-esc-body').html('<div class="tkt-empty-box">No se pudieron cargar las reglas de escalado.</div>');
+            $backdrop.find('#tkt-esc-body').html('<div class="tkt-empty-box">' + TKA.t('modal_29_rules_load_failed', 'No se pudieron cargar las reglas de escalado.') + '</div>');
         });
 
         escBind($backdrop);
@@ -57,16 +57,19 @@
     // ── Fallback: el modal de solo lectura de antes ───────────────
     function escLegacyList($backdrop) {
         $backdrop.find('.tkt-modal-foot').html(
-            '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">Crear o editar reglas</a>' +
-            '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>');
+            '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">' + TKA.t('modal_29_create_edit_rules_link', 'Crear o editar reglas') + '</a>' +
+            '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>');
         withSettings(function (d) {
             var list = (d && d.automations) || [];
-            if (!list.length) { $backdrop.find('#tkt-esc-body').html('<div class="tkt-empty-box">No hay reglas de automatización definidas.</div>'); return; }
+            if (!list.length) { $backdrop.find('#tkt-esc-body').html('<div class="tkt-empty-box">' + TKA.t('modal_29_no_rules_defined', 'No hay reglas de automatización definidas.') + '</div>'); return; }
             $backdrop.find('#tkt-esc-body').html('<div class="tkt-mailitems">' + list.map(function (a) {
+                var runLabel = a.run_count
+                    ? (a.run_count === 1 ? TKA.t('modal_29_run_count_singular', ':n ejecución', { ':n': a.run_count }) : TKA.t('modal_29_run_count_plural', ':n ejecuciones', { ':n': a.run_count }))
+                    : null;
                 return '<div class="tkt-mailitem"><span class="av light"><i class="fa-solid fa-gears"></i></span>' +
                     '<span class="who"><span class="n">' + escapeHtml(a.name) + '</span>' +
-                    '<span class="s">' + escapeHtml([a.trigger_event, a.run_count ? a.run_count + ' ejecuciones' : null, a.last_run_at_human].filter(Boolean).join(' · ')) + '</span></span>' +
-                    '<span class="tkt-rchip' + (a.is_active ? ' ok' : '') + '">' + (a.is_active ? 'activa' : 'pausada') + '</span></div>';
+                    '<span class="s">' + escapeHtml([a.trigger_event, runLabel, a.last_run_at_human].filter(Boolean).join(' · ')) + '</span></span>' +
+                    '<span class="tkt-rchip' + (a.is_active ? ' ok' : '') + '">' + (a.is_active ? TKA.t('modal_29_active_word', 'activa') : TKA.t('modal_29_paused_word', 'pausada')) + '</span></div>';
             }).join('') + '</div>');
         });
     }
@@ -120,10 +123,10 @@
         var op = cond.op || cond.operator;
         var spec = escFieldSpec(cond.field);
         var label = spec ? spec.label : cond.field;
-        if (op === 'is_null') return label + ' está vacío';
-        if (op === 'is_not_null') return label + ' tiene valor';
+        if (op === 'is_null') return label + ' ' + TKA.t('modal_29_is_empty', 'está vacío');
+        if (op === 'is_not_null') return label + ' ' + TKA.t('modal_29_has_value', 'tiene valor');
         var valor = spec && spec.input === 'bool'
-            ? (cond.value ? 'sí' : 'no')
+            ? (cond.value ? TKA.t('modal_29_yes_word', 'sí') : TKA.t('modal_29_no_word', 'no'))
             : (spec && spec.options ? escValueLabel(spec.options, cond.value) : String(cond.value));
         return label + ' ' + escOpLabel(op) + ' ' + valor;
     }
@@ -139,13 +142,14 @@
         var conds = (rule.conditions || []).map(escConditionText);
         var acts = (rule.actions || []).map(escActionText);
         var si = escTriggerLabel(rule.trigger_event) || rule.trigger_event;
-        var joiner = rule.match_mode === 'any' ? ' o ' : ' y ';
-        return (conds.length ? si + ' y ' + conds.join(joiner) : si) + ' → ' + (acts.join(', ') || 'nada');
+        var andWord = ' ' + TKA.t('modal_29_and_connector', 'y') + ' ';
+        var joiner = rule.match_mode === 'any' ? ' ' + TKA.t('modal_29_or_connector', 'o') + ' ' : andWord;
+        return (conds.length ? si + andWord + conds.join(joiner) : si) + ' → ' + (acts.join(', ') || TKA.t('modal_29_no_actions', 'nada'));
     }
 
     // ── Render ────────────────────────────────────────────────────
     function escRender($backdrop) {
-        $backdrop.find('.tkt-modal-title').text(TKT_ESC.tab === 'form' ? 'Nueva regla' : 'Reglas de escalado');
+        $backdrop.find('.tkt-modal-title').text(TKT_ESC.tab === 'form' ? TKA.t('modal_29_new_rule_title', 'Nueva regla') : TKA.t('modal_title_escalation_rules', 'Reglas de escalado'));
         $backdrop.find('#tkt-esc-body').html(TKT_ESC.tab === 'form' ? escFormHtml() : escListHtml());
         $backdrop.find('.tkt-modal-foot').html(TKT_ESC.tab === 'form' ? escFormFootHtml() : escListFootHtml());
         initSelect2($backdrop.find('#tkt-esc-body'));
@@ -153,42 +157,47 @@
 
     function escListHtml() {
         if (!TKT_ESC.rules.length) {
-            return '<div class="tkt-empty-box">No hay reglas de automatización definidas.</div>' + escEvalNoteHtml();
+            return '<div class="tkt-empty-box">' + TKA.t('modal_29_no_rules_defined', 'No hay reglas de automatización definidas.') + '</div>' + escEvalNoteHtml();
         }
 
         var html = '<div class="tkt-mailitems">' + TKT_ESC.rules.map(function (r) {
             var huerfana = !escTriggerLabel(r.trigger_event);
+            var runLabel = r.run_count
+                ? (r.run_count === 1 ? TKA.t('modal_29_run_count_singular', ':n ejecución', { ':n': r.run_count }) : TKA.t('modal_29_run_count_plural', ':n ejecuciones', { ':n': r.run_count }))
+                : null;
             var meta = [
                 escTriggerLabel(r.trigger_event) || r.trigger_event,
-                r.run_count ? r.run_count + ' ejecuciones' : null,
+                runLabel,
                 r.last_run_at_human,
             ].filter(Boolean).join(' · ');
             var chipCls = 'tkt-rchip' + (r.is_active ? ' ok' : '');
-            var estado = r.is_active ? 'activa' : 'pausada';
+            var estado = r.is_active ? TKA.t('modal_29_active_word', 'activa') : TKA.t('modal_29_paused_word', 'pausada');
             // El estado es el botón de activar/pausar para quien puede gestionar;
             // para el resto es una etiqueta y nada más.
             var chip = TKT_ESC.canManage
                 ? '<button type="button" class="' + chipCls + ' tkt-esc-toggle" data-esc-toggle="' + r.id + '" ' +
-                  'title="' + (r.is_active ? 'Pausar la regla' : 'Activar la regla') + '">' + estado + '</button>'
+                  'title="' + (r.is_active ? TKA.t('modal_29_pause_rule_title', 'Pausar la regla') : TKA.t('modal_29_activate_rule_title', 'Activar la regla')) + '">' + estado + '</button>'
                 : '<span class="' + chipCls + '">' + estado + '</span>';
 
             return '<div class="tkt-mailitem tkt-esc-item"><span class="av light"><i class="fa-solid fa-gears"></i></span>' +
                 '<span class="who"><span class="n">' + escapeHtml(r.name) + '</span>' +
                 '<span class="s">' + escapeHtml(meta) + '</span>' +
                 '<span class="s tkt-esc-rule-sum">' + escapeHtml(escRuleSummary(r)) + '</span></span>' +
-                (huerfana ? '<span class="tkt-rchip" title="Su disparador no existe en el motor: nunca se ejecuta">sin disparador</span>' : '') +
+                (huerfana ? '<span class="tkt-rchip" title="' + TKA.t('modal_29_no_trigger_title', 'Su disparador no existe en el motor: nunca se ejecuta') + '">' + TKA.t('modal_29_no_trigger_chip', 'sin disparador') + '</span>' : '') +
                 chip + '</div>';
         }).join('') + '</div>';
 
         if (TKT_ESC.canManage) {
-            html += '<div class="tkt-cap">Toca el estado de una regla para activarla o pausarla.</div>';
+            html += '<div class="tkt-cap">' + TKA.t('modal_29_toggle_hint', 'Toca el estado de una regla para activarla o pausarla.') + '</div>';
         }
 
         // Solo se avisa de reglas huérfanas si de verdad las hay.
         var huerfanas = TKT_ESC.rules.filter(function (r) { return !escTriggerLabel(r.trigger_event); }).length;
         if (huerfanas) {
-            html += '<div class="tkt-note warn"><i class="fa-solid fa-triangle-exclamation"></i> ' +
-                'Hay ' + huerfanas + ' regla(s) con un disparador que el motor de tickets no conoce: están guardadas pero no se ejecutan nunca.</div>';
+            var warning = huerfanas === 1
+                ? TKA.t('modal_29_orphan_rules_warning_singular', 'Hay 1 regla con un disparador que el motor de tickets no conoce: está guardada pero no se ejecuta nunca.')
+                : TKA.t('modal_29_orphan_rules_warning_plural', 'Hay :n reglas con un disparador que el motor de tickets no conoce: están guardadas pero no se ejecutan nunca.', { ':n': huerfanas });
+            html += '<div class="tkt-note warn"><i class="fa-solid fa-triangle-exclamation"></i> ' + warning + '</div>';
         }
 
         return html + escEvalNoteHtml();
@@ -199,16 +208,15 @@
         // minutos": ese comando no existe (el real es ticket:autooverdue) y
         // además no evalúa reglas, solo marca incumplimientos de SLA. Lo que se
         // cuenta aquí es lo que de verdad pasa.
-        return '<div class="tkt-note"><i class="fa-solid fa-gauge-high"></i><div>' +
-            'Las reglas se evalúan en cuanto ocurre el evento elegido (en la cola <span class="tkt-esc-mono">default</span>). Las de «Periódicamente» se revisan cada 15 minutos y actúan una vez por periodo de inactividad del ticket. ' +
-            'El aviso <span class="tkt-esc-mono">SlaBreachMail</span> a los managers ya sale solo al incumplirse el SLA: no hace falta ninguna regla.' +
-            '</div></div>';
+        var note1 = TKA.t('modal_29_eval_note_1', 'Las reglas se evalúan en cuanto ocurre el evento elegido (en la cola :queue). Las de «Periódicamente» se revisan cada 15 minutos y actúan una vez por periodo de inactividad del ticket.', { ':queue': '<span class="tkt-esc-mono">default</span>' });
+        var note2 = TKA.t('modal_29_eval_note_2', 'El aviso :mail a los managers ya sale solo al incumplirse el SLA: no hace falta ninguna regla.', { ':mail': '<span class="tkt-esc-mono">SlaBreachMail</span>' });
+        return '<div class="tkt-note"><i class="fa-solid fa-gauge-high"></i><div>' + note1 + ' ' + note2 + '</div></div>';
     }
 
     function escListFootHtml() {
-        return (TKT_ESC.canManage ? '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-esc-new">Crear regla</button>' : '') +
-            '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">Ver todas en Ajustes</a>' +
-            '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>';
+        return (TKT_ESC.canManage ? '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-esc-new">' + TKA.t('modal_29_create_rule_btn', 'Crear regla') + '</button>' : '') +
+            '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">' + TKA.t('modal_29_view_all_settings_link', 'Ver todas en Ajustes') + '</a>' +
+            '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>';
     }
 
     // ── Formulario "Si… Entonces…" ────────────────────────────────
@@ -228,33 +236,33 @@
                 TKT_ESC.errors.map(escapeHtml).join('<br>') + '</div></div>';
         }
 
-        html += '<div class="tkt-field"><label class="tkt-label">Nombre de la regla</label>' +
-            '<input type="text" class="tkt-input" id="tkt-esc-name" maxlength="255" placeholder="Escalar los urgentes sin agente"' +
+        html += '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_29_rule_name_label', 'Nombre de la regla') + '</label>' +
+            '<input type="text" class="tkt-input" id="tkt-esc-name" maxlength="255" placeholder="' + escapeHtml(TKA.t('modal_29_rule_name_placeholder', 'Escalar los urgentes sin agente')) + '"' +
             ' value="' + escapeHtml(TKT_ESC.draft.name || '') + '"></div>';
 
-        html += '<div class="tkt-field"><label class="tkt-label">Si</label>' +
+        html += '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_29_if_label', 'Si') + '</label>' +
             '<select class="tkt-select" id="tkt-esc-trigger">' + triggers.map(function (t) {
                 return '<option value="' + escapeHtml(t.value) + '"' + (t.value === TKT_ESC.draft.trigger_event ? ' selected' : '') + '>' + escapeHtml(t.label) + '</option>';
             }).join('') + '</select></div>';
 
         var anyMode = TKT_ESC.draft.match_mode === 'any';
-        html += '<div class="tkt-field"><label class="tkt-label" for="tkt-esc-match">Combinar las condiciones</label>' +
+        html += '<div class="tkt-field"><label class="tkt-label" for="tkt-esc-match">' + TKA.t('modal_29_combine_conditions_label', 'Combinar las condiciones') + '</label>' +
             '<select class="tkt-select" id="tkt-esc-match">' +
-                '<option value="all"' + (anyMode ? '' : ' selected') + '>Se tienen que cumplir todas</option>' +
-                '<option value="any"' + (anyMode ? ' selected' : '') + '>Basta con que se cumpla una</option>' +
+                '<option value="all"' + (anyMode ? '' : ' selected') + '>' + TKA.t('modal_29_match_all_option', 'Se tienen que cumplir todas') + '</option>' +
+                '<option value="any"' + (anyMode ? ' selected' : '') + '>' + TKA.t('modal_29_match_any_option', 'Basta con que se cumpla una') + '</option>' +
             '</select></div>';
 
-        html += '<div class="tkt-field"><label class="tkt-label">Y se cumple<button type="button" class="tkt-label-action" id="tkt-esc-add-cond">+ añadir condición</button></label>' +
+        html += '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_29_and_matches_label', 'Y se cumple') + '<button type="button" class="tkt-label-action" id="tkt-esc-add-cond">' + TKA.t('modal_29_add_condition_btn', '+ añadir condición') + '</button></label>' +
             '<div id="tkt-esc-conds">' + (TKT_ESC.conds.length
                 ? TKT_ESC.conds.map(function (c, i) { return escCondHtml(i, c); }).join('')
-                : '<div class="tkt-empty-box">Sin condiciones: la regla vale para cualquier ticket.</div>') +
+                : '<div class="tkt-empty-box">' + TKA.t('modal_29_no_conditions_note', 'Sin condiciones: la regla vale para cualquier ticket.') + '</div>') +
             '</div></div>';
 
-        html += '<div class="tkt-field"><label class="tkt-label">Entonces<button type="button" class="tkt-label-action" id="tkt-esc-add-act">+ añadir acción</button></label>' +
+        html += '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_29_then_label', 'Entonces') + '<button type="button" class="tkt-label-action" id="tkt-esc-add-act">' + TKA.t('modal_29_add_action_btn', '+ añadir acción') + '</button></label>' +
             '<div id="tkt-esc-acts">' + TKT_ESC.acts.map(function (a, i) { return escActHtml(i, a); }).join('') + '</div></div>';
 
         html += '<label class="tkt-check"><input type="checkbox" id="tkt-esc-active"' +
-            (TKT_ESC.draft.is_active ? ' checked' : '') + '> Activar la regla al crearla</label>';
+            (TKT_ESC.draft.is_active ? ' checked' : '') + '> ' + TKA.t('modal_29_activate_on_create_checkbox', 'Activar la regla al crearla') + '</label>';
 
         if (TKT_ESC.preview) {
             html += '<div class="tkt-note ' + (TKT_ESC.preview.matched ? 'ok' : '') + '"><i class="fa-solid fa-flask"></i><div>' +
@@ -265,8 +273,8 @@
     }
 
     function escFormFootHtml() {
-        return '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-esc-save">Crear regla</button>' +
-            '<button type="button" class="tkt-btn" id="tkt-esc-test">Probar regla</button>' +
+        return '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-esc-save">' + TKA.t('modal_29_create_rule_btn', 'Crear regla') + '</button>' +
+            '<button type="button" class="tkt-btn" id="tkt-esc-test">' + TKA.t('modal_29_test_rule_btn', 'Probar regla') + '</button>' +
             '<button type="button" class="tkt-btn" id="tkt-esc-cancel">' + TKA.t('cancel', 'Cancelar') + '</button>';
     }
 
@@ -277,8 +285,8 @@
         var op = cond.op && spec.ops.indexOf(cond.op) >= 0 ? cond.op : spec.ops[0];
 
         return '<div class="tkt-esc-rule" data-cond="' + i + '">' +
-            '<div class="tkt-esc-rule-head"><span class="tkt-cap">Condición ' + (i + 1) + '</span>' +
-            '<button type="button" class="tkt-btn-icon tkt-esc-rule-del" data-cond-del="' + i + '" title="Quitar la condición"><i class="fa-solid fa-xmark"></i></button></div>' +
+            '<div class="tkt-esc-rule-head"><span class="tkt-cap">' + TKA.t('modal_29_condition_label', 'Condición :n', { ':n': i + 1 }) + '</span>' +
+            '<button type="button" class="tkt-btn-icon tkt-esc-rule-del" data-cond-del="' + i + '" title="' + TKA.t('modal_29_remove_condition_title', 'Quitar la condición') + '"><i class="fa-solid fa-xmark"></i></button></div>' +
             '<div class="tkt-duo">' +
                 '<div class="tkt-field"><select class="tkt-select" data-cond-field="' + i + '">' + fields.map(function (f) {
                     return '<option value="' + escapeHtml(f.field) + '"' + (f.field === spec.field ? ' selected' : '') + '>' + escapeHtml(f.label) + '</option>';
@@ -297,9 +305,9 @@
         if (!spec) return '';
 
         return '<div class="tkt-esc-rule" data-act="' + i + '">' +
-            '<div class="tkt-esc-rule-head"><span class="tkt-cap">Acción ' + (i + 1) + '</span>' +
+            '<div class="tkt-esc-rule-head"><span class="tkt-cap">' + TKA.t('modal_29_action_label', 'Acción :n', { ':n': i + 1 }) + '</span>' +
             (TKT_ESC.acts.length > 1
-                ? '<button type="button" class="tkt-btn-icon tkt-esc-rule-del" data-act-del="' + i + '" title="Quitar la acción"><i class="fa-solid fa-xmark"></i></button>'
+                ? '<button type="button" class="tkt-btn-icon tkt-esc-rule-del" data-act-del="' + i + '" title="' + TKA.t('modal_29_remove_action_title', 'Quitar la acción') + '"><i class="fa-solid fa-xmark"></i></button>'
                 : '') +
             '</div>' +
             '<div class="tkt-field"><select class="tkt-select" data-act-type="' + i + '">' + actions.map(function (a) {
@@ -325,8 +333,8 @@
         }
 
         if (spec.input === 'bool') {
-            return '<select class="tkt-select ' + cls + '"><option value="1">Sí</option>' +
-                '<option value="0"' + (String(actual) === '0' ? ' selected' : '') + '>No</option></select>';
+            return '<select class="tkt-select ' + cls + '"><option value="1">' + TKA.t('modal_29_yes_option', 'Sí') + '</option>' +
+                '<option value="0"' + (String(actual) === '0' ? ' selected' : '') + '>' + TKA.t('modal_29_no_option', 'No') + '</option></select>';
         }
 
         if (spec.input === 'number') {
@@ -334,18 +342,18 @@
         }
 
         if (spec.input === 'textarea') {
-            return '<textarea class="tkt-input ' + cls + '" rows="2" maxlength="2000" placeholder="Texto de la nota interna">' +
+            return '<textarea class="tkt-input ' + cls + '" rows="2" maxlength="2000" placeholder="' + escapeHtml(TKA.t('modal_29_note_text_placeholder', 'Texto de la nota interna')) + '">' +
                 escapeHtml(String(actual == null ? '' : actual)) + '</textarea>';
         }
 
         if (spec.input === 'text') {
-            return '<input type="text" class="tkt-input ' + cls + '" maxlength="255" placeholder="Escribe el valor"' +
+            return '<input type="text" class="tkt-input ' + cls + '" maxlength="255" placeholder="' + escapeHtml(TKA.t('modal_29_value_placeholder', 'Escribe el valor')) + '"' +
                 ' value="' + escapeHtml(String(actual == null ? '' : actual)) + '">';
         }
 
         var list = escCatalogList(spec.options);
         if (!list.length) {
-            return '<div class="tkt-empty-box">No hay opciones disponibles para esta elección.</div>';
+            return '<div class="tkt-empty-box">' + TKA.t('modal_29_no_options_available', 'No hay opciones disponibles para esta elección.') + '</div>';
         }
 
         return '<select class="tkt-select ' + cls + '">' + list.map(function (o) {
@@ -418,7 +426,7 @@
         } else if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
             msgs.push(xhr.responseJSON.message);
         }
-        if (!msgs.length) msgs.push(xhr && xhr.status === 403 ? 'Hace falta permiso de ajustes del módulo.' : porDefecto);
+        if (!msgs.length) msgs.push(xhr && xhr.status === 403 ? TKA.t('modal_29_settings_permission_required', 'Hace falta permiso de ajustes del módulo.') : porDefecto);
         return msgs;
     }
 
@@ -457,7 +465,7 @@
                 escRender($backdrop);
             }).fail(function (xhr) {
                 $chip.prop('disabled', false);
-                var msg = escApiError(xhr, 'No se pudo cambiar el estado de la regla.')[0];
+                var msg = escApiError(xhr, TKA.t('modal_29_toggle_rule_failed', 'No se pudo cambiar el estado de la regla.'))[0];
                 tktNotify('error', msg);
             });
         });
@@ -534,19 +542,20 @@
             }).done(function (resp) {
                 escSyncStructure($backdrop);
                 TKT_ESC.errors = null;
+                var matchedText = TKA.t('modal_29_preview_matched', 'Las condiciones coinciden con :matched de los últimos :scanned tickets', { ':matched': resp.matched, ':scanned': resp.scanned }) +
+                    (resp.sample.length ? TKA.t('modal_29_preview_sample_suffix', ' (:samples)', { ':samples': resp.sample.map(function (s) { return s.ticket_number; }).join(', ') }) : '') +
+                    TKA.t('modal_29_preview_no_action_note', '. La prueba no ejecuta ninguna acción.');
                 TKT_ESC.preview = {
                     matched: resp.matched,
                     text: resp.matched
-                        ? 'Las condiciones coinciden con ' + resp.matched + ' de los últimos ' + resp.scanned + ' tickets' +
-                          (resp.sample.length ? ' (' + resp.sample.map(function (s) { return s.ticket_number; }).join(', ') + ')' : '') +
-                          '. La prueba no ejecuta ninguna acción.'
-                        : 'Ninguno de los últimos ' + resp.scanned + ' tickets cumple estas condiciones.',
+                        ? matchedText
+                        : TKA.t('modal_29_preview_none_matched', 'Ninguno de los últimos :scanned tickets cumple estas condiciones.', { ':scanned': resp.scanned }),
                 };
                 escRender($backdrop);
             }).fail(function (xhr) {
                 $btn.prop('disabled', false);
                 escSyncStructure($backdrop);
-                TKT_ESC.errors = escApiError(xhr, 'No se pudo probar la regla.');
+                TKT_ESC.errors = escApiError(xhr, TKA.t('modal_29_test_rule_failed', 'No se pudo probar la regla.'));
                 TKT_ESC.preview = null;
                 escRender($backdrop);
             });
@@ -558,7 +567,7 @@
             var datos = escReadForm($backdrop);
             if (!datos.name) {
                 escSyncStructure($backdrop);
-                TKT_ESC.errors = ['Ponle un nombre a la regla.'];
+                TKT_ESC.errors = [TKA.t('modal_29_name_required', 'Ponle un nombre a la regla.')];
                 escRender($backdrop);
                 return;
             }
@@ -576,7 +585,7 @@
             }).fail(function (xhr) {
                 $btn.prop('disabled', false);
                 escSyncStructure($backdrop);
-                TKT_ESC.errors = escApiError(xhr, 'No se pudo crear la regla.');
+                TKT_ESC.errors = escApiError(xhr, TKA.t('modal_29_create_rule_failed', 'No se pudo crear la regla.'));
                 escRender($backdrop);
             });
         });

@@ -10,20 +10,20 @@
             titleChip: t.ticket_number,
             width: 'md',
             body: '<div class="tkt-headline bad">' +
-                    '<div class="t mono">' + escapeHtml(mail.delivery_error || 'Rebote sin detalle del servidor') + '</div>' +
-                    '<div class="s">El envío a <strong>' + escapeHtml(mail.to || '—') + '</strong> no llegó a su destino.</div>' +
+                    '<div class="t mono">' + escapeHtml(mail.delivery_error || TKA.t('modal_06_bounce_no_detail', 'Rebote sin detalle del servidor')) + '</div>' +
+                    '<div class="s">' + TKA.t('modal_06_send_failed_to', 'El envío a :to no llegó a su destino.', { ':to': '<strong>' + escapeHtml(mail.to || '—') + '</strong>' }) + '</div>' +
                   '</div>' +
                   '<div class="tkt-side-rows">' +
-                    sideRow('Asunto', mail.subject || '—') +
-                    sideRow('Estado', mail.status || '—', { mono: true, last: true }) +
+                    sideRow(TKA.t('modal_06_subject_label', 'Asunto'), mail.subject || '—') +
+                    sideRow(TKA.t('status', 'Estado'), mail.status || '—', { mono: true, last: true }) +
                   '</div>' +
-                  '<div class="tkt-field"><label class="tkt-label" for="tkt-bounce-to">Corregir destinatario<span class="req">*</span></label>' +
+                  '<div class="tkt-field"><label class="tkt-label" for="tkt-bounce-to">' + TKA.t('modal_06_fix_recipient_label', 'Corregir destinatario') + '<span class="req">*</span></label>' +
                     '<input type="email" class="tkt-input" id="tkt-bounce-to" value="' + escapeHtml(mail.to || '') + '"></div>' +
-                  '<label class="tkt-check"><input type="checkbox" id="tkt-bounce-contact" checked> Actualizar el email del contacto</label>' +
-                  '<label class="tkt-check"><input type="checkbox" id="tkt-bounce-suppress" checked> Añadir la dirección anterior a la lista de supresión</label>' +
-                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Se dejará una nota interna en el ticket con el cambio de destinatario.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bounce-confirm">Corregir y reenviar</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Descartar</button>',
+                  '<label class="tkt-check"><input type="checkbox" id="tkt-bounce-contact" checked> ' + TKA.t('modal_06_update_contact_email', 'Actualizar el email del contacto') + '</label>' +
+                  '<label class="tkt-check"><input type="checkbox" id="tkt-bounce-suppress" checked> ' + TKA.t('modal_06_add_to_suppression_list', 'Añadir la dirección anterior a la lista de supresión') + '</label>' +
+                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_06_internal_note_notice', 'Se dejará una nota interna en el ticket con el cambio de destinatario.') + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bounce-confirm">' + TKA.t('btn_fix_and_resend', 'Corregir y reenviar') + '</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('discard', 'Descartar') + '</button>',
         }));
 
         $backdrop.on('click', '#tkt-bounce-confirm', function () {

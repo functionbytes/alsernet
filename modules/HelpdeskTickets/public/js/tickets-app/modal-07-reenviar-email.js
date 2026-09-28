@@ -12,27 +12,27 @@
             body: '<div class="tkt-headline">' +
                     '<div class="t">' + escapeHtml(mail.subject || TKA.t('no_subject', '(sin asunto)')) + '</div>' +
                     '<div class="s">' + escapeHtml(mail.sent_at_human || mail.created_at_human || '') +
-                        (attCount ? ' · ' + attCount + (attCount === 1 ? ' adjunto' : ' adjuntos') : '') + '</div>' +
+                        (attCount ? ' · ' + attCount + (attCount === 1 ? TKA.t('modal_07_attachment_singular_suffix', ' adjunto') : TKA.t('modal_07_attachment_plural_suffix', ' adjuntos')) : '') + '</div>' +
                   '</div>' +
-                  '<div class="tkt-field"><label class="tkt-label" for="tkt-resend-to">Destinatario<span class="req">*</span></label>' +
+                  '<div class="tkt-field"><label class="tkt-label" for="tkt-resend-to">' + TKA.t('modal_07_recipient_label', 'Destinatario') + '<span class="req">*</span></label>' +
                     '<input type="email" class="tkt-input" id="tkt-resend-to" value="' + escapeHtml(mail.to || '') + '"></div>' +
                   '<div class="tkt-pick-list">' +
                     '<label class="tkt-pick as-option on"><input type="radio" name="tkt-resend-mode" value="asis" checked>' +
-                        '<span class="who"><span class="n">Reenviar tal cual</span><span class="s">Misma copia, con sus adjuntos</span></span></label>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_07_resend_as_is', 'Reenviar tal cual') + '</span><span class="s">' + TKA.t('modal_07_resend_as_is_hint', 'Misma copia, con sus adjuntos') + '</span></span></label>' +
                     '<label class="tkt-pick as-option"><input type="radio" name="tkt-resend-mode" value="edit">' +
-                        '<span class="who"><span class="n">Editar antes de reenviar</span><span class="s">Abre el redactor con este contenido</span></span></label>' +
+                        '<span class="who"><span class="n">' + TKA.t('modal_07_edit_before_resend', 'Editar antes de reenviar') + '</span><span class="s">' + TKA.t('modal_07_edit_before_resend_hint', 'Abre el redactor con este contenido') + '</span></span></label>' +
                     (attCount ? '<label class="tkt-pick as-option"><input type="radio" name="tkt-resend-mode" value="noatt">' +
-                        '<span class="who"><span class="n">Reenviar sin adjuntos</span><span class="s">Solo el texto del mensaje</span></span></label>' : '') +
+                        '<span class="who"><span class="n">' + TKA.t('modal_07_resend_without_attachments', 'Reenviar sin adjuntos') + '</span><span class="s">' + TKA.t('modal_07_resend_without_attachments_hint', 'Solo el texto del mensaje') + '</span></span></label>' : '') +
                   '</div>' +
-                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Se generará un nuevo Message-ID enlazado al hilo original mediante <span class="mono">In-Reply-To</span>.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-resend-confirm">Reenviar ahora</button>' +
+                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_07_new_message_id_note', 'Se generará un nuevo Message-ID enlazado al hilo original mediante :header.', { ':header': '<span class="mono">In-Reply-To</span>' }) + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-resend-confirm">' + TKA.t('btn_resend_now', 'Reenviar ahora') + '</button>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         $backdrop.on('change', '[name="tkt-resend-mode"]', function () {
             $backdrop.find('.tkt-pick.as-option').removeClass('on');
             $(this).closest('.tkt-pick').addClass('on');
-            $backdrop.find('#tkt-resend-confirm').text($(this).val() === 'edit' ? 'Abrir el redactor' : 'Reenviar ahora');
+            $backdrop.find('#tkt-resend-confirm').text($(this).val() === 'edit' ? TKA.t('modal_07_open_composer_btn', 'Abrir el redactor') : TKA.t('btn_resend_now', 'Reenviar ahora'));
         });
 
         $backdrop.on('click', '#tkt-resend-confirm', function () {

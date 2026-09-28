@@ -11,7 +11,7 @@
         function confidenceChip(conf) {
             if (conf == null) return '';
             var pct = Math.round(conf * 100);
-            return ' <span class="tkt-rchip' + (pct > 90 ? ' ok' : '') + '">' + pct + '% confianza</span>';
+            return ' <span class="tkt-rchip' + (pct > 90 ? ' ok' : '') + '">' + TKA.t('modal_27_confidence_pct', ':pct% confianza', { ':pct': pct }) + '</span>';
         }
 
         // sideRow() escapa siempre su 'value' — aquí hace falta concatenar
@@ -33,18 +33,18 @@
             icon: 'fa-solid fa-tags', kicker: TKA.t('kicker_ai_classification', 'IA · clasificación'),
             title: TKA.t('modal_title_auto_tagging', 'Etiquetado automático'), titleChip: t.ticket_number, width: 'md',
             body: '<div class="tkt-side-rows">' +
-                    sideRowWithChip('Categoría sugerida', (suggestion.category && suggestion.category.name) || '—',
+                    sideRowWithChip(TKA.t('modal_27_suggested_category', 'Categoría sugerida'), (suggestion.category && suggestion.category.name) || '—',
                         suggestion.category ? confidenceChip(suggestion.category.confidence) : '', { strong: true }) +
-                    sideRowWithChip('Prioridad sugerida', suggestion.priority ? priorityLabel(suggestion.priority) : '—',
+                    sideRowWithChip(TKA.t('modal_27_suggested_priority', 'Prioridad sugerida'), suggestion.priority ? priorityLabel(suggestion.priority) : '—',
                         confidenceChip(suggestion.priority_confidence), { strong: true, last: true }) +
                   '</div><div class="tkt-side-rows">' +
-                    sideRow('Categoría actual', t.category_name || '—') +
-                    sideRow('Prioridad actual', priorityLabel(t.priority), { last: true }) +
+                    sideRow(TKA.t('modal_27_current_category', 'Categoría actual'), t.category_name || '—') +
+                    sideRow(TKA.t('modal_27_current_priority', 'Prioridad actual'), priorityLabel(t.priority), { last: true }) +
                   '</div>' +
-                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> La confianza es la cuota de coincidencia de palabras clave, no la certeza de un modelo entrenado. La clasificación se calcula al entrar el correo, antes de asignar agente.</div>' +
-                  '<label class="tkt-check"><input type="checkbox" id="tkt-tag-autoapply"' + (autoApplyOn ? ' checked' : '') + '> Aplicar automáticamente las próximas sugerencias con más del 90% de confianza</label>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tag-apply">Aplicar sugerencias</button>' +
-                  '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">Ajustar reglas</a>' +
+                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_27_confidence_explanation', 'La confianza es la cuota de coincidencia de palabras clave, no la certeza de un modelo entrenado. La clasificación se calcula al entrar el correo, antes de asignar agente.') + '</div>' +
+                  '<label class="tkt-check"><input type="checkbox" id="tkt-tag-autoapply"' + (autoApplyOn ? ' checked' : '') + '> ' + TKA.t('modal_27_autoapply_checkbox', 'Aplicar automáticamente las próximas sugerencias con más del 90% de confianza') + '</label>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tag-apply">' + TKA.t('modal_27_apply_suggestions', 'Aplicar sugerencias') + '</button>' +
+                  '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.automationsIndex || '#') + '">' + TKA.t('modal_27_adjust_rules', 'Ajustar reglas') + '</a>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -57,7 +57,7 @@
                     if (window.toastr) toastr.success((resp && resp.message) || TKA.t('saved_generic', 'Guardado'));
                 })
                 .fail(function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_27_save_failed', 'No se pudo guardar.'));
                     tktNotify('error', msg);
                 });
         });

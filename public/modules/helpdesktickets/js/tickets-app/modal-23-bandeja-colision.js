@@ -23,15 +23,15 @@
 
                 return '<div class="tkt-mailitem"><span class="av">' + escapeHtml(initials(pr.name)) + '</span>' +
                     '<span class="who"><span class="n">' + escapeHtml(pr.name) + '</span>' +
-                    '<span class="s">' + escapeHtml(escribiendo ? 'Está redactando una respuesta' : 'Viendo el ticket') + '</span></span>' +
-                    '<span class="tkt-live"><span class="dot"></span>' + (escribiendo ? 'escribiendo' : 'viendo') + '</span>' +
+                    '<span class="s">' + escapeHtml(escribiendo ? TKA.t('modal_23_composing_reply', 'Está redactando una respuesta') : TKA.t('modal_23_viewing_ticket', 'Viendo el ticket')) + '</span></span>' +
+                    '<span class="tkt-live"><span class="dot"></span>' + (escribiendo ? TKA.t('modal_23_typing_badge', 'escribiendo') : TKA.t('modal_23_viewing_badge', 'viendo')) + '</span>' +
                     // Acceso rápido a las dos acciones que se piden desde aquí:
                     // pasarle el ticket a esa persona, o avisarla de que estáis
                     // los dos dentro.
-                    '<button type="button" class="tkt-btn tkt-btn-sm" data-assign-to="' + escapeHtml(String(pr.id)) + '">Asignar</button>' +
-                    '<button type="button" class="tkt-btn tkt-btn-sm" data-nudge="' + escapeHtml(String(pr.id)) + '">Avisar</button></div>';
+                    '<button type="button" class="tkt-btn tkt-btn-sm" data-assign-to="' + escapeHtml(String(pr.id)) + '">' + TKA.t('modal_23_assign_btn', 'Asignar') + '</button>' +
+                    '<button type="button" class="tkt-btn tkt-btn-sm" data-nudge="' + escapeHtml(String(pr.id)) + '">' + TKA.t('modal_23_nudge_btn', 'Avisar') + '</button></div>';
               }).join('')
-            : '<div class="tkt-empty-box">Ahora mismo nadie más está en este ticket.</div>';
+            : '<div class="tkt-empty-box">' + TKA.t('modal_23_nobody_else_here', 'Ahora mismo nadie más está en este ticket.') + '</div>';
 
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-users', kicker: TKA.t('kicker_inbox_collision', 'Bandeja · colisión'),
@@ -40,9 +40,9 @@
             // truncaba de inmediato.
             title: TKA.t('modal_title_shared_inbox', 'Bandeja compartida'), titleChip: t.ticket_number, width: 'xl',
             body: '<div class="tkt-mailitems">' + rows + '</div>' +
-                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> La presencia se actualiza mientras la pestaña está abierta; al cerrarla el resto deja de verte.</div>',
-            foot: (people.length ? '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-collision-take">Tomar el control</button>' : '') +
-                '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+                '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_23_presence_note', 'La presencia se actualiza mientras la pestaña está abierta; al cerrarla el resto deja de verte.') + '</div>',
+            foot: (people.length ? '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-collision-take">' + TKA.t('modal_23_take_control_btn', 'Tomar el control') + '</button>' : '') +
+                '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         // "Avisar a X": notificación puntual al agente elegido, no cambia
@@ -56,7 +56,7 @@
                     tktNotify('success', (resp && resp.message) || TKA.t('notice_sent', 'Aviso enviado'));
                 })
                 .fail(function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo avisar.');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_23_nudge_failed', 'No se pudo avisar.'));
                     tktNotify('error', msg);
                 })
                 .always(function () { $btn.prop('disabled', false); });

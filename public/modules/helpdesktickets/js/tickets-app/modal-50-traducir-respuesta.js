@@ -1,11 +1,20 @@
 'use strict';
 
     // ── Modal 50: Traducir respuesta ──────────────────────────
-    var TRANSLATE_LANGS = [
-        { code: 'es', label: 'Español' }, { code: 'en', label: 'Inglés' },
-        { code: 'pt', label: 'Portugués' }, { code: 'fr', label: 'Francés' },
-        { code: 'de', label: 'Alemán' }, { code: 'it', label: 'Italiano' },
-    ];
+    // Función, no un array de módulo: TKA.i18n todavía no está poblado
+    // cuando este archivo se parsea (ver csatLabel en modal-40 para el mismo
+    // razonamiento), así que los nombres de idioma se resuelven al abrir el
+    // modal, no al cargar el script.
+    function translateLangs() {
+        return [
+            { code: 'es', label: TKA.t('modal_50_lang_es', 'Español') },
+            { code: 'en', label: TKA.t('modal_50_lang_en', 'Inglés') },
+            { code: 'pt', label: TKA.t('modal_50_lang_pt', 'Portugués') },
+            { code: 'fr', label: TKA.t('modal_50_lang_fr', 'Francés') },
+            { code: 'de', label: TKA.t('modal_50_lang_de', 'Alemán') },
+            { code: 'it', label: TKA.t('modal_50_lang_it', 'Italiano') },
+        ];
+    }
 
     /**
      * Traducir la respuesta antes de enviarla.
@@ -38,19 +47,19 @@
             title: TKA.t('modal_title_translate_reply', 'Traducir respuesta'),
             titleChip: t.ticket_number,
             width: 'lg',
-            body: '<div class="tkt-field"><label class="tkt-label" for="tkt-tr-target">Idioma del cliente' +
-                    (detected ? '<span class="hint">detectado: ' + escapeHtml(detected) + '</span>' : '') + '</label>' +
-                    '<select class="tkt-input" id="tkt-tr-target" data-no-select2>' + TRANSLATE_LANGS.map(function (l) {
+            body: '<div class="tkt-field"><label class="tkt-label" for="tkt-tr-target">' + TKA.t('modal_50_target_lang_label', 'Idioma del cliente') +
+                    (detected ? '<span class="hint">' + TKA.t('modal_50_detected_prefix', 'detectado: ') + escapeHtml(detected) + '</span>' : '') + '</label>' +
+                    '<select class="tkt-input" id="tkt-tr-target" data-no-select2>' + translateLangs().map(function (l) {
                         return '<option value="' + l.code + '"' + (detected && detected.indexOf(l.code) === 0 ? ' selected' : '') + '>' + escapeHtml(l.label) + '</option>';
                     }).join('') + '</select></div>' +
-                  '<div class="tkt-field"><label class="tkt-label">Tu texto</label>' +
+                  '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_50_your_text_label', 'Tu texto') + '</label>' +
                     '<div class="tkt-tpl-preview">' + escapeHtml(source) + '</div></div>' +
-                  '<div class="tkt-field"><label class="tkt-label">Se enviará al cliente</label>' +
-                    '<div class="tkt-tpl-preview" id="tkt-tr-out">Pulsa "Traducir" para ver el resultado.</div></div>' +
-                  '<label class="tkt-check"><input type="checkbox" id="tkt-tr-keep"> Adjuntar la versión original al pie</label>' +
-                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> La traducción sustituye el cuerpo del redactor; el texto original solo se conserva si marcas la casilla.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tr-use" disabled>Usar traducción</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-tr-run">Traducir</button>' +
+                  '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_50_will_be_sent_label', 'Se enviará al cliente') + '</label>' +
+                    '<div class="tkt-tpl-preview" id="tkt-tr-out">' + TKA.t('modal_50_translate_placeholder', 'Pulsa "Traducir" para ver el resultado.') + '</div></div>' +
+                  '<label class="tkt-check"><input type="checkbox" id="tkt-tr-keep"> ' + TKA.t('modal_50_keep_original_checkbox', 'Adjuntar la versión original al pie') + '</label>' +
+                  '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_50_replace_note', 'La traducción sustituye el cuerpo del redactor; el texto original solo se conserva si marcas la casilla.') + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-tr-use" disabled>' + TKA.t('modal_50_use_translation_btn', 'Usar traducción') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-tr-run">' + TKA.t('btn_translate', 'Traducir') + '</button>' +
                   '<button type="button" class="tkt-btn" id="tkt-tr-back">' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -75,7 +84,7 @@
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false).text(TKA.t('btn_translate', 'Traducir'));
-                    var msg = apiErrorMessage(xhr, 'No se pudo traducir el texto');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_50_translate_failed', 'No se pudo traducir el texto'));
                     tktNotify('error', msg);
                 },
             });
@@ -159,53 +168,53 @@
             width: 'xl',
             body: '' +
                 '<div class="tkt-field">' +
-                    '<label class="tkt-label" for="tkt-compose-to">Para<span class="req">*</span>' +
-                        '<button type="button" class="tkt-label-action" id="tkt-compose-ccbcc">+ CC · CCO</button>' +
+                    '<label class="tkt-label" for="tkt-compose-to">' + TKA.t('modal_01_to_label', 'Para') + '<span class="req">*</span>' +
+                        '<button type="button" class="tkt-label-action" id="tkt-compose-ccbcc">' + TKA.t('modal_01_ccbcc_toggle_btn', '+ CC · CCO') + '</button>' +
                     '</label>' +
                     '<input type="email" class="tkt-input" id="tkt-compose-to" value="' + escapeHtml(composeDraft.to) + '"></div>' +
                 '<div class="tkt-field-row" id="tkt-compose-ccbcc-row"' + (hasCcBcc ? '' : ' hidden') + '>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-cc">CC <span class="hint">separados por coma</span></label><input type="text" class="tkt-input" id="tkt-compose-cc" value="' + escapeHtml(composeDraft.cc) + '"></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-bcc">CCO</label><input type="text" class="tkt-input" id="tkt-compose-bcc" value="' + escapeHtml(composeDraft.bcc) + '"></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-cc">' + TKA.t('modal_01_cc_label', 'CC') + ' <span class="hint">' + TKA.t('modal_01_cc_hint', 'separados por coma') + '</span></label><input type="text" class="tkt-input" id="tkt-compose-cc" value="' + escapeHtml(composeDraft.cc) + '"></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-bcc">' + TKA.t('modal_01_bcc_label', 'CCO') + '</label><input type="text" class="tkt-input" id="tkt-compose-bcc" value="' + escapeHtml(composeDraft.bcc) + '"></div>' +
                 '</div>' +
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-subject">Asunto<span class="req">*</span></label>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-subject">' + TKA.t('modal_01_subject_label', 'Asunto') + '<span class="req">*</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-compose-subject" value="' + escapeHtml(composeDraft.subject) + '"></div>' +
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label">Plantilla</label>' +
-                        '<button type="button" class="tkt-input tkt-input-btn" id="tkt-compose-tpl"><span>Elegir plantilla…</span><i class="fa-solid fa-chevron-down"></i></button></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-from">Remitente</label>' +
+                    '<div class="tkt-field"><label class="tkt-label">' + TKA.t('modal_01_template_label', 'Plantilla') + '</label>' +
+                        '<button type="button" class="tkt-input tkt-input-btn" id="tkt-compose-tpl"><span>' + TKA.t('modal_01_choose_template_btn', 'Elegir plantilla…') + '</span><i class="fa-solid fa-chevron-down"></i></button></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-compose-from">' + TKA.t('modal_01_sender_label', 'Remitente') + '</label>' +
                         (senders.length > 1
                             ? '<select class="tkt-input" id="tkt-compose-from" data-no-select2>' + senders.map(function (a) {
                                 return '<option value="' + escapeHtml(a) + '"' + (a === composeDraft.from ? ' selected' : '') + '>' + escapeHtml(a) + '</option>';
                               }).join('') + '</select>'
-                            : '<input type="text" class="tkt-input" id="tkt-compose-from" value="' + escapeHtml(composeDraft.from) + '" readonly title="Única dirección de envío configurada">') +
+                            : '<input type="text" class="tkt-input" id="tkt-compose-from" value="' + escapeHtml(composeDraft.from) + '" readonly title="' + escapeHtml(TKA.t('modal_01_single_sender_title', 'Única dirección de envío configurada')) + '">') +
                     '</div>' +
                 '</div>' +
                 '<div class="tkt-field">' +
-                    '<label class="tkt-label" for="tkt-compose-body">Mensaje<span class="req">*</span>' +
+                    '<label class="tkt-label" for="tkt-compose-body">' + TKA.t('modal_01_message_label', 'Mensaje') + '<span class="req">*</span>' +
                         // Sintaxis real de TicketVariableInterpolator: snake_case
                         // plano, nunca con puntos (bug 11-sep-2026).
-                        '<span class="hint">variables: {{customer_name}} {{ticket_number}} {{agent_name}}</span></label>' +
+                        '<span class="hint">' + TKA.t('modal_01_variables_hint', 'variables: {{customer_name}} {{ticket_number}} {{agent_name}}') + '</span></label>' +
                     '<div class="tkt-composer">' +
                         '<div class="tkt-composer-bar">' +
-                            '<button type="button" data-wrap="**" title="Negrita"><i class="fa-solid fa-bold"></i></button>' +
-                            '<button type="button" data-wrap="_" title="Cursiva"><i class="fa-solid fa-italic"></i></button>' +
-                            '<button type="button" data-prefix="- " title="Lista"><i class="fa-solid fa-list-ul"></i></button>' +
-                            '<button type="button" id="tkt-compose-link" title="Enlace"><i class="fa-solid fa-link"></i></button>' +
-                            '<button type="button" id="tkt-compose-translate" class="right" title="Traducir antes de enviar"><i class="fa-solid fa-language"></i></button>' +
-                            '<button type="button" id="tkt-compose-attach-open" title="Adjuntar archivos"><i class="fa-solid fa-paperclip"></i></button>' +
+                            '<button type="button" data-wrap="**" title="' + escapeHtml(TKA.t('modal_01_bold_title', 'Negrita')) + '"><i class="fa-solid fa-bold"></i></button>' +
+                            '<button type="button" data-wrap="_" title="' + escapeHtml(TKA.t('modal_01_italic_title', 'Cursiva')) + '"><i class="fa-solid fa-italic"></i></button>' +
+                            '<button type="button" data-prefix="- " title="' + escapeHtml(TKA.t('modal_01_list_title', 'Lista')) + '"><i class="fa-solid fa-list-ul"></i></button>' +
+                            '<button type="button" id="tkt-compose-link" title="' + escapeHtml(TKA.t('modal_01_link_title', 'Enlace')) + '"><i class="fa-solid fa-link"></i></button>' +
+                            '<button type="button" id="tkt-compose-translate" class="right" title="' + escapeHtml(TKA.t('modal_01_translate_before_send_title', 'Traducir antes de enviar')) + '"><i class="fa-solid fa-language"></i></button>' +
+                            '<button type="button" id="tkt-compose-attach-open" title="' + escapeHtml(TKA.t('modal_01_attach_files_title', 'Adjuntar archivos')) + '"><i class="fa-solid fa-paperclip"></i></button>' +
                         '</div>' +
-                        '<textarea class="tkt-composer-area" id="tkt-compose-body" placeholder="Escribe la respuesta…">' + escapeHtml(composeDraft.body) + '</textarea>' +
+                        '<textarea class="tkt-composer-area" id="tkt-compose-body" placeholder="' + escapeHtml(TKA.t('modal_01_body_placeholder', 'Escribe la respuesta…')) + '">' + escapeHtml(composeDraft.body) + '</textarea>' +
                     '</div>' +
                 '</div>' +
                 '<div id="tkt-compose-files">' + composeFilesHtml() + '</div>' +
-                '<label class="tkt-check"><input type="checkbox" id="tkt-compose-thread"' + (composeDraft.attachToThread ? ' checked' : '') + '> Adjuntar el email al hilo del ticket</label>' +
+                '<label class="tkt-check"><input type="checkbox" id="tkt-compose-thread"' + (composeDraft.attachToThread ? ' checked' : '') + '> ' + TKA.t('modal_01_attach_to_thread_checkbox', 'Adjuntar el email al hilo del ticket') + '</label>' +
                 (composeDraft.scheduledAt
-                    ? '<div class="tkt-note ok" id="tkt-compose-sched-note"><i class="fa-regular fa-clock"></i> Programado para <strong>' + escapeHtml(composeScheduleLabel()) + '</strong>' +
-                        '<button type="button" class="tkt-link-btn" id="tkt-compose-sched-clear">quitar</button></div>'
+                    ? '<div class="tkt-note ok" id="tkt-compose-sched-note"><i class="fa-regular fa-clock"></i> ' + TKA.t('modal_01_scheduled_for_prefix', 'Programado para ') + '<strong>' + escapeHtml(composeScheduleLabel()) + '</strong>' +
+                        '<button type="button" class="tkt-link-btn" id="tkt-compose-sched-clear">' + TKA.t('modal_01_remove_schedule_btn', 'quitar') + '</button></div>'
                     : ''),
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-compose-confirm">' + (composeDraft.scheduledAt ? 'Programar envío' : 'Enviar ahora') + '</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-compose-schedule">Programar</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-compose-draft">Borrador</button>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-compose-confirm">' + (composeDraft.scheduledAt ? TKA.t('modal_01_schedule_send_btn', 'Programar envío') : TKA.t('modal_01_send_now_btn', 'Enviar ahora')) + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-compose-schedule">' + TKA.t('modal_02_schedule_btn', 'Programar') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-compose-draft">' + TKA.t('modal_01_draft_btn', 'Borrador') + '</button>',
         }));
 
         // "+ CC · CCO" despliega la fila, como en el mockup (oculta mientras
@@ -279,7 +288,7 @@
             }
 
             var scheduled = composeDraft.scheduledAt;
-            var $btn = $(this).prop('disabled', true).text(scheduled ? 'Programando…' : 'Enviando…');
+            var $btn = $(this).prop('disabled', true).text(scheduled ? TKA.t('modal_01_scheduling_progress', 'Programando…') : TKA.t('btn_sending', 'Enviando…'));
             var formData = new FormData();
             formData.append('ticket_id', t.id);
             formData.append('to', composeDraft.to.trim());
@@ -307,9 +316,9 @@
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
-                    var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo enviar el email';
+                    var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || TKA.t('modal_01_send_failed', 'No se pudo enviar el email');
                     tktNotify('error', msg);
-                    $btn.prop('disabled', false).text(scheduled ? 'Programar envío' : 'Enviar ahora');
+                    $btn.prop('disabled', false).text(scheduled ? TKA.t('modal_01_schedule_send_btn', 'Programar envío') : TKA.t('modal_01_send_now_btn', 'Enviar ahora'));
                 },
             });
         });
@@ -317,11 +326,11 @@
 
     function composeFilesHtml() {
         if (!composeDraft || !composeDraft.files.length) return '';
-        return '<div class="tkt-att-strip compact"><span class="tkt-cap">Adjuntos · ' + composeDraft.files.length + '</span>' +
+        return '<div class="tkt-att-strip compact"><span class="tkt-cap">' + TKA.t('modal_01_attachments_caption', 'Adjuntos · :n', { ':n': composeDraft.files.length }) + '</span>' +
             composeDraft.files.map(function (f, i) {
                 return '<span class="tkt-att-pill"><i class="' + fileIconClass(f.name) + '"></i>' + escapeHtml(f.name) +
                     '<span class="mono">' + formatFileSize(f.size) + '</span>' +
-                    '<button type="button" data-file-remove="' + i + '" title="Quitar"><i class="fa-solid fa-xmark"></i></button></span>';
+                    '<button type="button" data-file-remove="' + i + '" title="' + escapeHtml(TKA.t('modal_01_remove_file_title', 'Quitar')) + '"><i class="fa-solid fa-xmark"></i></button></span>';
             }).join('') + '</div>';
     }
 

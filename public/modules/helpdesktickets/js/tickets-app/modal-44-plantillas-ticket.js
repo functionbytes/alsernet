@@ -52,13 +52,13 @@
         function listHtml(filter) {
             var q = String(filter || '').trim().toLowerCase();
             var list = all.filter(function (r) { return !q || String(r.name).toLowerCase().indexOf(q) !== -1; });
-            if (!list.length) return '<div class="tkt-empty-box">Ninguna plantilla coincide con la búsqueda.</div>';
+            if (!list.length) return '<div class="tkt-empty-box">' + TKA.t('modal_03_no_template_matches', 'Ninguna plantilla coincide con la búsqueda.') + '</div>';
             return list.map(function (r) {
                 var meta = [r.category_name, r.priority ? priorityLabel(r.priority) : null].filter(Boolean).join(' · ');
                 return '<button type="button" class="tkt-pick' + (chosen && chosen.id === r.id ? ' on' : '') + '" data-ttpl="' + r.id + '">' +
                     '<span class="av light"><i class="fa-solid fa-clone"></i></span>' +
                     '<span class="who"><span class="n">' + escapeHtml(r.name) + '</span>' +
-                    '<span class="s">' + escapeHtml(meta || r.description || 'Sin categoría') + '</span></span>' +
+                    '<span class="s">' + escapeHtml(meta || r.description || TKA.t('modal_44_no_category_fallback', 'Sin categoría')) + '</span></span>' +
                     (chosen && chosen.id === r.id ? '<i class="fa-solid fa-check"></i>' : '') + '</button>';
             }).join('');
         }
@@ -66,12 +66,12 @@
         var $backdrop = openModal(modalShell({
             icon: 'fa-solid fa-clone', kicker: TKA.t('kicker_tickets_templates', 'Tickets · plantillas'),
             title: TKA.t('modal_title_ticket_templates', 'Plantillas de ticket'), width: 'lg',
-            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-ttpl-search" placeholder="Buscar plantilla…" aria-label="Buscar plantilla"></div>' +
+            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-ttpl-search" placeholder="' + escapeHtml(TKA.t('modal_03_search_template_placeholder', 'Buscar plantilla…')) + '" aria-label="' + escapeHtml(TKA.t('modal_03_search_template_placeholder', 'Buscar plantilla…')) + '"></div>' +
                 '<div class="tkt-pick-list" id="tkt-ttpl-list">' + listHtml('') + '</div>' +
-                '<div class="tkt-cap">Vista previa · con datos de ejemplo</div>' +
-                '<div class="tkt-tpl-preview" id="tkt-ttpl-preview">Elige una plantilla para ver el ticket que va a crear.</div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-ttpl-use" disabled>Crear ticket</button>' +
-                  '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.ticketTemplatesIndex || '#') + '">Gestionar plantillas</a>' +
+                '<div class="tkt-cap">' + TKA.t('modal_44_preview_caption', 'Vista previa · con datos de ejemplo') + '</div>' +
+                '<div class="tkt-tpl-preview" id="tkt-ttpl-preview">' + TKA.t('modal_44_preview_placeholder', 'Elige una plantilla para ver el ticket que va a crear.') + '</div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-ttpl-use" disabled>' + TKA.t('modal_44_create_ticket_btn', 'Crear ticket') + '</button>' +
+                  '<a class="tkt-btn" href="' + escapeHtml(TKA.urls.ticketTemplatesIndex || '#') + '">' + TKA.t('modal_44_manage_templates_link', 'Gestionar plantillas') + '</a>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 

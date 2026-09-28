@@ -13,16 +13,16 @@
             titleChip: t.ticket_number,
             title: TKA.t('modal_title_macros_shortcuts', 'Macros y atajos'),
             width: 'lg',
-            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-macro-search" placeholder="Buscar macro…" aria-label="Buscar macro"></div>' +
+            body: '<div class="tkt-field"><input type="search" class="tkt-input" id="tkt-macro-search" placeholder="' + TKA.t('modal_24_search_macro_placeholder', 'Buscar macro…') + '" aria-label="' + TKA.t('modal_24_search_macro_placeholder', 'Buscar macro…') + '"></div>' +
                   '<div id="tkt-macro-list"><div class="tkt-empty-box">' + TKA.t('loading', 'Cargando…') + '</div></div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-macro-apply" disabled>Aplicar macro</button>' +
-                  '<a href="' + TKA.urls.macrosIndex + '" class="tkt-btn tkt-link-plain">Editar macros</a>' +
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-macro-apply" disabled>' + TKA.t('modal_24_apply_macro_btn', 'Aplicar macro') + '</button>' +
+                  '<a href="' + TKA.urls.macrosIndex + '" class="tkt-btn tkt-link-plain">' + TKA.t('modal_24_edit_macros_link', 'Editar macros') + '</a>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
         loadMacros(function (macros) {
             if (!macros.length) {
-                $backdrop.find('#tkt-macro-list').html('<div class="tkt-empty-box">No hay macros disponibles todavía.</div>');
+                $backdrop.find('#tkt-macro-list').html('<div class="tkt-empty-box">' + TKA.t('modal_24_no_macros_available', 'No hay macros disponibles todavía.') + '</div>');
 
                 return;
             }

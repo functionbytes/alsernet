@@ -6,7 +6,7 @@
     // del duplicado antes de crear, que es lo que aporta el mockup.
 
     function openNewTicketModal() {
-        var customerOptions = '<option value="">Selecciona un cliente…</option>' +
+        var customerOptions = '<option value="">' + TKA.t('modal_35_choose_customer_option', 'Selecciona un cliente…') + '</option>' +
             (TKA.state.customers || []).map(function (c) {
                 return '<option value="' + c.id + '">' + escapeHtml(c.name + (c.email ? ' · ' + c.email : '')) + '</option>';
             }).join('');
@@ -18,40 +18,40 @@
             width: 'md',
             body:
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-source">Origen del ticket</label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-source">' + TKA.t('modal_35_source_label', 'Origen del ticket') + '</label>' +
                         '<select id="tkt-new-source" class="tkt-select">' +
-                            '<option value="manual">Manual (agente)</option>' +
-                            '<option value="email">Email entrante</option>' +
-                            '<option value="formulario">Formulario</option>' +
-                            '<option value="widget">Widget</option>' +
-                            '<option value="wa">WhatsApp</option>' +
-                            '<option value="phone">Teléfono</option>' +
+                            '<option value="manual">' + TKA.t('modal_35_source_manual', 'Manual (agente)') + '</option>' +
+                            '<option value="email">' + TKA.t('modal_35_source_email', 'Email entrante') + '</option>' +
+                            '<option value="formulario">' + TKA.t('modal_35_source_form', 'Formulario') + '</option>' +
+                            '<option value="widget">' + TKA.t('modal_35_source_widget', 'Widget') + '</option>' +
+                            '<option value="wa">' + TKA.t('modal_35_source_whatsapp', 'WhatsApp') + '</option>' +
+                            '<option value="phone">' + TKA.t('modal_35_source_phone', 'Teléfono') + '</option>' +
                         '</select></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-customer">Cliente<span class="req">*</span></label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-customer">' + TKA.t('modal_35_customer_label', 'Cliente') + '<span class="req">*</span></label>' +
                         '<select id="tkt-new-customer" class="tkt-select">' + customerOptions + '</select></div>' +
                 '</div>' +
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-new-subject">Asunto</label>' +
-                    '<input type="text" class="tkt-input" id="tkt-new-subject" maxlength="255" placeholder="Resumen en una línea"></div>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-new-subject">' + TKA.t('modal_35_subject_label', 'Asunto') + '</label>' +
+                    '<input type="text" class="tkt-input" id="tkt-new-subject" maxlength="255" placeholder="' + escapeHtml(TKA.t('modal_35_subject_placeholder', 'Resumen en una línea')) + '"></div>' +
                 '<div id="tkt-new-dupe"></div>' +
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-category">Categoría</label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-category">' + TKA.t('modal_35_category_label', 'Categoría') + '</label>' +
                         '<select id="tkt-new-category" class="tkt-select"><option value="">—</option>' + optionsHtml(TKA.state.categories, 'id') + '</select></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-priority">Prioridad</label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-priority">' + TKA.t('modal_35_priority_label', 'Prioridad') + '</label>' +
                         '<select id="tkt-new-priority" class="tkt-select">' +
-                            '<option value="normal">Normal</option><option value="high">Alta</option>' +
-                            '<option value="urgent">Urgente</option><option value="low">Baja</option>' +
+                            '<option value="normal">' + TKA.t('modal_35_priority_normal', 'Normal') + '</option><option value="high">' + TKA.t('modal_35_priority_high', 'Alta') + '</option>' +
+                            '<option value="urgent">' + TKA.t('modal_35_priority_urgent', 'Urgente') + '</option><option value="low">' + TKA.t('modal_35_priority_low', 'Baja') + '</option>' +
                         '</select></div>' +
                 '</div>' +
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-assignee">Agente</label>' +
-                        '<select id="tkt-new-assignee" class="tkt-select"><option value="">Sin asignar</option>' + optionsHtml(TKA.state.agentsFull, 'id') + '</select></div>' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-group">Equipo</label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-assignee">' + TKA.t('modal_35_agent_label', 'Agente') + '</label>' +
+                        '<select id="tkt-new-assignee" class="tkt-select"><option value="">' + TKA.t('modal_35_unassigned_option', 'Sin asignar') + '</option>' + optionsHtml(TKA.state.agentsFull, 'id') + '</select></div>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-new-group">' + TKA.t('modal_35_team_label', 'Equipo') + '</label>' +
                         '<select id="tkt-new-group" class="tkt-select"><option value="">—</option>' + optionsHtml(TKA.state.groups, 'id') + '</select></div>' +
                 '</div>' +
-                '<div class="tkt-field"><label class="tkt-label" for="tkt-new-description">Descripción<span class="req">*</span></label>' +
-                    '<textarea class="tkt-input" id="tkt-new-description" rows="4" placeholder="Qué ha contado el cliente…"></textarea></div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-new-create">Crear y abrir</button>' +
-                  '<a href="' + TKA.urls.ticketCreate + '" class="tkt-btn tkt-link-plain">Formulario completo</a>' +
+                '<div class="tkt-field"><label class="tkt-label" for="tkt-new-description">' + TKA.t('modal_35_description_label', 'Descripción') + '<span class="req">*</span></label>' +
+                    '<textarea class="tkt-input" id="tkt-new-description" rows="4" placeholder="' + escapeHtml(TKA.t('modal_35_description_placeholder', 'Qué ha contado el cliente…')) + '"></textarea></div>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-new-create">' + TKA.t('modal_35_create_and_open_btn', 'Crear y abrir') + '</button>' +
+                  '<a href="' + TKA.urls.ticketCreate + '" class="tkt-btn tkt-link-plain">' + TKA.t('modal_35_full_form_link', 'Formulario completo') + '</a>' +
                   '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('cancel', 'Cancelar') + '</button>',
         }));
 
@@ -79,13 +79,14 @@
                 var list = (res && res.duplicates) || [];
                 if (!list.length) return;
 
-                $box.html('<div class="tkt-note warn">Este cliente ya tiene ' +
-                    (list.length === 1 ? 'un ticket abierto' : list.length + ' tickets abiertos') +
-                    ' con un asunto parecido: ' +
-                    list.map(function (d) {
-                        return '<a href="' + escapeHtml(d.url) + '" target="_blank" rel="noopener">' +
-                            escapeHtml(d.ticket_number) + '</a> (' + Math.round(d.similarity * 100) + ' %)';
-                    }).join(', ') + '.</div>');
+                var openTicketsLabel = list.length === 1
+                    ? TKA.t('modal_35_dupe_one_open', 'un ticket abierto')
+                    : TKA.t('modal_35_dupe_many_open', ':n tickets abiertos', { ':n': list.length });
+                var links = list.map(function (d) {
+                    return '<a href="' + escapeHtml(d.url) + '" target="_blank" rel="noopener">' +
+                        escapeHtml(d.ticket_number) + '</a> (' + Math.round(d.similarity * 100) + ' %)';
+                }).join(', ');
+                $box.html('<div class="tkt-note warn">' + TKA.t('modal_35_dupe_warning', 'Este cliente ya tiene :open con un asunto parecido: :links.', { ':open': openTicketsLabel, ':links': links }) + '</div>');
             });
         }
 
@@ -122,7 +123,7 @@
                     : TKA.urls.index;
             }).fail(function (xhr) {
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message
-                    || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'No se pudo crear el ticket';
+                    || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || TKA.t('modal_35_create_failed', 'No se pudo crear el ticket');
                 tktNotify('error', msg);
                 $btn.prop('disabled', false).text(TKA.t('btn_create_and_open', 'Crear y abrir'));
             });

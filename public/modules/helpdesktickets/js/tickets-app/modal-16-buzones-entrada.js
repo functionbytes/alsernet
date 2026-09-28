@@ -11,13 +11,17 @@
         var ts = new Date(iso).getTime();
         if (isNaN(ts)) return null;
         var secs = Math.round((Date.now() - ts) / 1000);
-        if (secs < 60) return 'hace un momento';
+        if (secs < 60) return TKA.t('modal_16_time_ago_moment', 'hace un momento');
         var mins = Math.round(secs / 60);
-        if (mins < 60) return 'hace ' + mins + ' min';
+        if (mins < 60) return TKA.t('modal_16_time_ago_minutes', 'hace :n min', { ':n': mins });
         var hours = Math.round(mins / 60);
-        if (hours < 24) return 'hace ' + hours + ' h';
+        if (hours < 24) return TKA.t('modal_16_time_ago_hours', 'hace :n h', { ':n': hours });
         var days = Math.round(hours / 24);
-        if (days < 30) return 'hace ' + days + (days === 1 ? ' día' : ' días');
+        if (days < 30) {
+            return days === 1
+                ? TKA.t('modal_16_time_ago_day_singular', 'hace :n día', { ':n': days })
+                : TKA.t('modal_16_time_ago_day_plural', 'hace :n días', { ':n': days });
+        }
         return formatDateShort(iso);
     }
 
@@ -26,10 +30,10 @@
     // last_error y last_checked_at. Nada de "conectado" por defecto.
     function mbxState(b) {
         var proto = (b.encryption ? String(b.encryption).toUpperCase() + ' · ' : '') + 'IMAP';
-        if (!b.create_tickets && !b.create_replies) return { text: 'En pausa · ' + proto, cls: 'idle' };
-        if (b.last_error) return { text: 'Con error · ' + proto, cls: 'err' };
-        if (!b.last_checked_at) return { text: 'Sin lecturas · ' + proto, cls: 'idle' };
-        return { text: 'Conectado · ' + proto, cls: 'ok' };
+        if (!b.create_tickets && !b.create_replies) return { text: TKA.t('modal_16_state_paused', 'En pausa') + ' · ' + proto, cls: 'idle' };
+        if (b.last_error) return { text: TKA.t('modal_16_state_error', 'Con error') + ' · ' + proto, cls: 'err' };
+        if (!b.last_checked_at) return { text: TKA.t('modal_16_state_no_reads', 'Sin lecturas') + ' · ' + proto, cls: 'idle' };
+        return { text: TKA.t('modal_16_state_connected', 'Conectado') + ' · ' + proto, cls: 'ok' };
     }
 
     function openMailboxesModal() {
@@ -41,9 +45,9 @@
             icon: 'fa-solid fa-inbox', kicker: TKA.t('kicker_settings_mail', 'Ajustes · correo'),
             title: TKA.t('modal_title_inboxes', 'Buzones de entrada'), width: 'xl',
             body: '<div id="tkt-mbx-body"><div class="tkt-skeleton"></div></div>',
-            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-mbx-save" disabled>Guardar</button>' +
-                  '<button type="button" class="tkt-btn" id="tkt-mbx-test" disabled>Probar conexión</button>' +
-                  '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-mbx-save" disabled>' + TKA.t('save', 'Guardar') + '</button>' +
+                  '<button type="button" class="tkt-btn" id="tkt-mbx-test" disabled>' + TKA.t('btn_test_connection', 'Probar conexión') + '</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         function current() {
@@ -62,8 +66,8 @@
 
             if (!boxes.length) {
                 $backdrop.find('#tkt-mbx-save, #tkt-mbx-test').prop('disabled', true);
-                $body.html('<div class="tkt-empty-box">No hay ningún buzón de correo entrante configurado.</div>' +
-                    moreLink('Configurar buzones'));
+                $body.html('<div class="tkt-empty-box">' + TKA.t('modal_16_no_mailboxes_configured', 'No hay ningún buzón de correo entrante configurado.') + '</div>' +
+                    moreLink(TKA.t('modal_16_configure_mailboxes_link', 'Configurar buzones')));
                 return;
             }
 
@@ -72,7 +76,7 @@
             var st = mbxState(b);
 
             var options = boxes.map(function (m) {
-                var label = m.name || m.username || 'Buzón';
+                var label = m.name || m.username || TKA.t('modal_16_mailbox_fallback_label', 'Buzón');
                 if (m.name && m.username) label = m.name + ' — ' + m.username;
                 return '<option value="' + escapeHtml(String(m.id)) + '"' +
                     (String(m.id) === String(currentId) ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
@@ -84,13 +88,13 @@
             var smtp = [b.smtp_host, b.smtp_port].filter(Boolean).join(':');
             if (smtp && b.smtp_encryption) smtp += ' · ' + String(b.smtp_encryption).toUpperCase();
 
-            var lastRead = mbxSince(b.last_checked_at) || 'sin lecturas todavía';
+            var lastRead = mbxSince(b.last_checked_at) || TKA.t('modal_16_no_reads_yet', 'sin lecturas todavía');
 
             $body.html(
                 '<div class="tkt-field-row">' +
-                    '<div class="tkt-field"><label class="tkt-label" for="tkt-mbx-pick">Buzón</label>' +
+                    '<div class="tkt-field"><label class="tkt-label" for="tkt-mbx-pick">' + TKA.t('modal_16_mailbox_label', 'Buzón') + '</label>' +
                         '<select class="tkt-select" id="tkt-mbx-pick">' + options + '</select></div>' +
-                    '<div class="tkt-field"><label class="tkt-label">Estado</label>' +
+                    '<div class="tkt-field"><label class="tkt-label">' + TKA.t('status', 'Estado') + '</label>' +
                         '<div class="tkt-mbx-state ' + st.cls + '">' + escapeHtml(st.text) + '</div></div>' +
                 '</div>' +
                 '<div class="tkt-side-card"><div class="tkt-side-card-body tight">' +
@@ -99,16 +103,16 @@
                     // salida propio; sin él las respuestas salen por el mailer
                     // global y enseñar "—" haría pensar que está mal configurado.
                     (smtp ? sideRow('SMTP', smtp, { mono: true }) : '') +
-                    sideRow('Última lectura', lastRead, { last: !b.last_error }) +
-                    (b.last_error ? sideRow('Último error', String(b.last_error).slice(0, 120), { mono: true, last: true }) : '') +
+                    sideRow(TKA.t('modal_16_last_read_label', 'Última lectura'), lastRead, { last: !b.last_error }) +
+                    (b.last_error ? sideRow(TKA.t('modal_16_last_error_label', 'Último error'), String(b.last_error).slice(0, 120), { mono: true, last: true }) : '') +
                 '</div></div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-mbx-tickets"' +
-                    (b.create_tickets ? ' checked' : '') + (canManage ? '' : ' disabled') + '> Crear tickets con los correos entrantes</label>' +
+                    (b.create_tickets ? ' checked' : '') + (canManage ? '' : ' disabled') + '> ' + TKA.t('modal_16_create_tickets_checkbox', 'Crear tickets con los correos entrantes') + '</label>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-mbx-replies"' +
-                    (b.create_replies ? ' checked' : '') + (canManage ? '' : ' disabled') + '> Añadir respuestas al ticket existente</label>' +
-                (canManage ? '' : '<div class="tkt-note">Solo lectura: hace falta el permiso de ajustes de tickets para cambiar el comportamiento de un buzón.</div>') +
+                    (b.create_replies ? ' checked' : '') + (canManage ? '' : ' disabled') + '> ' + TKA.t('modal_16_add_replies_checkbox', 'Añadir respuestas al ticket existente') + '</label>' +
+                (canManage ? '' : '<div class="tkt-note">' + TKA.t('modal_16_readonly_note', 'Solo lectura: hace falta el permiso de ajustes de tickets para cambiar el comportamiento de un buzón.') + '</div>') +
                 '<div id="tkt-mbx-result"></div>' +
-                moreLink('Configurar buzones (credenciales, alta y borrado)')
+                moreLink(TKA.t('modal_16_configure_mailboxes_full_link', 'Configurar buzones (credenciales, alta y borrado)'))
             );
 
             $backdrop.find('#tkt-mbx-save').prop('disabled', !canManage);
@@ -163,7 +167,7 @@
                 data: { create_tickets: tickets ? 1 : 0, create_replies: replies ? 1 : 0 },
                 headers: { Accept: 'application/json' },
                 success: function (res) {
-                    var msg = (res && res.message) || 'Buzón guardado.';
+                    var msg = (res && res.message) || TKA.t('modal_16_mailbox_saved', 'Buzón guardado.');
                     tktNotify('success', msg);
                     if (res && res.mailbox) {
                         boxes = boxes.map(function (m) { return String(m.id) === String(b.id) ? res.mailbox : m; });
@@ -174,7 +178,7 @@
                     if (!tickets && !replies) note('warn', msg);
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo guardar el buzón.');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_16_mailbox_save_failed', 'No se pudo guardar el buzón.'));
                     tktNotify('error', msg);
                 },
                 complete: function () {
@@ -188,7 +192,7 @@
             if (!b || !TKA.urls.mailboxTestTemplate) return;
 
             var $btn = $(this).prop('disabled', true).text(TKA.t('btn_testing', 'Probando…'));
-            note('', 'Conectando con ' + [b.host, b.port].filter(Boolean).join(':') + '…');
+            note('', TKA.t('modal_16_connecting_to', 'Conectando con :target…', { ':target': [b.host, b.port].filter(Boolean).join(':') }));
 
             $.ajax({
                 url: TKA.urls.mailboxTestTemplate.replace('__MBX__', encodeURIComponent(b.id)),
@@ -200,7 +204,7 @@
                 error: function (xhr) {
                     // La prueba es un chequeo TCP: no valida credenciales, así que
                     // el fallo se cuenta tal cual lo devuelve el servidor.
-                    note('danger', apiErrorMessage(xhr, 'No se pudo probar la conexión.'));
+                    note('danger', apiErrorMessage(xhr, TKA.t('modal_16_test_connection_failed', 'No se pudo probar la conexión.')));
                 },
                 complete: function () {
                     $btn.prop('disabled', !canManage).text(TKA.t('btn_test_connection', 'Probar conexión'));

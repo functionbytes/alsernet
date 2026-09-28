@@ -8,14 +8,14 @@
         if (m == null) return '—';
         m = Number(m);
         if (!isFinite(m) || m < 0) return '—';
-        if (m < 60) return m + ' min';
+        if (m < 60) return TKA.t('modal_28_minutes_short', ':n min', { ':n': m });
         if (m < 1440) {
             var h = Math.round(m / 60 * 10) / 10;
-            return h + ' h';
+            return TKA.t('modal_28_hours_short', ':n h', { ':n': h });
         }
         var d = Math.floor(m / 1440);
         var restH = Math.round((m % 1440) / 60);
-        return d + ' d' + (restH ? ' ' + restH + ' h' : '');
+        return TKA.t('modal_28_days_short', ':n d', { ':n': d }) + (restH ? ' ' + TKA.t('modal_28_hours_short', ':n h', { ':n': restH }) : '');
     }
 
     function slaFmtHours(h) {
@@ -24,7 +24,7 @@
 
     // Vencimiento: fecha corta + "dentro de / hace" que ya calcula el backend.
     function slaDueText(row) {
-        if (!row || !row.at) return 'sin plazo';
+        if (!row || !row.at) return TKA.t('modal_28_no_deadline', 'sin plazo');
         return formatDateShort(row.at) + (row.human ? ' · ' + row.human : '');
     }
 
@@ -41,11 +41,11 @@
             titleChip: ticket ? ticket.ticket_number : null,
             width: '2xl',
             body: '<div id="tkt-slacal-body"><div class="tkt-skeleton"></div><div class="tkt-skeleton"></div></div>',
-            foot: '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
+            foot: '<button type="button" class="tkt-btn" data-modal-close>' + TKA.t('close', 'Cerrar') + '</button>',
         }));
 
         if (!TKA.urls.slaCalendar) {
-            $backdrop.find('#tkt-slacal-body').html('<div class="tkt-empty-box">El calendario de SLA no está disponible en esta pantalla.</div>');
+            $backdrop.find('#tkt-slacal-body').html('<div class="tkt-empty-box">' + TKA.t('modal_28_calendar_unavailable', 'El calendario de SLA no está disponible en esta pantalla.') + '</div>');
             return;
         }
 
@@ -54,7 +54,7 @@
         $.getJSON(TKA.urls.slaCalendar, params).done(function (d) {
             renderSlaCalendar($backdrop, d);
         }).fail(function () {
-            $backdrop.find('#tkt-slacal-body').html('<div class="tkt-note danger"><i class="fa-solid fa-triangle-exclamation"></i> No se ha podido leer la configuración de SLA.</div>');
+            $backdrop.find('#tkt-slacal-body').html('<div class="tkt-note danger"><i class="fa-solid fa-triangle-exclamation"></i> ' + TKA.t('modal_28_config_load_failed', 'No se ha podido leer la configuración de SLA.') + '</div>');
         });
     }
 
@@ -62,9 +62,9 @@
         d = d || {};
 
         var panes = [];
-        if (d.ticket) panes.push({ key: 'ticket', label: 'Este ticket', html: slaPaneTicket(d.ticket) });
-        panes.push({ key: 'targets', label: 'Objetivos', html: slaPaneTargets(d) });
-        panes.push({ key: 'hours', label: 'Horario y pausas', html: slaPaneHours(d) });
+        if (d.ticket) panes.push({ key: 'ticket', label: TKA.t('modal_28_tab_this_ticket', 'Este ticket'), html: slaPaneTicket(d.ticket) });
+        panes.push({ key: 'targets', label: TKA.t('modal_28_tab_targets', 'Objetivos'), html: slaPaneTargets(d) });
+        panes.push({ key: 'hours', label: TKA.t('modal_28_tab_hours_pauses', 'Horario y pausas'), html: slaPaneHours(d) });
 
         $backdrop.find('#tkt-slacal-body').html(
             '<div class="tkt-seg-tabs" id="tkt-slacal-tabs">' +
@@ -81,7 +81,7 @@
         // que es la acción que sigue al 90 % de las visitas a este modal.
         if (d.links && d.links.sla_policies) {
             $backdrop.find('.tkt-modal-foot').prepend(
-                '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(d.links.sla_policies) + '">Editar políticas de SLA</a>'
+                '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(d.links.sla_policies) + '">' + TKA.t('modal_28_edit_sla_policies', 'Editar políticas de SLA') + '</a>'
             );
         }
 
@@ -100,45 +100,45 @@
     function slaPaneTicket(t) {
         var head = t.paused
             ? '<div class="tkt-headline bad">' +
-                  '<div class="t">Reloj de SLA pausado</div>' +
-                  '<div class="s">Pausado ' + escapeHtml(t.paused_since_human || '') +
-                      ' · ' + slaFmtMinutes(t.current_pause_minutes) + ' de esta pausa' +
-                      (t.accumulated_pause_minutes ? ' · ' + slaFmtMinutes(t.accumulated_pause_minutes) + ' acumulados antes' : '') +
+                  '<div class="t">' + TKA.t('modal_28_clock_paused_title', 'Reloj de SLA pausado') + '</div>' +
+                  '<div class="s">' + TKA.t('modal_28_paused_since', 'Pausado :when', { ':when': escapeHtml(t.paused_since_human || '') }) +
+                      ' · ' + TKA.t('modal_28_this_pause_duration', ':duration de esta pausa', { ':duration': slaFmtMinutes(t.current_pause_minutes) }) +
+                      (t.accumulated_pause_minutes ? ' · ' + TKA.t('modal_28_accumulated_before', ':duration acumulados antes', { ':duration': slaFmtMinutes(t.accumulated_pause_minutes) }) : '') +
                   '</div>' +
               '</div>'
             : '<div class="tkt-headline">' +
-                  '<div class="t">Reloj de SLA en marcha</div>' +
+                  '<div class="t">' + TKA.t('modal_28_clock_running_title', 'Reloj de SLA en marcha') + '</div>' +
                   '<div class="s">' + (t.accumulated_pause_minutes
-                      ? slaFmtMinutes(t.accumulated_pause_minutes) + ' pausados en total hasta ahora'
-                      : 'Nunca se ha pausado') + '</div>' +
+                      ? TKA.t('modal_28_paused_total_so_far', ':duration pausados en total hasta ahora', { ':duration': slaFmtMinutes(t.accumulated_pause_minutes) })
+                      : TKA.t('modal_28_never_paused', 'Nunca se ha pausado')) + '</div>' +
               '</div>';
 
         // Sin política no hay vencimientos: decirlo es más útil que pintar tres
         // filas con guiones, que se leen como "aún no ha vencido".
         if (!t.policy) {
-            head += '<div class="tkt-note warn"><i class="fa-solid fa-circle-info"></i> Este ticket no tiene ninguna política de SLA asignada, así que no tiene plazos que vigilar.</div>';
+            head += '<div class="tkt-note warn"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_28_no_policy_assigned', 'Este ticket no tiene ninguna política de SLA asignada, así que no tiene plazos que vigilar.') + '</div>';
         }
 
         var rows =
-            sideRow('política', t.policy ? t.policy.name : 'ninguna') +
-            sideRow('prioridad', t.priority_label || '—') +
-            sideRow('estado', (t.status ? t.status.name : '—') + (t.status && t.status.stops_sla ? ' · pausa el reloj' : ''), { last: true });
+            sideRow(TKA.t('modal_28_policy_label', 'política'), t.policy ? t.policy.name : TKA.t('modal_28_none_feminine', 'ninguna')) +
+            sideRow(TKA.t('modal_28_priority_label', 'prioridad'), t.priority_label || '—') +
+            sideRow(TKA.t('modal_28_status_label', 'estado'), (t.status ? t.status.name : '—') + (t.status && t.status.stops_sla ? ' · ' + TKA.t('modal_28_pauses_clock_suffix', 'pausa el reloj') : ''), { last: true });
 
         var dueRows = '';
         if (t.due) {
             dueRows =
-                '<div class="tkt-cap">Vencimientos</div>' +
+                '<div class="tkt-cap">' + TKA.t('modal_28_due_dates_heading', 'Vencimientos') + '</div>' +
                 '<div class="tkt-side-rows">' +
-                    sideRow('1ª respuesta', t.first_response_at
-                        ? 'respondida ' + formatDateShort(t.first_response_at)
-                        : slaDueText(t.due.first_response) + (t.due.first_response.breached ? ' · incumplido' : ''), { mono: true }) +
-                    sideRow('siguiente respuesta', slaDueText(t.due.next_response) + (t.due.next_response.breached ? ' · incumplido' : ''), { mono: true }) +
-                    sideRow('resolución', slaDueText(t.due.resolution) + (t.due.resolution.breached ? ' · incumplido' : ''), { mono: true, last: !t.paused }) +
+                    sideRow(TKA.t('modal_28_first_response_label', '1ª respuesta'), t.first_response_at
+                        ? TKA.t('modal_28_answered_on', 'respondida :date', { ':date': formatDateShort(t.first_response_at) })
+                        : slaDueText(t.due.first_response) + (t.due.first_response.breached ? ' · ' + TKA.t('modal_28_breached', 'incumplido') : ''), { mono: true }) +
+                    sideRow(TKA.t('modal_28_next_response_label', 'siguiente respuesta'), slaDueText(t.due.next_response) + (t.due.next_response.breached ? ' · ' + TKA.t('modal_28_breached', 'incumplido') : ''), { mono: true }) +
+                    sideRow(TKA.t('modal_28_resolution_label', 'resolución'), slaDueText(t.due.resolution) + (t.due.resolution.breached ? ' · ' + TKA.t('modal_28_breached', 'incumplido') : ''), { mono: true, last: !t.paused }) +
                     // El vencimiento efectivo solo se separa del nominal mientras
                     // hay una pausa en curso: fuera de ese caso repetir la fila
                     // sería ruido.
                     (t.paused && t.effective_resolution_due_at
-                        ? sideRow('resolución (con la pausa)', formatDateShort(t.effective_resolution_due_at), { mono: true, strong: true, last: true })
+                        ? sideRow(TKA.t('modal_28_resolution_with_pause_label', 'resolución (con la pausa)'), formatDateShort(t.effective_resolution_due_at), { mono: true, strong: true, last: true })
                         : '') +
                 '</div>';
         }
@@ -159,7 +159,7 @@
         var list = d.policies || [];
 
         if (!list.length) {
-            return '<div class="tkt-empty-box">No hay ninguna política de SLA activa.</div>';
+            return '<div class="tkt-empty-box">' + TKA.t('modal_28_no_active_policies', 'No hay ninguna política de SLA activa.') + '</div>';
         }
 
         var out = '';
@@ -171,13 +171,13 @@
         var conPrioridad = list.filter(function (p) { return !!p.priority_label; });
 
         if (conPrioridad.length) {
-            out += '<div class="tkt-cap">Objetivos por prioridad</div>' +
+            out += '<div class="tkt-cap">' + TKA.t('modal_28_targets_by_priority_heading', 'Objetivos por prioridad') + '</div>' +
                 '<div class="tkt-side-rows">' +
                     conPrioridad.map(function (p, i) {
                         return sideRow(p.priority_label, slaPolicyPair(p), { mono: true, last: i === conPrioridad.length - 1 });
                     }).join('') +
                 '</div>' +
-                '<div class="tkt-modal-note">1ª respuesta / resolución, según la política de cada prioridad.</div>';
+                '<div class="tkt-modal-note">' + TKA.t('modal_28_targets_note', '1ª respuesta / resolución, según la política de cada prioridad.') + '</div>';
         }
 
         // El aviso de "estos plazos no los aplica el reloj" va UNA vez por panel:
@@ -187,17 +187,18 @@
 
         if (sinEfecto.length) {
             out += '<div class="tkt-note warn"><i class="fa-solid fa-triangle-exclamation"></i> ' +
-                (sinEfecto.length === list.length ? 'Ninguna de estas políticas fija' : sinEfecto.length + ' de estas políticas no fijan') +
-                ' vencimientos: tienen los plazos en las columnas heredadas (en horas) y el cálculo lee las de minutos, que están vacías. ' +
-                'Vuelve a guardarlas desde la pantalla de políticas para que empiecen a contar.</div>';
+                (sinEfecto.length === list.length
+                    ? TKA.t('modal_28_policies_no_deadlines_all', 'Ninguna de estas políticas fija vencimientos: tienen los plazos en las columnas heredadas (en horas) y el cálculo lee las de minutos, que están vacías. Vuelve a guardarlas desde la pantalla de políticas para que empiecen a contar.')
+                    : TKA.t('modal_28_policies_no_deadlines_some', ':n de estas políticas no fijan vencimientos: tienen los plazos en las columnas heredadas (en horas) y el cálculo lee las de minutos, que están vacías. Vuelve a guardarlas desde la pantalla de políticas para que empiecen a contar.', { ':n': sinEfecto.length })) +
+                '</div>';
         }
 
         return out + list.map(function (p) {
             var chips = '';
-            if (p.is_default) chips += '<span class="tkt-rchip ok">predeterminada</span> ';
+            if (p.is_default) chips += '<span class="tkt-rchip ok">' + TKA.t('modal_28_default_chip', 'predeterminada') + '</span> ';
             if (p.priority_label) chips += '<span class="tkt-rchip">' + escapeHtml(p.priority_label) + '</span> ';
             if (p.channel) chips += '<span class="tkt-rchip">' + escapeHtml(p.channel) + '</span> ';
-            if (!p.clock_enforced) chips += '<span class="tkt-rchip strong">sin efecto</span>';
+            if (!p.clock_enforced) chips += '<span class="tkt-rchip strong">' + TKA.t('modal_28_no_effect_chip', 'sin efecto') + '</span>';
 
             var body;
 
@@ -206,12 +207,12 @@
                 // cálculo que hace el motor (base × multiplicador).
                 body =
                     '<div class="tkt-side-rows">' +
-                        sideRow('1ª respuesta', slaFmtMinutes(p.first_response_minutes), { mono: true }) +
-                        sideRow('respuestas siguientes', slaFmtMinutes(p.next_response_minutes), { mono: true }) +
-                        sideRow('resolución', slaFmtMinutes(p.resolution_minutes), { mono: true, last: true }) +
+                        sideRow(TKA.t('modal_28_first_response_label', '1ª respuesta'), slaFmtMinutes(p.first_response_minutes), { mono: true }) +
+                        sideRow(TKA.t('modal_28_next_responses_label', 'respuestas siguientes'), slaFmtMinutes(p.next_response_minutes), { mono: true }) +
+                        sideRow(TKA.t('modal_28_resolution_label', 'resolución'), slaFmtMinutes(p.resolution_minutes), { mono: true, last: true }) +
                     '</div>' +
                     (p.targets_by_priority && p.targets_by_priority.length
-                        ? '<div class="tkt-cap tkt-slacal-cap">Por prioridad · 1ª respuesta / resolución</div>' +
+                        ? '<div class="tkt-cap tkt-slacal-cap">' + TKA.t('modal_28_by_priority_heading', 'Por prioridad · 1ª respuesta / resolución') + '</div>' +
                           '<div class="tkt-side-rows">' +
                               p.targets_by_priority.map(function (row, i) {
                                   return sideRow(
@@ -230,9 +231,9 @@
                 // el aviso único de la cabecera del panel.
                 body =
                     '<div class="tkt-side-rows">' +
-                        sideRow('1ª respuesta (declarada)', slaFmtHours(p.declared_hours.first_response), { mono: true }) +
-                        sideRow('respuestas siguientes (declarada)', slaFmtHours(p.declared_hours.next_response), { mono: true }) +
-                        sideRow('resolución (declarada)', slaFmtHours(p.declared_hours.resolution), { mono: true, last: true }) +
+                        sideRow(TKA.t('modal_28_first_response_declared_label', '1ª respuesta (declarada)'), slaFmtHours(p.declared_hours.first_response), { mono: true }) +
+                        sideRow(TKA.t('modal_28_next_responses_declared_label', 'respuestas siguientes (declarada)'), slaFmtHours(p.declared_hours.next_response), { mono: true }) +
+                        sideRow(TKA.t('modal_28_resolution_declared_label', 'resolución (declarada)'), slaFmtHours(p.declared_hours.resolution), { mono: true, last: true }) +
                     '</div>';
             }
 
@@ -241,11 +242,11 @@
             // muestra el calendario de la empresa (otro alcance).
             var hoursText;
             if (!p.business_hours_only) {
-                hoursText = 'cuenta 24/7';
+                hoursText = TKA.t('modal_28_hours_24_7', 'cuenta 24/7');
             } else if (p.business_hours) {
-                hoursText = 'horario propio definido';
+                hoursText = TKA.t('modal_28_hours_custom_defined', 'horario propio definido');
             } else {
-                hoursText = 'L-V 09:00–17:00 (por defecto del cálculo)';
+                hoursText = TKA.t('modal_28_hours_default_calc', 'L-V 09:00–17:00 (por defecto del cálculo)');
             }
 
             return '<div class="tkt-side-card">' +
@@ -253,10 +254,10 @@
                 '<div class="tkt-side-card-body">' +
                     body +
                     '<div class="tkt-side-rows">' +
-                        sideRow('horario', hoursText, { mono: true }) +
-                        sideRow('zona horaria', p.timezone, { mono: true, last: !p.enable_escalation }) +
+                        sideRow(TKA.t('modal_28_schedule_label', 'horario'), hoursText, { mono: true }) +
+                        sideRow(TKA.t('modal_28_timezone_label', 'zona horaria'), p.timezone, { mono: true, last: !p.enable_escalation }) +
                         (p.enable_escalation
-                            ? sideRow('escala al', (p.escalation_threshold_percent || 0) + ' % consumido', { mono: true, last: true })
+                            ? sideRow(TKA.t('modal_28_escalates_at_label', 'escala al'), TKA.t('modal_28_percent_consumed', ':pct % consumido', { ':pct': p.escalation_threshold_percent || 0 }), { mono: true, last: true })
                             : '') +
                     '</div>' +
                 '</div>' +
@@ -275,7 +276,7 @@
         // ── Pausa automática al esperar al cliente ──
         // Es el único ajuste editable del modal: el flag stops_sla_timer del
         // catálogo de estados, que es lo que dispara pauseSla()/resumeSla().
-        out += '<div class="tkt-cap">Pausar el SLA al esperar al cliente</div>';
+        out += '<div class="tkt-cap">' + TKA.t('modal_28_pause_sla_heading', 'Pausar el SLA al esperar al cliente') + '</div>';
 
         // Los estados cerrados (Resuelto/Cerrado) no entran: un ticket cerrado ya
         // está fuera del control de SLA (checkBreaches filtra por closed_at), así
@@ -286,7 +287,7 @@
         var ocultos = todos.length - statuses.length;
 
         if (!statuses.length) {
-            out += '<div class="tkt-empty-box">No hay estados en el catálogo.</div>';
+            out += '<div class="tkt-empty-box">' + TKA.t('modal_28_no_statuses_in_catalog', 'No hay estados en el catálogo.') + '</div>';
         } else {
             var alguno = statuses.some(function (s) { return s.stops_sla; });
 
@@ -297,7 +298,7 @@
                             (pause.can_manage ? '' : ' disabled') + '>' +
                             '<i class="fa-solid ' + (s.stops_sla ? 'fa-toggle-on' : 'fa-toggle-off') + '"></i>' +
                             '<span class="n">' + escapeHtml(s.name) + '</span>' +
-                            '<span class="s">' + (s.stops_sla ? 'pausa' : 'no pausa') + '</span>' +
+                            '<span class="s">' + (s.stops_sla ? TKA.t('modal_28_pauses_word', 'pausa') : TKA.t('modal_28_does_not_pause_word', 'no pausa')) + '</span>' +
                         '</button>';
                 }).join('') +
             '</div>';
@@ -305,31 +306,33 @@
             // Siempre en el HTML (oculto si ya hay alguno encendido) para que el
             // toggle pueda mostrarlo/ocultarlo sin repintar el panel entero.
             out += '<div class="tkt-note warn tkt-slacal-nopause' + (alguno ? ' off' : '') + '">' +
-                '<i class="fa-solid fa-triangle-exclamation"></i> Ningún estado pausa el reloj ahora mismo: el SLA sigue corriendo también mientras se espera al cliente.</div>';
+                '<i class="fa-solid fa-triangle-exclamation"></i> ' + TKA.t('modal_28_no_status_pauses_clock', 'Ningún estado pausa el reloj ahora mismo: el SLA sigue corriendo también mientras se espera al cliente.') + '</div>';
 
-            out += '<div class="tkt-modal-note">Se aplica a los próximos cambios de estado; los tickets que ya están en ese estado no se pausan hacia atrás. ' +
-                'La reanudación es automática al salir del estado o al responder el cliente por el portal, y devuelve a los plazos el tiempo esperado.' +
-                (ocultos ? ' No se lista' + (ocultos === 1 ? ' 1 estado de cierre, donde' : 'n ' + ocultos + ' estados de cierre, donde') + ' el SLA ya no corre.' : '') +
+            out += '<div class="tkt-modal-note">' + TKA.t('modal_28_pause_applies_note', 'Se aplica a los próximos cambios de estado; los tickets que ya están en ese estado no se pausan hacia atrás.') + ' ' +
+                TKA.t('modal_28_pause_resume_note', 'La reanudación es automática al salir del estado o al responder el cliente por el portal, y devuelve a los plazos el tiempo esperado.') +
+                (ocultos ? (ocultos === 1
+                    ? ' ' + TKA.t('modal_28_hidden_closed_status_singular', 'No se lista 1 estado de cierre, donde el SLA ya no corre.')
+                    : ' ' + TKA.t('modal_28_hidden_closed_status_plural', 'No se listan :n estados de cierre, donde el SLA ya no corre.', { ':n': ocultos })) : '') +
                 '</div>';
 
             if (!pause.can_manage) {
-                out += '<div class="tkt-note"><i class="fa-solid fa-lock"></i> Solo lectura: hace falta el permiso de ajustes del módulo para cambiarlo.</div>';
+                out += '<div class="tkt-note"><i class="fa-solid fa-lock"></i> ' + TKA.t('modal_28_readonly_note', 'Solo lectura: hace falta el permiso de ajustes del módulo para cambiarlo.') + '</div>';
             } else if (links.statuses) {
-                out += '<a class="tkt-btn tkt-w-100" href="' + escapeHtml(links.statuses) + '">Editar el catálogo de estados</a>';
+                out += '<a class="tkt-btn tkt-w-100" href="' + escapeHtml(links.statuses) + '">' + TKA.t('modal_28_edit_status_catalog', 'Editar el catálogo de estados') + '</a>';
             }
         }
 
         // ── Horario de atención de la empresa ──
-        out += '<div class="tkt-cap tkt-slacal-cap">Horario de atención de la empresa</div>';
+        out += '<div class="tkt-cap tkt-slacal-cap">' + TKA.t('modal_28_business_hours_heading', 'Horario de atención de la empresa') + '</div>';
 
         if (!bh.configured) {
-            out += '<div class="tkt-empty-box">No hay ningún horario de atención configurado.</div>';
+            out += '<div class="tkt-empty-box">' + TKA.t('modal_28_no_business_hours_configured', 'No hay ningún horario de atención configurado.') + '</div>';
         } else {
             out += '<div class="tkt-side-rows">' +
                 (bh.days || []).map(function (day, i) {
                     return sideRow(
                         day.name,
-                        day.is_open && day.opens_at ? day.opens_at + ' – ' + day.closes_at : 'cerrado',
+                        day.is_open && day.opens_at ? day.opens_at + ' – ' + day.closes_at : TKA.t('modal_28_closed_word', 'cerrado'),
                         { mono: true, last: i === bh.days.length - 1 }
                     );
                 }).join('') +
@@ -338,46 +341,47 @@
             // Alcance real: esta rejilla NO la mira el reloj de SLA de tickets
             // (cada política lleva el suyo, ver pestaña Objetivos). Decirlo evita
             // que alguien "arregle" un plazo tocando aquí.
-            out += '<div class="tkt-modal-note">Zona horaria ' + escapeHtml(bh.timezone || '—') + '. ' +
-                'Este calendario rige el SLA de conversaciones' +
-                (bh.used_by_escalation ? ' y el escalado de tickets' : '') +
-                '; los plazos de los tickets usan el horario de su propia política.</div>';
+            out += '<div class="tkt-modal-note">' + TKA.t('modal_28_timezone_prefix', 'Zona horaria :tz.', { ':tz': escapeHtml(bh.timezone || '—') }) + ' ' +
+                (bh.used_by_escalation
+                    ? TKA.t('modal_28_calendar_scope_note_with_escalation', 'Este calendario rige el SLA de conversaciones y el escalado de tickets; los plazos de los tickets usan el horario de su propia política.')
+                    : TKA.t('modal_28_calendar_scope_note', 'Este calendario rige el SLA de conversaciones; los plazos de los tickets usan el horario de su propia política.')) +
+                '</div>';
         }
 
         if (links.business_hours) {
-            out += '<a class="tkt-btn tkt-w-100" href="' + escapeHtml(links.business_hours) + '">Editar el horario de atención</a>';
+            out += '<a class="tkt-btn tkt-w-100" href="' + escapeHtml(links.business_hours) + '">' + TKA.t('modal_28_edit_business_hours', 'Editar el horario de atención') + '</a>';
         }
 
         // ── Festivos ──
         if (hol.available !== false) {
-            out += '<div class="tkt-cap tkt-slacal-cap">Festivos</div>';
+            out += '<div class="tkt-cap tkt-slacal-cap">' + TKA.t('modal_28_holidays_heading', 'Festivos') + '</div>';
 
             if (!hol.total) {
-                out += '<div class="tkt-empty-box">No hay festivos dados de alta.</div>';
+                out += '<div class="tkt-empty-box">' + TKA.t('modal_28_no_holidays', 'No hay festivos dados de alta.') + '</div>';
             } else if (!hol.upcoming || !hol.upcoming.length) {
-                out += '<div class="tkt-empty-box">' + hol.total + ' festivos dados de alta, ninguno próximo.</div>';
+                out += '<div class="tkt-empty-box">' + TKA.t('modal_28_holidays_none_upcoming', ':n festivos dados de alta, ninguno próximo.', { ':n': hol.total }) + '</div>';
             } else {
                 out += '<div class="tkt-side-rows">' +
                     hol.upcoming.map(function (h, i) {
                         return sideRow(
                             h.name,
-                            h.date + (h.is_recurring ? ' · anual' : ''),
+                            h.date + (h.is_recurring ? ' · ' + TKA.t('modal_28_recurring_word', 'anual') : ''),
                             { mono: true, last: i === hol.upcoming.length - 1 }
                         );
                     }).join('') +
                 '</div>';
 
                 if (hol.total > hol.upcoming.length) {
-                    out += '<div class="tkt-modal-note">' + hol.total + ' festivos en total.</div>';
+                    out += '<div class="tkt-modal-note">' + TKA.t('modal_28_holidays_total', ':n festivos en total.', { ':n': hol.total }) + '</div>';
                 }
             }
 
             if (hol.total && !hol.applies_to_ticket_sla) {
-                out += '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> Ninguna política activa cuenta en horas hábiles, así que los festivos no descuentan tiempo de los plazos de los tickets.</div>';
+                out += '<div class="tkt-note"><i class="fa-solid fa-circle-info"></i> ' + TKA.t('modal_28_holidays_no_effect_note', 'Ninguna política activa cuenta en horas hábiles, así que los festivos no descuentan tiempo de los plazos de los tickets.') + '</div>';
             }
 
             if (links.holidays) {
-                out += '<a class="tkt-btn tkt-w-100" href="' + escapeHtml(links.holidays) + '">Ver festivos</a>';
+                out += '<a class="tkt-btn tkt-w-100" href="' + escapeHtml(links.holidays) + '">' + TKA.t('modal_28_view_holidays', 'Ver festivos') + '</a>';
             }
         }
 
@@ -410,7 +414,7 @@
                         .toggleClass('on', stops)
                         .prop('disabled', false);
                     $btn.find('i').attr('class', 'fa-solid ' + (stops ? 'fa-toggle-on' : 'fa-toggle-off'));
-                    $btn.find('.s').text(stops ? 'pausa' : 'no pausa');
+                    $btn.find('.s').text(stops ? TKA.t('modal_28_pauses_word', 'pausa') : TKA.t('modal_28_does_not_pause_word', 'no pausa'));
 
                     // El aviso "ningún estado pausa el reloj" deja de ser cierto en
                     // cuanto se enciende uno.
@@ -420,7 +424,7 @@
                     if (window.toastr && res && res.message) toastr.success(res.message);
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se ha podido cambiar la pausa del SLA');
+                    var msg = apiErrorMessage(xhr, TKA.t('modal_28_pause_toggle_failed', 'No se ha podido cambiar la pausa del SLA'));
                     tktNotify('error', msg);
                     $btn.prop('disabled', false);
                 },
