@@ -32,6 +32,26 @@ final class BridgeCatalogDriver implements CatalogDriver
         )));
     }
 
+    /**
+     * Busca con filtros (marca, categoría, precio, stock, orden) sobre el
+     * mismo motor que usa la tienda (JoliSearch → Search::find → LIKE, ver
+     * alsernet_product_search() en el bridge) y expone qué motor respondió y
+     * qué filtros se relajaron para evitar un 0 resultados.
+     */
+    public function searchWithFilters(string $query, int $limit, array $filters = []): array
+    {
+        $result = $this->bridge->searchProductsWithMeta($query, $limit, $filters, $this->lang);
+
+        return [
+            'products' => array_values(array_filter(array_map(
+                fn (array $p): ?CatalogProduct => $this->toProduct($p),
+                $result['products']
+            ))),
+            'relaxed' => $result['relaxed'],
+            'engine' => $result['engine'],
+        ];
+    }
+
     public function find(string $id): ?CatalogProduct
     {
         if (! ctype_digit($id)) {
@@ -85,6 +105,8 @@ final class BridgeCatalogDriver implements CatalogDriver
             idProductAttribute: (int) ($p['id_product_attribute'] ?? 0),
             hasCombinations: (bool) ($p['has_combinations'] ?? false),
             priceOriginal: isset($p['final_price_original']) ? (float) $p['final_price_original'] : null,
+            brand: $p['brand'] ?? null,
+            category: $p['category'] ?? null,
         );
     }
 }

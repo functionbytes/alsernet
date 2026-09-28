@@ -25,6 +25,20 @@ interface CatalogDriver
     public function search(string $query, int $limit = 6): array;
 
     /**
+     * Busca productos con filtros adicionales (marca, categoría, rango de
+     * precio, stock, orden) — la versión que usa la herramienta de búsqueda
+     * de producto del bot cuando el visitante da criterios concretos ("botas
+     * Chiruca por menos de 150€"). Los drivers sin motor de filtros propio
+     * (feed, PrestaShop directo, null) filtran localmente el resultado de
+     * search() y nunca relajan filtros (relaxed siempre vacío, engine null);
+     * solo BridgeCatalogDriver delega el filtrado/relajación al bridge.
+     *
+     * @param  array{brand?:string,category?:string,price_min?:float,price_max?:float,in_stock?:bool,sort?:string}  $filters
+     * @return array{products: array<int, CatalogProduct>, relaxed: array<int,string>, engine: ?string}
+     */
+    public function searchWithFilters(string $query, int $limit, array $filters = []): array;
+
+    /**
      * Recupera un producto por su id de catálogo, o null si no existe.
      */
     public function find(string $id): ?CatalogProduct;

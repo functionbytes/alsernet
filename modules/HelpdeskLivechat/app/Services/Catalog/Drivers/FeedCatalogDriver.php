@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
+use Modules\HelpdeskLivechat\Services\Catalog\Drivers\Concerns\FiltersCatalogProductsLocally;
 
 /**
  * Driver de catálogo basado en un product feed remoto (JSON), el mismo modelo
@@ -20,6 +21,8 @@ use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
  */
 final class FeedCatalogDriver implements CatalogDriver
 {
+    use FiltersCatalogProductsLocally;
+
     private const CACHE_TTL_SECONDS = 3600;
 
     /**
@@ -96,6 +99,19 @@ final class FeedCatalogDriver implements CatalogDriver
             static fn (array $row): CatalogProduct => $row['product'],
             array_slice($scored, 0, max(1, $limit))
         );
+    }
+
+    public function searchWithFilters(string $query, int $limit, array $filters = []): array
+    {
+        // Busca sobre una bolsa más amplia que $limit antes de filtrar, para
+        // no perder candidatos que search() habría descartado solo por orden.
+        $products = $this->filterCatalogProductsLocally($this->search($query, max($limit * 4, 20)), $filters);
+
+        return [
+            'products' => array_slice($products, 0, max(1, $limit)),
+            'relaxed' => [],
+            'engine' => null,
+        ];
     }
 
     public function find(string $id): ?CatalogProduct

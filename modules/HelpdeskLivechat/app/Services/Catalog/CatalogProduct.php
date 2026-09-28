@@ -32,6 +32,9 @@ final class CatalogProduct implements JsonSerializable
         public readonly bool $hasCombinations = false,
         // Precio antes del descuento (tachado en las tarjetas), si lo hay.
         public readonly ?float $priceOriginal = null,
+        // Marca/fabricante y categoría, cuando el driver los conoce (bridge PrestaShop).
+        public readonly ?string $brand = null,
+        public readonly ?string $category = null,
     ) {}
 
     /**
@@ -52,6 +55,8 @@ final class CatalogProduct implements JsonSerializable
             idProductAttribute: (int) ($data['id_product_attribute'] ?? 0),
             hasCombinations: (bool) ($data['has_combinations'] ?? false),
             priceOriginal: isset($data['price_original']) ? (float) $data['price_original'] : null,
+            brand: isset($data['brand']) ? (string) $data['brand'] : null,
+            category: isset($data['category']) ? (string) $data['category'] : null,
         );
     }
 
@@ -73,6 +78,8 @@ final class CatalogProduct implements JsonSerializable
             'id_product_attribute' => $this->idProductAttribute,
             'has_combinations' => $this->hasCombinations,
             'price_original' => $this->priceOriginal,
+            'brand' => $this->brand,
+            'category' => $this->category,
         ];
     }
 

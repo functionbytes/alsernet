@@ -71,4 +71,52 @@ class BridgeCatalogDriverTest extends TestCase
 
         $this->assertNull((new BridgeCatalogDriver($bridge))->find('1 OR 1=1'));
     }
+
+    public function test_search_maps_brand_and_category(): void
+    {
+        $bridge = Mockery::mock(PrestashopContextService::class);
+        $bridge->shouldReceive('searchProducts')->once()->andReturn([
+            $this->product(['brand' => 'Chiruca', 'category' => 'Botas de caza']),
+        ]);
+
+        $products = (new BridgeCatalogDriver($bridge))->search('chiruca', 6);
+
+        $this->assertSame('Chiruca', $products[0]->brand);
+        $this->assertSame('Botas de caza', $products[0]->category);
+    }
+
+    public function test_search_with_filters_delegates_to_bridge_and_maps_meta(): void
+    {
+        $bridge = Mockery::mock(PrestashopContextService::class);
+        $bridge->shouldReceive('searchProductsWithMeta')
+            ->once()
+            ->with('chiruca', 6, ['brand' => 'Chiruca', 'price_max' => 150.0], null)
+            ->andReturn([
+                'products' => [$this->product(['brand' => 'Chiruca'])],
+                'relaxed' => ['category'],
+                'engine' => 'jolisearch',
+            ]);
+
+        $result = (new BridgeCatalogDriver($bridge))->searchWithFilters('chiruca', 6, ['brand' => 'Chiruca', 'price_max' => 150.0]);
+
+        $this->assertCount(1, $result['products']);
+        $this->assertSame('Chiruca', $result['products'][0]->brand);
+        $this->assertSame(['category'], $result['relaxed']);
+        $this->assertSame('jolisearch', $result['engine']);
+    }
+
+    public function test_search_with_filters_ignores_unmappable_products(): void
+    {
+        $bridge = Mockery::mock(PrestashopContextService::class);
+        $bridge->shouldReceive('searchProductsWithMeta')->once()->andReturn([
+            'products' => [[]],
+            'relaxed' => [],
+            'engine' => 'like',
+        ]);
+
+        $result = (new BridgeCatalogDriver($bridge))->searchWithFilters('x', 6);
+
+        $this->assertSame([], $result['products']);
+        $this->assertSame('like', $result['engine']);
+    }
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
+use Modules\HelpdeskLivechat\Services\Catalog\Drivers\Concerns\FiltersCatalogProductsLocally;
 
 /**
  * Driver de catálogo EN VIVO contra la base de datos de una tienda PrestaShop
@@ -22,6 +23,8 @@ use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
  */
 final class PrestashopCatalogDriver implements CatalogDriver
 {
+    use FiltersCatalogProductsLocally;
+
     /**
      * @param  array<string, mixed>  $config
      */
@@ -51,6 +54,20 @@ final class PrestashopCatalogDriver implements CatalogDriver
 
             return [];
         }
+    }
+
+    public function searchWithFilters(string $query, int $limit, array $filters = []): array
+    {
+        // Este driver no filtra por marca/categoría a nivel SQL (baseQuery()
+        // no las selecciona): busca sobre una bolsa más amplia y filtra en
+        // memoria, igual que FeedCatalogDriver.
+        $products = $this->filterCatalogProductsLocally($this->search($query, max($limit * 4, 20)), $filters);
+
+        return [
+            'products' => array_slice($products, 0, max(1, $limit)),
+            'relaxed' => [],
+            'engine' => null,
+        ];
     }
 
     public function find(string $id): ?CatalogProduct

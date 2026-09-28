@@ -597,4 +597,45 @@ class ChatFlowAgentServiceTest extends TestCase
             return $tool && str_contains($tool['content'], 'aún no tiene cesta');
         });
     }
+
+    public function test_product_search_passes_filters_and_reports_relaxation(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('product_search', ['query' => 'botas caza', 'brand' => 'Chiruca', 'price_max' => 150, 'in_stock' => true, 'sort' => 'price_asc']), 200)
+            ->push(['choices' => [['message' => ['content' => 'Estas encajan.', 'tool_calls' => []]]]], 200);
+
+        $catalog = new class
+        {
+            public array $calls = [];
+
+            public function search(string $q, int $limit = 6): array
+            {
+                return [];
+            }
+
+            public function searchWithFilters(string $q, int $limit, array $filters = []): array
+            {
+                $this->calls[] = [$q, $filters];
+
+                return ['products' => [new CatalogProduct('54574', 'Botas Chiruca Pointer', price: 119.99, currency: 'EUR', brand: 'Chiruca')], 'relaxed' => ['price'], 'engine' => 'jolisearch'];
+            }
+
+            public function find(string $id): ?object
+            {
+                return null;
+            }
+        };
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('botas de caza chiruca de menos de 150', [], [], 'es', $catalog);
+
+        $this->assertSame([['botas caza', ['brand' => 'Chiruca', 'price_max' => 150.0, 'in_stock' => true, 'sort' => 'price_asc']]], $catalog->calls);
+        $this->assertSame('54574', $result['products'][0]->id);
+        Http::assertSent(function ($request) {
+            $tool = collect($request->data()['messages'] ?? [])->firstWhere('role', 'tool');
+
+            return $tool && str_contains($tool['content'], '"relaxed":["price"]') && str_contains($tool['content'], '"brand":"Chiruca"');
+        });
+    }
 }

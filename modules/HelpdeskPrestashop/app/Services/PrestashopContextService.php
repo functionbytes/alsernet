@@ -1409,25 +1409,44 @@ class PrestashopContextService
     }
 
     /**
-     * Busca productos en PrestaShop via el bridge por texto.
-     * Devuelve array de productos normalizados (vacío si el bridge no los soporta o falla).
+     * Busca productos en PrestaShop via el bridge por texto, con filtros
+     * opcionales (marca, categoría, precio, stock, orden — ver
+     * alsernet_product_search() en el bridge). Devuelve array de productos
+     * normalizados (vacío si el bridge no los soporta o falla).
      *
+     * @param  array{brand?:string,category?:string,price_min?:float,price_max?:float,in_stock?:bool,sort?:string}  $filters
      * @return array<int, array<string, mixed>>
      */
-    public function searchProducts(string $query, int $limit = 10, ?string $lang = null, int $offset = 0, bool $inStockOnly = false): array
+    public function searchProducts(string $query, int $limit = 10, ?string $lang = null, int $offset = 0, bool $inStockOnly = false, array $filters = []): array
     {
+        return $this->searchProductsWithMeta($query, $limit, $filters, $lang, $offset, $inStockOnly)['products'];
+    }
+
+    /**
+     * Como searchProducts(), pero además indica qué motor de búsqueda del
+     * bridge respondió y qué filtros hubo que relajar para no devolver 0
+     * resultados. La usa BridgeCatalogDriver::searchWithFilters() (la
+     * herramienta de búsqueda de producto del bot).
+     *
+     * @param  array{brand?:string,category?:string,price_min?:float,price_max?:float,in_stock?:bool,sort?:string}  $filters
+     * @return array{products: array<int, array<string, mixed>>, relaxed: array<int, string>, engine: ?string}
+     */
+    public function searchProductsWithMeta(string $query, int $limit = 10, array $filters = [], ?string $lang = null, int $offset = 0, bool $inStockOnly = false): array
+    {
+        $empty = ['products' => [], 'relaxed' => [], 'engine' => null];
+
         $query = trim($query);
 
         if (mb_strlen($query) < 2) {
-            return [];
+            return $empty;
         }
 
         // TTL corto (no versionado con el catálogo): mitiga tecleo rápido/doble
         // envío sobre el mismo texto sin arriesgar resultados obsoletos de stock.
-        $cacheKey = 'ps.search.'.md5($query.'|'.$limit.'|'.($lang ?? 'default').'|'.$offset.'|'.($inStockOnly ? 1 : 0));
+        $cacheKey = 'ps.search.meta.'.md5($query.'|'.$limit.'|'.($lang ?? 'default').'|'.$offset.'|'.($inStockOnly ? 1 : 0).'|'.json_encode($filters));
 
-        return Cache::remember($cacheKey, 45, function () use ($query, $limit, $lang, $offset, $inStockOnly): array {
-            $payload = ['query' => $query, 'limit' => $limit, 'offset' => $offset];
+        return Cache::remember($cacheKey, 45, function () use ($query, $limit, $lang, $offset, $inStockOnly, $filters, $empty): array {
+            $payload = array_merge($filters, ['query' => $query, 'limit' => $limit, 'offset' => $offset]);
 
             if ($lang !== null) {
                 $payload['lang'] = $lang;
@@ -1440,20 +1459,24 @@ class PrestashopContextService
             try {
                 $result = $this->callApi('product.search', $payload);
             } catch (PsUpstreamException) {
-                return [];
+                return $empty;
             }
 
             if (! is_array($result)) {
-                return [];
+                return $empty;
             }
 
             $products = $result['products'] ?? $result;
 
             if (! is_array($products)) {
-                return [];
+                return $empty;
             }
 
-            return array_map(fn ($p) => $this->normalizeProduct($p), $products);
+            return [
+                'products' => array_map(fn ($p) => $this->normalizeProduct($p), $products),
+                'relaxed' => is_array($result['relaxed'] ?? null) ? array_values($result['relaxed']) : [],
+                'engine' => isset($result['engine']) ? (string) $result['engine'] : null,
+            ];
         });
     }
 

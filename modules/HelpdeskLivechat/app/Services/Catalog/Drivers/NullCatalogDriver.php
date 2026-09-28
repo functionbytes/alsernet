@@ -17,6 +17,11 @@ final class NullCatalogDriver implements CatalogDriver
         return [];
     }
 
+    public function searchWithFilters(string $query, int $limit, array $filters = []): array
+    {
+        return ['products' => [], 'relaxed' => [], 'engine' => null];
+    }
+
     public function find(string $id): ?CatalogProduct
     {
         return null;

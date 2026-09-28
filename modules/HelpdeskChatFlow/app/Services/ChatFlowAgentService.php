@@ -419,8 +419,16 @@ class ChatFlowAgentService
                 ['query' => ['type' => 'string', 'description' => 'Lo que se quiere buscar']], ['query']);
         }
         if ($withProducts) {
-            $tools[] = $fn('product_search', 'Busca productos en el catálogo de la tienda. Los resultados se muestran al cliente como tarjetas con botón de añadir al carrito; en tu respuesta no repitas precios ni enlaces, resume y ayuda a elegir.',
-                ['query' => ['type' => 'string', 'description' => 'Palabras clave del producto (tipo, marca, uso), sin frases completas']], ['query']);
+            $tools[] = $fn('product_search', 'Busca productos con el buscador de la tienda. Traduce la necesidad del cliente a palabras clave + filtros (marca, categoría, precio, stock, orden). Los resultados se muestran al cliente como tarjetas con botón de añadir; en tu respuesta no repitas precios ni enlaces, resume y ayuda a elegir. Si la respuesta indica "relaxed", explica qué filtro no se pudo cumplir.',
+                [
+                    'query' => ['type' => 'string', 'description' => 'Palabras clave del producto (tipo, uso, material), sin frases completas ni la marca si va en brand'],
+                    'brand' => ['type' => 'string', 'description' => 'Marca, si el cliente la pide'],
+                    'category' => ['type' => 'string', 'description' => 'Categoría o deporte (caza, pesca, golf…), si ayuda a acotar'],
+                    'price_min' => ['type' => 'number', 'description' => 'Precio mínimo en €'],
+                    'price_max' => ['type' => 'number', 'description' => 'Precio máximo en € ("menos de 150" → 150)'],
+                    'in_stock' => ['type' => 'boolean', 'description' => 'Solo con stock (true si lo necesita ya)'],
+                    'sort' => ['type' => 'string', 'enum' => ['relevance', 'price_asc', 'price_desc', 'newest'], 'description' => 'Orden (relevance por defecto; price_asc si busca lo más barato)'],
+                ], ['query']);
             $tools[] = $fn('product_detail', 'Obtiene la ficha de un producto concreto del catálogo por su id (de product_search, o el que aparece como "Viendo ahora" en el contexto del visitante) para responder dudas sobre él.',
                 ['product_id' => ['type' => 'string', 'description' => 'Id del producto. Omítelo para usar el producto que el visitante está viendo ahora mismo.']]);
             if ($this->insights !== null && ($data['tool_variants'] ?? true)) {
@@ -532,21 +540,47 @@ class ChatFlowAgentService
             }
 
             if ($name === 'product_search' && $catalog !== null) {
-                $products = array_slice($catalog->search(trim((string) ($args['query'] ?? '')), self::MAX_PRODUCTS), 0, self::MAX_PRODUCTS);
+                $query = trim((string) ($args['query'] ?? ''));
+                $filters = array_filter([
+                    'brand' => trim((string) ($args['brand'] ?? '')) ?: null,
+                    'category' => trim((string) ($args['category'] ?? '')) ?: null,
+                    'price_min' => is_numeric($args['price_min'] ?? null) ? (float) $args['price_min'] : null,
+                    'price_max' => is_numeric($args['price_max'] ?? null) ? (float) $args['price_max'] : null,
+                    'in_stock' => ($args['in_stock'] ?? false) === true ? true : null,
+                    'sort' => in_array($args['sort'] ?? null, ['relevance', 'price_asc', 'price_desc', 'newest'], true) ? $args['sort'] : null,
+                ], fn ($v) => $v !== null);
+
+                // Buscador de la tienda con filtros (y relajación si no hay
+                // resultados); catálogos sin esa capacidad usan la búsqueda simple.
+                if (method_exists($catalog, 'searchWithFilters')) {
+                    $found = $catalog->searchWithFilters($query, self::MAX_PRODUCTS, $filters);
+                    $products = array_slice($found['products'] ?? [], 0, self::MAX_PRODUCTS);
+                    $relaxed = $found['relaxed'] ?? [];
+                } else {
+                    $products = array_slice($catalog->search($query, self::MAX_PRODUCTS), 0, self::MAX_PRODUCTS);
+                    $relaxed = [];
+                }
                 foreach ($products as $p) {
                     $shown[(string) $p->id] = $p;
                 }
 
-                return $products === []
-                    ? 'No hay productos en el catálogo que coincidan con esa búsqueda.'
-                    : json_encode(array_map(fn ($p) => [
+                if ($products === []) {
+                    return 'No hay productos en el catálogo que coincidan con esa búsqueda. Prueba con otras palabras clave o menos filtros.';
+                }
+
+                return json_encode(array_filter([
+                    'relaxed' => $relaxed !== [] ? $relaxed : null,
+                    'products' => array_map(fn ($p) => array_filter([
                         'id' => (string) $p->id,
                         'title' => $this->sanitize((string) $p->title),
+                        'brand' => isset($p->brand) && $p->brand !== null ? $this->sanitize((string) $p->brand) : null,
+                        'category' => isset($p->category) && $p->category !== null ? $this->sanitize((string) $p->category) : null,
                         'price' => $p->price,
                         'currency' => $p->currency,
                         'available' => $p->available,
                         'has_options' => (bool) ($p->hasCombinations ?? false),
-                    ], $products), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    ], fn ($v) => $v !== null), $products),
+                ], fn ($v) => $v !== null), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             if ($name === 'product_detail' && $catalog !== null) {

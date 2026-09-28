@@ -120,4 +120,32 @@ class FeedCatalogDriverTest extends TestCase
         // Una sola descarga del feed pese a múltiples consultas.
         Http::assertSentCount(1);
     }
+
+    public function test_search_with_filters_applies_price_range_locally(): void
+    {
+        $this->fakeFeed($this->sampleProducts());
+
+        $driver = new FeedCatalogDriver(self::FEED_URL);
+        $result = $driver->searchWithFilters('zapatillas', 6, ['price_max' => 80]);
+
+        $this->assertNotEmpty($result['products']);
+        foreach ($result['products'] as $product) {
+            $this->assertLessThanOrEqual(80, $product->price);
+        }
+        // El driver de feed no relaja filtros ni reporta motor.
+        $this->assertSame([], $result['relaxed']);
+        $this->assertNull($result['engine']);
+    }
+
+    public function test_search_with_filters_in_stock_excludes_unavailable(): void
+    {
+        $this->fakeFeed($this->sampleProducts());
+
+        $driver = new FeedCatalogDriver(self::FEED_URL);
+        $result = $driver->searchWithFilters('zapatillas', 6, ['in_stock' => true]);
+
+        foreach ($result['products'] as $product) {
+            $this->assertTrue($product->available);
+        }
+    }
 }
