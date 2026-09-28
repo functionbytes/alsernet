@@ -27,11 +27,21 @@
 
 @push('css')
     {{-- Estilos de los .bv-modal del inbox (la pantalla de tickets no los carga):
-         mismo trío que la ficha de Contactos 360. --}}
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-identity.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-identity.css')) }}">
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}">
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-commerce.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-commerce.css')) }}">
-    <link rel="stylesheet" href="{{ asset('modules/helpdeskerp/css/erp-tickets.css') }}?v={{ @filemtime(public_path('modules/helpdeskerp/css/erp-tickets.css')) }}">
+         mismo trío que la ficha de Contactos 360.
+
+         Sin bloquear el primer pintado (QA 28-sep-2026): son ~600 KB de CSS
+         que solo visten modales y hojas que arrancan cerradas. El <style> de
+         delante replica las dos únicas reglas que importan antes de que
+         lleguen —conversations.css ya define .bv-modal { display:none } (se
+         abre con .bv-modal.on) y .bv-hidden { display:none !important }—
+         para que ese marcado no asome mientras cargan. Comprobado: con las
+         cuatro hojas desactivadas y solo estas dos reglas, ningún elemento
+         de la pantalla cambia de visibilidad. --}}
+    <style>.bv-modal{display:none}.bv-hidden{display:none!important}</style>
+    @foreach (['vendor/helpdesk/conversations-identity.css', 'vendor/helpdesk/conversations.css', 'vendor/helpdesk/conversations-commerce.css', 'modules/helpdeskerp/css/erp-tickets.css'] as $ercTktCss)
+        <link rel="stylesheet" href="{{ asset($ercTktCss) }}?v={{ @filemtime(public_path($ercTktCss)) }}" media="print" onload="this.media='all'">
+        <noscript><link rel="stylesheet" href="{{ asset($ercTktCss) }}?v={{ @filemtime(public_path($ercTktCss)) }}"></noscript>
+    @endforeach
 @endpush
 
 <div id="ercTktConfig" hidden

@@ -1214,6 +1214,7 @@
                     syncFilterControls(params);
                     renderTabs();
                     renderList();
+                    TKA.state.pagination = res.pagination || null;
                     renderFoot(res.pagination || {});
                     renderBulkBar();
                     // En modo Kanban la lista está oculta y las columnas se pintan
@@ -1866,21 +1867,13 @@
             $list[0].appendChild(fragment);
         }
 
-        // "6 tickets" a secas, como el mockup — el "en esta página" sobra
-        // ahora que el pie de la lista dice el rango exacto.
-        $('#tkt-count').text(rows.length + (rows.length === 1 ? ' ticket' : ' tickets'));
-
-        // El pie de paginación ('1–N de N') es un partial Blade estático,
-        // renderizado una sola vez por el servidor con el total SIN filtrar
-        // — los tabs/chips de estado son 100% client-side, así que quedaba
-        // congelado y podía contradecir directamente al empty-state (p.ej.
-        // "1–11 de 11" a la vez que "No hay tickets" en el mismo pantallazo,
-        // verificado en vivo con el tab "Resueltos"). Se actualiza aquí con
-        // el conteo real ya filtrado, mismo criterio que #tkt-count arriba.
-        var $footCount = $('.tkt-list-foot > span').first();
-        if ($footCount.length) {
-            $footCount.text((rows.length ? '1–' + rows.length : '0–0') + ' de ' + rows.length + ' tickets');
-        }
+        // Contador y pie salen SIEMPRE de la paginación del servidor
+        // (renderFoot): las pestañas ya filtran en el servidor, y contar las
+        // filas pintadas decía "50 tickets · 1–50 de 50" con 100 tickets en
+        // dos páginas (QA 28-sep-2026, visible en cuanto el arranque dejó de
+        // repetir la petición inicial). Sin paginación todavía (primera
+        // carga) se deja el texto que ya pintó el Blade con $tickets->total().
+        if (TKA.state.pagination) renderFoot(TKA.state.pagination);
 
         if (!TKA.state.currentTicket) renderQueueSummary();
     }
