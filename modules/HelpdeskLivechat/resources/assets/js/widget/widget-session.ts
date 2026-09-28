@@ -8,7 +8,8 @@
  *   - Show the agent which pages the visitor saw before/during the chat.
  */
 
-import { apiUrl } from './api';
+import { apiUrl, getWebsiteToken } from './api';
+import { getCart, getViewedProducts, recordViewedProduct, refreshCart, watchCart } from './widget-commerce';
 
 const STORAGE_KEY = 'livechat_widget_session_token';
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 5_000; // 5s — matches server cooldown
@@ -32,6 +33,7 @@ function resolveHeartbeatIntervalMs(): number {
  */
 interface WidgetProduct {
     id: string | number;
+    id_product_attribute?: number;
     title?: string;
     image_url?: string;
     url?: string;
@@ -46,6 +48,7 @@ function resolveCurrentProduct(): WidgetProduct | null {
     }
     return {
         id: String(product.id),
+        id_product_attribute: typeof product.id_product_attribute === 'number' ? product.id_product_attribute : undefined,
         title: product.title,
         image_url: product.image_url,
         url: product.url,
@@ -88,39 +91,34 @@ function generateToken(): string {
 }
 
 /**
- * Send a heartbeat to the backend with current URL + page title.
+ * Send a heartbeat to the backend with current URL + page title, the product
+ * being viewed, the recently viewed products and the live cart.
  * Backend creates/updates the WidgetSession and appends a WidgetPageView
  * if the URL changed or the cooldown (5s server-side) elapsed.
  *
- * Uses sendBeacon for URL changes to fire instantly even on page unload —
- * critical for MPAs (PrestaShop, etc.) where the user navigates before
- * fetch can complete.
+ * fetch con keepalive (no sendBeacon): sobrevive a la descarga de la página
+ * en MPAs (PrestaShop) y, a diferencia de sendBeacon, puede llevar la cabecera
+ * X-Website-Token que exige HeartbeatRequest. El token va también en el body.
  */
 export async function sendHeartbeat(): Promise<void> {
     const token = getSessionToken();
     const url = window.location.href;
-    const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const websiteToken = getWebsiteToken();
     const product = resolveCurrentProduct();
+    const cart = getCart();
+    const viewed = getViewedProducts();
     const payload = {
         session_token: token,
+        website_token: websiteToken,
         url,
         title: document.title,
         ...(product ? { product } : {}),
+        // undefined = cesta aún no leída: no se envía para no borrar la guardada.
+        ...(cart !== undefined ? { cart } : {}),
+        ...(viewed.length ? { viewed_products: viewed } : {}),
     };
 
     lastSentUrl = url;
-
-    if (typeof navigator.sendBeacon === 'function') {
-        try {
-            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-            const ok = navigator.sendBeacon(apiUrl('/hd/api/session/heartbeat'), blob);
-            if (ok) {
-                return;
-            }
-        } catch {
-            // fall through to fetch
-        }
-    }
 
     try {
         await fetch(apiUrl('/hd/api/session/heartbeat'), {
@@ -128,8 +126,7 @@ export async function sendHeartbeat(): Promise<void> {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+                ...(websiteToken ? { 'X-Website-Token': websiteToken } : {}),
             },
             body: JSON.stringify(payload),
             keepalive: true,
@@ -156,7 +153,23 @@ export function startHeartbeat(): void {
     if (heartbeatTimer !== null) {
         return;
     }
-    sendHeartbeat();
+    recordViewedProduct();
+    // Primer latido con la cesta ya leída (si la tienda la expone); si tarda
+    // más de 1,5 s, sale sin ella.
+    let firstSent = false;
+    const initialCart = refreshCart();
+    Promise.race([initialCart, new Promise(r => setTimeout(r, 1500))]).finally(() => {
+        firstSent = true;
+        sendHeartbeat();
+    });
+    // Si la cesta llegó después del primer latido, se envía ya y no en el
+    // siguiente intervalo.
+    initialCart.then(changed => {
+        if (changed && firstSent) {
+            sendHeartbeat();
+        }
+    });
+    watchCart(() => { sendHeartbeat(); });
     heartbeatTimer = setInterval(sendHeartbeat, resolveHeartbeatIntervalMs());
 
     window.addEventListener('popstate', sendIfUrlChanged);

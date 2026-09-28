@@ -41,6 +41,12 @@ return [
                 'scheme' => env('REVERB_SCHEME', 'https'),
                 'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
             ],
+            // Puerto/esquema que abre el NAVEGADOR (widget embebido y bandeja),
+            // p. ej. el de nginx que hace de proxy a Reverb. 'options' es solo
+            // servidor→Reverb por la red interna de Docker. Lo lee
+            // HelpdeskLivechat\Concerns\ResolvesReverbHost.
+            'public_port' => env('REVERB_PUBLIC_PORT', env('VITE_REVERB_PORT')),
+            'public_scheme' => env('REVERB_PUBLIC_SCHEME', env('VITE_REVERB_SCHEME')),
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
             ],

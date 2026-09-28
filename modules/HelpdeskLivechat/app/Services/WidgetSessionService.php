@@ -28,16 +28,19 @@ class WidgetSessionService
         $cacheKey = 'helpdesklivechat:hb:'.$token;
 
         $product = $this->extractProduct($request);
+        $commerce = $this->extractCommerce($request);
+
+        // Huella de lo que el agente ve en vivo (producto, cesta, vistos): si
+        // cambia sin cambiar la URL (p. ej. añade al carrito) hay que persistir
+        // y emitir, así que el atajo solo vale cuando URL y huella coinciden.
+        $fingerprint = md5((string) json_encode([$product, $commerce]));
 
         $cached = Cache::get($cacheKey);
-        // El fast-path salta la BD cuando la URL no cambió; pero si el heartbeat
-        // trae un producto (el visitante entró a una ficha) hay que persistirlo,
-        // así que no se toma el atajo en ese caso.
-        if ($cached !== null && $product === null) {
-            [$cachedUrl, $cachedSessionId] = explode('|', $cached, 2) + [null, null];
+        if ($cached !== null) {
+            [$cachedUrl, $cachedSessionId, $cachedFingerprint] = explode('|', $cached, 3) + [null, null, null];
 
-            if ($cachedUrl === $url && $cachedSessionId !== null) {
-                // Fast-path: same URL within cooldown — return a minimal stub without hitting the DB.
+            if ($cachedUrl === $url && $cachedSessionId !== null && $cachedFingerprint === $fingerprint) {
+                // Fast-path: same URL and context within cooldown — return a minimal stub without hitting the DB.
                 $stub = new WidgetSession(['session_token' => $token]);
                 $stub->id = (int) $cachedSessionId;
 
@@ -48,13 +51,13 @@ class WidgetSessionService
         $session = WidgetSession::where('session_token', $token)->first();
 
         if (! $session) {
-            $session = $this->createSession($token, $url, $title, $request, $product);
+            $session = $this->createSession($token, $url, $title, $request, $product, $commerce);
         } else {
-            $this->updateSession($session, $url, $title, $request, $product);
+            $this->updateSession($session, $url, $title, $request, $product, $commerce);
         }
 
-        // Refresh the Redis gate with current URL and session id.
-        Cache::put($cacheKey, $url.'|'.$session->id, $cooldown);
+        // Refresh the Redis gate with current URL, session id and context fingerprint.
+        Cache::put($cacheKey, $url.'|'.$session->id.'|'.$fingerprint, $cooldown);
 
         $conversationId = Cache::get('helpdesklivechat:session_conv:'.$token);
         if ($conversationId) {
@@ -64,7 +67,10 @@ class WidgetSessionService
         return $session;
     }
 
-    private function createSession(string $token, string $url, ?string $title, Request $request, ?array $product = null): WidgetSession
+    /**
+     * @param  array{cart?: array<string, mixed>|null, viewed_products?: list<array<string, mixed>>}  $commerce
+     */
+    private function createSession(string $token, string $url, ?string $title, Request $request, ?array $product = null, array $commerce = []): WidgetSession
     {
         $ip = $request->ip();
 
@@ -78,6 +84,9 @@ class WidgetSessionService
             // puede pegar a un proveedor remoto y colgar el arranque de sesión.
             'country_code' => null,
             'current_product' => $product,
+            'cart_snapshot' => $commerce['cart'] ?? null,
+            'cart_updated_at' => array_key_exists('cart', $commerce) ? now() : null,
+            'viewed_products' => $commerce['viewed_products'] ?? null,
             'started_at' => now(),
             'last_activity_at' => now(),
         ]);
@@ -96,7 +105,10 @@ class WidgetSessionService
         return $session;
     }
 
-    private function updateSession(WidgetSession $session, string $url, ?string $title, Request $request, ?array $product = null): void
+    /**
+     * @param  array{cart?: array<string, mixed>|null, viewed_products?: list<array<string, mixed>>}  $commerce
+     */
+    private function updateSession(WidgetSession $session, string $url, ?string $title, Request $request, ?array $product = null, array $commerce = []): void
     {
         $urlChanged = $session->current_url !== $url;
         $lastActivity = $session->last_activity_at;
@@ -116,6 +128,17 @@ class WidgetSessionService
             $session->current_product = $product;
         } elseif ($urlChanged) {
             $session->current_product = null;
+        }
+
+        // Cesta: solo cuando el latido la trae (ausente = el widget aún no la
+        // leyó; null = el visitante no tiene cesta y sí se guarda).
+        if (array_key_exists('cart', $commerce) && $commerce['cart'] !== $session->cart_snapshot) {
+            $session->cart_snapshot = $commerce['cart'];
+            $session->cart_updated_at = now();
+        }
+
+        if (array_key_exists('viewed_products', $commerce)) {
+            $session->viewed_products = $commerce['viewed_products'];
         }
 
         // Refresh device info if it was missing (e.g. session bootstrapped without a real UA).
@@ -161,12 +184,76 @@ class WidgetSessionService
 
         return [
             'id' => (string) $product['id'],
+            'id_product_attribute' => isset($product['id_product_attribute']) ? (int) $product['id_product_attribute'] : null,
             'title' => isset($product['title']) ? (string) $product['title'] : null,
-            'image_url' => isset($product['image_url']) ? (string) $product['image_url'] : null,
-            'url' => isset($product['url']) ? (string) $product['url'] : null,
+            'image_url' => $this->safeUrl($product['image_url'] ?? null),
+            'url' => $this->safeUrl($product['url'] ?? null),
             'price' => isset($product['price']) ? (float) $product['price'] : null,
             'currency' => isset($product['currency']) ? (string) $product['currency'] : null,
         ];
+    }
+
+    /**
+     * Cesta en vivo y productos vistos que reporta el widget. Solo incluye
+     * cada clave si el latido la trae, para distinguir "sin cesta" (null) de
+     * "cesta aún no leída" (clave ausente).
+     *
+     * @return array{cart?: array<string, mixed>|null, viewed_products?: list<array<string, mixed>>}
+     */
+    private function extractCommerce(Request $request): array
+    {
+        $out = [];
+
+        if ($request->has('cart')) {
+            $cart = $request->input('cart');
+            $out['cart'] = is_array($cart) && ! empty($cart['id']) ? [
+                'id' => (int) $cart['id'],
+                'products_count' => (int) ($cart['products_count'] ?? 0),
+                'total' => isset($cart['total']) ? round((float) $cart['total'], 2) : null,
+                'total_products' => isset($cart['total_products']) ? round((float) $cart['total_products'], 2) : null,
+                'currency' => isset($cart['currency']) ? (string) $cart['currency'] : null,
+                'customer_logged' => (bool) ($cart['customer_logged'] ?? false),
+                'lines' => array_values(array_map(fn (array $line): array => [
+                    'id_product' => (int) $line['id_product'],
+                    'id_product_attribute' => (int) ($line['id_product_attribute'] ?? 0),
+                    'name' => isset($line['name']) ? (string) $line['name'] : null,
+                    'attributes' => isset($line['attributes']) ? (string) $line['attributes'] : null,
+                    'reference' => isset($line['reference']) ? (string) $line['reference'] : null,
+                    'qty' => (int) $line['qty'],
+                    'price' => isset($line['price']) ? (float) $line['price'] : null,
+                    'total' => isset($line['total']) ? (float) $line['total'] : null,
+                    'image_url' => $this->safeUrl($line['image_url'] ?? null),
+                    'url' => $this->safeUrl($line['url'] ?? null),
+                ], array_filter((array) ($cart['lines'] ?? []), 'is_array'))),
+            ] : null;
+        }
+
+        if ($request->has('viewed_products')) {
+            $out['viewed_products'] = array_values(array_map(fn (array $v): array => [
+                'id' => (string) $v['id'],
+                'title' => isset($v['title']) ? (string) $v['title'] : null,
+                'image_url' => $this->safeUrl($v['image_url'] ?? null),
+                'url' => $this->safeUrl($v['url'] ?? null),
+                'price' => isset($v['price']) ? (float) $v['price'] : null,
+                'currency' => isset($v['currency']) ? (string) $v['currency'] : null,
+                'viewed_at' => isset($v['viewed_at']) ? (string) $v['viewed_at'] : null,
+            ], array_slice(array_filter((array) $request->input('viewed_products', []), 'is_array'), 0, 20)));
+        }
+
+        return $out;
+    }
+
+    /**
+     * Solo http(s) o relativas al protocolo: el panel pinta estas URLs como
+     * enlaces e imágenes y no debe aceptar javascript: ni data:.
+     */
+    private function safeUrl(mixed $url): ?string
+    {
+        if (! is_string($url) || $url === '') {
+            return null;
+        }
+
+        return preg_match('#^(https?:)?//#i', $url) === 1 ? $url : null;
     }
 
     private function extractDevice(Request $request): array

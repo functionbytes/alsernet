@@ -10,7 +10,9 @@ class HeartbeatRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $token = (string) $this->header('X-Website-Token', '');
+        // Cabecera o body: el widget envía ambos (el body sirve también a
+        // clientes que no pueden poner cabeceras).
+        $token = (string) ($this->header('X-Website-Token') ?: $this->input('website_token', ''));
 
         if ($token === '') {
             return false;
@@ -38,6 +40,35 @@ class HeartbeatRequest extends FormRequest
             'product.url' => ['nullable', 'string', 'max:1000'],
             'product.price' => ['nullable', 'numeric'],
             'product.currency' => ['nullable', 'string', 'max:8'],
+            'product.id_product_attribute' => ['nullable', 'integer', 'min:0'],
+            // Cesta en vivo leída de la tienda (null = el visitante no tiene cesta).
+            'cart' => ['nullable', 'array'],
+            'cart.id' => ['required_with:cart', 'integer', 'min:1'],
+            'cart.products_count' => ['nullable', 'integer', 'min:0'],
+            'cart.total' => ['nullable', 'numeric'],
+            'cart.total_products' => ['nullable', 'numeric'],
+            'cart.currency' => ['nullable', 'string', 'max:8'],
+            'cart.customer_logged' => ['nullable', 'boolean'],
+            'cart.lines' => ['nullable', 'array', 'max:50'],
+            'cart.lines.*.id_product' => ['required', 'integer', 'min:1'],
+            'cart.lines.*.id_product_attribute' => ['nullable', 'integer', 'min:0'],
+            'cart.lines.*.name' => ['nullable', 'string', 'max:255'],
+            'cart.lines.*.attributes' => ['nullable', 'string', 'max:255'],
+            'cart.lines.*.reference' => ['nullable', 'string', 'max:64'],
+            'cart.lines.*.qty' => ['required', 'integer', 'min:0'],
+            'cart.lines.*.price' => ['nullable', 'numeric'],
+            'cart.lines.*.total' => ['nullable', 'numeric'],
+            'cart.lines.*.image_url' => ['nullable', 'string', 'max:1000'],
+            'cart.lines.*.url' => ['nullable', 'string', 'max:1000'],
+            // Productos vistos recientemente (lista local del widget).
+            'viewed_products' => ['nullable', 'array', 'max:20'],
+            'viewed_products.*.id' => ['required', 'string', 'max:64'],
+            'viewed_products.*.title' => ['nullable', 'string', 'max:255'],
+            'viewed_products.*.image_url' => ['nullable', 'string', 'max:1000'],
+            'viewed_products.*.url' => ['nullable', 'string', 'max:1000'],
+            'viewed_products.*.price' => ['nullable', 'numeric'],
+            'viewed_products.*.currency' => ['nullable', 'string', 'max:8'],
+            'viewed_products.*.viewed_at' => ['nullable', 'date'],
         ];
     }
 

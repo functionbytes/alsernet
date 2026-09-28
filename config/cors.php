@@ -15,7 +15,9 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    // hd/api/*: API pública del widget de chat, llamada desde la tienda (otro
+    // origen). Sin credenciales; los dominios los filtra ValidateTrustedOrigin.
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'hd/api/*'],
 
     'allowed_methods' => ['*'],
 

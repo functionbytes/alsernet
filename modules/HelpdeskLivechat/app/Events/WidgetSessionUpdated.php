@@ -40,6 +40,10 @@ class WidgetSessionUpdated implements ShouldBroadcast
             // Producto que el visitante está viendo — el agente lo ve en vivo en
             // el panel de la conversación (covisualización estilo Oct8ne).
             'current_product' => $this->session->current_product,
+            // Cesta en vivo y productos vistos (live commerce, fase 1).
+            'cart' => $this->session->cart_snapshot,
+            'cart_updated_at' => $this->session->cart_updated_at?->toIso8601String(),
+            'viewed_products' => $this->session->viewed_products,
             'last_activity_at' => $this->session->last_activity_at?->toIso8601String(),
         ];
     }

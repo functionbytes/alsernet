@@ -24,7 +24,8 @@ class WidgetScriptController extends Controller
 
         if (! $web) {
             return response('// Widget not found', 404)
-                ->header('Content-Type', 'application/javascript; charset=UTF-8');
+                ->header('Content-Type', 'application/javascript; charset=UTF-8')
+                ->header('Access-Control-Allow-Origin', '*');
         }
 
         $bundlePath = public_path('build-helpdesklivechat/widget.js');
@@ -55,7 +56,9 @@ class WidgetScriptController extends Controller
         $web = Web::where('website_token', $websiteToken)->first();
 
         if (! $web) {
-            return response()->json(['error' => 'Widget not found'], 404);
+            // Con CORS para que el navegador muestre el 404 y no un ERR_FAILED opaco.
+            return response()->json(['error' => 'Widget not found'], 404)
+                ->header('Access-Control-Allow-Origin', '*');
         }
 
         return response()

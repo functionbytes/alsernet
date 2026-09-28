@@ -28,6 +28,9 @@ class WidgetSession extends Model
         'ip_address',
         'country_code',
         'current_product',
+        'cart_snapshot',
+        'cart_updated_at',
+        'viewed_products',
         'started_at',
         'last_activity_at',
     ];
@@ -37,6 +40,9 @@ class WidgetSession extends Model
         return [
             'device' => 'array',
             'current_product' => 'array',
+            'cart_snapshot' => 'array',
+            'cart_updated_at' => 'datetime',
+            'viewed_products' => 'array',
             'started_at' => 'datetime',
             'last_activity_at' => 'datetime',
             'created_at' => 'datetime',
