@@ -310,7 +310,10 @@ class ManagersTicketsCrudTest extends TestCase
     {
         Event::fake([TicketAssigned::class]);
 
+        // Desde el fix de asignación (28-sep-2026), assignee_id exige un rol
+        // de agente del helpdesk — ver AssignmentService::isAssignableAgent().
         $agent = User::factory()->create();
+        $agent->assignRole('helpdesk-agent');
         $ticket = $this->createTicket();
 
         $this->actingAs($this->manager)
@@ -322,6 +325,27 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertRedirect();
 
         Event::assertDispatched(TicketAssigned::class, fn (TicketAssigned $event) => $event->ticket->is($ticket) && $event->agent->is($agent));
+    }
+
+    /**
+     * Bug real (28-sep-2026): UpdateTicketRequest::assignee_id aceptaba
+     * CUALQUIER users.id, sin exigir ningún rol de agente del helpdesk —
+     * ver AssignmentService::isAssignableAgent().
+     */
+    public function test_reassigning_a_ticket_to_a_non_agent_is_rejected(): void
+    {
+        $notAnAgent = User::factory()->create();
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->put(route('manager.helpdesk.tickets.update', $ticket), [
+                'priority' => $ticket->priority,
+                'status_id' => $ticket->status_id,
+                'assignee_id' => $notAnAgent->id,
+            ])
+            ->assertSessionHasErrors(['assignee_id']);
+
+        $this->assertNull($ticket->fresh()->assignee_id);
     }
 
     public function test_close_requires_authentication(): void

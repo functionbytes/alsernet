@@ -3,9 +3,11 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Setting;
 use Modules\Helpdesk\Services\AgentAvailabilityService;
@@ -17,6 +19,60 @@ use Modules\HelpdeskTickets\Models\TicketHistory;
 
 class AssignmentService
 {
+    /**
+     * Roles que cuentan como "agente del helpdesk" a la hora de validar el
+     * DESTINO de una asignación manual o masiva (Update/BulkTicketRequest).
+     * Más amplio que el rol único que usa getAvailableAgents() para el
+     * reparto automático (round-robin/workload) a propósito: aquí un manager
+     * también puede recibir tickets a mano, y la lista sale de los roles que
+     * hoy aparecen de verdad como assignee_id en helpdesk_tickets (verificado
+     * en BD: helpdesk-agent, helpdesk-agent-restricted, helpdesk-supervisor,
+     * super-admin, super-settings), más helpdesk-manager/helpdesk-admin/
+     * manager para que un responsable de equipo también sea un destino
+     * válido aunque hoy no tenga tickets a su nombre.
+     */
+    public const ASSIGNABLE_ROLES = [
+        'helpdesk-agent',
+        'helpdesk-agent-restricted',
+        'helpdesk-supervisor',
+        'helpdesk-manager',
+        'helpdesk-admin',
+        'manager',
+        'super-admin',
+        'super-settings',
+    ];
+
+    /**
+     * Mismo `whereHas('roles', ...)` que getAvailableAgents() usaba inline,
+     * extraído para poder reutilizarse con listas de roles distintas: el
+     * reparto automático solo quiere 'helpdesk-agent', mientras que la
+     * validación de asignación manual/masiva (isAssignableAgent()) admite
+     * también a managers.
+     */
+    private static function usersWithRoles(array $roles): Builder
+    {
+        return User::whereHas('roles', fn ($q) => $q->whereIn('name', $roles));
+    }
+
+    /**
+     * ¿Puede $userId recibir un ticket por asignación manual o masiva? A
+     * diferencia de getAvailableAgents(), NO exige available=true: un
+     * manager debe poder asignar a alguien ausente, solo el reparto
+     * AUTOMÁTICO necesita descartar a quien no puede atender ahora mismo.
+     * Sí exige que la cuenta siga activa (deleted_at IS NULL) cuando esa
+     * columna existe en el esquema.
+     */
+    public static function isAssignableAgent(int $userId): bool
+    {
+        $query = self::usersWithRoles(self::ASSIGNABLE_ROLES)->whereKey($userId);
+
+        if (Schema::hasColumn('users', 'deleted_at')) {
+            $query->whereNull('deleted_at');
+        }
+
+        return $query->exists();
+    }
+
     /**
      * Assign a ticket to an agent
      */
@@ -288,9 +344,7 @@ class AssignmentService
      */
     public function getAvailableAgents(?int $categoryId = null): Collection
     {
-        $query = User::whereHas('roles', function ($q) {
-            $q->where('name', 'helpdesk-agent');
-        })->where('available', true);
+        $query = self::usersWithRoles(['helpdesk-agent'])->where('available', true);
 
         if ($categoryId) {
             $query->whereHas('agentCategories', function ($q) use ($categoryId) {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketStatusRequest;
@@ -102,6 +103,19 @@ class TicketStatusesController extends Controller
         $validated['is_open'] = $request->boolean('is_open');
         $validated['is_default'] = $request->boolean('is_default');
         $validated['stops_sla_timer'] = $request->boolean('stops_sla_timer');
+
+        // El catálogo siempre necesita un estado por defecto: sin él,
+        // TicketObserver::creating() no tiene de dónde sacar el status_id de
+        // un ticket nuevo si tampoco se indica uno a mano — desmarcar
+        // "predeterminado" del único estado que lo tenía dejaba is_default
+        // en false en TODAS las filas (bug real que dejó tickets sin
+        // status_id en local, reparado con una migración de datos aparte).
+        if ($status->is_default && ! $validated['is_default']
+            && ! TicketStatus::whereKeyNot($status->id)->where('is_default', true)->exists()) {
+            throw ValidationException::withMessages([
+                'is_default' => 'Debe quedar al menos un estado predeterminado: marca otro antes de quitarle este.',
+            ]);
+        }
 
         $status->update($validated);
 

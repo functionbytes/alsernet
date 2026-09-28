@@ -21,6 +21,13 @@ class TicketNotesController extends Controller
      */
     public function store(StoreTicketNoteRequest $request, Ticket $ticket): JsonResponse
     {
+        // TicketNotePolicy::create() solo comprueba el permiso plano
+        // (helpdesk.tickets.update/manage), sin conocer TODAVÍA a qué
+        // ticket va la nota: cualquiera con ese permiso podía anotar
+        // cualquier ticket, incluido uno fuera de su equipo, tecleando su
+        // id en la URL. Mismo patrón que TicketWorkController (IDOR real,
+        // 28-sep-2026).
+        $this->authorize('update', $ticket);
         $this->authorize('create', TicketNote::class);
 
         $note = TicketNote::create([

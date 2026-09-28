@@ -44,6 +44,11 @@ class TicketCommentsController extends Controller
      */
     public function store(StoreTicketCommentRequest $request, Ticket $ticket): JsonResponse
     {
+        // Mismo hueco que TicketNotesController::store(): TicketCommentPolicy
+        // ::create() solo mira el permiso plano, no el ticket concreto —
+        // cualquiera con helpdesk.tickets.update podía comentar un ticket
+        // ajeno tecleando su id (IDOR real, 28-sep-2026).
+        $this->authorize('update', $ticket);
         $this->authorize('create', TicketComment::class);
 
         $comment = TicketComment::create([

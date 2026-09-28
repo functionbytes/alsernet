@@ -272,6 +272,53 @@ class TicketPolicyTest extends TestCase
         $this->assertFalse($otherUser->can('update', $ticket));
     }
 
+    /**
+     * Bug real (28-sep-2026): merge() no llamaba a inScope(), a diferencia
+     * de update()/close() — el permiso base bastaba para fusionar un ticket
+     * de un equipo ajeno.
+     */
+    public function test_user_with_update_permission_cannot_merge_ticket_of_another_team(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo('helpdesk.tickets.update');
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $foreignGroup = TicketGroup::create([
+            'name' => 'Equipo ajeno '.uniqid(),
+            'assignment_mode' => 'manual',
+            'is_default' => false,
+            'is_active' => true,
+        ]);
+        $ticket = $this->createTicket(['group_id' => $foreignGroup->id]);
+
+        $this->assertFalse($user->can('merge', $ticket));
+    }
+
+    public function test_user_with_manage_permission_can_merge_any_ticket(): void
+    {
+        $user = User::factory()->create();
+
+        try {
+            $user->givePermissionTo(['helpdesk.tickets.update', 'helpdesk.tickets.manage']);
+        } catch (\Throwable) {
+            $this->markTestSkipped('Permissions not available in test env.');
+        }
+
+        $foreignGroup = TicketGroup::create([
+            'name' => 'Equipo ajeno '.uniqid(),
+            'assignment_mode' => 'manual',
+            'is_default' => false,
+            'is_active' => true,
+        ]);
+        $ticket = $this->createTicket(['group_id' => $foreignGroup->id]);
+
+        $this->assertTrue($user->can('merge', $ticket));
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private function createTicket(array $overrides = []): Ticket

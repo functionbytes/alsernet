@@ -165,9 +165,18 @@ class TicketPolicy
         return $this->close($user, $ticket);
     }
 
+    /**
+     * No llamaba a inScope(): a diferencia de update()/close(), cualquiera
+     * con helpdesk.tickets.update podía fusionar un ticket ajeno (de otro
+     * equipo) dentro de uno propio, o al revés (IDOR real, 28-sep-2026).
+     */
     public function merge(User $user, Ticket $ticket): bool
     {
-        return $user->hasPermissionTo('helpdesk.tickets.update');
+        if ($ticket->assignee_id === $user->id) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('helpdesk.tickets.update') && $this->inScope($user, $ticket);
     }
 
     public function watch(User $user, Ticket $ticket): bool

@@ -6,9 +6,12 @@ use App\Models\User;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketGroup;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
@@ -160,6 +163,47 @@ class TicketNotesControllerTest extends TestCase
             ->assertOk();
 
         $this->assertSoftDeleted('helpdesk_ticket_notes', ['id' => $note->id], 'helpdesk');
+    }
+
+    /**
+     * Bug real (28-sep-2026, IDOR): el store() solo comprobaba
+     * TicketNotePolicy::create() (permiso plano), nunca el ticket concreto
+     * — un agente con helpdesk.tickets.update podía anotar cualquier
+     * ticket, incluido uno de un equipo ajeno.
+     */
+    public function test_store_note_on_ticket_of_another_team_is_forbidden(): void
+    {
+        $foreignGroup = TicketGroup::create([
+            'name' => 'Equipo ajeno '.uniqid(),
+            'assignment_mode' => 'manual',
+            'is_default' => false,
+            'is_active' => true,
+        ]);
+        $ticket = $this->createTicket(['group_id' => $foreignGroup->id]);
+
+        // HelpdeskTicketsPermissionsSeeder da TODOS los permisos a
+        // super-settings, incluido helpdesk.tickets.manage, que se salta el
+        // acotado por equipo (TicketPolicy::inScope()). Sin retirárselo aquí
+        // el "agente" del test es en realidad un manager y el 201 es
+        // correcto. setUp() vuelve a sembrarlo en cada test; el finally lo
+        // restaura igualmente por si esta clase se ejecuta aislada.
+        $role = Role::findByName('super-settings', 'web');
+        $role->revokePermissionTo('helpdesk.tickets.manage');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        try {
+            $this->actingAs($this->agent->fresh())
+                ->postJson(route('manager.helpdesk.tickets.notes.store', $ticket), [
+                    'ticket_id' => $ticket->id,
+                    'body' => 'Nota sobre un ticket ajeno.',
+                ])
+                ->assertForbidden();
+        } finally {
+            $role->givePermissionTo('helpdesk.tickets.manage');
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
+        }
+
+        $this->assertDatabaseMissing('helpdesk_ticket_notes', ['ticket_id' => $ticket->id], 'helpdesk');
     }
 
     public function test_store_requires_authentication(): void

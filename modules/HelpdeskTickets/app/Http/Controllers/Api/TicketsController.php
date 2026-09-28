@@ -13,6 +13,7 @@ use Modules\HelpdeskTickets\Http\Requests\Api\StoreTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Requests\Api\UpdateTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Resources\TicketResource;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class TicketsController extends Controller
 {
@@ -68,6 +69,12 @@ class TicketsController extends Controller
                 'category_id' => $validated['category_id'],
                 'priority' => $validated['priority'] ?? 'normal',
                 'customer_id' => $validated['customer_id'] ?? null,
+                // Mismo fallback que el resto de vías de alta (Portal,
+                // InboundEmailTicketResolver, HelpdeskTicketBridgeService):
+                // sin esto el ticket se creaba con status_id NULL (bug real,
+                // 28-sep-2026) hasta que TicketObserver::creating() corría —
+                // aquí se deja explícito para no depender solo del observer.
+                'status_id' => CatalogCacheService::defaultStatus()?->id ?? Ticket::firstOpenTicketStatus()?->id,
                 'source' => 'api',
             ]);
         });

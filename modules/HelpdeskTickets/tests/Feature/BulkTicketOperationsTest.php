@@ -17,11 +17,13 @@ use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class BulkTicketOperationsTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
@@ -36,6 +38,11 @@ class BulkTicketOperationsTest extends TestCase
         if (! $this->helpdeskConnectionAvailable()) {
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
+
+        // BulkTicketRequest::agent_id exige rol de agente del helpdesk desde
+        // el fix de asignación (28-sep-2026) — ver AssignmentService::
+        // isAssignableAgent().
+        $this->seedHelpdeskRoles();
 
         foreach (['helpdesk.tickets.view', 'helpdesk.tickets.update', 'helpdesk.tickets.delete'] as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
@@ -185,6 +192,7 @@ class BulkTicketOperationsTest extends TestCase
         Event::fake([TicketAssigned::class]);
 
         $agent = User::factory()->create();
+        $agent->assignRole('helpdesk-agent');
         $ticketA = $this->createTestTicket();
         $ticketB = $this->createTestTicket();
 
@@ -229,6 +237,7 @@ class BulkTicketOperationsTest extends TestCase
     public function test_bulk_assign_sets_assigned_to_on_all_tickets(): void
     {
         $agent = User::factory()->create();
+        $agent->assignRole('helpdesk-agent');
         $ticketA = $this->createTestTicket();
         $ticketB = $this->createTestTicket();
 
@@ -241,6 +250,27 @@ class BulkTicketOperationsTest extends TestCase
 
         $this->assertEquals($agent->id, Ticket::find($ticketA->id)->assignee_id);
         $this->assertEquals($agent->id, Ticket::find($ticketB->id)->assignee_id);
+    }
+
+    /**
+     * Bug real (28-sep-2026): BulkTicketRequest::agent_id aceptaba
+     * CUALQUIER users.id como destino — se podía asignar un ticket a un
+     * usuario sin ningún rol de agente del helpdesk. Ver AssignmentService::
+     * isAssignableAgent().
+     */
+    public function test_bulk_assign_rejects_agent_without_helpdesk_role(): void
+    {
+        $notAnAgent = User::factory()->create();
+        $ticket = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'assign',
+                'agent_id' => $notAnAgent->id,
+            ])->assertJsonValidationErrors(['agent_id']);
+
+        $this->assertNull(Ticket::find($ticket->id)->assignee_id);
     }
 
     public function test_bulk_delete_soft_deletes_tickets(): void

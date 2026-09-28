@@ -288,8 +288,10 @@ class TicketsCrudController extends Controller
             // debajo del detalle. El total de paginación sigue siendo el
             // total real filtrado; esta fila adicional es solo contexto del
             // ticket que el agente está atendiendo.
+            // outside_filter marca esa fila en la lista para que no parezca
+            // que cumple el filtro activo (mismo criterio que el SSR).
             if ($selectedTicket && ! $ticketsPayload->contains('id', $selectedTicket->id)) {
-                $ticketsPayload->prepend($selectedTicket->toListRow());
+                $ticketsPayload->prepend($selectedTicket->toListRow() + ['outside_filter' => true]);
             }
 
             return response()->json([
@@ -553,11 +555,28 @@ class TicketsCrudController extends Controller
         $openIds = array_merge($statusIds['open'] ?? [], $statusIds['progress'] ?? []);
         $openExpr = $openIds === [] ? '0' : 'status_id IN ('.implode(',', $openIds).')';
 
+        // "En riesgo"/"Urgente" solo tiene sentido en un ticket vivo: antes
+        // c_urgent/c_sla_risk contaban la tabla entera, incluidos resueltos y
+        // cerrados (bug real, 28-sep-2026) — un ticket ya cerrado con
+        // sla_resolution_breached=1 de cuando estaba abierto seguía sumando
+        // en el badge para siempre. Se restringe a open+progress+pending,
+        // pero dentro de "pending" se excluyen los estados con el
+        // temporizador de SLA parado (TicketStatus::stops_sla_timer, p. ej.
+        // "Esperando cliente"/"En espera"): con el reloj parado no hay
+        // vencimiento que se acerque, así que no son "riesgo" real.
+        $pausedStatusIds = Cache::remember(
+            'helpdesk:catalogs:sla-paused-status-ids',
+            3600,
+            fn () => TicketStatus::stopsSla()->pluck('id')->all(),
+        );
+        $activeIds = array_diff(array_merge($openIds, $statusIds['pending'] ?? []), $pausedStatusIds);
+        $activeExpr = $activeIds === [] ? '0' : 'status_id IN ('.implode(',', $activeIds).')';
+
         // slaRowKind() es 'breach' si hay flag de incumplimiento o si el
         // vencimiento ya pasó, y 'warn' si vence en menos de 60 minutos; la
         // unión de ambos es "hay vencimiento y está a menos de 60 minutos, o
         // ya hay flag".
-        $slaRiskExpr = '(sla_resolution_breached = 1 OR sla_first_response_breached = 1'
+        $slaRiskExpr = "{$activeExpr} AND (sla_resolution_breached = 1 OR sla_first_response_breached = 1"
             .' OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < ?))';
 
         $query = Ticket::query()
@@ -586,7 +605,7 @@ class TicketsCrudController extends Controller
                 "SUM(CASE WHEN {$inOrFalse('pending')} THEN 1 ELSE 0 END) AS c_pending",
                 "SUM(CASE WHEN {$inOrFalse('resolved')} THEN 1 ELSE 0 END) AS c_resolved",
                 "SUM(CASE WHEN {$inOrFalse('closed')} THEN 1 ELSE 0 END) AS c_closed",
-                "SUM(CASE WHEN priority = 'urgent' OR sla_resolution_breached = 1 OR sla_first_response_breached = 1 THEN 1 ELSE 0 END) AS c_urgent",
+                "SUM(CASE WHEN {$activeExpr} AND (priority = 'urgent' OR sla_resolution_breached = 1 OR sla_first_response_breached = 1) THEN 1 ELSE 0 END) AS c_urgent",
                 'SUM(CASE WHEN assignee_id IS NULL THEN 1 ELSE 0 END) AS c_unassigned',
                 "SUM(CASE WHEN {$slaRiskExpr} THEN 1 ELSE 0 END) AS c_sla_risk",
             ]), [now()->addMinutes(60)])
@@ -650,19 +669,34 @@ class TicketsCrudController extends Controller
         $statusIds = $this->statusIdsByCanonicalSlug();
         $idsFor = fn (string ...$slugs) => array_merge(...array_map(fn ($s) => $statusIds[$s] ?? [], $slugs));
 
+        // Mismo bucket "activo" que sharedTabCounts() calcula para c_urgent/
+        // c_sla_risk: open+progress+pending sin los estados que paran el
+        // temporizador de SLA (stops_sla_timer) — un ticket resuelto/cerrado,
+        // o en pausa esperando al cliente, no debe aparecer en estas dos
+        // pestañas aunque arrastre un flag de incumplimiento viejo (bug real,
+        // 28-sep-2026). Badge y filtro comparten EXACTAMENTE esta condición.
+        $pausedStatusIds = Cache::remember(
+            'helpdesk:catalogs:sla-paused-status-ids',
+            3600,
+            fn () => TicketStatus::stopsSla()->pluck('id')->all(),
+        );
+        $activeIds = array_diff($idsFor('open', 'progress', 'pending'), $pausedStatusIds);
+
         match ($filter) {
             'mine' => $query->where('assignee_id', $userId),
             'unassigned' => $query->whereNull('assignee_id'),
             // Mismo OR que la columna c_urgent de sharedTabCounts().
-            'urgent' => $query->where(fn ($q) => $q->where('priority', 'urgent')
-                ->orWhere('sla_resolution_breached', true)
-                ->orWhere('sla_first_response_breached', true)),
+            'urgent' => $query->whereIn('status_id', $activeIds ?: [0])
+                ->where(fn ($q) => $q->where('priority', 'urgent')
+                    ->orWhere('sla_resolution_breached', true)
+                    ->orWhere('sla_first_response_breached', true)),
             // "En riesgo" = ya incumplido, o vence en menos de 60 minutos:
             // la misma unión que slaRowKind() devuelve como warn|breach.
-            'sla_risk' => $query->where(fn ($q) => $q->where('sla_resolution_breached', true)
-                ->orWhere('sla_first_response_breached', true)
-                ->orWhere(fn ($q2) => $q2->whereNotNull('sla_resolution_due_at')
-                    ->where('sla_resolution_due_at', '<', now()->addMinutes(60)))),
+            'sla_risk' => $query->whereIn('status_id', $activeIds ?: [0])
+                ->where(fn ($q) => $q->where('sla_resolution_breached', true)
+                    ->orWhere('sla_first_response_breached', true)
+                    ->orWhere(fn ($q2) => $q2->whereNotNull('sla_resolution_due_at')
+                        ->where('sla_resolution_due_at', '<', now()->addMinutes(60)))),
             // El formulario público de PrestaShop entra como 'formulario', con
             // 'web_form' como alias que también acepta Ticket::sourceSlug().
             'from_presta' => $query->whereIn('source', ['formulario', 'web_form']),

@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Requests\Managers;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\HelpdeskTickets\Services\AssignmentService;
 
 class BulkTicketRequest extends FormRequest
 {
@@ -20,7 +21,17 @@ class BulkTicketRequest extends FormRequest
             'ticket_ids' => ['required', 'array', 'min:1', 'max:100'],
             'ticket_ids.*' => ['integer'],
             'action' => ['required', 'string', 'in:assign,close,mark_spam,resolve,reopen,change_status,change_priority,delete,add_tag,remove_tag,snooze,assign_group,link_to_ticket,retry_failed_mail'],
-            'agent_id' => ['required_if:action,assign', 'nullable', 'integer', 'exists:users,id'],
+            'agent_id' => [
+                'required_if:action,assign', 'nullable', 'integer', 'exists:users,id',
+                // Mismo hueco que UpdateTicketRequest::assignee_id, pero para
+                // la asignación masiva del listado (bug real, 28-sep-2026):
+                // aceptaba cualquier users.id como destino.
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value !== null && ! AssignmentService::isAssignableAgent((int) $value)) {
+                        $fail('El agente seleccionado no es un agente del helpdesk.');
+                    }
+                },
+            ],
             'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
             'group_id' => ['required_if:action,assign_group', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
             'tag' => ['required_if:action,add_tag,remove_tag', 'nullable', 'string', 'max:50'],

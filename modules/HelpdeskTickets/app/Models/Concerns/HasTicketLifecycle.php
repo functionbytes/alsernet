@@ -130,6 +130,18 @@ trait HasTicketLifecycle
     }
 
     /**
+     * Primer estado abierto del catálogo por orden — red de seguridad para
+     * cuando no hay un slug/is_default concreto que resolver. Antes vivía
+     * inline solo en reopen(); TicketObserver::creating() lo reutiliza ahora
+     * como último fallback si el catálogo se queda sin ningún is_default
+     * (bug real: los tickets creados sin status_id en local salían de ahí).
+     */
+    public static function firstOpenTicketStatus(): ?TicketStatus
+    {
+        return TicketStatus::where('is_open', true)->orderBy('order')->first();
+    }
+
+    /**
      * Reopen ticket
      */
     public function reopen(): self
@@ -138,7 +150,7 @@ trait HasTicketLifecycle
         // que es "Nuevo", y un ticket reabierto se confundía con uno recién
         // llegado en listados e informes.
         $openStatus = Cache::remember('helpdesk:reopened-status', 3600, fn () => TicketStatus::where('slug', 'reopened')->first()
-            ?? TicketStatus::where('is_open', true)->orderBy('order')->first());
+            ?? static::firstOpenTicketStatus());
 
         $this->update([
             'status_id' => $openStatus->id ?? $this->status_id,

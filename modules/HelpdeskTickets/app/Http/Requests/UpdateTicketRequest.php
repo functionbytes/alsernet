@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Modules\HelpdeskTickets\Services\AssignmentService;
 
 class UpdateTicketRequest extends BaseTicketRequest
 {
@@ -35,7 +36,20 @@ class UpdateTicketRequest extends BaseTicketRequest
             'status_id' => 'sometimes|integer|exists:helpdesk.helpdesk_ticket_statuses,id',
             'category_id' => 'sometimes|nullable|integer|exists:helpdesk.helpdesk_ticket_categories,id',
             'priority' => 'sometimes|string|in:low,normal,high,urgent',
-            'assignee_id' => 'sometimes|nullable|integer|exists:users,id',
+            'assignee_id' => [
+                'sometimes', 'nullable', 'integer', 'exists:users,id',
+                // Sin esto, aceptaba CUALQUIER users.id: se podía asignar un
+                // ticket a un cliente, a un usuario de otro módulo o a
+                // cualquier cuenta sin rol de agente del helpdesk (bug real,
+                // 28-sep-2026). Aquí SÍ vale un agente ausente — decide el
+                // manager, no la disponibilidad — ver AssignmentService::
+                // isAssignableAgent().
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value !== null && ! AssignmentService::isAssignableAgent((int) $value)) {
+                        $fail('El usuario seleccionado no es un agente del helpdesk.');
+                    }
+                },
+            ],
             'group_id' => 'sometimes|nullable|integer|exists:helpdesk.helpdesk_groups,id',
             'sla_policy_id' => 'sometimes|nullable|integer|exists:helpdesk.helpdesk_ticket_sla_policies,id',
             'tags' => 'sometimes|nullable|array',

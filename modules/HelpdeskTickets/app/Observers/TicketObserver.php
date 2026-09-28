@@ -18,10 +18,13 @@ class TicketObserver
         }
 
         if (! $ticket->status_id) {
+            // Red global: si además de no venir status_id el catálogo se
+            // quedó sin ningún is_default=true (posible tras editar estados
+            // en Settings — ver TicketStatusesController::update()), cae al
+            // primer estado abierto por orden en vez de dejar el ticket sin
+            // estado (bug real: 2 tickets con status_id NULL en local).
             $default = CatalogCacheService::defaultStatus();
-            if ($default) {
-                $ticket->status_id = $default->id;
-            }
+            $ticket->status_id = $default?->id ?? Ticket::firstOpenTicketStatus()?->id;
         }
 
         // SLA por canal: si nadie fijó una política (UI de manager / default de

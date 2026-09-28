@@ -37,6 +37,16 @@ class CheckSlaBreachesTest extends TestCase
     {
         parent::setUp();
 
+        // La base de test es una copia de la real (scripts/refresh-test-db.sh)
+        // y sin scheduler: sus tickets siguen abiertos con el SLA venciendo a
+        // medida que pasan los días, y checkBreaches() los recogía junto al
+        // del test ("9 matches expected 0"). Se marcan como ya incumplidos
+        // dentro de la transacción del test, que lo revierte al terminar.
+        Ticket::query()
+            ->where('sla_resolution_breached', false)
+            ->whereNotNull('sla_resolution_due_at')
+            ->update(['sla_resolution_breached' => true]);
+
         if (! $this->helpdeskConnectionAvailable()) {
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }

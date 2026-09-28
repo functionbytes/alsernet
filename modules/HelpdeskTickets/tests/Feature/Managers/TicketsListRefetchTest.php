@@ -137,6 +137,55 @@ class TicketsListRefetchTest extends TestCase
         $this->assertFalse($ids->contains($normal->id));
     }
 
+    /**
+     * Bug real (28-sep-2026): c_urgent/c_sla_risk y sus quick_filter
+     * contaban la tabla entera, incluidos tickets ya resueltos/cerrados —
+     * un ticket cerrado con sla_resolution_breached=1 de cuando estaba
+     * abierto seguía sumando en el badge "En riesgo"/"Urgentes" para
+     * siempre. Badge (tab_counts) y filtro (tickets) deben coincidir.
+     */
+    public function test_urgente_y_en_riesgo_excluyen_resueltos_y_cerrados(): void
+    {
+        $closedStatus = TicketStatus::firstOrCreate(
+            ['slug' => 'closed'],
+            ['name' => 'Closed', 'color' => '#343a40', 'is_open' => false, 'is_default' => false, 'order' => 4]
+        );
+
+        $abiertoIncumplido = $this->createTicket(['sla_resolution_breached' => true, 'subject' => 'Abierto incumplido']);
+        $resueltoIncumplido = $this->createTicket([
+            'status_id' => $this->resolvedStatus->id,
+            'priority' => 'urgent',
+            'sla_resolution_breached' => true,
+            'subject' => 'Resuelto pero urgente/incumplido',
+        ]);
+        $cerradoIncumplido = $this->createTicket([
+            'status_id' => $closedStatus->id,
+            'priority' => 'urgent',
+            'sla_resolution_breached' => true,
+            'subject' => 'Cerrado pero urgente/incumplido',
+        ]);
+
+        $urgentResponse = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.index', ['quick_filter' => 'urgent']))
+            ->assertOk();
+        $urgentIds = collect($urgentResponse->json('tickets'))->pluck('id');
+
+        $this->assertTrue($urgentIds->contains($abiertoIncumplido->id));
+        $this->assertFalse($urgentIds->contains($resueltoIncumplido->id));
+        $this->assertFalse($urgentIds->contains($cerradoIncumplido->id));
+        $this->assertSame($urgentResponse->json('tab_counts.urgent'), $urgentResponse->json('pagination.total'));
+
+        $slaRiskResponse = $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.tickets.index', ['quick_filter' => 'sla_risk']))
+            ->assertOk();
+        $slaRiskIds = collect($slaRiskResponse->json('tickets'))->pluck('id');
+
+        $this->assertTrue($slaRiskIds->contains($abiertoIncumplido->id));
+        $this->assertFalse($slaRiskIds->contains($resueltoIncumplido->id));
+        $this->assertFalse($slaRiskIds->contains($cerradoIncumplido->id));
+        $this->assertSame($slaRiskResponse->json('tab_counts.sla_risk'), $slaRiskResponse->json('pagination.total'));
+    }
+
     public function test_una_pestana_desconocida_no_devuelve_la_tabla_entera(): void
     {
         // El JS trataba un filtro desconocido como slug de estado; el servidor
