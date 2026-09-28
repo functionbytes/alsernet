@@ -18,6 +18,45 @@ use Modules\Helpdesk\Services\CustomerInsightsService;
 abstract class TestCase extends BaseTestCase
 {
     /**
+     * Apunta la suite a la base de test ANTES de arrancar la aplicación.
+     *
+     * Los <env force="true"> de phpunit.xml solo escriben $_ENV y putenv();
+     * el repositorio de Env de Laravel lee primero $_SERVER, donde el
+     * contenedor Docker deja DB_DATABASE=webadmin. Por eso, hasta el
+     * 28-sep-2026, `artisan test` escribía en la base real de desarrollo
+     * (medido: mysql, mariadb y helpdesk resolvían "webadmin"). Se fija aquí
+     * en los tres sitios y se comprueba después: si alguna conexión sigue
+     * apuntando a una base protegida, la suite no arranca.
+     *
+     * DB_TEST_DATABASE permite otra base (p. ej. en CI); por defecto
+     * webadmin_test, copia de la real con las mismas migraciones.
+     */
+    public function createApplication()
+    {
+        $testDatabase = getenv('DB_TEST_DATABASE') ?: 'webadmin_test';
+
+        foreach (['DB_DATABASE', 'DB_DATABASE_HELPDESK'] as $key) {
+            putenv("{$key}={$testDatabase}");
+            $_ENV[$key] = $testDatabase;
+            $_SERVER[$key] = $testDatabase;
+        }
+
+        $app = parent::createApplication();
+
+        foreach (['mysql', 'mariadb', 'helpdesk'] as $connection) {
+            $database = $app['config']->get("database.connections.{$connection}.database");
+
+            if (in_array($database, self::PROTECTED_DATABASES, true)) {
+                throw new \RuntimeException(
+                    "La conexión '{$connection}' de los tests apunta a la base real \"{$database}\"."
+                );
+            }
+        }
+
+        return $app;
+    }
+
+    /**
      * Sin esto, TODA petición POST/PUT/PATCH/DELETE del cliente de test
      * recibe 419 (confirmado 29-ago-2026: el proyecto no desactivaba CSRF
      * para tests en ningún sitio central — varios archivos lo parcheaban
@@ -133,12 +172,10 @@ abstract class TestCase extends BaseTestCase
     /**
      * Bases de datos que NO son de test y que la suite no debe poder vaciar.
      *
-     * phpunit.xml fuerza DB_CONNECTION=sqlite / DB_DATABASE=:memory:, pero eso
-     * no cubre nada: (1) en Docker las variables del contenedor ganan al
-     * force="true" del XML, y (2) la conexión 'helpdesk' se resuelve con sus
-     * propias DB_*_HELPDESK y apunta a la base real pase lo que pase con
-     * DB_CONNECTION. Cualquier test que use DB::connection('helpdesk')
-     * escribe en datos reales.
+     * createApplication() ya apunta mysql/mariadb/helpdesk a webadmin_test y
+     * se niega a arrancar si alguna resuelve una de estas; la guarda de
+     * borrados masivos de abajo queda como segunda red por si otra conexión
+     * (o un DB::purge/reconnect en un test) acabara en una base protegida.
      */
     private const PROTECTED_DATABASES = ['webadmin'];
 
