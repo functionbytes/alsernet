@@ -60,6 +60,7 @@
             <option value="pt" @selected(old('language', $macro->language ?? '') === 'pt')>Portugués</option>
             <option value="de" @selected(old('language', $macro->language ?? '') === 'de')>Alemán</option>
             <option value="it" @selected(old('language', $macro->language ?? '') === 'it')>Italiano</option>
+            <option value="ca" @selected(old('language', $macro->language ?? '') === 'ca')>Catalán</option>
         </select>
         <div class="form-text">Si el macro redacta texto para el cliente (ej. "Enviar respuesta"), elige el idioma en que esta escrito</div>
         @error('language')

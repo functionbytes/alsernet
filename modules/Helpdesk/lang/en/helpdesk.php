@@ -1236,6 +1236,7 @@ return [
             'translate_lang_de' => 'German',
             'translate_lang_it' => 'Italian',
             'translate_lang_pt' => 'Portuguese',
+            'translate_lang_ca' => 'Catalan',
             'translate_lang_nl' => 'Dutch',
             'translate_lang_ru' => 'Russian',
             'translate_lang_zh' => 'Chinese',

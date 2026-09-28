@@ -976,7 +976,21 @@
 
         // Also refresh when an item.created arrives on any open conversation channel,
         // because counters (last_message_at, unread badge) change.
-        window.addEventListener('inbox:incoming-message', scheduleRefresh);
+        //
+        // Si el mensaje es de la conversación abierta, el hilo ya lanzó un
+        // mark-read (window.__bvPendingMarkRead): se espera a que termine
+        // antes de refrescar, o la lista llegaría con el read_at viejo y
+        // volvería a pintar el número de sin leer en la conversación que el
+        // agente está mirando.
+        window.addEventListener('inbox:incoming-message', function () {
+            const pending = window.__bvPendingMarkRead;
+            window.__bvPendingMarkRead = null;
+            if (pending && typeof pending.always === 'function') {
+                pending.always(function () { scheduleRefresh(); });
+            } else {
+                scheduleRefresh();
+            }
+        });
 
         // Tras un corte de Reverb no hay eventos perdidos que "recuperar": la
         // única forma honesta de saber en qué quedó todo es volver a pedirlo.

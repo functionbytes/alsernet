@@ -69,8 +69,24 @@ trait LocalizesAutoReplyMessage
         $customer = $conversation->customer;
         $stored = $customer?->language ? strtolower(substr($customer->language, 0, 2)) : null;
 
+        // Un idioma ya confirmado (detección previa o Gestión) se respeta,
+        // incluso si coincide con el locale base.
+        if ($stored && $customer->language_detected_at !== null) {
+            return $stored;
+        }
+
         if ($stored && $stored !== $source) {
             return $stored;
+        }
+
+        // 28-sep-2026: el idioma de Gestión (ERP) manda sobre detectar el
+        // primer mensaje — la auto-respuesta corre en otra cola que
+        // TranslateIncomingMessage y puede adelantarse a él, y detectar un
+        // texto corto/informal se equivoca (salió en inglés para clientes
+        // cuyo primer mensaje era un adjunto no soportado).
+        $erpLanguage = $customer?->erpLanguage();
+        if ($erpLanguage) {
+            return $erpLanguage;
         }
 
         if (! class_exists(CachedTranslator::class)) {

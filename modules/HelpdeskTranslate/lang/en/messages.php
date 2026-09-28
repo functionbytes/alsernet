@@ -66,6 +66,7 @@ return [
         'de' => 'German',
         'pt' => 'Portuguese',
         'it' => 'Italian',
+        'ca' => 'Catalan',
     ],
 
     'validation' => [

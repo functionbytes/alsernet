@@ -770,6 +770,16 @@ class Conversation extends Model
             return 0;
         }
 
+        // 28-sep-2026: una conversación cerrada no tiene nada pendiente de
+        // leer. Cerrar no marca "leído" (solo abrirla lo hace), así que en la
+        // vista "Cerradas" la fila seguía mostrando el número de mensajes
+        // entrantes — mientras el contador "Sin leer" del sidebar sí las
+        // excluye (scopeUnreadFor → defaultViewVisible → open()). Mismo
+        // criterio que scopeClosed().
+        if ($this->status && ! $this->status->is_open) {
+            return 0;
+        }
+
         // Prefiere el read precargado (with('reads')) para evitar una query por fila.
         if ($this->relationLoaded('reads')) {
             $read = $this->reads->firstWhere('user_id', $userId)?->read_at;

@@ -17,7 +17,7 @@ class StoreWhatsAppTemplateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:512', 'regex:/^[a-z0-9_]+$/', 'unique:helpdesk.helpdesk_whatsapp_templates,external_id'],
-            'language' => ['required', 'string', 'in:es,en,en_US,en_GB,pt_BR,pt_PT,fr,de,it'],
+            'language' => ['required', 'string', 'in:es,en,en_US,en_GB,pt_BR,pt_PT,fr,de,it,ca'],
             'category' => ['required', 'string', 'in:'.implode(',', WhatsAppTemplate::CATEGORIES)],
             'body' => ['required', 'string', 'max:1024'],
             // Ejemplos de cada {{n}} del body, separados por coma — Meta los exige

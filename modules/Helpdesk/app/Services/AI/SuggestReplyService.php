@@ -6,7 +6,7 @@ use Modules\Helpdesk\Models\Conversation;
 
 class SuggestReplyService
 {
-    // Mismos 6 idiomas que helpdesk_customers.language / el panel "Traducir"
+    // Mismos idiomas que helpdesk_customers.language / el panel "Traducir"
     // de HelpdeskTranslate — instrucción en lenguaje natural para el prompt.
     private const LANGUAGE_NAMES = [
         'es' => 'español',
@@ -15,6 +15,7 @@ class SuggestReplyService
         'de' => 'alemán',
         'pt' => 'portugués',
         'it' => 'italiano',
+        'ca' => 'catalán',
     ];
 
     public function __construct(

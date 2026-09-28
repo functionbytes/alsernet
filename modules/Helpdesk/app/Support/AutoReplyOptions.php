@@ -36,6 +36,7 @@ class AutoReplyOptions
             'de' => 'Alemán',
             'it' => 'Italiano',
             'pt' => 'Portugués',
+            'ca' => 'Catalán',
         ];
     }
 

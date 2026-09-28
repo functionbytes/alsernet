@@ -144,6 +144,7 @@ return [
         'de' => 'Alemán',
         'pt' => 'Portugués',
         'it' => 'Italiano',
+        'ca' => 'Catalán',
     ],
 
     'validation' => [

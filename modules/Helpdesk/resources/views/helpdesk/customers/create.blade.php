@@ -96,6 +96,7 @@
                                 <option value="pt" {{ old('language') === 'pt' ? 'selected' : '' }}>🇵🇹 Português</option>
                                 <option value="de" {{ old('language') === 'de' ? 'selected' : '' }}>🇩🇪 Deutsch</option>
                                 <option value="it" {{ old('language') === 'it' ? 'selected' : '' }}>🇮🇹 Italiano</option>
+                                <option value="ca" {{ old('language') === 'ca' ? 'selected' : '' }}>Català</option>
                             </select>
                             @error('language')
                                 <div class="invalid-feedback">{{ $message }}</div>

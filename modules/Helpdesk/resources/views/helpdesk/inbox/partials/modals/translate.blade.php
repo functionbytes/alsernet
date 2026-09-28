@@ -27,6 +27,7 @@
                         <option value="de">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_de') }}</option>
                         <option value="it">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_it') }}</option>
                         <option value="pt">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_pt') }}</option>
+                        <option value="ca">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ca') }}</option>
                         <option value="nl">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_nl') }}</option>
                         <option value="ru">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ru') }}</option>
                         <option value="zh">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_zh') }}</option>
@@ -48,6 +49,7 @@
                         <option value="de">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_de') }}</option>
                         <option value="it">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_it') }}</option>
                         <option value="pt">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_pt') }}</option>
+                        <option value="ca">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ca') }}</option>
                         <option value="nl">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_nl') }}</option>
                         <option value="ru">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ru') }}</option>
                         <option value="zh">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_zh') }}</option>

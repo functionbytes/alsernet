@@ -1199,6 +1199,7 @@ return [
             'translate_lang_de' => 'Alemán',
             'translate_lang_it' => 'Italiano',
             'translate_lang_pt' => 'Portugués',
+            'translate_lang_ca' => 'Catalán',
             'translate_lang_nl' => 'Neerlandés',
             'translate_lang_ru' => 'Ruso',
             'translate_lang_zh' => 'Chino',

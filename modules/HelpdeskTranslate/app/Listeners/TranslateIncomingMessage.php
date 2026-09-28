@@ -50,6 +50,23 @@ class TranslateIncomingMessage implements ShouldQueue
 
         $body = $this->translatableBody($item);
         if ($body === null) {
+            // 24-sep-2026: un mensaje sin texto (solo imagen/PDF/audio) no
+            // tiene nada que detectar ni traducir, pero si el cliente ya
+            // está en Gestión con idioma cargado ahí, conviene aplicarlo
+            // desde este primer mensaje — si no, se queda con el default
+            // 'es' hasta que escriba texto de verdad (puede que nunca, si
+            // solo manda adjuntos). Mismo criterio de prioridad ERP que
+            // resolveCustomerLanguage(), sin el paso de detección por texto
+            // porque acá no hay texto.
+            $customer = $conversation->customer;
+            if ($customer && ! $customer->language_detected_at) {
+                $erpLanguage = $customer->erpLanguage();
+                if ($erpLanguage) {
+                    $previous = $customer->language ? strtolower($customer->language) : null;
+                    $this->updateCustomerLanguage($conversation, $customer, $erpLanguage, $previous);
+                }
+            }
+
             return;
         }
 
@@ -117,6 +134,22 @@ class TranslateIncomingMessage implements ShouldQueue
         // until we actually detect a real language from the first message.
         if ($stored && $stored !== 'es') {
             return $stored;
+        }
+
+        // 24-sep-2026: el idioma de Gestión (ERP) manda sobre la detección
+        // automática del primer mensaje cuando existe — más fiable que
+        // adivinar a partir de un texto corto/informal (el detector se
+        // confunde fácil: "os mando la foto" salía como portugués, "aqui
+        // teneis la imagen" como occitano). Solo se recurre a
+        // detectLanguage() cuando el cliente no está vinculado a un cliente
+        // de ERP, o ese cliente no tiene idioma cargado ahí.
+        if ($customer) {
+            $erpLanguage = $customer->erpLanguage();
+            if ($erpLanguage) {
+                $this->updateCustomerLanguage($conversation, $customer, $erpLanguage, $stored);
+
+                return $erpLanguage;
+            }
         }
 
         $detected = $this->translator->detectLanguage($body, feature: 'auto_incoming');
