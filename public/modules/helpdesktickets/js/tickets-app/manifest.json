@@ -1,5 +1,5 @@
 {
-  "//": "Orden de carga de tickets-app.js dividido (ver 2c12c6f8b). 'core' siempre primero: ahí vive TKA/openModal()/escapeHtml() de los que depende cada modal. El orden del resto no importa (nada se ejecuta hasta que el usuario interactúa) — index.blade.php y scripts/build-tickets-app.mjs leen ESTA lista para no divergir entre el <script> suelto por archivo y el bundle minificado.",
+  "//": "Orden de carga de tickets-app.js dividido (ver 2c12c6f8b). 'core' siempre primero: ahí vive TKA/openModal()/escapeHtml() de los que depende cada modal. El orden del resto no importa (nada se ejecuta hasta que el usuario interactúa) — index.blade.php y scripts/build-tickets-app.mjs leen ESTA lista para no divergir entre el <script> suelto por archivo y el bundle minificado. 'lazy' (solo lo usa el bundle minificado; en desarrollo se cargan todos sueltos): modales que salen del bundle inicial y se descargan la primera vez que se abren. Cada clave es un fichero de 'files' y su valor las funciones que core u otros modales llaman desde fuera — el build genera para ellas un stub que carga el fichero y reenvía la llamada, y falla si un modal 'lazy' expone algo que no está aquí. NO pueden ser lazy los que comparten variables o helpers con core/otros modales: modal-14 (sideRow, barra de estado), modal-32 (withSettings), modal-49 (PREVIEWABLE) y modal-50 (composeDraft).",
   "files": [
     "core",
     "modal-02-programar-envio",
@@ -36,5 +36,97 @@
     "modal-46-posible-duplicado",
     "modal-49-previsualizar-adjunto",
     "modal-50-traducir-respuesta"
-  ]
+  ],
+  "lazy": {
+    "modal-02-programar-envio": [
+      "openScheduleModal"
+    ],
+    "modal-03-plantillas-email": [
+      "openTemplatesModal"
+    ],
+    "modal-04-adjuntar-archivos": [
+      "openAttachModal"
+    ],
+    "modal-05-detalle-entrega": [
+      "openDeliveryModal"
+    ],
+    "modal-06-email-rebotado": [
+      "openBounceModal"
+    ],
+    "modal-07-reenviar-email": [
+      "openResendMailModal"
+    ],
+    "modal-09-cancelar-envio-programado": [
+      "openCancelScheduledModal"
+    ],
+    "modal-10-vincular-email-ticket": [
+      "openLinkMailModal"
+    ],
+    "modal-12-vista-previa-rapida": [
+      "openQuickPreviewModal"
+    ],
+    "modal-16-buzones-entrada": [
+      "openMailboxesModal"
+    ],
+    "modal-19-autorespuesta-ia": [
+      "openAiDraftModal"
+    ],
+    "modal-21-editor-plantilla": [
+      "openTemplateEditorModal"
+    ],
+    "modal-22-reputacion-autenticacion": [
+      "openReputationModal"
+    ],
+    "modal-23-bandeja-colision": [
+      "openCollisionModal"
+    ],
+    "modal-24-macros-atajos": [
+      "openMacrosModal"
+    ],
+    "modal-25-cliente-360": [
+      "openCustomer360Modal"
+    ],
+    "modal-26-resumen-ia-hilo": [
+      "openAiSummaryModal"
+    ],
+    "modal-27-etiquetado-automatico": [
+      "openAiTaggingModal"
+    ],
+    "modal-28-calendario-sla": [
+      "openSlaCalendarModal"
+    ],
+    "modal-29-reglas-escalado": [
+      "openEscalationModal"
+    ],
+    "modal-30-tickets-recurrentes": [
+      "openRecurringModal"
+    ],
+    "modal-31-notificaciones": [
+      "openNotificationsModal"
+    ],
+    "modal-34-identidades-cliente": [
+      "openIdentitiesModal"
+    ],
+    "modal-35-nuevo-ticket": [
+      "openNewTicketModal"
+    ],
+    "modal-36-cambiar-estado": [
+      "openChangeStatusModal"
+    ],
+    "modal-37-asignar-ticket": [
+      "openAssignModal"
+    ],
+    "modal-39-dividir-ticket": [
+      "openSplitModal"
+    ],
+    "modal-40-encuesta-csat": [
+      "openCsatModal"
+    ],
+    "modal-44-plantillas-ticket": [
+      "openTicketTemplatesModal"
+    ],
+    "modal-46-posible-duplicado": [
+      "openDuplicateModal"
+    ]
+  }
 }

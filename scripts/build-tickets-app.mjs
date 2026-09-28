@@ -16,10 +16,16 @@
 // el resultado como un único script clásico, preservando la semántica
 // exacta de los <script> sueltos que sustituye.
 //
+// Carga bajo demanda: los modales listados en manifest.json → "lazy" NO van en
+// tickets-app.min.js. Cada uno se minifica aparte en js/tickets-app-lazy/ y se
+// descarga la primera vez que se abre (ver scripts/tickets-app-lazy-loader.js,
+// cuyo código se añade al final del bundle). Los que comparten variables o
+// helpers con core u otros modales se quedan en el bundle inicial.
+//
 // Uso: node scripts/build-tickets-app.mjs
 // (o `npm run build:tickets-app`)
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +38,9 @@ const outDir = path.join(root, 'modules/HelpdeskTickets/public/js');
 const outPath = path.join(outDir, 'tickets-app.min.js');
 const publishedDir = path.join(root, 'public/modules/helpdesktickets/js');
 const publishedPath = path.join(publishedDir, 'tickets-app.min.js');
+const lazyLoaderPath = path.join(root, 'scripts/tickets-app-lazy-loader.js');
+const lazyOutDir = path.join(outDir, 'tickets-app-lazy');
+const lazyPublishedDir = path.join(publishedDir, 'tickets-app-lazy');
 
 // El CSS del módulo es un único archivo (no dividido como el JS): solo hace
 // falta minificarlo, sin concatenar nada. Mismo criterio de "opcional, cae
@@ -65,6 +74,40 @@ async function buildCss() {
     console.log(`  publicado:  ${path.relative(root, cssPublishedPath)}`);
 }
 
+// Un modal 'lazy' solo puede exponer hacia fuera funciones listadas en el mapa
+// (el cargador les instala un stub) y su valor de retorno no debe usarse: si
+// otro fichero llama a un símbolo suyo que NO está en el mapa, en el bundle esa
+// llamada daría ReferenceError al primer clic. Se detecta aquí, en el build,
+// en vez de en producción.
+function validateLazy(files, lazy, sources) {
+    for (const [file, names] of Object.entries(lazy)) {
+        if (file === 'core') throw new Error("'core' no puede ser 'lazy'");
+        if (!files.includes(file)) throw new Error(`manifest.json: lazy '${file}' no está en "files"`);
+        if (!Array.isArray(names) || names.length === 0) throw new Error(`manifest.json: lazy '${file}' sin funciones expuestas`);
+
+        const declared = [...sources[file].matchAll(/^ {4}(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm)].map((m) => m[1]);
+        const topVars = [...sources[file].matchAll(/^ {4}(?:var|let|const)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+
+        for (const name of names) {
+            if (!declared.includes(name)) {
+                throw new Error(`manifest.json: lazy '${file}' dice exponer ${name}(), pero no la declara como función de nivel superior`);
+            }
+        }
+
+        for (const name of [...declared, ...topVars]) {
+            if (names.includes(name)) continue;
+            const re = new RegExp(`(?<![\\w$.])${name.replace(/\$/g, '\\$')}(?![\\w$])`);
+            for (const other of files) {
+                if (other === file) continue;
+                const code = sources[other].split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+                if (re.test(code)) {
+                    throw new Error(`'${other}' usa '${name}', declarado en el modal 'lazy' '${file}': añádelo a lazy['${file}'] (solo si es una función cuyo retorno no se usa) o saca ese modal de "lazy"`);
+                }
+            }
+        }
+    }
+}
+
 async function main() {
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
     const files = manifest.files;
@@ -79,21 +122,21 @@ async function main() {
         throw new Error(`'core' debe ir primero en manifest.json (va: '${files[0]}')`);
     }
 
-    const chunks = [];
+    const lazy = manifest.lazy && typeof manifest.lazy === 'object' ? manifest.lazy : {};
+    const lazyFiles = Object.keys(lazy);
+
+    const sources = {};
     for (const file of files) {
         const filePath = path.join(srcDir, `${file}.js`);
         if (!existsSync(filePath)) {
             throw new Error(`manifest.json referencia '${file}', pero no existe ${filePath}`);
         }
-        const code = await readFile(filePath, 'utf8');
-        // Separador con salto de línea real: dos ficheros pegados sin él
-        // pueden fusionar un `}` de cierre con la siguiente sentencia (ASI).
-        chunks.push(`// ---- ${file}.js ----\n${code}`);
+        sources[file] = await readFile(filePath, 'utf8');
     }
 
-    const concatenated = chunks.join('\n\n');
+    validateLazy(files, lazy, sources);
 
-    const result = await esbuild.transform(concatenated, {
+    const minify = (code) => esbuild.transform(code, {
         loader: 'js',
         minify: true,
         target: 'es2019',
@@ -102,6 +145,39 @@ async function main() {
         // servido — igual que hace Vite con el resto de assets del proyecto.
         legalComments: 'none',
     });
+
+    // Los ficheros 'lazy' se escriben ANTES que el bundle: index.blade.php
+    // compara el mtime de cada fuente con el de su fichero generado.
+    await rm(lazyOutDir, { recursive: true, force: true });
+    await rm(lazyPublishedDir, { recursive: true, force: true });
+    await mkdir(lazyOutDir, { recursive: true });
+    await mkdir(lazyPublishedDir, { recursive: true });
+
+    let lazyMin = 0;
+    for (const file of lazyFiles) {
+        const result = await minify(sources[file]);
+        for (const w of result.warnings) console.warn(`[esbuild ${file}]`, w.text, w.location);
+        await writeFile(path.join(lazyOutDir, `${file}.min.js`), result.code, 'utf8');
+        await writeFile(path.join(lazyPublishedDir, `${file}.min.js`), result.code, 'utf8');
+        lazyMin += result.code.length;
+    }
+
+    const chunks = [];
+    for (const file of files) {
+        if (file in lazy) continue;
+        // Separador con salto de línea real: dos ficheros pegados sin él
+        // pueden fusionar un `}` de cierre con la siguiente sentencia (ASI).
+        chunks.push(`// ---- ${file}.js ----\n${sources[file]}`);
+    }
+
+    if (lazyFiles.length > 0) {
+        const loader = (await readFile(lazyLoaderPath, 'utf8')).split('__LAZY_MAP__').join(JSON.stringify(lazy));
+        if (loader.includes('__LAZY_MAP__')) throw new Error('el cargador lazy conserva el marcador __LAZY_MAP__ sin sustituir');
+        chunks.push(`// ---- lazy loader ----\n${loader}`);
+    }
+
+    const concatenated = chunks.join('\n\n');
+    const result = await minify(concatenated);
 
     if (result.warnings.length) {
         for (const w of result.warnings) console.warn('[esbuild]', w.text, w.location);
@@ -113,9 +189,13 @@ async function main() {
     await mkdir(publishedDir, { recursive: true });
     await writeFile(publishedPath, result.code, 'utf8');
 
-    console.log(`tickets-app.min.js generado: ${files.length} ficheros → ${kb(concatenated.length)} → ${kb(result.code.length)} minificado`);
+    const eagerCount = files.length - lazyFiles.length;
+    console.log(`tickets-app.min.js generado: ${eagerCount} ficheros → ${kb(concatenated.length)} → ${kb(result.code.length)} minificado`);
     console.log(`  fuente:     ${path.relative(root, outPath)}`);
     console.log(`  publicado:  ${path.relative(root, publishedPath)}`);
+    if (lazyFiles.length > 0) {
+        console.log(`  bajo demanda: ${lazyFiles.length} modales, ${kb(lazyMin)} minificados en ${path.relative(root, lazyOutDir)}/`);
+    }
 
     await buildCss();
 }

@@ -726,7 +726,14 @@
         // tiempo que una cambiara sin la otra y el bundle minificado
         // sirviera un modal desincronizado del código fuente en silencio.
         $manifestPath = public_path('modules/helpdesktickets/js/tickets-app/manifest.json');
-        $ticketsAppFiles = json_decode(@file_get_contents($manifestPath) ?: '{}', true)['files'] ?? [];
+        $manifest = json_decode(@file_get_contents($manifestPath) ?: '{}', true) ?: [];
+        $ticketsAppFiles = $manifest['files'] ?? [];
+
+        // Modales que el bundle NO trae y descarga la primera vez que se abren
+        // (manifest → "lazy"; ver scripts/build-tickets-app.mjs). Existen solo
+        // como js/tickets-app-lazy/<fichero>.min.js.
+        $lazyFiles = array_keys($manifest['lazy'] ?? []);
+        $lazyDir = 'modules/helpdesktickets/js/tickets-app-lazy';
 
         // El bundle minificado (npm run build:tickets-app) es OPCIONAL y
         // NO es el camino por defecto en desarrollo: aquí se edita y se
@@ -750,8 +757,25 @@
                 }
             }
         }
+
+        // Con modales 'lazy' el bundle solo es válido si TODOS sus ficheros
+        // bajo demanda existen y son más recientes que su fuente: un bundle
+        // nuevo con un modal que no se puede descargar dejaría botones muertos.
+        if ($useMinified) {
+            foreach ($lazyFiles as $file) {
+                $lazyMtime = @filemtime(public_path($lazyDir.'/'.$file.'.min.js'));
+                $srcMtime = @filemtime(public_path('modules/helpdesktickets/js/tickets-app/'.$file.'.js'));
+                if ($lazyMtime === false || $srcMtime === false || $srcMtime > $lazyMtime) {
+                    $useMinified = false;
+                    break;
+                }
+            }
+        }
     @endphp
     @if ($useMinified)
+        @if ($lazyFiles !== [])
+            <script>window.TKT_LAZY = { base: @json(asset($lazyDir)), v: @json((string) $minMtime) };</script>
+        @endif
         <script src="{{ asset('modules/helpdesktickets/js/tickets-app.min.js') }}?v={{ $minMtime }}"></script>
     @else
         @foreach ($ticketsAppFiles as $file)
