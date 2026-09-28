@@ -14,6 +14,7 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\HelpdeskLivechat\Events\AiAnswerRated;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Models\WidgetSession;
 use Modules\HelpdeskLivechat\Services\WidgetSessionService;
@@ -448,6 +449,41 @@ class WidgetConversationService
         ];
     }
 
+    /**
+     * Record a visitor's 👍/👎 on an AI-generated answer. Idempotent — rating
+     * the same message again overwrites the previous value.
+     *
+     * @return array{ai_feedback: int}
+     */
+    public function rateAiAnswer(Conversation $conversation, int $customerId, int $itemId, string $value): array
+    {
+        $this->assertOwnedByCustomer($conversation, $customerId);
+
+        $item = ConversationItem::where('id', $itemId)
+            ->where('conversation_id', $conversation->id)
+            ->first();
+
+        if (! $item) {
+            throw new \RuntimeException('Message not found in this conversation');
+        }
+
+        $metadata = is_array($item->metadata) ? $item->metadata : [];
+        if (empty($metadata['ai_agent'])) {
+            throw new \RuntimeException('Invalid item: not an AI-generated message');
+        }
+
+        $rating = $value === 'up' ? 1 : -1;
+
+        $metadata['ai_feedback'] = $rating;
+        $metadata['ai_feedback_at'] = now()->toIso8601String();
+        $item->metadata = $metadata;
+        $item->saveQuietly();
+
+        AiAnswerRated::dispatch($item, $rating);
+
+        return ['ai_feedback' => $rating];
+    }
+
     public function closeConversation(Conversation $conversation, int $customerId): void
     {
         $this->assertOwnedByCustomer($conversation, $customerId);
@@ -600,7 +636,7 @@ class WidgetConversationService
      * one or several cards). Empty/null for non-bot items or plain text.
      *
      * @param  array<string, mixed>  $metadata
-     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>}
+     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>, ai: bool, ai_feedback: int|null}
      */
     private function botExtras(array $metadata): array
     {
@@ -618,7 +654,13 @@ class WidgetConversationService
             'url' => $c['url'] ?? null,
         ], array_filter($rawCards, 'is_array')));
 
-        return ['options' => $options, 'prompt' => $prompt, 'cards' => $cards];
+        return [
+            'options' => $options,
+            'prompt' => $prompt,
+            'cards' => $cards,
+            'ai' => (bool) ($metadata['ai_agent'] ?? false),
+            'ai_feedback' => isset($metadata['ai_feedback']) ? (int) $metadata['ai_feedback'] : null,
+        ];
     }
 
     private function resolveSenderName(ConversationItem $item): string

@@ -21,6 +21,7 @@ interface MessageListProps {
     onOpenLightbox: (url: string) => void;
     onLoadMore: () => void;
     onQuickReply?: (text: string) => void;
+    onRateAiAnswer?: (messageId: string, value: 'up' | 'down') => void;
 }
 
 export function MessageList({
@@ -39,6 +40,7 @@ export function MessageList({
     onOpenLightbox,
     onLoadMore,
     onQuickReply,
+    onRateAiAnswer,
 }: MessageListProps) {
     const t = useTranslation();
     return (
@@ -77,6 +79,7 @@ export function MessageList({
                     // Botones activos solo en el último mensaje (si el visitante
                     // ya contestó, los anteriores quedan como historial).
                     onQuickReply={index === messages.length - 1 ? onQuickReply : undefined}
+                    onRateAiAnswer={onRateAiAnswer}
                 />
             ))}
 

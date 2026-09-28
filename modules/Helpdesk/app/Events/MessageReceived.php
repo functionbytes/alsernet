@@ -145,7 +145,7 @@ class MessageReceived implements ShouldBroadcast
      * WidgetConversationService::botExtras() (REST getMessages) so the live
      * broadcast and the history endpoint render identically.
      *
-     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>}
+     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>, ai: bool, ai_feedback: int|null}
      */
     private function botExtras(): array
     {
@@ -165,7 +165,13 @@ class MessageReceived implements ShouldBroadcast
             'url' => $c['url'] ?? null,
         ], array_filter($rawCards, 'is_array')));
 
-        return ['options' => $options, 'prompt' => $prompt, 'cards' => $cards];
+        return [
+            'options' => $options,
+            'prompt' => $prompt,
+            'cards' => $cards,
+            'ai' => (bool) ($metadata['ai_agent'] ?? false),
+            'ai_feedback' => isset($metadata['ai_feedback']) ? (int) $metadata['ai_feedback'] : null,
+        ];
     }
 
     /**

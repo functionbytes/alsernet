@@ -94,6 +94,7 @@ export function ConversationScreen() {
         messagesEndRef,
         loadMoreMessages,
         scheduleMarkAsRead,
+        rateAiAnswer,
         typingTimerRef,
     } = useConversationMessages({
         conversationId,
@@ -459,6 +460,7 @@ export function ConversationScreen() {
                 messagesEndRef={messagesEndRef}
                 onOpenLightbox={openLightbox}
                 onLoadMore={loadMoreMessages}
+                onRateAiAnswer={rateAiAnswer}
             />
 
             {!conversationId && quickReplies.length > 0 && (

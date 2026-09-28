@@ -15,6 +15,7 @@ use Modules\HelpdeskLivechat\Events\WidgetTyping;
 use Modules\HelpdeskLivechat\Http\Requests\Widget\CloseWidgetConversationRequest;
 use Modules\HelpdeskLivechat\Http\Requests\Widget\EmailTranscriptRequest;
 use Modules\HelpdeskLivechat\Http\Requests\Widget\MarkAsReadRequest;
+use Modules\HelpdeskLivechat\Http\Requests\Widget\RateAiAnswerRequest;
 use Modules\HelpdeskLivechat\Http\Requests\Widget\SendWidgetMessageRequest;
 use Modules\HelpdeskLivechat\Http\Requests\Widget\StoreWidgetConversationRequest;
 use Modules\HelpdeskLivechat\Mail\ConversationTranscriptMail;
@@ -363,6 +364,30 @@ class WidgetConversationController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    public function rateAiAnswer(RateAiAnswerRequest $request, string $id, string $itemId): JsonResponse
+    {
+        $conversation = $this->authorizeConversation($request, $id);
+
+        if (! $conversation) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $data = $this->service->rateAiAnswer(
+                $conversation,
+                (int) $conversation->customer_id,
+                (int) $itemId,
+                $request->validated('value')
+            );
+
+            return response()->json(['success' => true, 'data' => $data]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], $this->httpStatusForServiceException($e));
+        }
     }
 
     /**

@@ -103,6 +103,10 @@ export interface Message {
     /** Texto del bot sin la lista numerada (si hay botones). */
     prompt?: string;
     cards?: BotCard[];
+    /** Respuesta generada por el agente IA (metadata.ai_agent) — muestra 👍/👎. */
+    ai?: boolean;
+    /** Valoración ya registrada: 1 (👍), -1 (👎), o null/undefined si aún no se valoró. */
+    aiFeedback?: number | null;
 }
 
 /** Botones, texto y tarjetas de un mensaje del bot (ChatFlow). */
@@ -167,6 +171,8 @@ function parseApiMessage(msg: any): Message {
         })),
         linkPreview: msg.link_preview ?? null,
         products: parseCarouselProducts(msg.products),
+        ai: !!msg.ai,
+        aiFeedback: typeof msg.ai_feedback === 'number' ? msg.ai_feedback : null,
         ...parseBotExtras(msg),
     };
 }
@@ -208,6 +214,7 @@ interface UseConversationMessagesReturn {
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     loadMoreMessages: () => Promise<void>;
     scheduleMarkAsRead: (messageId: string) => void;
+    rateAiAnswer: (messageId: string, value: 'up' | 'down') => void;
     typingTimerRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
 }
 
@@ -354,6 +361,8 @@ export function useConversationMessages({
                         attachments: incomingAttachments,
                         linkPreview: incomingLinkPreview,
                         products: incomingProducts,
+                        ai: !!event.ai,
+                        aiFeedback: typeof event.ai_feedback === 'number' ? event.ai_feedback : null,
                         ...parseBotExtras(event),
                     }];
                 });
@@ -553,6 +562,40 @@ export function useConversationMessages({
         }, 2000);
     }, [conversationId, customerId, customerEmail]);
 
+    // 👍/👎 on an AI-generated answer. Optimistic: marks the message
+    // immediately and rolls back if the request fails (network error or the
+    // message not qualifying as an AI answer anymore).
+    const rateAiAnswer = useCallback((messageId: string, value: 'up' | 'down') => {
+        if (!conversationId) return;
+
+        const newValue = value === 'up' ? 1 : -1;
+        let previousValue: number | null = null;
+
+        setMessages(prev => prev.map(m => {
+            if (m.id !== messageId) return m;
+            previousValue = m.aiFeedback ?? null;
+            return { ...m, aiFeedback: newValue };
+        }));
+
+        const csrf = getCsrfToken();
+        fetch(apiUrl(`/hd/api/conversation/${conversationId}/messages/${messageId}/feedback`), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+                ...conversationAuthHeaders(),
+            },
+            body: JSON.stringify({ value }),
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('AI feedback request failed');
+            })
+            .catch(() => {
+                setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, aiFeedback: previousValue } : m)));
+            });
+    }, [conversationId]);
+
     // Cleanup timers on unmount
     useEffect(() => {
         return () => {
@@ -603,6 +646,7 @@ export function useConversationMessages({
         messagesEndRef,
         loadMoreMessages,
         scheduleMarkAsRead,
+        rateAiAnswer,
         typingTimerRef,
     };
 }

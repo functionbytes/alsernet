@@ -92,6 +92,13 @@ Route::middleware('throttle:5,1,widget-transcript')->group(function () {
     Route::post('/conversation/{id}/email-transcript', [WidgetConversationController::class, 'emailTranscript'])->name('conversation.email-transcript');
 });
 
+// AI answer feedback (👍/👎) — 30 per minute, own throttle prefix so it does
+// not share (and get starved by) widget-conv-read's cupo.
+Route::middleware('throttle:30,1,widget-ai-feedback')->group(function () {
+    Route::post('/conversation/{id}/messages/{itemId}/feedback', [WidgetConversationController::class, 'rateAiAnswer'])
+        ->name('conversation.messages.feedback');
+});
+
 // Disparadores proactivos (live commerce) — 60 por minuto, cupo propio.
 Route::middleware('throttle:60,1,widget-triggers')->group(function () {
     Route::get('/triggers', [WidgetTriggersApiController::class, 'index'])->name('triggers');
