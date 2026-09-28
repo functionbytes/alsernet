@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Models\Company;
 use Modules\Helpdesk\Models\Customer;
@@ -30,6 +31,28 @@ class CustomerSummaryService
             return null;
         }
 
+        // Caché corta (90s, dentro del rango 60-120s recomendado para datos
+        // "cerca de tiempo real"): este bloque se reconstruye en CADA carga
+        // del panel de detalle de CUALQUIER ticket del cliente (varios
+        // tickets abiertos del mismo contacto, refrescos del panel, varios
+        // agentes viendo tickets distintos del mismo cliente) y encadena
+        // ~4 consultas propias (company, avgFirstResponseMinutes, erpMissing
+        // vía Customer::erpLookupFailed(), platforms) más las de
+        // ContactAggregatorService::resumen() (que ya cachea 60s por su
+        // cuenta, pero solo cubre SU propio tramo). La clave incluye
+        // updated_at: cualquier edición de la ficha (nombre, ban, idioma…)
+        // la invalida al instante, igual que ContactAggregatorService::
+        // resumen().
+        $key = "helpdesktickets:customer-summary:{$customer->id}:".($customer->updated_at?->timestamp ?? 0);
+
+        return Cache::remember($key, 90, fn (): array => $this->buildSummary($customer));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildSummary(Customer $customer): array
+    {
         $company = $customer->company_id ? Company::find($customer->company_id) : null;
         $stats = $this->stats($customer);
 
@@ -243,6 +266,23 @@ class CustomerSummaryService
             return [];
         }
 
+        // Misma caché corta que summarize() (90s): identities() agrupa por
+        // 'from' sobre TODOS los correos entrantes del cliente
+        // (helpdesk_ticket_mails), una consulta que no depende de
+        // customer.updated_at — de ahí que la clave SOLO module por id
+        // (no por updated_at, ese dato no la invalidaría de todos modos) y
+        // se apoye en el TTL para no releerla en cada apertura de ticket del
+        // mismo cliente.
+        $key = "helpdesktickets:customer-identities:{$customer->id}";
+
+        return Cache::remember($key, 90, fn (): array => $this->buildIdentities($customer));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildIdentities(Customer $customer): array
+    {
         $identities = [];
 
         // Canales con columna propia en helpdesk_customers.
