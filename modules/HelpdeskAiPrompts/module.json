@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskAiPrompts",
+    "alias": "helpdeskaiprompts",
+    "description": "Biblioteca de prompts del chatbot IA del ChatFlow: prompt base, bloques de conocimiento, casos por intención con enrutador, métricas y runner de pruebas.",
+    "keywords": ["helpdesk", "ai", "prompts", "chatbot", "chatflow"],
+    "priority": 57,
+    "providers": [
+        "Modules\\HelpdeskAiPrompts\\Providers\\HelpdeskAiPromptsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}

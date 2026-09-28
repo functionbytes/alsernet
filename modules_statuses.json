@@ -13,6 +13,7 @@
     "GiftMessage": true,
     "Helpdesk": true,
     "HelpdeskAgents": true,
+    "HelpdeskAiPrompts": true,
     "HelpdeskAnalytics": true,
     "HelpdeskBirthday": false,
     "HelpdeskCampaigns": false,
