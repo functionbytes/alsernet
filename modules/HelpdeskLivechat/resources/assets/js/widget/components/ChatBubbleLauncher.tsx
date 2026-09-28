@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../i18n/useLanguage';
 import { useWidgetStore } from '../widget-store';
 
 interface ChatBubbleLauncherProps {
@@ -7,6 +8,7 @@ interface ChatBubbleLauncherProps {
 }
 
 export function ChatBubbleLauncher({ onToggle, isOpen }: ChatBubbleLauncherProps) {
+    const t = useTranslation();
     const settings = useWidgetStore(state => state.settings);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -37,7 +39,7 @@ export function ChatBubbleLauncher({ onToggle, isOpen }: ChatBubbleLauncherProps
             >
                 {/* Fix 5: offline dot indicator */}
                 {!isOnline && !isOpen && (
-                    <span className="wgt-launcher-offline-dot" aria-label="Fuera de línea" />
+                    <span className="wgt-launcher-offline-dot" aria-label={t('ui.offline_dot')} />
                 )}
                 <div
                     className="wgt-launcher-icon"

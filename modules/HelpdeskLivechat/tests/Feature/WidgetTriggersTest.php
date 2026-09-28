@@ -135,4 +135,20 @@ class WidgetTriggersTest extends TestCase
 
         $this->assertCount(1, $this->getJson($url)->json('data'));
     }
+
+    public function test_message_translations_are_saved_and_served(): void
+    {
+        $web = WebFactory::new()->create();
+
+        $this->actingAs($this->admin)
+            ->post(route('settings.helpdesk-livechat.triggers.store'), $this->payload($web->id, [
+                'messages' => ['en' => 'Need help finishing your order?', 'fr' => '', 'xx' => 'ignorado'],
+            ]))->assertRedirect();
+
+        $trigger = WidgetTrigger::where('web_id', $web->id)->firstOrFail();
+        $this->assertSame(['en' => 'Need help finishing your order?'], $trigger->messages);
+
+        $data = $this->getJson(route('helpdesk-livechat.widget.triggers', ['website_token' => $web->website_token]))->json('data.0');
+        $this->assertSame('Need help finishing your order?', $data['messages']['en']);
+    }
 }

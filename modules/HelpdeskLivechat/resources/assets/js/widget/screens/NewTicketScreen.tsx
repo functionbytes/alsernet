@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
+import { useTranslation } from '../i18n/useLanguage';
 import { apiUrl } from '../api';
 
 interface FieldOption {
@@ -41,6 +42,7 @@ interface TicketFormData {
 export function NewTicketScreen() {
     const settings = useWidgetStore(state => state.settings);
     const navigate = useNavigate();
+    const t = useTranslation();
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -159,21 +161,21 @@ export function NewTicketScreen() {
         setErrors({});
 
         if (!formData.subject.trim() || !formData.description.trim() || !formData.customer_email.trim()) {
-            setErrors({ form: 'Por favor completa los campos obligatorios.' });
+            setErrors({ form: t('new_ticket.error_required_fields') });
             return;
         }
 
         const requiredCustomFields = (selectedCategory?.fields ?? []).filter(f => f.is_required);
         for (const field of requiredCustomFields) {
             if (!formData.custom_fields[field.key]?.trim()) {
-                setErrors({ form: 'Por favor completa todos los campos obligatorios.' });
+                setErrors({ form: t('new_ticket.error_required_custom_fields') });
                 return;
             }
         }
 
         const websiteToken = getWebsiteToken();
         if (!websiteToken) {
-            setErrors({ form: 'Token de widget no disponible.' });
+            setErrors({ form: t('new_ticket.error_no_token') });
             return;
         }
 
@@ -213,7 +215,7 @@ export function NewTicketScreen() {
                     });
                     setErrors(fieldErrors);
                 } else {
-                    setErrors({ form: data?.message || 'No se pudo crear el ticket.' });
+                    setErrors({ form: data?.message || t('new_ticket.error_generic') });
                 }
                 return;
             }
@@ -223,16 +225,16 @@ export function NewTicketScreen() {
 
             setSuccess({ ticket_number: data.data.ticket_number });
         } catch {
-            setErrors({ form: 'Error de conexión. Inténtalo de nuevo.' });
+            setErrors({ form: t('new_ticket.error_connection') });
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const priorities = [
-        { value: 'low', label: 'Baja' },
-        { value: 'normal', label: 'Normal' },
-        { value: 'high', label: 'Alta' },
+        { value: 'low', label: t('new_ticket.priority_low') },
+        { value: 'normal', label: t('new_ticket.priority_normal') },
+        { value: 'high', label: t('new_ticket.priority_high') },
     ];
 
     if (success) {
@@ -244,17 +246,16 @@ export function NewTicketScreen() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                     </Link>
-                    <span className="wgt-flex-1 wgt-screen-header-title">Ticket creado</span>
+                    <span className="wgt-flex-1 wgt-screen-header-title">{t('new_ticket.created_title')}</span>
                 </div>
                 <div className="wgt-flex-1 wgt-overflow-y wgt-px-4 wgt-py-4 wgt-stack-y wgt-gap-3 wgt-align-center wgt-text-center">
                     <svg viewBox="0 0 24 24" fill="none" stroke={settings.primary_color} strokeWidth={2} style={{ width: 64, height: 64 }}>
                         <circle cx="12" cy="12" r="10" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
                     </svg>
-                    <h3 style={{ margin: 0 }}>¡Ticket creado!</h3>
+                    <h3 style={{ margin: 0 }}>{t('new_ticket.created_heading')}</h3>
                     <p style={{ color: '#666', margin: 0 }}>
-                        Tu ticket <strong>{success.ticket_number}</strong> ha sido recibido.
-                        Te responderemos por correo lo antes posible.
+                        {t('new_ticket.success_prefix')} <strong>{success.ticket_number}</strong> {t('new_ticket.success_suffix')}
                     </p>
                     <button
                         type="button"
@@ -262,7 +263,7 @@ export function NewTicketScreen() {
                         className="wgt-btn-primary"
                         style={{ backgroundColor: settings.primary_color, marginTop: 16 }}
                     >
-                        Volver al inicio
+                        {t('new_ticket.back_home')}
                     </button>
                 </div>
             </div>
@@ -280,7 +281,7 @@ export function NewTicketScreen() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </Link>
-                <span className="wgt-flex-1 wgt-screen-header-title">Crear Ticket</span>
+                <span className="wgt-flex-1 wgt-screen-header-title">{t('home.create_ticket')}</span>
             </div>
 
             <form onSubmit={handleSubmit} className="wgt-flex-1 wgt-overflow-y wgt-px-4 wgt-py-4">
@@ -292,24 +293,24 @@ export function NewTicketScreen() {
                     )}
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Nombre</label>
+                        <label className="wgt-label">{t('new_ticket.label_name')}</label>
                         <input
                             type="text"
                             value={formData.customer_name}
                             onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                            placeholder="Tu nombre"
+                            placeholder={t('new_ticket.placeholder_name')}
                             className="wgt-input"
                         />
                         {errors.customer_name && <small className="wgt-text-danger">{errors.customer_name}</small>}
                     </div>
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Correo electrónico *</label>
+                        <label className="wgt-label">{t('new_ticket.label_email')} *</label>
                         <input
                             type="email"
                             value={formData.customer_email}
                             onChange={(e) => handleInputChange('customer_email', e.target.value)}
-                            placeholder="tu@email.com"
+                            placeholder={t('new_ticket.placeholder_email')}
                             className="wgt-input"
                             required
                         />
@@ -317,12 +318,12 @@ export function NewTicketScreen() {
                     </div>
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Asunto *</label>
+                        <label className="wgt-label">{t('new_ticket.label_subject')} *</label>
                         <input
                             type="text"
                             value={formData.subject}
                             onChange={(e) => handleSubjectChange(e.target.value)}
-                            placeholder="Describe brevemente tu problema"
+                            placeholder={t('new_ticket.placeholder_subject')}
                             className="wgt-input"
                             required
                         />
@@ -330,13 +331,13 @@ export function NewTicketScreen() {
                     </div>
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Categoría</label>
+                        <label className="wgt-label">{t('new_ticket.label_category')}</label>
                         <select
                             value={formData.category_id}
                             onChange={(e) => handleCategoryChange(e.target.value)}
                             className="wgt-select"
                         >
-                            <option value="">Selecciona una categoría</option>
+                            <option value="">{t('new_ticket.select_category_placeholder')}</option>
                             {categories.map(c => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
@@ -391,7 +392,7 @@ export function NewTicketScreen() {
                                         className="wgt-select"
                                         required={isRequired}
                                     >
-                                        <option value="">Selecciona...</option>
+                                        <option value="">{t('new_ticket.select_option_placeholder')}</option>
                                         {(field.options ?? []).map(o => (
                                             <option key={o.value} value={o.value}>{o.label}</option>
                                         ))}
@@ -445,7 +446,7 @@ export function NewTicketScreen() {
                     })}
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Prioridad</label>
+                        <label className="wgt-label">{t('new_ticket.label_priority')}</label>
                         <div className="wgt-priority-grid">
                             {priorities.map(({ value, label }) => (
                                 <button
@@ -462,11 +463,11 @@ export function NewTicketScreen() {
                     </div>
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Descripción *</label>
+                        <label className="wgt-label">{t('new_ticket.label_description')} *</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
-                            placeholder="Describe tu problema con el mayor detalle posible..."
+                            placeholder={t('new_ticket.placeholder_description')}
                             rows={5}
                             className="wgt-textarea"
                             required
@@ -477,12 +478,12 @@ export function NewTicketScreen() {
                     {showDeflection && (
                         <div className="wgt-deflection-box">
                             <div className="wgt-deflection-header">
-                                <span>¿Encontraste lo que buscas?</span>
+                                <span>{t('new_ticket.deflection_question')}</span>
                                 <button
                                     type="button"
                                     onClick={() => setDeflectionDismissed(true)}
                                     className="wgt-icon-btn"
-                                    aria-label="Cerrar sugerencias"
+                                    aria-label={t('new_ticket.close_suggestions')}
                                 >
                                     <svg className="wgt-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -498,7 +499,7 @@ export function NewTicketScreen() {
                     )}
 
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Adjuntar Archivos</label>
+                        <label className="wgt-label">{t('new_ticket.label_attachments')}</label>
                         <input
                             type="file"
                             multiple
@@ -511,7 +512,7 @@ export function NewTicketScreen() {
                             <svg className="wgt-icon wgt-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                             </svg>
-                            <span>Haz click para adjuntar archivos</span>
+                            <span>{t('new_ticket.attach_files_cta')}</span>
                         </label>
 
                         {formData.attachments.length > 0 && (
@@ -556,14 +557,14 @@ export function NewTicketScreen() {
                                 <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="white" strokeWidth="4" />
                                 <path style={{ opacity: 0.75 }} fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            Creando ticket...
+                            {t('new_ticket.submitting')}
                         </>
                     ) : (
                         <>
                             <svg className="wgt-icon" fill="none" stroke="white" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            Crear Ticket
+                            {t('home.create_ticket')}
                         </>
                     )}
                 </button>

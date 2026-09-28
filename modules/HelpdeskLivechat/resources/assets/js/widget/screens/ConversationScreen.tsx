@@ -4,6 +4,7 @@ import { useWidgetStore } from '../widget-store';
 import { apiUrl, conversationAuthHeaders, getWebsiteToken, websiteTokenHeaders, setConversationToken, clearConversationToken } from '../api';
 import { ImageLightbox } from '../components/ImageLightbox';
 import { getHostIdentityProof, getVisitorIdentity } from '../widget-identity';
+import { getDetectedLanguage } from '../i18n/useLanguage';
 import { isScreenShareAvailable } from '../webrtc';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -210,10 +211,12 @@ export function ConversationScreen() {
         }
     };
 
-    const handleSendMessage = async () => {
-        if ((!inputValue.trim() && attachedFiles.length === 0) || isSending) return;
+    // quickReply: texto de un botón del bot (se envía tal cual, sin adjuntos).
+    const handleSendMessage = async (quickReply?: string) => {
+        const text = typeof quickReply === 'string' ? quickReply : inputValue;
+        if ((!text.trim() && attachedFiles.length === 0) || isSending) return;
 
-        const messageContent = inputValue.trim() || `📎 ${attachedFiles.length} archivo(s) adjunto(s)`;
+        const messageContent = text.trim() || t('conversation.attachment_fallback', { count: String(attachedFiles.length) });
         const tempId = Date.now().toString();
         // Último contacto con el chat (atribución de ventas, 30 días).
         if (conversationId) {
@@ -273,6 +276,9 @@ export function ConversationScreen() {
                         message: messageContent,
                         customer_id: customerId ?? null,
                         widget_session_token: sessionToken,
+                        // Idioma de la página: el bot IA, el catálogo y las
+                        // tarjetas de producto responden en él.
+                        language: getDetectedLanguage(),
                         custom_attributes: customAttributes,
                         ...(identityProof ?? {}),
                         engagement_context: {
@@ -344,7 +350,7 @@ export function ConversationScreen() {
                                 ...m,
                                 id: realId,
                                 status: 'sent' as const,
-                                content: inputValue.trim() || '',
+                                content: text.trim() || '',
                                 attachments: serverAttachments.length ? serverAttachments : m.attachments,
                             }
                             : m
@@ -360,7 +366,7 @@ export function ConversationScreen() {
 
     const handleCloseConversation = async () => {
         if (!conversationId || !customerEmail) return;
-        if (!confirm('¿Estás seguro de que deseas cerrar esta conversación?')) return;
+        if (!confirm(t('conversation.close_confirm'))) return;
 
         setIsClosing(true);
         try {
@@ -375,15 +381,15 @@ export function ConversationScreen() {
             const data = await response.json();
 
             if (data.success) {
-                alert('Conversación cerrada. ¡Gracias por contactarnos!');
+                alert(t('conversation.closed_alert'));
                 localStorage.removeItem('livechat_conversation_id');
                 clearConversationToken();
                 navigate('/');
             } else {
-                alert('No se pudo cerrar la conversación. Por favor, inténtalo de nuevo.');
+                alert(t('conversation.close_failed_alert'));
             }
         } catch {
-            alert('Error al cerrar la conversación.');
+            alert(t('conversation.close_error_alert'));
         } finally {
             setIsClosing(false);
             setShowMenu(false);
@@ -416,13 +422,15 @@ export function ConversationScreen() {
                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
                         <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                     </svg>
-                    <span>Reconectando…</span>
+                    <span>{t('conversation.reconnecting')}</span>
                 </div>
             )}
 
             {queuePosition !== null && queuePosition > 0 && (
                 <div className="wgt-queue-banner" role="status" aria-live="polite">
-                    {t('queue_message', { number: String(queuePosition) })}
+                    {settings.queue_message
+                        ? settings.queue_message.replace(':number', String(queuePosition))
+                        : t('chat.queue_message', { number: String(queuePosition) })}
                 </div>
             )}
 
@@ -436,6 +444,7 @@ export function ConversationScreen() {
             )}
 
             <MessageList
+                onQuickReply={(text) => { handleSendMessage(text); }}
                 messages={messages}
                 botMessages={botMessages}
                 recommendations={recommendations}
@@ -453,7 +462,7 @@ export function ConversationScreen() {
             />
 
             {!conversationId && quickReplies.length > 0 && (
-                <div className="wgt-quick-replies" role="group" aria-label="Respuestas rápidas">
+                <div className="wgt-quick-replies" role="group" aria-label={t('conversation.quick_replies_aria')}>
                     {quickReplies.map((reply, i) => (
                         <button
                             key={i}
@@ -471,7 +480,7 @@ export function ConversationScreen() {
                 inputValue={inputValue}
                 onInputChange={handleInputChange}
                 onKeyPress={handleKeyPress}
-                onSend={handleSendMessage}
+                onSend={() => handleSendMessage()}
                 isSending={isSending}
                 attachedFiles={attachedFiles}
                 onFileSelect={handleFileSelect}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface EmojiPickerProps {
     onSelect: (emoji: string) => void;
@@ -49,6 +50,7 @@ const CATEGORIES: Array<{ key: string; label: string; icon: string; emojis: stri
 ];
 
 export function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
+    const t = useTranslation();
     const [activeCat, setActiveCat] = useState(CATEGORIES[0].key);
     const [search, setSearch] = useState('');
     const wrapRef = useRef<HTMLDivElement>(null);
@@ -67,7 +69,7 @@ export function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
         : cat.emojis;
 
     return (
-        <div ref={wrapRef} className="wgt-emoji-picker" role="dialog" aria-label="Emoji picker">
+        <div ref={wrapRef} className="wgt-emoji-picker" role="dialog" aria-label={t('ui.emoji_picker')}>
             <div className="wgt-emoji-grid">
                 {visible.map((e, i) => (
                     <button
@@ -81,7 +83,7 @@ export function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                     </button>
                 ))}
                 {visible.length === 0 && (
-                    <div className="wgt-emoji-empty">No matches</div>
+                    <div className="wgt-emoji-empty">{t('ui.no_matches')}</div>
                 )}
             </div>
             <div className="wgt-emoji-tabs" role="tablist">

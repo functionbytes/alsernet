@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
+import { useTranslation } from '../i18n/useLanguage';
 import { apiUrl, conversationAuthHeaders } from '../api';
 import { setVisitorIdentity } from '../widget-identity';
 
@@ -21,10 +22,12 @@ interface PreChatFormConfig {
     fields: PreChatField[];
 }
 
-const DEFAULT_FIELDS: PreChatField[] = [
-    { key: 'name',  label: 'Nombre', type: 'text',  required: true,  placeholder: 'Tu nombre' },
-    { key: 'email', label: 'Email',  type: 'email', required: true,  placeholder: 'tu@email.com' },
-];
+function buildDefaultFields(t: (key: string) => string): PreChatField[] {
+    return [
+        { key: 'name', label: t('pre_chat.field_name'), type: 'text', required: true, placeholder: t('pre_chat.placeholder_name') },
+        { key: 'email', label: t('pre_chat.field_email'), type: 'email', required: true, placeholder: t('pre_chat.placeholder_email') },
+    ];
+}
 
 function validateEmail(value: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -34,9 +37,10 @@ export function PreChatFormScreen() {
     const settings    = useWidgetStore(state => state.settings);
     const prefillData = useWidgetStore(state => state.prefillData);
     const navigate    = useNavigate();
+    const t           = useTranslation();
 
     const [formConfig,   setFormConfig]   = useState<PreChatFormConfig | null>(null);
-    const [fields,       setFields]       = useState<PreChatField[]>(DEFAULT_FIELDS);
+    const [fields,       setFields]       = useState<PreChatField[]>(() => buildDefaultFields(t));
     const [values,       setValues]       = useState<Record<string, string>>({});
     const [errors,       setErrors]       = useState<Record<string, string>>({});
     const [isLoading,    setIsLoading]    = useState(true);
@@ -79,12 +83,12 @@ export function PreChatFormScreen() {
             const val = (values[field.key] ?? '').trim();
 
             if (field.required && !val) {
-                next[field.key] = `${field.label} es obligatorio`;
+                next[field.key] = t('pre_chat.field_required', { field: field.label });
                 continue;
             }
 
             if (field.type === 'email' && val && !validateEmail(val)) {
-                next[field.key] = 'Ingresa un email válido';
+                next[field.key] = t('pre_chat.invalid_email');
             }
         }
 
@@ -154,17 +158,17 @@ export function PreChatFormScreen() {
         <div className="wgt-stack-y wgt-h-full wgt-bg-light wgt-fade-in">
             {/* Header */}
             <div className="wgt-screen-header">
-                <Link to="/" className="wgt-icon-btn" aria-label="Volver">
+                <Link to="/" className="wgt-icon-btn" aria-label={t('pre_chat.back')}>
                     <svg className="wgt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </Link>
-                <span className="wgt-flex-1 wgt-screen-header-title">Antes de empezar</span>
+                <span className="wgt-flex-1 wgt-screen-header-title">{t('pre_chat.header_title')}</span>
             </div>
 
             {isLoading ? (
                 <div className="wgt-flex-1 wgt-row-center" style={{ justifyContent: 'center' }}>
-                    <div className="wgt-spinner" aria-label="Cargando" />
+                    <div className="wgt-spinner" aria-label={t('pre_chat.loading')} />
                 </div>
             ) : (
                 <form
@@ -174,7 +178,7 @@ export function PreChatFormScreen() {
                 >
                     <div className="wgt-stack-y wgt-gap-4">
                         <p className="wgt-text-muted" style={{ fontSize: 13 }}>
-                            Completa los datos para que podamos atenderte mejor.
+                            {t('pre_chat.intro')}
                         </p>
 
                         {fields.map(field => (
@@ -184,6 +188,7 @@ export function PreChatFormScreen() {
                                 value={values[field.key] ?? ''}
                                 error={errors[field.key] ?? ''}
                                 onChange={handleChange}
+                                t={t}
                             />
                         ))}
 
@@ -207,9 +212,9 @@ export function PreChatFormScreen() {
                                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
                                         <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                                     </svg>
-                                    Iniciando...
+                                    {t('pre_chat.submitting')}
                                 </>
-                            ) : 'Iniciar conversación'}
+                            ) : t('pre_chat.submit')}
                         </button>
                     </div>
                 </form>
@@ -223,9 +228,10 @@ interface FieldInputProps {
     value: string;
     error: string;
     onChange: (key: string, value: string) => void;
+    t: (key: string, vars?: Record<string, string>) => string;
 }
 
-function FieldInput({ field, value, error, onChange }: FieldInputProps) {
+function FieldInput({ field, value, error, onChange, t }: FieldInputProps) {
     const inputStyle = error ? { borderColor: 'var(--wgt-danger)' } : {};
 
     return (
@@ -259,7 +265,7 @@ function FieldInput({ field, value, error, onChange }: FieldInputProps) {
                     aria-invalid={!!error}
                     aria-describedby={error ? `pre-chat-${field.key}-err` : undefined}
                 >
-                    <option value="">Selecciona una opción</option>
+                    <option value="">{t('pre_chat.select_option_placeholder')}</option>
                     {field.options.map(opt => {
                         const v = typeof opt === 'string' ? opt : opt.value;
                         const l = typeof opt === 'string' ? opt : opt.label;

@@ -12,16 +12,18 @@ use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCsatRecorded;
 use Modules\HelpdeskChatFlow\Events\ChatFlowStarted;
 use Modules\HelpdeskChatFlow\Jobs\HandleNodeTimeoutJob;
+use Modules\HelpdeskChatFlow\Jobs\ResumeChatFlowAfterDelayJob;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBranchConditions;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
+use Modules\HelpdeskChatFlow\Services\Concerns\ResolvesVisitorContext;
 use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
 
 class ChatFlowEngine
 {
-    use EvaluatesBranchConditions, FormatsNumberedOptions, PostsBotMessages, ValidatesUserInput;
+    use EvaluatesBranchConditions, FormatsNumberedOptions, PostsBotMessages, ResolvesVisitorContext, ValidatesUserInput;
 
     private const WAIT_FOR_INPUT_TYPES = ['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat', 'rich_message'];
 
@@ -73,6 +75,12 @@ class ChatFlowEngine
 
         // Correlation id stitched through observer → jobs → engine → dispatcher logs.
         $context['_trace_id'] = (string) Str::uuid();
+
+        // Seed {{current_product_title}}/{{cart_total}}/{{cart_count}} etc. from
+        // the widget session so flow templates can use them from the very first
+        // node. Explicit $context (e.g. outbound flow seeds) always wins on key
+        // collision.
+        $context = array_merge($this->visitorContextSeed($conversation), $context);
 
         $session = ChatFlowSession::create([
             'chat_flow_id' => $flow->id,
@@ -143,6 +151,31 @@ class ChatFlowEngine
     }
 
     /**
+     * Las opciones se muestran en el idioma del cliente (option_labels); si
+     * responde con una de esas etiquetas (botón del widget o texto), se
+     * convierte en su número para que resolveNumberedChoice la resuelva contra
+     * la etiqueta original del flujo.
+     *
+     * @param  array<string, mixed>  $node
+     */
+    private function translatedOptionToNumber(ChatFlowSession $session, array $node, string $message): string
+    {
+        $labels = $session->getContextValue('option_labels');
+        if (! is_array($labels) || ! in_array($node['type'] ?? '', ['quick_replies', 'rich_message', 'csat'], true)) {
+            return $message;
+        }
+
+        $needle = mb_strtolower(trim($message));
+        foreach (array_values($labels) as $i => $label) {
+            if (mb_strtolower(trim((string) $label)) === $needle) {
+                return (string) ($i + 1);
+            }
+        }
+
+        return $message;
+    }
+
+    /**
      * Handle a customer reply on a waiting node: language/sentiment detection,
      * escape handling, input capture and advancing the flow.
      *
@@ -152,6 +185,8 @@ class ChatFlowEngine
     private function handleInput(ChatFlowSession $session, ChatFlow $flow, array $currentNode, string $message, array $attachmentUrls): void
     {
         $conditions = $flow->trigger_conditions ?? [];
+
+        $message = $this->translatedOptionToNumber($session, $currentNode, $message);
 
         // Detect the customer's language on first interaction (multilingual flows).
         if (($conditions['multilingual'] ?? false) && ! $session->getContextValue('customer_lang')) {
@@ -629,6 +664,50 @@ class ChatFlowEngine
     }
 
     /**
+     * Schedules the resume of a `delay` node's child after `data.seconds`
+     * (default 5s, clamped 1-300s to match the editor's input range). When the
+     * node has no child, finalize immediately — nothing to resume.
+     */
+    private function scheduleDelay(ChatFlowSession $session, array $node): void
+    {
+        $nextNodeId = $this->getFirstChildId($session, $node['id']);
+
+        if ($nextNodeId === null) {
+            $this->finalizeIfNeeded($session, $node, null);
+
+            return;
+        }
+
+        $seconds = max(1, min(300, (int) ($node['data']['seconds'] ?? 5)));
+
+        ResumeChatFlowAfterDelayJob::dispatch($session->id, $nextNodeId, $session->conversation_id)
+            ->delay(now()->addSeconds($seconds));
+    }
+
+    /**
+     * Resumes a session paused on a `delay` node. No-op if the session ended
+     * before the delay elapsed (e.g. an agent took over, or it expired).
+     */
+    public function resumeAfterDelay(ChatFlowSession $session, string $nodeId): void
+    {
+        if (! $session->isActive()) {
+            return;
+        }
+
+        $this->applyTraceContext($session);
+
+        $node = $session->chatFlow->getNodeById($nodeId);
+
+        if (! $node) {
+            $this->failSession($session);
+
+            return;
+        }
+
+        $this->runFrom($session, $node);
+    }
+
+    /**
      * Run a waiting node's timeout branch: optional message, then re-ask (bounded
      * by timeout_retries), transfer to a human, or close the session.
      */
@@ -778,6 +857,15 @@ class ChatFlowEngine
         while ($node && $depth < $maxDepth) {
             $session->update(['current_node_id' => $node['id']]);
 
+            // `delay` pauses the run for real instead of passing through
+            // immediately: schedule the resume job and stop here, mirroring how
+            // PAUSE_TYPES nodes stop and wait (but on a timer, not customer input).
+            if ($node['type'] === 'delay') {
+                $this->scheduleDelay($session, $node);
+
+                return;
+            }
+
             try {
                 $nextNodeId = $this->executeNode($session, $node);
             } catch (\Throwable $e) {
@@ -900,6 +988,10 @@ class ChatFlowEngine
         }
 
         if ($node['type'] !== 'end' && $nextNodeId === null) {
+            // Release too: the flow ran off its last node without an explicit
+            // close/end/transfer, so nothing else would clear handled_by_bot and
+            // a later customer reply would stay invisible to agents forever.
+            $session->conversation?->releaseFromBot();
             $session->update(['status' => 'completed', 'ended_at' => now()]);
             ChatFlowCompleted::dispatch($session);
         }
@@ -1018,5 +1110,30 @@ class ChatFlowEngine
     private function getFirstChildId(ChatFlowSession $session, string $parentId): ?string
     {
         return $session->chatFlow->childrenByParent()[$parentId][0]['id'] ?? null;
+    }
+
+    /**
+     * Flattens {@see resolveVisitorContext()} into the scalar template
+     * variables flow designers use ({{current_product_title}}, ...).
+     *
+     * @return array<string, mixed>
+     */
+    private function visitorContextSeed(Conversation $conversation): array
+    {
+        $visitor = $this->resolveVisitorContext($conversation);
+
+        if ($visitor === null) {
+            return [];
+        }
+
+        $product = $visitor['current_product'];
+        $cart = $visitor['cart'];
+
+        return array_filter([
+            'current_product_id' => $product['id'] ?? null,
+            'current_product_title' => $product['title'] ?? null,
+            'cart_total' => $cart['total'] ?? null,
+            'cart_count' => $cart['products_count'] ?? null,
+        ], fn ($value) => $value !== null);
     }
 }

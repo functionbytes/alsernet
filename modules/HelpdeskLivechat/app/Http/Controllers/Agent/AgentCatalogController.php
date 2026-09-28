@@ -37,7 +37,7 @@ class AgentCatalogController extends Controller
             return response()->json(['success' => true, 'data' => ['products' => []]]);
         }
 
-        $products = $this->catalog->forWeb($this->resolveWeb($conversation))->search($query, 12);
+        $products = $this->catalog->forWeb($this->resolveWeb($conversation), $conversation->customer?->language)->search($query, 12);
 
         return response()->json([
             'success' => true,
@@ -61,7 +61,8 @@ class AgentCatalogController extends Controller
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $driver = $this->catalog->forWeb($this->resolveWeb($conversation));
+        // Idioma del cliente: las tarjetas le llegan con títulos y URLs en su idioma.
+        $driver = $this->catalog->forWeb($this->resolveWeb($conversation), $conversation->customer?->language);
 
         $byId = $driver->findMany(array_map('strval', $validated['product_ids']));
 

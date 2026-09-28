@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiUrl } from './api';
+import { getDetectedLanguage, getTranslation } from './i18n/useLanguage';
 
 export interface RecommendationProduct {
     id: string | number;
@@ -127,7 +128,7 @@ const defaultSettings: LiveChatSettings = {
     welcome_message: 'Hola! ¿Cómo podemos ayudarte?',
     input_placeholder: 'Escribe tu mensaje...',
     offline_message: 'Nuestros agentes no están disponibles en este momento...',
-    queue_message: 'Uno de nuestros agentes estará contigo en breve.',
+    queue_message: getTranslation(getDetectedLanguage(), 'chat.queue_message'),
     position: 'bottom-right',
     side_spacing: 16,
     bottom_spacing: 16,

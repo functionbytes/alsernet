@@ -47,10 +47,20 @@ class ChatFlowAgentService
      *                                search()/find()); activa product_search y product_detail
      * @param  object|null  $cart  Cesta del visitante (show(): ?array, add(int, int, int): array);
      *                             activa show_cart y add_to_cart
+     * @param  array<int, array{role: string, content: string}>  $history  Prior conversation turns (memory)
+     * @param  array{current_product: array<string,mixed>|null, cart: array<string,mixed>|null, viewed_products: array<int, array<string,mixed>>}|null  $visitorContext  Live widget-session snapshot (current product, cart, recently viewed)
      * @return array{action: string, text: string, used_tools: array<int,string>, products: array<int, object>}
      */
-    public function run(string $question, array $context, array $data, string $locale = 'es', ?object $catalog = null, ?object $cart = null): array
-    {
+    public function run(
+        string $question,
+        array $context,
+        array $data,
+        string $locale = 'es',
+        ?object $catalog = null,
+        ?object $cart = null,
+        array $history = [],
+        ?array $visitorContext = null,
+    ): array {
         $apiKey = config('services.openai.key', '');
         if (empty($apiKey) || trim($question) === '') {
             return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => [], 'products' => []];
@@ -78,23 +88,41 @@ class ChatFlowAgentService
             $system .= ' '.$this->sanitizer->systemGuard();
         }
 
-        $messages = [
-            ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $this->wrapCustomerText($question)],
-        ];
+        $fallbackMessage = (string) ($data['fallback_message'] ?? 'Te paso con un agente.');
+
+        $messages = [['role' => 'system', 'content' => $system]];
+
+        // Fenced, refreshed on every step with the products shown so far so the
+        // model doesn't re-suggest one it already offered.
+        $visitorContextIndex = null;
+        $visitorContextText = $this->buildVisitorContextText($visitorContext, $shown);
+        if ($visitorContextText !== '') {
+            $messages[] = ['role' => 'system', 'content' => $visitorContextText];
+            $visitorContextIndex = count($messages) - 1;
+        }
+
+        foreach ($this->sanitizeHistory($history) as $turn) {
+            $messages[] = $turn;
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $this->wrapCustomerText($question)];
         $usedTools = [];
 
         for ($step = 0; $step < self::MAX_STEPS; $step++) {
             $message = $this->callLlm($messages, $tools, $data);
 
             if ($message === null) {
-                return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => $usedTools, 'products' => []];
+                return ['action' => 'escalate', 'text' => $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
             }
 
             $toolCalls = $message['tool_calls'] ?? [];
 
             if (empty($toolCalls)) {
-                return ['action' => 'respond', 'text' => trim((string) ($message['content'] ?? '')), 'used_tools' => $usedTools, 'products' => array_values($shown)];
+                $text = trim((string) ($message['content'] ?? ''));
+
+                return $text !== ''
+                    ? ['action' => 'respond', 'text' => $text, 'used_tools' => $usedTools, 'products' => array_values($shown)]
+                    : ['action' => 'escalate', 'text' => $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
             }
 
             $messages[] = $message; // assistant turn with tool_calls
@@ -105,10 +133,16 @@ class ChatFlowAgentService
                 $usedTools[] = $name;
 
                 if ($name === 'answer_customer') {
-                    return ['action' => 'respond', 'text' => trim((string) ($args['text'] ?? '')), 'used_tools' => $usedTools, 'products' => array_values($shown)];
+                    // An empty answer would post a blank bubble to the customer —
+                    // treat it the same as the model giving up.
+                    $text = trim((string) ($args['text'] ?? ''));
+
+                    return $text !== ''
+                        ? ['action' => 'respond', 'text' => $text, 'used_tools' => $usedTools, 'products' => array_values($shown)]
+                        : ['action' => 'escalate', 'text' => $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
                 }
                 if ($name === 'escalate_to_agent') {
-                    return ['action' => 'escalate', 'text' => trim((string) ($args['message'] ?? 'Te paso con un agente.')), 'used_tools' => $usedTools, 'products' => []];
+                    return ['action' => 'escalate', 'text' => trim((string) ($args['message'] ?? $fallbackMessage)) ?: $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
                 }
 
                 $messages[] = [
@@ -117,9 +151,104 @@ class ChatFlowAgentService
                     'content' => $this->executeTool($name, $args, $context, $catalog, $shown, $cart),
                 ];
             }
+
+            if ($visitorContextIndex !== null) {
+                $messages[$visitorContextIndex]['content'] = $this->buildVisitorContextText($visitorContext, $shown);
+            }
         }
 
         return ['action' => 'escalate', 'text' => 'Te paso con un agente para ayudarte mejor.', 'used_tools' => $usedTools, 'products' => []];
+    }
+
+    /**
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @return array<int, array{role: string, content: string}>
+     */
+    private function sanitizeHistory(array $history, int $max = 8): array
+    {
+        $clean = [];
+
+        foreach ($history as $turn) {
+            $role = $turn['role'] ?? '';
+            $content = trim((string) ($turn['content'] ?? ''));
+
+            if (in_array($role, ['user', 'assistant'], true) && $content !== '') {
+                $clean[] = ['role' => $role, 'content' => $content];
+            }
+        }
+
+        return array_slice($clean, -$max);
+    }
+
+    /**
+     * Compact, fenced summary of what the visitor is looking at right now —
+     * current product, cart contents/total, recently viewed — plus the ids
+     * already shown in this run so the model doesn't repeat them.
+     *
+     * @param  array{current_product: array<string,mixed>|null, cart: array<string,mixed>|null, viewed_products: array<int, array<string,mixed>>}|null  $visitorContext
+     * @param  array<string, object>  $shown  Products already surfaced this run, keyed by id
+     */
+    private function buildVisitorContextText(?array $visitorContext, array $shown): string
+    {
+        if ($visitorContext === null) {
+            return '';
+        }
+
+        $lines = [];
+
+        $product = $visitorContext['current_product'] ?? null;
+        if (is_array($product) && ! empty($product['id'])) {
+            $lines[] = sprintf(
+                'Viendo ahora: id=%s "%s" (%s)',
+                $product['id'],
+                $this->sanitize((string) ($product['title'] ?? '')),
+                $this->formatMoney($product['price'] ?? null, $product['currency'] ?? null),
+            );
+        }
+
+        $cart = $visitorContext['cart'] ?? null;
+        if (is_array($cart) && ! empty($cart['lines'])) {
+            $cartLines = collect($cart['lines'])
+                ->take(10)
+                ->map(fn ($l) => sprintf(
+                    '- %s x%s (%s)',
+                    $this->sanitize((string) ($l['name'] ?? ('producto '.($l['id_product'] ?? '')))),
+                    $l['qty'] ?? 1,
+                    $this->formatMoney($l['total'] ?? null, $cart['currency'] ?? null),
+                ))
+                ->implode("\n");
+            $lines[] = sprintf("Cesta (total %s):\n%s", $this->formatMoney($cart['total'] ?? null, $cart['currency'] ?? null), $cartLines);
+        }
+
+        $viewed = array_slice($visitorContext['viewed_products'] ?? [], 0, 5);
+        if ($viewed !== []) {
+            $lines[] = 'Vistos recientemente: '.collect($viewed)
+                ->map(fn ($v) => sprintf('id=%s "%s"', $v['id'] ?? '', $this->sanitize((string) ($v['title'] ?? ''))))
+                ->implode(', ');
+        }
+
+        if ($shown !== []) {
+            $lines[] = 'Ya mostrados en esta respuesta (no los repitas): '.implode(', ', array_keys($shown));
+        }
+
+        if ($lines === []) {
+            return '';
+        }
+
+        $text = implode("\n\n", $lines);
+
+        return $this->sanitizer?->wrap($text, 'CONTEXTO_VISITANTE') ?? $text;
+    }
+
+    private function formatMoney(mixed $amount, ?string $currency): string
+    {
+        if ($amount === null || $amount === '') {
+            return '-';
+        }
+
+        $formatted = number_format((float) $amount, 2);
+
+        return $currency ? "{$formatted} {$currency}" : $formatted;
     }
 
     /**
@@ -171,20 +300,37 @@ class ChatFlowAgentService
         if ($withProducts) {
             $tools[] = $fn('product_search', 'Busca productos en el catálogo de la tienda. Los resultados se muestran al cliente como tarjetas con botón de añadir al carrito; en tu respuesta no repitas precios ni enlaces, resume y ayuda a elegir.',
                 ['query' => ['type' => 'string', 'description' => 'Palabras clave del producto (tipo, marca, uso), sin frases completas']], ['query']);
-            $tools[] = $fn('product_detail', 'Obtiene la ficha de un producto concreto del catálogo por su id (de product_search) para responder dudas sobre él.',
-                ['product_id' => ['type' => 'string', 'description' => 'Id del producto']], ['product_id']);
+            $tools[] = $fn('product_detail', 'Obtiene la ficha de un producto concreto del catálogo por su id (de product_search, o el que aparece como "Viendo ahora" en el contexto del visitante) para responder dudas sobre él.',
+                ['product_id' => ['type' => 'string', 'description' => 'Id del producto. Omítelo para usar el producto que el visitante está viendo ahora mismo.']]);
         }
         if ($withCart) {
             $tools[] = $fn('show_cart', 'Muestra lo que el cliente tiene ahora en su cesta de la tienda (productos, cantidades y total).', []);
             $tools[] = $fn('add_to_cart', 'Añade un producto a la cesta del cliente. Úsala SOLO si el cliente ha pedido o confirmado explícitamente en su último mensaje añadir ESE producto y cantidad; si no, pregúntale antes y no la llames.',
                 [
-                    'product_id' => ['type' => 'string', 'description' => 'Id del producto (de product_search)'],
+                    'product_id' => ['type' => 'string', 'description' => 'Id del producto (de product_search, o el que está viendo ahora si no dio otro)'],
                     'quantity' => ['type' => 'integer', 'description' => 'Unidades (1 si no lo dice)'],
                     'customer_confirmed' => ['type' => 'boolean', 'description' => 'true solo si el cliente lo pidió/confirmó expresamente'],
-                ], ['product_id', 'customer_confirmed']);
+                ], ['customer_confirmed']);
         }
 
         return $tools;
+    }
+
+    /**
+     * Product id for product_detail/add_to_cart: the id argument if given,
+     * otherwise the product the visitor is currently looking at (context
+     * seeded by ChatFlowEngine::visitorContextSeed / the CONTEXTO_VISITANTE
+     * block) — lets the model act on "this product" without having called
+     * product_search first.
+     *
+     * @param  array<string,mixed>  $args
+     * @param  array<string,mixed>  $context
+     */
+    private function resolveProductId(array $args, array $context): string
+    {
+        $id = trim((string) ($args['product_id'] ?? ''));
+
+        return $id !== '' ? $id : trim((string) ($context['current_product_id'] ?? ''));
     }
 
     /**
@@ -217,7 +363,7 @@ class ChatFlowAgentService
                 if (($args['customer_confirmed'] ?? false) !== true) {
                     return 'No añadido: primero pregunta al cliente si quiere añadir ese producto a su cesta.';
                 }
-                $product = $catalog->find(trim((string) ($args['product_id'] ?? '')));
+                $product = $catalog->find($this->resolveProductId($args, $context));
                 if ($product === null || ! $product->available) {
                     return 'No añadido: el producto no existe o no está disponible.';
                 }
@@ -252,7 +398,7 @@ class ChatFlowAgentService
             }
 
             if ($name === 'product_detail' && $catalog !== null) {
-                $product = $catalog->find(trim((string) ($args['product_id'] ?? '')));
+                $product = $catalog->find($this->resolveProductId($args, $context));
                 if ($product === null) {
                     return 'No se encontró ese producto en el catálogo.';
                 }

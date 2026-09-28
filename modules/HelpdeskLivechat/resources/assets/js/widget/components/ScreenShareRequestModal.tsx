@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface ScreenShareRequestModalProps {
     agentName: string;
@@ -13,6 +14,7 @@ export function ScreenShareRequestModal({
     onAccept,
     onDecline,
 }: ScreenShareRequestModalProps) {
+    const t = useTranslation();
     return (
         <div className="wgt-share-request-overlay" role="dialog" aria-modal="true" aria-labelledby="wgt-share-req-title">
             <div className="wgt-share-request-card">
@@ -22,14 +24,14 @@ export function ScreenShareRequestModal({
                     </svg>
                 </div>
                 <h3 id="wgt-share-req-title" className="wgt-share-request-title">
-                    {agentName} quiere ver tu pantalla
+                    {t('ui.share_request_title', { name: agentName })}
                 </h3>
                 <p className="wgt-share-request-desc">
-                    Para ayudarte mejor, el agente solicita ver tu pantalla. Solo verá lo que tú decidas compartir y puedes detenerlo en cualquier momento.
+                    {t('ui.share_request_desc')}
                 </p>
                 <div className="wgt-share-request-actions">
                     <button type="button" className="wgt-share-request-decline" onClick={onDecline}>
-                        Rechazar
+                        {t('ui.decline')}
                     </button>
                     <button
                         type="button"
@@ -37,7 +39,7 @@ export function ScreenShareRequestModal({
                         onClick={onAccept}
                         style={{ backgroundColor: primaryColor }}
                     >
-                        Compartir pantalla
+                        {t('ui.share_screen')}
                     </button>
                 </div>
             </div>

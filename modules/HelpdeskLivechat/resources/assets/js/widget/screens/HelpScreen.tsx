@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { apiUrl } from '../api';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface Article {
     id: string;
@@ -24,6 +25,7 @@ interface HelpCenterData {
 
 export function HelpScreen() {
     const navigate = useNavigate();
+    const t = useTranslation();
     const { categoryId } = useParams<{ categoryId?: string }>();
     const [searchParams] = useSearchParams();
     const initialQuery = searchParams.get('q') ?? '';
@@ -75,14 +77,14 @@ export function HelpScreen() {
                         type="button"
                         onClick={() => navigate('/help')}
                         className="wgt-help-back"
-                        aria-label="Back"
+                        aria-label={t('help.back')}
                     >
                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
                         </svg>
                     </button>
                 )}
-                <h2 className="wgt-help-title">Help</h2>
+                <h2 className="wgt-help-title">{t('help.title')}</h2>
             </div>
 
             <div className="wgt-help-search-wrap">
@@ -90,7 +92,7 @@ export function HelpScreen() {
                     <input
                         type="search"
                         className="wgt-help-search-input"
-                        placeholder="Search for answers"
+                        placeholder={t('help.search_placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         autoFocus={isSearching}
@@ -105,11 +107,11 @@ export function HelpScreen() {
 
             <div className="wgt-help-list">
                 {loading && (
-                    <div className="wgt-help-empty">Cargando…</div>
+                    <div className="wgt-help-empty">{t('help.loading')}</div>
                 )}
 
                 {!loading && showCategoriesList && categories.length === 0 && (
-                    <div className="wgt-help-empty">No hay categorías disponibles.</div>
+                    <div className="wgt-help-empty">{t('help.no_categories')}</div>
                 )}
 
                 {!loading && showCategoriesList && categories.map(cat => (
@@ -121,7 +123,7 @@ export function HelpScreen() {
                         <div className="wgt-help-row-text">
                             <div className="wgt-help-row-title">{cat.name}</div>
                             <div className="wgt-help-row-meta">
-                                {cat.count} {cat.count === 1 ? 'article' : 'articles'}
+                                {t('help.articles_count', { count: String(cat.count) })}
                             </div>
                         </div>
                         <svg className="wgt-help-row-chevron" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -136,14 +138,16 @@ export function HelpScreen() {
                             <div className="wgt-help-section-head">
                                 <div className="wgt-help-section-title">{selectedCategory.name}</div>
                                 <div className="wgt-help-section-meta">
-                                    {selectedCategory.count} {selectedCategory.count === 1 ? 'article' : 'articles'}
+                                    {t('help.articles_count', { count: String(selectedCategory.count) })}
                                 </div>
                             </div>
                         )}
 
                         {visibleArticles.length === 0 && (
                             <div className="wgt-help-empty">
-                                {isSearching ? `Sin resultados para "${searchQuery}"` : 'Sin artículos en esta categoría.'}
+                                {isSearching
+                                    ? t('help.no_results_query', { query: searchQuery })
+                                    : t('help.no_articles_category')}
                             </div>
                         )}
 

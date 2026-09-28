@@ -211,6 +211,28 @@ class ConversationItem extends Model
     }
 
     /**
+     * Check if this message was posted by the ChatFlow bot (no human on either
+     * side). HelpdeskChatFlow\Services\Concerns\PostsBotMessages marks
+     * regular messages with `metadata.sent_by_chatflow`; ProductShowcaseService
+     * marks bot-originated product carousels with `metadata.is_bot`. Both
+     * leave `user_id` and `author_id` null, so without this check they were
+     * indistinguishable from a customer message (isFromCustomer/isFromAgent
+     * both return false). Las respuestas automáticas (saludo, ausencia, fuera
+     * de horario, workflow, despedida) llevan `metadata.auto_reply` y tampoco
+     * tienen autor: también son del asistente.
+     */
+    public function isFromBot(): bool
+    {
+        $metadata = is_array($this->metadata) ? $this->metadata : [];
+
+        if (! empty($metadata['auto_reply']) && $this->user_id === null && $this->author_id === null) {
+            return true;
+        }
+
+        return (bool) ($metadata['sent_by_chatflow'] ?? $metadata['is_bot'] ?? false);
+    }
+
+    /**
      * Get readable event type label
      */
     public function getEventLabelAttribute()
@@ -264,6 +286,10 @@ class ConversationItem extends Model
      */
     public function getSenderNameAttribute()
     {
+        if ($this->isFromBot()) {
+            return 'Asistente';
+        }
+
         if ($this->isFromCustomer()) {
             return $this->author?->name ?? 'Desconocido';
         }

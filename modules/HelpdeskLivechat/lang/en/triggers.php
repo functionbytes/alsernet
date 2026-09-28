@@ -43,6 +43,8 @@ return [
     'action_open_chat' => 'Open the chat',
     'action_message' => 'Open the chat with a proactive message',
     'field_message' => 'Message',
+    'field_translations' => 'Message translations',
+    'field_translations_help' => 'Optional. Visitors see it in the page language; if missing, the main message is used.',
     'field_message_help' => 'Shown to the visitor as a chat message. Max. 500 characters.',
     'field_frequency' => 'Frequency',
     'frequency_once_visitor' => 'Once per visitor',

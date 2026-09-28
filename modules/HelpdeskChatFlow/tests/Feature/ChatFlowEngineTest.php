@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Mockery\MockInterface;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCsatRecorded;
+use Modules\HelpdeskChatFlow\Jobs\ResumeChatFlowAfterDelayJob;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAiResponder;
@@ -23,6 +25,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowSentiment;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTriggerResolver;
 use Modules\HelpdeskChatFlow\Services\CustomerIdentityResolver;
 use Modules\HelpdeskChatFlow\Tests\Support\InMemoryChatFlowSession;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class ChatFlowEngineTest extends TestCase
@@ -431,6 +434,120 @@ class ChatFlowEngineTest extends TestCase
 
         $this->assertNotContains('transferred', array_column($session->updates, 'status'));
         Event::assertDispatched(ChatFlowCsatRecorded::class);
+    }
+
+    /**
+     * El botón del widget envía la etiqueta mostrada ("⭐ Muy malo", o su
+     * traducción), no el número: se debe puntuar igual que "1".
+     */
+    public function test_csat_button_label_is_scored_as_its_number(): void
+    {
+        $flow = new ChatFlow;
+        $flow->trigger_conditions = [];
+        $flow->nodes = [
+            ['id' => 'csat1', 'type' => 'csat', 'data' => ['csat_low_action' => 'escalate', 'csat_low_threshold' => 2]],
+        ];
+
+        /** @var MockInterface&HasMany $hasMany */
+        $hasMany = Mockery::mock(HasMany::class);
+        $hasMany->shouldReceive('create')->andReturn(null);
+
+        $conversation = Mockery::mock(Conversation::class)->makePartial();
+        $conversation->shouldReceive('items')->andReturn($hasMany);
+        $conversation->shouldReceive('update')->andReturn(true);
+        $conversation->shouldReceive('releaseFromBot')->once();
+
+        $session = $this->makeSessionStub($flow, [
+            'current_node_id' => 'csat1',
+            'conversation' => $conversation,
+        ]);
+        $session->setContextValue('option_labels', ['⭐ Very poor', '⭐⭐ Poor', '⭐⭐⭐ OK', '⭐⭐⭐⭐ Good', '⭐⭐⭐⭐⭐ Excellent']);
+
+        $this->makeEngine()->processMessage($session, '⭐ very poor');
+
+        $this->assertSame(1, $session->getContextStore()['csat_score']);
+        $this->assertContains('transferred', array_column($session->updates, 'status'));
+    }
+
+    // ─── delay node ────────────────────────────────────────────────────────────
+
+    private function invokeRunFrom(ChatFlowEngine $engine, ChatFlowSession $session, array $node): void
+    {
+        $m = new ReflectionMethod(ChatFlowEngine::class, 'runFrom');
+        $m->setAccessible(true);
+        $m->invoke($engine, $session, $node);
+    }
+
+    /**
+     * Regresión: `delay` pasaba al siguiente nodo de inmediato (0 segundos de
+     * espera real) en vez de pausar la sesión. Ahora debe agendar el resume
+     * job y NO tocar el status de la sesión (sigue "active", en pausa).
+     */
+    public function test_delay_node_pauses_and_schedules_a_resume_job(): void
+    {
+        Queue::fake();
+
+        $flow = new ChatFlow;
+        $flow->nodes = [
+            ['id' => 'd1', 'type' => 'delay', 'parentId' => null, 'data' => ['seconds' => 10]],
+            ['id' => 'm1', 'type' => 'message', 'parentId' => 'd1', 'data' => ['text' => 'Después del delay']],
+        ];
+
+        $session = $this->makeSessionStub($flow, ['id' => 55, 'conversation_id' => 9]);
+
+        $this->invokeRunFrom($this->makeEngine(), $session, $flow->nodes[0]);
+
+        Queue::assertPushed(ResumeChatFlowAfterDelayJob::class, 1);
+        $this->assertEmpty(array_column($session->updates, 'status'));
+    }
+
+    /**
+     * Once the delay elapses, the queued job resumes at the delay's child node
+     * and the flow continues normally — here it runs off its last node, which
+     * (fix #3) must also release the conversation from the bot.
+     */
+    public function test_resume_after_delay_continues_the_flow_and_releases_on_completion(): void
+    {
+        $flow = new ChatFlow;
+        $flow->nodes = [
+            ['id' => 'd1', 'type' => 'delay', 'parentId' => null, 'data' => ['seconds' => 10]],
+            ['id' => 'm1', 'type' => 'message', 'parentId' => 'd1', 'data' => []],
+        ];
+
+        $executor = Mockery::mock(ChatFlowNodeExecutor::class);
+        $executor->shouldReceive('execute')
+            ->once()
+            ->with(Mockery::on(fn ($n) => $n['id'] === 'm1'), Mockery::any())
+            ->andReturn(null);
+
+        $conversation = Mockery::mock(Conversation::class)->makePartial();
+        $conversation->shouldReceive('releaseFromBot')->once();
+
+        $session = $this->makeSessionStub($flow, [
+            'current_node_id' => 'd1',
+            'status' => 'active',
+            'conversation' => $conversation,
+        ]);
+
+        $this->makeEngine(executor: $executor)->resumeAfterDelay($session, 'm1');
+
+        $this->assertContains('completed', array_column($session->updates, 'status'));
+        Event::assertDispatched(ChatFlowCompleted::class);
+    }
+
+    public function test_resume_after_delay_is_a_noop_when_the_session_is_no_longer_active(): void
+    {
+        $executor = Mockery::mock(ChatFlowNodeExecutor::class);
+        $executor->shouldNotReceive('execute');
+
+        $flow = new ChatFlow;
+        $flow->nodes = [['id' => 'm1', 'type' => 'message', 'parentId' => null, 'data' => []]];
+
+        $session = $this->makeSessionStub($flow, ['status' => 'transferred']);
+
+        $this->makeEngine(executor: $executor)->resumeAfterDelay($session, 'm1');
+
+        $this->assertEmpty($session->updates);
     }
 
     // ─── method surface ────────────────────────────────────────────────────────

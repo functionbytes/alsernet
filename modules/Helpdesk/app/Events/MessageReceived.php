@@ -68,12 +68,14 @@ class MessageReceived implements ShouldBroadcast
     public function broadcastWith(): array
     {
         $isAgent = method_exists($this->message, 'isFromAgent') ? (bool) $this->message->isFromAgent() : ! is_null($this->message->user_id);
+        $isBot = method_exists($this->message, 'isFromBot') && $this->message->isFromBot();
+        $isOutgoing = $isAgent || $isBot;
 
         $attachments = $this->normalizeAttachments();
 
-        // Only forward the link preview to the widget when the agent is the sender —
-        // a visitor URL should NOT auto-unfurl on the widget side.
-        $linkPreview = $isAgent ? ($this->message->metadata['link_preview'] ?? null) : null;
+        // Only forward the link preview to the widget when the sender is not the
+        // customer — a visitor URL should NOT auto-unfurl on the widget side.
+        $linkPreview = $isOutgoing ? ($this->message->metadata['link_preview'] ?? null) : null;
 
         // Carrusel de productos (coviewer): los productos viajan en metadata.products
         // y el widget los pinta como tarjetas. Es un mensaje saliente (tienda/agente/bot).
@@ -82,6 +84,18 @@ class MessageReceived implements ShouldBroadcast
             ? $this->message->metadata['products']
             : [];
 
+        $senderType = match (true) {
+            $isBot => 'Bot',
+            $isAgent => 'User',
+            default => 'Customer',
+        };
+
+        $senderName = match (true) {
+            $isBot => 'Asistente',
+            $isAgent => $this->message->sender_name ?? 'Agent',
+            default => $this->message->sender_name ?? 'Visitor',
+        };
+
         return [
             // ── Widget-friendly flat shape (consumed by Helpdesk React widget) ──
             'id' => $this->message->id,
@@ -89,17 +103,19 @@ class MessageReceived implements ShouldBroadcast
             'content' => $this->message->body,
             'content_type' => $isProductCarousel ? 'products' : $this->resolveContentType($attachments),
             'products' => $products,
-            'message_type' => $isAgent || $isProductCarousel ? 'outgoing' : 'incoming',
+            'message_type' => $isOutgoing || $isProductCarousel ? 'outgoing' : 'incoming',
             'created_at' => $this->message->created_at->toIso8601String(),
             'sender' => [
                 'id' => $isAgent ? $this->message->user_id : $this->message->author_id,
-                'type' => $isAgent ? 'User' : 'Customer',
-                'name' => $this->message->sender_name ?? ($isAgent ? 'Agent' : 'Visitor'),
+                'type' => $senderType,
+                'name' => $senderName,
             ],
             'attachments' => $attachments,
             'link_preview' => $linkPreview,
             'translated_body' => $this->message->translated_body ?? null,
             'outgoing_translated_body' => $this->message->outgoing_translated_body ?? null,
+            'is_bot' => $isBot,
+            ...$this->botExtras(),
 
             // ── Legacy nested shape (preserved for existing listeners) ──
             'message' => [
@@ -107,10 +123,10 @@ class MessageReceived implements ShouldBroadcast
                 'type' => $this->message->type,
                 'body' => $this->message->body,
                 'html_body' => $this->message->html_body,
-                'is_from_customer' => method_exists($this->message, 'isFromCustomer') ? $this->message->isFromCustomer() : ! $isAgent,
-                'is_from_agent' => $isAgent,
+                'is_from_customer' => method_exists($this->message, 'isFromCustomer') ? $this->message->isFromCustomer() : ! $isOutgoing,
+                'is_from_agent' => $isOutgoing,
                 'is_internal' => $this->message->is_internal,
-                'sender_name' => $this->message->sender_name ?? null,
+                'sender_name' => $senderName,
                 'sender_avatar' => $this->message->sender_avatar ?? null,
                 'created_at' => $this->message->created_at->toIso8601String(),
             ],
@@ -120,6 +136,36 @@ class MessageReceived implements ShouldBroadcast
                 'last_message_at' => $this->conversation->last_message_at?->toIso8601String(),
             ],
         ];
+    }
+
+    /**
+     * Bot-only extras the widget renders as interactive UI: quick-reply/CSAT
+     * buttons (options + the prompt they answer) and rich-message/product
+     * cards. Empty/null for non-bot items or plain text — same contract as
+     * WidgetConversationService::botExtras() (REST getMessages) so the live
+     * broadcast and the history endpoint render identically.
+     *
+     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>}
+     */
+    private function botExtras(): array
+    {
+        $metadata = is_array($this->message->metadata) ? $this->message->metadata : [];
+
+        $options = is_array($metadata['bot_options'] ?? null) ? array_values($metadata['bot_options']) : [];
+        $prompt = isset($metadata['bot_prompt']) ? (string) $metadata['bot_prompt'] : null;
+
+        $rawCards = is_array($metadata['cards'] ?? null)
+            ? $metadata['cards']
+            : (is_array($metadata['card'] ?? null) ? [$metadata['card']] : []);
+
+        $cards = array_values(array_map(fn (array $c): array => [
+            'title' => (string) ($c['title'] ?? ''),
+            'subtitle' => (string) ($c['subtitle'] ?? ''),
+            'image_url' => $c['image_url'] ?? null,
+            'url' => $c['url'] ?? null,
+        ], array_filter($rawCards, 'is_array')));
+
+        return ['options' => $options, 'prompt' => $prompt, 'cards' => $cards];
     }
 
     /**

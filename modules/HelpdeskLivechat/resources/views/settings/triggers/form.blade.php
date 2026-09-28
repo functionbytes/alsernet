@@ -134,6 +134,18 @@
                                 <label class="form-label" for="t-message">{{ __('helpdesklivechat::triggers.field_message') }}</label>
                                 <textarea name="message" id="t-message" class="form-control" rows="3" maxlength="500">{{ old('message', $trigger?->message) }}</textarea>
                                 <small class="text-muted">{{ __('helpdesklivechat::triggers.field_message_help') }}</small>
+                                <details class="mt-3">
+                                    <summary class="small fw-semibold">{{ __('helpdesklivechat::triggers.field_translations') }}</summary>
+                                    <p class="small text-muted mb-2 mt-1">{{ __('helpdesklivechat::triggers.field_translations_help') }}</p>
+                                    <div class="row g-2">
+                                        @foreach(\Modules\HelpdeskLivechat\Models\WidgetTrigger::MESSAGE_LANGUAGES as $lang)
+                                            <div class="col-md-6">
+                                                <label class="form-label small mb-1" for="t-message-{{ $lang }}">{{ strtoupper($lang) }}</label>
+                                                <textarea name="messages[{{ $lang }}]" id="t-message-{{ $lang }}" class="form-control form-control-sm" rows="2" maxlength="500">{{ old('messages.'.$lang, $trigger?->messages[$lang] ?? '') }}</textarea>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     </div>

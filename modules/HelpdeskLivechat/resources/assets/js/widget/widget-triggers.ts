@@ -11,6 +11,7 @@
 import { apiUrl, getWebsiteToken } from './api';
 import { getCart, getShop, getViewedProducts } from './widget-commerce';
 import { useWidgetStore } from './widget-store';
+import { getDetectedLanguage } from './i18n/useLanguage';
 
 interface TriggerCondition {
     type: string;
@@ -24,6 +25,8 @@ interface WidgetTriggerRule {
     conditions: TriggerCondition[];
     action: 'open_chat' | 'message';
     message: string | null;
+    /** Traducciones por idioma (en, fr…); si falta la del visitante, `message`. */
+    messages?: Record<string, string>;
     frequency: 'once_visitor' | 'once_session' | 'every_page';
 }
 
@@ -166,8 +169,9 @@ function fire(rule: WidgetTriggerRule): void {
     firedThisPage = true;
     markFired(rule);
     const store = useWidgetStore.getState();
-    if (rule.action === 'message' && rule.message) {
-        store.pushBotMessage(rule.message);
+    const text = (rule.messages && rule.messages[getDetectedLanguage()]) || rule.message;
+    if (rule.action === 'message' && text) {
+        store.pushBotMessage(text);
     }
     store.requestRoute('/conversation');
     store.setOpen(true);

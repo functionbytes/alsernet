@@ -17,6 +17,7 @@ use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Models\WidgetSession;
 use Modules\HelpdeskLivechat\Services\WidgetSessionService;
+use Modules\HelpdeskLivechat\Support\VisitorMessageSanitizer;
 
 class WidgetConversationService
 {
@@ -368,9 +369,9 @@ class WidgetConversationService
         // Sanitize visitor-supplied body before persisting. Only applied to web
         // channel messages (widget visitors). Agent messages are NOT sanitized here
         // — agents may send rich HTML via the admin panel using their own editor.
-        // clean() uses HTMLPurifier (ezyang/htmlpurifier) which strips dangerous
-        // attributes (onclick, javascript:, etc.) — safer than strip_tags allowlist.
-        $body = clean((string) ($data['content'] ?? ''));
+        // HTMLPurifier (ezyang/htmlpurifier) quita toda etiqueta: el visitante
+        // envía texto plano — más seguro que un allowlist de strip_tags.
+        $body = VisitorMessageSanitizer::clean((string) ($data['content'] ?? ''));
 
         $item = ConversationItem::create([
             'conversation_id' => $conversation->id,
@@ -501,6 +502,7 @@ class WidgetConversationService
         // tienda/agente/bot), con los productos en metadata.products.
         if ($item->type === 'product_carousel') {
             $metadata = is_array($item->metadata) ? $item->metadata : [];
+            $isBot = $item->isFromBot();
 
             return [
                 'id' => $item->id,
@@ -510,18 +512,23 @@ class WidgetConversationService
                 'created_at' => $item->created_at->toIso8601String(),
                 'sender' => [
                     'id' => $item->user_id,
-                    'type' => ! empty($metadata['is_bot']) ? 'Bot' : 'User',
-                    'name' => ! empty($metadata['is_bot']) ? 'Asistente' : $this->resolveSenderName($item),
+                    'type' => $isBot ? 'Bot' : 'User',
+                    'name' => $isBot ? 'Asistente' : $this->resolveSenderName($item),
                 ],
                 'products' => is_array($metadata['products'] ?? null) ? $metadata['products'] : [],
                 'attachments' => [],
                 'link_preview' => null,
+                'is_bot' => $isBot,
+                ...$this->botExtras($metadata),
             ];
         }
 
         $isAgent = ! is_null($item->user_id);
+        $isBot = $item->isFromBot();
+        $isOutgoing = $isAgent || $isBot;
         $contentType = 'text';
         $attachments = is_array($item->attachment_urls) ? $item->attachment_urls : [];
+        $metadata = is_array($item->metadata) ? $item->metadata : [];
 
         if (count($attachments) > 0) {
             $first = $attachments[0];
@@ -534,23 +541,25 @@ class WidgetConversationService
             };
         }
 
-        // Link preview is only emitted to the widget when the agent is the sender —
-        // visitor URLs are NOT auto-unfurled.
-        $linkPreview = $isAgent ? ($item->metadata['link_preview'] ?? null) : null;
+        // Link preview is only emitted to the widget when the sender is not the
+        // visitor — visitor URLs are NOT auto-unfurled.
+        $linkPreview = $isOutgoing ? ($metadata['link_preview'] ?? null) : null;
 
         return [
             'id' => $item->id,
             'content' => $item->body,
             'content_type' => $contentType,
-            'message_type' => $isAgent ? 'outgoing' : 'incoming',
+            'message_type' => $isOutgoing ? 'outgoing' : 'incoming',
             'created_at' => $item->created_at->toIso8601String(),
             'sender' => [
                 'id' => $isAgent ? $item->user_id : $item->author_id,
-                'type' => $isAgent ? 'User' : 'Customer',
+                'type' => $isBot ? 'Bot' : ($isAgent ? 'User' : 'Customer'),
                 'name' => $this->resolveSenderName($item),
             ],
             'attachments' => $this->normalizeAttachments($attachments),
             'link_preview' => $linkPreview,
+            'is_bot' => $isBot,
+            ...$this->botExtras($metadata),
         ];
     }
 
@@ -584,8 +593,40 @@ class WidgetConversationService
         return $out;
     }
 
+    /**
+     * Bot-only extras the widget renders as interactive UI: quick-reply/CSAT
+     * buttons (options + the prompt they answer, from quick_replies/csat/
+     * rich_message nodes) and product/rich-message cards (rich_message with
+     * one or several cards). Empty/null for non-bot items or plain text.
+     *
+     * @param  array<string, mixed>  $metadata
+     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>}
+     */
+    private function botExtras(array $metadata): array
+    {
+        $options = is_array($metadata['bot_options'] ?? null) ? array_values($metadata['bot_options']) : [];
+        $prompt = isset($metadata['bot_prompt']) ? (string) $metadata['bot_prompt'] : null;
+
+        $rawCards = is_array($metadata['cards'] ?? null)
+            ? $metadata['cards']
+            : (is_array($metadata['card'] ?? null) ? [$metadata['card']] : []);
+
+        $cards = array_values(array_map(fn (array $c): array => [
+            'title' => (string) ($c['title'] ?? ''),
+            'subtitle' => (string) ($c['subtitle'] ?? ''),
+            'image_url' => $c['image_url'] ?? null,
+            'url' => $c['url'] ?? null,
+        ], array_filter($rawCards, 'is_array')));
+
+        return ['options' => $options, 'prompt' => $prompt, 'cards' => $cards];
+    }
+
     private function resolveSenderName(ConversationItem $item): string
     {
+        if ($item->isFromBot()) {
+            return 'Asistente';
+        }
+
         if ($item->user_id) {
             $name = optional($item->user)->name ?? 'Agent';
 

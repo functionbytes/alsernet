@@ -1,3 +1,5 @@
+import { getDetectedLanguage } from '../i18n/useLanguage';
+import { RichText } from './RichText';
 import React from 'react';
 import { AudioPlayer } from './AudioPlayer';
 import { type LightboxImage } from './ImageLightbox';
@@ -11,6 +13,8 @@ interface MessageBubbleProps {
     avatarInitial?: string;
     onOpenLightbox: (url: string) => void;
     animationDelay?: string;
+    /** Solo el último mensaje del bot: pulsar un botón envía su texto. */
+    onQuickReply?: (text: string) => void;
 }
 
 function isImageAttachment(a: MessageAttachment): boolean {
@@ -113,7 +117,11 @@ function BubbleBody({ message, onOpenLightbox }: { message: Message; onOpenLight
 
     return (
         <>
-            {trimmed && !isJustTheUrl ? <p>{message.content}</p> : null}
+            {trimmed && !isJustTheUrl ? (
+                // Agente y bot IA: formato ligero (negrita, listas, enlaces). El
+                // texto del visitante se muestra tal cual.
+                isUser ? <p>{message.content}</p> : <p className="wgt-rich"><RichText text={message.content} /></p>
+            ) : null}
 
             {message.linkPreview && (
                 <a
@@ -174,6 +182,7 @@ export function MessageBubble({
     avatarInitial,
     onOpenLightbox,
     animationDelay,
+    onQuickReply,
 }: MessageBubbleProps) {
     const isUser = message.author === 'user';
     const isAgent = message.author === 'agent';
@@ -196,11 +205,7 @@ export function MessageBubble({
                     <RecommendationsCard products={message.products} primaryColor={primaryColor} />
                     <div className="wgt-row wgt-gap-1 wgt-bubble-time">
                         <span>
-                            {message.timestamp.toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true,
-                            })}
+                            {message.timestamp.toLocaleTimeString(getDetectedLanguage(), { hour: '2-digit', minute: '2-digit' })}
                         </span>
                     </div>
                 </div>
@@ -224,16 +229,53 @@ export function MessageBubble({
                     className={`wgt-bubble${isUser ? ' is-user' : ' is-agent'}`}
                     style={isUser ? { backgroundColor: primaryColor } : undefined}
                 >
-                    <BubbleBody message={message} onOpenLightbox={onOpenLightbox} />
+                    <BubbleBody
+                        message={message.options?.length && message.prompt ? { ...message, content: message.prompt } : message}
+                        onOpenLightbox={onOpenLightbox}
+                    />
                 </div>
+
+                {message.cards && message.cards.length > 0 && (
+                    <div className="wgt-bot-cards">
+                        {message.cards.map((card, i) => {
+                            const inner = (
+                                <>
+                                    {card.image_url && <img src={card.image_url} alt="" loading="lazy" className="wgt-bot-card-img" />}
+                                    <span className="wgt-bot-card-body">
+                                        <span className="wgt-bot-card-title">{card.title}</span>
+                                        {card.subtitle && <span className="wgt-bot-card-sub">{card.subtitle}</span>}
+                                    </span>
+                                </>
+                            );
+                            return card.url ? (
+                                <a key={i} className="wgt-bot-card" href={card.url} target="_blank" rel="noopener noreferrer">{inner}</a>
+                            ) : (
+                                <div key={i} className="wgt-bot-card">{inner}</div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {message.options && message.options.length > 0 && (
+                    <div className="wgt-bot-options" role="group">
+                        {message.options.map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                className="wgt-bot-option"
+                                style={onQuickReply ? { borderColor: primaryColor, color: primaryColor } : undefined}
+                                disabled={!onQuickReply}
+                                onClick={() => onQuickReply?.(option)}
+                            >
+                                {option}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 <div className="wgt-row wgt-gap-1 wgt-bubble-time">
                     <span>
-                        {message.timestamp.toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                        })}
+                        {message.timestamp.toLocaleTimeString(getDetectedLanguage(), { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     {isUser && message.status && (
                         <span>

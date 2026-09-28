@@ -12,6 +12,7 @@ import { PreChatFormScreen } from './screens/PreChatFormScreen';
 import { PostChatFormScreen } from './screens/PostChatFormScreen';
 import { MessagesScreen } from './screens/MessagesScreen';
 import { ChatPageScreen } from './screens/ChatPageScreen';
+import { ShopScreen } from './screens/ShopScreen';
 import { WidgetNavigation } from './components/WidgetNavigation';
 import { useWidgetStore } from './widget-store';
 
@@ -54,6 +55,7 @@ function WidgetScreens({ conversationId }: { conversationId?: string }) {
                 <Route path="/post-chat" element={<PostChatFormScreen />} />
                 <Route path="/messages" element={<MessagesScreen />} />
                 <Route path="/chat-page" element={<ChatPageScreen conversationId={conversationId} />} />
+                <Route path="/shop" element={<ShopScreen />} />
             </Routes>
         </ErrorBoundary>
     );

@@ -3,13 +3,17 @@
 namespace Modules\HelpdeskChatFlow\Services;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Contracts\TicketServiceContract;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationTag;
+use Modules\Helpdesk\Models\CustomerTag;
 use Modules\HelpdeskChatFlow\Models\ChatFlowExecution;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
+use Modules\HelpdeskChatFlow\Services\Concerns\ResolvesVisitorContext;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogManager;
 use Modules\HelpdeskLivechat\Services\Catalog\Drivers\NullCatalogDriver;
@@ -18,7 +22,7 @@ use Modules\HelpdeskLivechat\Services\Widget\ProductShowcaseService;
 
 class ChatFlowNodeExecutor
 {
-    use EvaluatesBusinessHours, FormatsNumberedOptions, PostsBotMessages;
+    use EvaluatesBusinessHours, FormatsNumberedOptions, PostsBotMessages, ResolvesVisitorContext;
 
     public function __construct(
         private readonly ChatFlowAiResponder $aiResponder,
@@ -221,6 +225,43 @@ class ChatFlowNodeExecutor
         return $this->localizer->localize($text, $session->getContextValue('customer_lang'));
     }
 
+    /**
+     * Traduce las etiquetas de las opciones al idioma del cliente (una sola
+     * llamada al traductor para toda la lista) y guarda las mostradas en
+     * `option_labels` para que el motor reconozca la respuesta del cliente
+     * cuando escribe o pulsa la etiqueta (traducida o no). Las ramas del flujo siguen
+     * usando la etiqueta original.
+     *
+     * @param  array<int, string>  $options
+     * @return array<int, string>
+     */
+    private function localizeOptions(array $options, ChatFlowSession $session): array
+    {
+        $options = array_values(array_map('strval', $options));
+        $localized = $options;
+
+        if ($options !== [] && $session->getContextValue('customer_lang')) {
+            $joined = $this->localizeForCustomer(implode("\n", $options), $session);
+            $parts = array_map('trim', explode("\n", trim($joined)));
+
+            // Si el traductor une o parte líneas, no hay correspondencia fiable.
+            if (count($parts) === count($options) && ! in_array('', $parts, true)) {
+                $localized = $parts;
+            }
+        }
+
+        // Siempre, aunque no se traduzca: los botones del widget envían la
+        // etiqueta y el CSAT solo puntúa números.
+        $session->setContextValue('option_labels', $localized !== [] ? $localized : null);
+
+        return $localized;
+    }
+
+    private function optionsHint(ChatFlowSession $session): string
+    {
+        return $this->localizeForCustomer('Responde con el número de la opción.', $session);
+    }
+
     private function executeQuickReplies(array $node, ChatFlowSession $session, Conversation $conversation): ?string
     {
         $data = $node['data'] ?? [];
@@ -231,8 +272,10 @@ class ChatFlowNodeExecutor
             $session,
         );
 
-        $this->postBotMessage($conversation, $node['id'], $this->numberedPrompt($header, $options), [
-            'bot_options' => $options, // delivered as native buttons where the channel supports them
+        $labels = $this->localizeOptions($options, $session);
+
+        $this->postBotMessage($conversation, $node['id'], $this->numberedPrompt($header, $labels, $this->optionsHint($session)), [
+            'bot_options' => $labels, // delivered as native buttons where the channel supports them
             'bot_prompt' => $header,
         ]);
 
@@ -246,6 +289,7 @@ class ChatFlowNodeExecutor
         match ($data['action_type'] ?? '') {
             'assign_agent' => $conversation->update(['assignee_id' => $data['agent_id'] ?? null]),
             'change_status' => $conversation->update(['status_id' => $data['status_id'] ?? null]),
+            'add_tag' => $this->attachTags($conversation, $data['tags'] ?? []),
             default => null,
         };
 
@@ -290,7 +334,9 @@ class ChatFlowNodeExecutor
         $locale = (string) ($session->getContextValue('customer_lang') ?? $conversation->locale ?? config('app.locale', 'es'));
 
         $catalog = $this->catalogFor($conversation);
-        $result = $this->agent->run($question, $session->context ?? [], $data, $locale, $catalog, $this->cartFor($conversation));
+        $history = ($data['use_memory'] ?? true) ? $this->conversationHistory($conversation) : [];
+        $visitorContext = $this->resolveVisitorContext($conversation);
+        $result = $this->agent->run($question, $session->context ?? [], $data, $locale, $catalog, $this->cartFor($conversation), $history, $visitorContext);
 
         $this->postBotMessage($conversation, $node['id'], $result['text'], [
             'ai_agent' => true,
@@ -334,7 +380,7 @@ class ChatFlowNodeExecutor
             return null;
         }
 
-        $driver = app(CatalogManager::class)->forWeb($channel);
+        $driver = app(CatalogManager::class)->forWeb($channel, $conversation->customer?->language);
 
         return $driver instanceof NullCatalogDriver ? null : $driver;
     }
@@ -368,6 +414,14 @@ class ChatFlowNodeExecutor
     /**
      * Recent conversation turns for AI memory, oldest first.
      *
+     * Fetches one extra row and drops the most recent one: that last item is
+     * the customer message that triggered this very node run (already sent
+     * separately as the current question), so including it here duplicated it
+     * in the prompt. Role is 'user' only for genuine customer messages —
+     * everything else (bot AND human agent replies) is 'assistant', since a
+     * human-agent turn labelled 'user' made the model think the customer had
+     * said it.
+     *
      * @return array<int, array{role: string, content: string}>
      */
     private function conversationHistory(Conversation $conversation, int $limit = 8): array
@@ -376,11 +430,13 @@ class ChatFlowNodeExecutor
             ->where('type', 'message')
             ->where('is_internal', false)
             ->latest('id')
-            ->limit($limit)
+            ->limit($limit + 1)
             ->get()
             ->reverse()
+            ->values()
+            ->slice(0, -1)
             ->map(fn ($item) => [
-                'role' => ($item->metadata['sent_by_chatflow'] ?? false) ? 'assistant' : 'user',
+                'role' => $item->isFromCustomer() ? 'user' : 'assistant',
                 'content' => (string) ($item->body ?? ''),
             ])
             ->values()
@@ -504,11 +560,11 @@ class ChatFlowNodeExecutor
             $this->interpolateContext($data['question'] ?? '¿Cómo valorarías nuestra atención?', $session->context ?? []),
             $session,
         );
-        $options = $this->csatOptions($data);
+        $labels = $this->localizeOptions($this->csatOptions($data), $session);
 
-        $this->postBotMessage($conversation, $node['id'], $this->numberedPrompt($question, $options), [
+        $this->postBotMessage($conversation, $node['id'], $this->numberedPrompt($question, $labels, $this->optionsHint($session)), [
             'csat' => true,
-            'bot_options' => $options,
+            'bot_options' => $labels,
             'bot_prompt' => $question,
         ]);
 
@@ -543,8 +599,10 @@ class ChatFlowNodeExecutor
         $bodyParts = array_filter([$title, $subtitle]);
         $body = implode("\n", $bodyParts);
 
-        if ($options) {
-            $body = $this->numberedPrompt($body, $options);
+        $labels = $this->localizeOptions($options, $session);
+
+        if ($labels) {
+            $body = $this->numberedPrompt($body, $labels, $this->optionsHint($session));
         }
 
         $this->postBotMessage($conversation, $node['id'], $body !== '' ? $body : ($imageUrl ?? ''), array_filter([
@@ -554,7 +612,7 @@ class ChatFlowNodeExecutor
                 'image_url' => $imageUrl,
             ]),
             'image_url' => $imageUrl, // text channels send it as an attachment
-            'bot_options' => $options ?: null,
+            'bot_options' => $labels ?: null,
             'bot_prompt' => trim($title.' '.$subtitle) ?: null,
         ]));
 
@@ -580,8 +638,10 @@ class ChatFlowNodeExecutor
             $cards,
         );
 
-        if ($options) {
-            $body = $this->numberedPrompt($header, $options);
+        $labels = $this->localizeOptions($options, $session);
+
+        if ($labels) {
+            $body = $this->numberedPrompt($header, $labels, $this->optionsHint($session));
         } else {
             $list = $this->numberedList($lines);
             $body = $header !== '' ? $header."\n\n".$list : $list;
@@ -589,7 +649,7 @@ class ChatFlowNodeExecutor
 
         $this->postBotMessage($conversation, $node['id'], $body, array_filter([
             'cards' => $cards,
-            'bot_options' => $options ?: null,
+            'bot_options' => $labels ?: null,
             'bot_prompt' => $header ?: null,
         ], fn ($v) => $v !== null && $v !== ''));
 
@@ -729,6 +789,12 @@ class ChatFlowNodeExecutor
             $this->postBotMessage($conversation, $node['id'], $this->localizeForCustomer($farewell, $session));
         }
 
+        // Always release: even a cleanly-resolved session must return the
+        // conversation to the inbox, because the trigger only fires on the
+        // conversation's first customer message (ExecuteChatFlowNodeJob) — a
+        // later reply after this close would otherwise stay permanently
+        // invisible to agents (handled_by_bot never cleared).
+        $conversation->releaseFromBot();
         $session->update(['status' => 'completed', 'ended_at' => now()]);
 
         return null;
@@ -792,6 +858,8 @@ class ChatFlowNodeExecutor
         $tags = $node['data']['tags'] ?? [];
 
         if (! empty($tags)) {
+            $this->attachTags($conversation, $tags);
+
             $context = $session->context ?? [];
             $existing = $context['added_tags'] ?? [];
             $session->update([
@@ -800,6 +868,45 @@ class ChatFlowNodeExecutor
         }
 
         return $this->getFirstChildId($node, $session);
+    }
+
+    /**
+     * Attaches each tag name to the conversation (find-or-create by slug, same
+     * pattern as AutoTagService::categorizeAndAttach) and, when the
+     * conversation has a linked customer, to the customer too — the editor's
+     * add_tag node explicitly documents "se agregan a la conversación y al
+     * cliente". Both add_tag (dedicated node) and the action node's add_tag
+     * option used to only write to `context.added_tags`, a flow-only variable
+     * nothing outside the flow could see.
+     *
+     * @param  array<int, mixed>  $names
+     */
+    private function attachTags(Conversation $conversation, array $names): void
+    {
+        $customer = $conversation->customer;
+
+        foreach ($names as $name) {
+            $name = trim((string) $name);
+
+            if ($name === '') {
+                continue;
+            }
+
+            $slug = Str::slug($name);
+            $tag = ConversationTag::query()->where('slug', $slug)->first()
+                ?? ConversationTag::query()->create(['name' => $name, 'slug' => $slug, 'is_active' => true]);
+
+            if (! $conversation->conversationTags()->where('tag_id', $tag->id)->exists()) {
+                $conversation->conversationTags()->attach($tag->id);
+            }
+
+            if ($customer) {
+                $customerTag = CustomerTag::findOrCreateByName($name);
+                if (! $customer->tags()->where('tag_id', $customerTag->id)->exists()) {
+                    $customer->tags()->attach($customerTag->id);
+                }
+            }
+        }
     }
 
     private function executeSetAttribute(array $node, ChatFlowSession $session, Conversation $conversation): ?string
@@ -831,12 +938,9 @@ class ChatFlowNodeExecutor
         $data = $node['data'] ?? [];
         $isTransfer = ($data['action'] ?? '') === 'transfer_to_agent';
 
-        // Transfer-to-agent ending is a handoff → return it to the inbox. A plain
-        // close means the bot resolved it: it stays out of the inbox (history only).
-        if ($isTransfer) {
-            $session->conversation->releaseFromBot();
-        }
-
+        // Release in every case (see executeClose() for why a "resolved"
+        // ending must not leave the conversation permanently hidden).
+        $session->conversation->releaseFromBot();
         $session->update(['status' => $isTransfer ? 'transferred' : 'completed', 'ended_at' => now()]);
 
         return null;

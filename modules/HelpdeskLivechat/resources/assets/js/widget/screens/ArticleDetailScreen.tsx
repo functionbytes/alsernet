@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiUrl } from '../api';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface Article {
     id: string;
@@ -15,6 +16,7 @@ interface Article {
 export function ArticleDetailScreen() {
     const { articleId } = useParams<{ articleId: string }>();
     const navigate = useNavigate();
+    const t = useTranslation();
     const [article, setArticle] = useState<Article | null>(null);
     const [loading, setLoading] = useState(true);
     const [feedback, setFeedback] = useState<'yes' | 'no' | null>(null);
@@ -67,17 +69,17 @@ export function ArticleDetailScreen() {
                     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
                     </svg>
-                    <span>Back</span>
+                    <span>{t('article.back')}</span>
                 </button>
             </div>
 
             <div className="wgt-article-body-wrap">
                 {loading && (
-                    <div className="wgt-help-empty">Cargando…</div>
+                    <div className="wgt-help-empty">{t('help.loading')}</div>
                 )}
 
                 {!loading && !article && (
-                    <div className="wgt-help-empty">Artículo no encontrado.</div>
+                    <div className="wgt-help-empty">{t('article.not_found')}</div>
                 )}
 
                 {!loading && article && (
@@ -95,7 +97,7 @@ export function ArticleDetailScreen() {
                             {feedback === null ? (
                                 <>
                                     <div className="wgt-article-feedback-label">
-                                        Was this article helpful?
+                                        {t('article.feedback')}
                                     </div>
                                     <div className="wgt-article-feedback-actions">
                                         <button
@@ -106,7 +108,7 @@ export function ArticleDetailScreen() {
                                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                                 <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                                             </svg>
-                                            <span>Yes</span>
+                                            <span>{t('article.yes')}</span>
                                         </button>
                                         <button
                                             type="button"
@@ -116,7 +118,7 @@ export function ArticleDetailScreen() {
                                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                                 <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
                                             </svg>
-                                            <span>No</span>
+                                            <span>{t('article.no')}</span>
                                         </button>
                                     </div>
                                 </>
@@ -136,8 +138,8 @@ export function ArticleDetailScreen() {
                                     )}
                                     <span>
                                         {feedback === 'yes'
-                                            ? 'Thank you for the feedback!'
-                                            : "Thanks — we'll work on improving this article."}
+                                            ? t('article.thanks_yes')
+                                            : t('article.thanks_no')}
                                     </span>
                                 </div>
                             )}
@@ -151,7 +153,7 @@ export function ArticleDetailScreen() {
                                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                     <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
                                 </svg>
-                                <span>Open in help center</span>
+                                <span>{t('article.open_in_help_center')}</span>
                             </a>
                         </div>
                     </article>

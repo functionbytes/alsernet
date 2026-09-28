@@ -20,13 +20,15 @@ final class BridgeCatalogDriver implements CatalogDriver
     public function __construct(
         private readonly PrestashopContextService $bridge,
         private readonly string $currency = 'EUR',
+        // ISO del idioma del visitante (es, en, fr…): títulos y URLs de producto en su idioma.
+        private readonly ?string $lang = null,
     ) {}
 
     public function search(string $query, int $limit = 6): array
     {
         return array_values(array_filter(array_map(
             fn (array $p): ?CatalogProduct => $this->toProduct($p),
-            $this->bridge->searchProducts($query, $limit)
+            $this->bridge->searchProducts($query, $limit, $this->lang)
         )));
     }
 
@@ -36,7 +38,7 @@ final class BridgeCatalogDriver implements CatalogDriver
             return null;
         }
 
-        $product = $this->bridge->getProductById((int) $id);
+        $product = $this->bridge->getProductById((int) $id, $this->lang);
 
         return $product !== null ? $this->toProduct($product) : null;
     }
@@ -82,6 +84,7 @@ final class BridgeCatalogDriver implements CatalogDriver
             available: ($p['in_stock'] ?? true) !== false && ($p['available_for_order'] ?? true) !== false,
             idProductAttribute: (int) ($p['id_product_attribute'] ?? 0),
             hasCombinations: (bool) ($p['has_combinations'] ?? false),
+            priceOriginal: isset($p['final_price_original']) ? (float) $p['final_price_original'] : null,
         );
     }
 }

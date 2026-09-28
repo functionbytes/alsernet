@@ -1,6 +1,16 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { echo, onWsStateChange, getWsState, type WsConnectionState } from '../echo';
 import { apiUrl, conversationAuthHeaders, getConversationToken } from '../api';
+import { getDetectedLanguage, getTranslation } from '../i18n/useLanguage';
+
+/**
+ * El servidor guarda el texto del visitante con `<` y `>` escapados (defensa
+ * para canales que pintan HTML). React ya escapa al pintar, así que aquí se
+ * devuelven a su carácter para no mostrar "&lt;" en la burbuja.
+ */
+function decodeEntities(text: string): string {
+    return text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
 
 export type ConnectionStatus = 'online' | 'connecting' | 'reconnecting' | 'offline';
 
@@ -67,6 +77,15 @@ export interface CarouselProduct {
     id_product_attribute?: number;
     has_combinations?: boolean;
     available?: boolean;
+    price_original?: number;
+}
+
+/** Tarjeta de un mensaje del bot (nodo rich_message / carrusel). */
+export interface BotCard {
+    title: string;
+    subtitle?: string;
+    image_url?: string;
+    url?: string;
 }
 
 export interface Message {
@@ -79,6 +98,34 @@ export interface Message {
     attachments?: MessageAttachment[];
     linkPreview?: LinkPreview | null;
     products?: CarouselProduct[];
+    /** Respuestas rápidas del bot (se envían como mensaje del visitante). */
+    options?: string[];
+    /** Texto del bot sin la lista numerada (si hay botones). */
+    prompt?: string;
+    cards?: BotCard[];
+}
+
+/** Botones, texto y tarjetas de un mensaje del bot (ChatFlow). */
+function parseBotExtras(src: any): Pick<Message, 'options' | 'prompt' | 'cards'> {
+    const options = Array.isArray(src?.options)
+        ? src.options.filter((o: unknown) => typeof o === 'string' && o.trim() !== '').slice(0, 12)
+        : [];
+    const cards = Array.isArray(src?.cards)
+        ? src.cards
+            .filter((c: any) => c && typeof c.title === 'string' && c.title !== '')
+            .slice(0, 10)
+            .map((c: any) => ({
+                title: c.title,
+                subtitle: typeof c.subtitle === 'string' ? c.subtitle : undefined,
+                image_url: typeof c.image_url === 'string' && /^https?:\/\//i.test(c.image_url) ? c.image_url : undefined,
+                url: typeof c.url === 'string' && /^https?:\/\//i.test(c.url) ? c.url : undefined,
+            }))
+        : [];
+    return {
+        options: options.length ? options : undefined,
+        prompt: typeof src?.prompt === 'string' && src.prompt.trim() !== '' ? src.prompt : undefined,
+        cards: cards.length ? cards : undefined,
+    };
 }
 
 /**
@@ -101,14 +148,15 @@ function parseCarouselProducts(raw: any): CarouselProduct[] | undefined {
             id_product_attribute: typeof p.id_product_attribute === 'number' ? p.id_product_attribute : undefined,
             has_combinations: typeof p.has_combinations === 'boolean' ? p.has_combinations : undefined,
             available: typeof p.available === 'boolean' ? p.available : undefined,
+            price_original: typeof p.price_original === 'number' ? p.price_original : undefined,
         }));
 }
 
 function parseApiMessage(msg: any): Message {
     return {
         id: msg.id.toString(),
-        content: msg.body || msg.content,
-        author: msg.message_type === 'outgoing' ? 'agent' : 'user',
+        content: decodeEntities(msg.body || msg.content || ''),
+        author: msg.is_bot ? 'bot' : msg.message_type === 'outgoing' ? 'agent' : 'user',
         timestamp: new Date(msg.created_at),
         status: 'delivered',
         attachments: (msg.attachments || []).map((a: any) => ({
@@ -119,6 +167,7 @@ function parseApiMessage(msg: any): Message {
         })),
         linkPreview: msg.link_preview ?? null,
         products: parseCarouselProducts(msg.products),
+        ...parseBotExtras(msg),
     };
 }
 
@@ -176,7 +225,7 @@ export function useConversationMessages({
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
-            content: welcomeMessage || 'Hello! How can we help you today?',
+            content: welcomeMessage || getTranslation(getDetectedLanguage(), 'chat.welcome'),
             author: 'agent',
             timestamp: new Date(),
             status: 'delivered',
@@ -230,7 +279,7 @@ export function useConversationMessages({
                     onNewConversationId?.('');
                     setMessages([{
                         id: '1',
-                        content: welcomeMessage || 'Hello! How can we help you today?',
+                        content: welcomeMessage || getTranslation(getDetectedLanguage(), 'chat.welcome'),
                         author: 'agent',
                         timestamp: new Date(),
                         status: 'delivered',
@@ -292,19 +341,20 @@ export function useConversationMessages({
                         return next;
                     }
 
-                    const translatedContent = event.outgoing_translated_body || event.content || '';
+                    const translatedContent = decodeEntities(event.outgoing_translated_body || event.content || '');
                     const hasTranslation = !!event.outgoing_translated_body;
 
                     return [...prev, {
                         id: incomingId,
                         content: translatedContent,
                         originalContent: hasTranslation ? (event.content || '') : undefined,
-                        author: 'agent' as const,
+                        author: (event.is_bot ? 'bot' : 'agent') as 'bot' | 'agent',
                         timestamp: event.created_at ? new Date(event.created_at) : new Date(),
                         status: 'delivered' as const,
                         attachments: incomingAttachments,
                         linkPreview: incomingLinkPreview,
                         products: incomingProducts,
+                        ...parseBotExtras(event),
                     }];
                 });
 

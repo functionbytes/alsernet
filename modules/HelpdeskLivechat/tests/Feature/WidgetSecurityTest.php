@@ -4,6 +4,7 @@ namespace Modules\HelpdeskLivechat\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Setting;
@@ -84,6 +85,9 @@ class WidgetSecurityTest extends TestCase
 
     public function test_xss_in_message_body_is_sanitized(): void
     {
+        // Crear la conversación consulta ERP, traducción y detección de idioma:
+        // sin red, que no dependa de esos servicios.
+        Http::fake();
         $web = WebFactory::new()->create();
 
         // Create a customer + conversation first so we can send a message
@@ -125,6 +129,7 @@ class WidgetSecurityTest extends TestCase
 
         $this->assertNotNull($item);
         $this->assertStringNotContainsString('<script>', (string) $item->body);
+        $this->assertSame('hola', trim((string) $item->body));
     }
 
     public function test_invalid_mime_type_is_rejected(): void

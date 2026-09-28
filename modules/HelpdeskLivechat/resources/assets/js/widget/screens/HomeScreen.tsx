@@ -70,9 +70,9 @@ function RecommendationsCard({ products }: { products: RecommendationProduct[] }
     );
 }
 
-function timeAgo(d: Date): string {
+function timeAgo(d: Date, t: (key: string) => string): string {
     const sec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
-    if (sec < 60) return 'ahora';
+    if (sec < 60) return t('home.time_now');
     const min = Math.floor(sec / 60);
     if (min < 60) return `${min}m`;
     const hr = Math.floor(min / 60);
@@ -128,9 +128,9 @@ export function HomeScreen() {
                 const lastTs = new Date(last.created_at).getTime();
                 setActiveConversation({
                     id: parseInt(conversationId, 10),
-                    lastMessage: last.body || last.content || (last.attachments?.length ? '📎 Archivo' : ''),
+                    lastMessage: last.body || last.content || (last.attachments?.length ? t('home.attachment_preview') : ''),
                     lastSender: isAgent ? 'agent' : 'visitor',
-                    lastSenderName: last.sender?.name || (isAgent ? 'Soporte' : 'Tú'),
+                    lastSenderName: last.sender?.name || (isAgent ? t('home.default_agent_name') : t('home.you')),
                     lastAt: new Date(last.created_at),
                     unread: isAgent && lastTs > lastReadAt,
                 });
@@ -201,8 +201,8 @@ export function HomeScreen() {
                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16">
                             <path d="M12 23a7.5 7.5 0 0 1-5.138-12.963C8.204 8.774 11.5 6.5 11 1.5c6 4 9 8 3 14 1 0 2.5 0 3-1.5.5.75 1 2.5 1 3.5a7 7 0 0 1-6 5.5z" />
                         </svg>
-                        <span>¿Necesitas ayuda con tu compra?</span>
-                        <Link to="/conversation" className="hd-segment-banner-cta">Chatear ahora</Link>
+                        <span>{t('home.need_help_with_purchase')}</span>
+                        <Link to="/conversation" className="hd-segment-banner-cta">{t('home.chat_now')}</Link>
                     </div>
                 )}
 
@@ -223,18 +223,18 @@ export function HomeScreen() {
                                     <span className="wgt-resume-name">
                                         {activeConversation.lastSender === 'agent'
                                             ? activeConversation.lastSenderName
-                                            : 'Continuar conversación'}
+                                            : t('home.continue_conversation')}
                                     </span>
-                                    <span className="wgt-resume-time">{timeAgo(activeConversation.lastAt)}</span>
+                                    <span className="wgt-resume-time">{timeAgo(activeConversation.lastAt, t)}</span>
                                 </div>
                                 <div className="wgt-resume-msg">
                                     {activeConversation.lastSender === 'visitor' && (
-                                        <span className="wgt-resume-prefix">Tú: </span>
+                                        <span className="wgt-resume-prefix">{t('home.you')}: </span>
                                     )}
-                                    {activeConversation.lastMessage || '(sin texto)'}
+                                    {activeConversation.lastMessage || t('home.no_text')}
                                 </div>
                             </div>
-                            {activeConversation.unread && <span className="wgt-resume-dot" aria-label="No leído" />}
+                            {activeConversation.unread && <span className="wgt-resume-dot" aria-label={t('home.unread_aria')} />}
                             <svg className="wgt-bedesk-send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
                             </svg>
@@ -283,8 +283,8 @@ export function HomeScreen() {
                             className="wgt-bedesk-send-link"
                         >
                             <div>
-                                <div className="wgt-bedesk-send-title">Déjanos tu mensaje</div>
-                                <div className="wgt-bedesk-send-subtitle">Te responderemos cuando estemos disponibles</div>
+                                <div className="wgt-bedesk-send-title">{t('home.offline_cta_title')}</div>
+                                <div className="wgt-bedesk-send-subtitle">{t('home.offline_cta_subtitle')}</div>
                             </div>
                             <svg className="wgt-bedesk-send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />

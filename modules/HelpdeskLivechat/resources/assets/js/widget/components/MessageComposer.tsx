@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../i18n/useLanguage';
 import { EmojiPicker } from './EmojiPicker';
 
 function buildAcceptAttr(types: string[]): string {
@@ -53,6 +54,7 @@ export function MessageComposer({
     enableFileUpload,
     allowedFileTypes,
 }: MessageComposerProps) {
+    const t = useTranslation();
     return (
         <div className="wgt-composer">
             {attachedFiles.length > 0 && (
@@ -67,7 +69,7 @@ export function MessageComposer({
                                 type="button"
                                 onClick={() => onRemoveAttachment(index)}
                                 className="wgt-file-chip-x"
-                                aria-label="Remove"
+                                aria-label={t('ui.remove')}
                             >
                                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                     <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
@@ -107,7 +109,7 @@ export function MessageComposer({
                             type="button"
                             className="wgt-composer-icon wgt-tip"
                             data-tooltip="Emoji"
-                            aria-label="Emoji"
+                            aria-label={t('ui.emoji')}
                             onClick={onToggleEmojiPicker}
                         >
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -131,7 +133,7 @@ export function MessageComposer({
                         type="button"
                         className="wgt-composer-icon wgt-tip"
                         data-tooltip="Attach file"
-                        aria-label="Attach file"
+                        aria-label={t('ui.attach')}
                         onClick={() => fileInputRef.current?.click()}
                     >
                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -147,7 +149,7 @@ export function MessageComposer({
                     className="wgt-composer-send wgt-tip"
                     data-tooltip="Send"
                     style={{ color: primaryColor }}
-                    aria-label="Send"
+                    aria-label={t('ui.send')}
                 >
                     {isSending ? (
                         <svg viewBox="0 0 24 24" fill="none" style={{ animation: 'wgt-spin 0.8s linear infinite' }} aria-hidden="true">

@@ -14,6 +14,7 @@ type CardProduct = RecommendationProduct & {
     id_product_attribute?: number;
     has_combinations?: boolean;
     available?: boolean;
+    price_original?: number;
 };
 
 interface RecommendationsCardProps {
@@ -122,6 +123,9 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
                                     {product.price != null && (
                                         <p className="wgt-rec-price" style={{ color: primaryColor }}>
                                             {formatPrice(product.price, product.currency)}
+                                            {product.price_original != null && product.price_original > product.price && (
+                                                <span className="wgt-rec-price-was">{formatPrice(product.price_original, product.currency)}</span>
+                                            )}
                                         </p>
                                     )}
                                     {unavailable && <span className="wgt-rec-stock">{t('shop.out_of_stock')}</span>}

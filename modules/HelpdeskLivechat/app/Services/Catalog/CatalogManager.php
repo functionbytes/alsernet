@@ -22,7 +22,7 @@ use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
  */
 class CatalogManager
 {
-    public function forWeb(?Web $web): CatalogDriver
+    public function forWeb(?Web $web, ?string $lang = null): CatalogDriver
     {
         if (! $web) {
             return new NullCatalogDriver;
@@ -35,7 +35,9 @@ class CatalogManager
             // Preferido: la API firmada del bridge (búsqueda y visibilidad de
             // la propia tienda). La BD directa queda como alternativa.
             if ($this->bridgeConfigured()) {
-                return new BridgeCatalogDriver(app(PrestashopContextService::class));
+                $lang = $lang !== null ? strtolower(substr($lang, 0, 2)) : null;
+
+                return new BridgeCatalogDriver(app(PrestashopContextService::class), 'EUR', $lang ?: null);
             }
 
             $psConfig = $this->prestashopConfig();

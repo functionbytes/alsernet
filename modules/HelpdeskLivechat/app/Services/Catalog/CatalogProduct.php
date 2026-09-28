@@ -30,6 +30,8 @@ final class CatalogProduct implements JsonSerializable
         // ellas el widget abre la ficha en vez de añadir al carrito directo).
         public readonly int $idProductAttribute = 0,
         public readonly bool $hasCombinations = false,
+        // Precio antes del descuento (tachado en las tarjetas), si lo hay.
+        public readonly ?float $priceOriginal = null,
     ) {}
 
     /**
@@ -49,6 +51,7 @@ final class CatalogProduct implements JsonSerializable
             variants: is_array($data['variants'] ?? null) ? $data['variants'] : [],
             idProductAttribute: (int) ($data['id_product_attribute'] ?? 0),
             hasCombinations: (bool) ($data['has_combinations'] ?? false),
+            priceOriginal: isset($data['price_original']) ? (float) $data['price_original'] : null,
         );
     }
 
@@ -69,6 +72,7 @@ final class CatalogProduct implements JsonSerializable
             'variants' => $this->variants,
             'id_product_attribute' => $this->idProductAttribute,
             'has_combinations' => $this->hasCombinations,
+            'price_original' => $this->priceOriginal,
         ];
     }
 

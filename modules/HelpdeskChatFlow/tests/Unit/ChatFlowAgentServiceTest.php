@@ -254,4 +254,101 @@ class ChatFlowAgentServiceTest extends TestCase
             return ! in_array('add_to_cart', $names, true) && ! in_array('show_cart', $names, true);
         });
     }
+
+    public function test_history_turns_are_sent_before_the_question(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => 'Claro.', 'tool_calls' => []]]]], 200)]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('¿y el envío?', [], [], 'es', null, null, [
+            ['role' => 'user', 'content' => '¿Tenéis la talla M?'],
+            ['role' => 'assistant', 'content' => 'Sí, disponible.'],
+        ]);
+
+        Http::assertSent(function ($request) {
+            $messages = $request->data()['messages'] ?? [];
+            $roles = array_column($messages, 'role');
+
+            // system, history(user, assistant), user(question) — in that order.
+            return $roles === ['system', 'user', 'assistant', 'user']
+                && $messages[1]['content'] === '¿Tenéis la talla M?'
+                && $messages[2]['content'] === 'Sí, disponible.'
+                && str_contains($messages[3]['content'], '¿y el envío?');
+        });
+    }
+
+    public function test_visitor_context_is_fenced_and_sent_to_the_model(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => 'Claro.', 'tool_calls' => []]]]], 200)]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('hola', [], [], 'es', null, null, [], [
+            'current_product' => ['id' => '43141', 'title' => 'Estuche de limpieza MAXI', 'price' => 49.99, 'currency' => 'EUR'],
+            'cart' => null,
+            'viewed_products' => [],
+        ]);
+
+        Http::assertSent(function ($request) {
+            $messages = $request->data()['messages'] ?? [];
+            $visitorMessage = $messages[1] ?? null;
+
+            return $visitorMessage !== null
+                && $visitorMessage['role'] === 'system'
+                && str_contains($visitorMessage['content'], 'CONTEXTO_VISITANTE')
+                && str_contains($visitorMessage['content'], '43141')
+                && str_contains($visitorMessage['content'], 'Estuche de limpieza MAXI');
+        });
+    }
+
+    public function test_product_detail_falls_back_to_current_product_id_from_context(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('product_detail', []), 200)
+            ->push(['choices' => [['message' => ['content' => 'Es un estuche de 60 piezas.', 'tool_calls' => []]]]], 200);
+
+        $catalog = $this->fakeCatalog();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('¿qué trae este producto?', ['current_product_id' => '43141'], [], 'es', $catalog);
+
+        $this->assertSame('respond', $result['action']);
+        $this->assertContains('product_detail', $result['used_tools']);
+    }
+
+    public function test_empty_answer_customer_escalates_instead_of_an_empty_bubble(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake([
+            'api.openai.com/*' => Http::response(['choices' => [['message' => [
+                'content' => null,
+                'tool_calls' => [[
+                    'id' => 'call_empty',
+                    'type' => 'function',
+                    'function' => ['name' => 'answer_customer', 'arguments' => '{"text":"   "}'],
+                ]],
+            ]]]], 200),
+        ]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('hola', [], ['fallback_message' => 'Te paso con un agente.']);
+
+        $this->assertSame('escalate', $result['action']);
+        $this->assertSame('Te paso con un agente.', $result['text']);
+    }
+
+    public function test_blank_final_content_without_tool_calls_escalates(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake([
+            'api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => '   ', 'tool_calls' => []]]]], 200),
+        ]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('hola', [], ['fallback_message' => 'Te paso con un agente.']);
+
+        $this->assertSame('escalate', $result['action']);
+        $this->assertSame('Te paso con un agente.', $result['text']);
+    }
 }

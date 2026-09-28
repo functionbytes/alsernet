@@ -23,12 +23,15 @@ class WidgetTrigger extends Model
 
     public const FREQUENCIES = ['once_visitor', 'once_session', 'every_page'];
 
+    /** Idiomas del widget con traducción opcional del mensaje (el principal es `message`). */
+    public const MESSAGE_LANGUAGES = ['en', 'pt', 'fr', 'de', 'it'];
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_widget_triggers';
 
     protected $fillable = [
-        'web_id', 'name', 'is_active', 'priority', 'match', 'conditions', 'action', 'message', 'frequency',
+        'web_id', 'name', 'is_active', 'priority', 'match', 'conditions', 'action', 'message', 'messages', 'frequency',
     ];
 
     protected function casts(): array
@@ -37,6 +40,7 @@ class WidgetTrigger extends Model
             'is_active' => 'boolean',
             'priority' => 'integer',
             'conditions' => 'array',
+            'messages' => 'array',
         ];
     }
 
@@ -70,6 +74,7 @@ class WidgetTrigger extends Model
             'conditions' => array_values((array) $this->conditions),
             'action' => $this->action,
             'message' => $this->action === 'message' ? $this->message : null,
+            'messages' => $this->action === 'message' ? array_filter((array) $this->messages) : [],
             'frequency' => $this->frequency,
         ];
     }

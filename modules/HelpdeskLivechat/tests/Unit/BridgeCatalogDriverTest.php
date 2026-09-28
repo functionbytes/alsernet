@@ -32,7 +32,7 @@ class BridgeCatalogDriverTest extends TestCase
     public function test_search_prefers_prestashop_final_price_and_maps_fields(): void
     {
         $bridge = Mockery::mock(PrestashopContextService::class);
-        $bridge->shouldReceive('searchProducts')->once()->with('estuche', 6)->andReturn([$this->product()]);
+        $bridge->shouldReceive('searchProducts')->once()->with('estuche', 6, null)->andReturn([$this->product()]);
 
         $products = (new BridgeCatalogDriver($bridge))->search('estuche', 6);
 
@@ -47,7 +47,7 @@ class BridgeCatalogDriverTest extends TestCase
     public function test_falls_back_to_bridge_price_and_flags_combinations_and_stock(): void
     {
         $bridge = Mockery::mock(PrestashopContextService::class);
-        $bridge->shouldReceive('getProductById')->once()->with(63720)->andReturn($this->product([
+        $bridge->shouldReceive('getProductById')->once()->with(63720, null)->andReturn($this->product([
             'id' => 63720,
             'final_price_with_tax' => null,
             'price_with_tax' => 39.99,

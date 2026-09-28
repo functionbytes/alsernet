@@ -104,7 +104,7 @@
             </div>
         </div>
         <div class="actions">
-            @if($convo && ($convo->metadata['handled_by_bot'] ?? false))
+            @if($convo && ($convo->metadata['handled_by_bot'] ?? false) && Route::has('chatflow.takeover'))
             <button class="bv-th-action bv-th-action--takeover" id="bv-btn-takeover"
                     data-takeover-url="{{ route('chatflow.takeover', $convo->id) }}"
                     data-bv-tip="El bot está atendiendo · Toma el control">

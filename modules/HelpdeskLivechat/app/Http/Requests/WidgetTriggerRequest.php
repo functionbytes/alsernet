@@ -27,6 +27,8 @@ class WidgetTriggerRequest extends FormRequest
             'action' => ['required', Rule::in(WidgetTrigger::ACTIONS)],
             'message' => ['nullable', 'string', 'max:500', 'required_if:action,message'],
             'frequency' => ['required', Rule::in(WidgetTrigger::FREQUENCIES)],
+            'messages' => ['nullable', 'array'],
+            'messages.*' => ['nullable', 'string', 'max:500'],
             'conditions' => ['required', 'array', 'min:1', 'max:10'],
             'conditions.*.type' => ['required', Rule::in(WidgetTrigger::CONDITION_TYPES)],
             'conditions.*.op' => ['required', 'string', 'max:10'],
@@ -75,6 +77,12 @@ class WidgetTriggerRequest extends FormRequest
             'match' => $data['match'],
             'action' => $data['action'],
             'message' => $data['action'] === 'message' ? trim((string) $data['message']) : null,
+            'messages' => $data['action'] === 'message'
+                ? array_filter(array_map(
+                    fn ($m) => trim((string) $m),
+                    array_intersect_key((array) ($data['messages'] ?? []), array_flip(WidgetTrigger::MESSAGE_LANGUAGES))
+                ), fn ($m) => $m !== '')
+                : null,
             'frequency' => $data['frequency'],
             'is_active' => $this->boolean('is_active'),
             'conditions' => array_values(array_map(fn (array $c) => [

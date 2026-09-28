@@ -93,7 +93,7 @@ class ProductShowcaseService
             return null;
         }
 
-        $products = $this->catalog->forWeb($web)->search($text, 6);
+        $products = $this->catalog->forWeb($web, $conversation->customer?->language)->search($text, 6);
         if ($products === []) {
             return null;
         }

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface AudioPlayerProps {
     src: string;
@@ -35,6 +36,7 @@ function buildWaveform(seed: string): number[] {
 }
 
 export function AudioPlayer({ src, mime, title, isUser }: AudioPlayerProps) {
+    const t = useTranslation();
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const trackRef = useRef<HTMLDivElement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -119,7 +121,7 @@ export function AudioPlayer({ src, mime, title, isUser }: AudioPlayerProps) {
                 type="button"
                 className="wgt-audio-btn"
                 onClick={toggle}
-                aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
+                aria-label={isPlaying ? t('audio.pause') : t('audio.play')}
             >
                 {isLoading ? (
                     <svg viewBox="0 0 24 24" className="wgt-audio-spinner" aria-hidden="true">
@@ -142,7 +144,7 @@ export function AudioPlayer({ src, mime, title, isUser }: AudioPlayerProps) {
                 className="wgt-audio-wave"
                 onClick={onTrackClick}
                 role="slider"
-                aria-label="Posición del audio"
+                aria-label={t('audio.position')}
                 aria-valuemin={0}
                 aria-valuemax={Math.max(1, Math.round(duration))}
                 aria-valuenow={Math.round(currentTime)}
@@ -167,8 +169,8 @@ export function AudioPlayer({ src, mime, title, isUser }: AudioPlayerProps) {
                         type="button"
                         className={`wgt-audio-rate${rate !== 1 ? ' is-active' : ''}`}
                         onClick={cycleRate}
-                        title="Velocidad de reproducción"
-                        aria-label="Cambiar velocidad"
+                        title={t('audio.playback_rate')}
+                        aria-label={t('audio.change_rate')}
                     >
                         {rate}x
                     </button>

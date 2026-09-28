@@ -1,4 +1,5 @@
 import React from 'react';
+import { getDetectedLanguage, useTranslation } from '../i18n/useLanguage';
 import { type BotMessage, type RecommendationProduct } from '../widget-store';
 import { RecommendationsCard } from './RecommendationsCard';
 import { MessageBubble } from './MessageBubble';
@@ -19,6 +20,7 @@ interface MessageListProps {
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     onOpenLightbox: (url: string) => void;
     onLoadMore: () => void;
+    onQuickReply?: (text: string) => void;
 }
 
 export function MessageList({
@@ -36,7 +38,9 @@ export function MessageList({
     messagesEndRef,
     onOpenLightbox,
     onLoadMore,
+    onQuickReply,
 }: MessageListProps) {
+    const t = useTranslation();
     return (
         <div className="wgt-messages-area">
             {offlineMessageEnabled && offlineMessage && (
@@ -70,6 +74,9 @@ export function MessageList({
                     avatarInitial={avatarInitial}
                     onOpenLightbox={onOpenLightbox}
                     animationDelay={`${Math.min(index * 50, 500)}ms`}
+                    // Botones activos solo en el último mensaje (si el visitante
+                    // ya contestó, los anteriores quedan como historial).
+                    onQuickReply={index === messages.length - 1 ? onQuickReply : undefined}
                 />
             ))}
 
@@ -81,17 +88,13 @@ export function MessageList({
                         </svg>
                     </div>
                     <div className="wgt-bubble-wrap is-agent">
-                        <p className="wgt-bot-label">Asistente automatico</p>
+                        <p className="wgt-bot-label">{t('ui.bot_label')}</p>
                         <div className="wgt-bubble is-agent wgt-bubble-bot">
                             <p>{bm.text}</p>
                         </div>
                         <div className="wgt-row wgt-gap-1 wgt-bubble-time">
                             <span>
-                                {new Date(bm.timestamp).toLocaleTimeString('en-US', {
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                    hour12: true,
-                                })}
+                                {new Date(bm.timestamp).toLocaleTimeString(getDetectedLanguage(), { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
                     </div>
@@ -116,7 +119,7 @@ export function MessageList({
                         </div>
                     )}
                     <div className="wgt-bubble-wrap is-agent">
-                        <div className="wgt-bubble is-agent wgt-typing-bubble" aria-label="El agente está escribiendo">
+                        <div className="wgt-bubble is-agent wgt-typing-bubble" aria-label={t('ui.agent_typing')}>
                             <span className="wgt-typing-dot" />
                             <span className="wgt-typing-dot" />
                             <span className="wgt-typing-dot" />

@@ -2,11 +2,12 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { useTranslation } from '../i18n/useLanguage';
+import { getShop } from '../widget-commerce';
 
 interface NavTab {
     route: string;
     labelKey: string;
-    icon: (isActive: boolean) => JSX.Element;
+    icon: (isActive: boolean) => React.ReactElement;
 }
 
 const NAV_TABS: NavTab[] = [
@@ -51,6 +52,21 @@ const NAV_TABS: NavTab[] = [
     },
 ];
 
+/** Pestaña "Productos" (vistos y cesta): solo si la tienda publica su contexto. */
+const SHOP_TAB: NavTab = {
+    route: '/shop',
+    labelKey: 'shop.products_tab',
+    icon: (isActive) => (
+        <svg viewBox="0 0 24 24" fill={isActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            {isActive ? (
+                <path d="M7 7V6a5 5 0 0 1 10 0v1h2.2a1 1 0 0 1 1 .92l1 12A1 1 0 0 1 20.2 21H3.8a1 1 0 0 1-1-1.08l1-12A1 1 0 0 1 4.8 7H7Zm2 0h6V6a3 3 0 0 0-6 0v1Z" />
+            ) : (
+                <path d="M6 8h12l1 12H5L6 8Zm3 0V6a3 3 0 0 1 6 0v2" />
+            )}
+        </svg>
+    ),
+};
+
 export function WidgetNavigation() {
     const location = useLocation();
     const settings = useWidgetStore(state => state.settings);
@@ -65,7 +81,7 @@ export function WidgetNavigation() {
 
     return (
         <nav className="wgt-bottom-nav">
-            {NAV_TABS.map((tab) => {
+            {(getShop()?.product_url ? [...NAV_TABS.slice(0, 2), SHOP_TAB, ...NAV_TABS.slice(2)] : NAV_TABS).map((tab) => {
                 const isActive = isTabActive(tab.route);
                 return (
                     <Link

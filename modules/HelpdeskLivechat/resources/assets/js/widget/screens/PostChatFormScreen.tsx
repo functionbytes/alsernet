@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
+import { useTranslation } from '../i18n/useLanguage';
 import { apiUrl, conversationAuthHeaders, clearConversationToken } from '../api';
 
 type SubmitState = 'idle' | 'submitting' | 'done' | 'error';
@@ -8,6 +9,7 @@ type SubmitState = 'idle' | 'submitting' | 'done' | 'error';
 export function PostChatFormScreen() {
     const settings  = useWidgetStore(state => state.settings);
     const navigate  = useNavigate();
+    const t         = useTranslation();
 
     const [rating,      setRating]      = useState<number>(0);
     const [hovered,     setHovered]     = useState<number>(0);
@@ -81,15 +83,15 @@ export function PostChatFormScreen() {
                             <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                         </svg>
                     </div>
-                    <p className="wgt-fw-semibold" style={{ fontSize: 16 }}>¡Gracias por tu valoración!</p>
-                    <p className="wgt-text-muted" style={{ fontSize: 13 }}>Tu conversación ha sido cerrada. Puedes iniciar una nueva cuando lo necesites.</p>
+                    <p className="wgt-fw-semibold" style={{ fontSize: 16 }}>{t('post_chat.thanks')}</p>
+                    <p className="wgt-text-muted" style={{ fontSize: 13 }}>{t('post_chat.closed_message')}</p>
                     <button
                         type="button"
                         className="wgt-btn-primary"
                         style={{ backgroundColor: settings.primary_color, marginTop: 8 }}
                         onClick={() => navigate('/')}
                     >
-                        Volver al inicio
+                        {t('post_chat.back_home')}
                     </button>
                 </div>
             </div>
@@ -101,7 +103,7 @@ export function PostChatFormScreen() {
             {/* Header */}
             <div className="wgt-screen-header">
                 <div className="wgt-flex-1 wgt-screen-header-title">
-                    ¿Cómo fue tu experiencia?
+                    {t('post_chat.header_title')}
                 </div>
             </div>
 
@@ -112,10 +114,10 @@ export function PostChatFormScreen() {
                 <div className="wgt-stack-y wgt-gap-4">
                     {/* Star rating */}
                     <div className="wgt-form-group" style={{ alignItems: 'center' }}>
-                        <label className="wgt-label">Califica la conversación</label>
+                        <label className="wgt-label">{t('post_chat.rate_label')}</label>
                         <div
                             role="group"
-                            aria-label="Valoración de 1 a 5 estrellas"
+                            aria-label={t('post_chat.rating_group_aria')}
                             style={{ display: 'flex', gap: 8, marginTop: 4 }}
                         >
                             {[1, 2, 3, 4, 5].map(star => {
@@ -124,7 +126,7 @@ export function PostChatFormScreen() {
                                     <button
                                         key={star}
                                         type="button"
-                                        aria-label={`${star} estrella${star > 1 ? 's' : ''}`}
+                                        aria-label={t('post_chat.star_aria', { count: String(star) })}
                                         aria-pressed={rating === star}
                                         onClick={() => setRating(star)}
                                         onMouseEnter={() => setHovered(star)}
@@ -148,7 +150,7 @@ export function PostChatFormScreen() {
                         </div>
                         {rating > 0 && (
                             <p style={{ fontSize: 12, color: 'var(--wgt-gray-600)', marginTop: 4 }}>
-                                {['', 'Muy mala', 'Mala', 'Regular', 'Buena', 'Excelente'][rating]}
+                                {['', t('post_chat.rating_very_bad'), t('post_chat.rating_bad'), t('post_chat.rating_average'), t('post_chat.rating_good'), t('post_chat.rating_excellent')][rating]}
                             </p>
                         )}
                     </div>
@@ -156,13 +158,13 @@ export function PostChatFormScreen() {
                     {/* Feedback textarea */}
                     <div className="wgt-form-group">
                         <label className="wgt-label" htmlFor="post-chat-feedback">
-                            Comentarios <span className="wgt-text-muted" style={{ fontWeight: 400 }}>(opcional)</span>
+                            {t('post_chat.feedback_label')} <span className="wgt-text-muted" style={{ fontWeight: 400 }}>({t('post_chat.optional')})</span>
                         </label>
                         <textarea
                             id="post-chat-feedback"
                             className="wgt-textarea"
                             rows={4}
-                            placeholder="Cuéntanos cómo podemos mejorar..."
+                            placeholder={t('post_chat.feedback_placeholder')}
                             value={feedback}
                             onChange={e => setFeedback(e.target.value)}
                         />
@@ -170,7 +172,7 @@ export function PostChatFormScreen() {
 
                     {submitState === 'error' && (
                         <p role="alert" style={{ fontSize: 13, color: 'var(--wgt-danger)', margin: 0 }}>
-                            No se pudo enviar la valoración. Inténtalo de nuevo.
+                            {t('post_chat.submit_error')}
                         </p>
                     )}
                 </div>
@@ -191,9 +193,9 @@ export function PostChatFormScreen() {
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
                                 <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                             </svg>
-                            Enviando...
+                            {t('post_chat.submitting')}
                         </>
-                    ) : 'Enviar valoración'}
+                    ) : t('post_chat.submit')}
                 </button>
 
                 <button
@@ -210,7 +212,7 @@ export function PostChatFormScreen() {
                         textAlign: 'center',
                     }}
                 >
-                    Cerrar sin valorar
+                    {t('post_chat.skip')}
                 </button>
             </div>
         </div>

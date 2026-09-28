@@ -1,5 +1,6 @@
 import React from 'react';
 import { useWidgetStore } from '../widget-store';
+import { useTranslation } from '../i18n/useLanguage';
 import { Icon } from '../components/Icon';
 
 interface ChatPageScreenProps {
@@ -8,13 +9,14 @@ interface ChatPageScreenProps {
 
 export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
     const settings = useWidgetStore(state => state.settings);
+    const t = useTranslation();
 
     return (
         <div className="chat-page-screen">
             <div className="widget-header" style={{ backgroundColor: settings.primary_color }}>
                 <div className="header-info">
                     <div className="header-title">{settings.header_title}</div>
-                    <small className="header-status">We'll reply as soon as we can</small>
+                    <small className="header-status">{t('home.we_will_reply')}</small>
                 </div>
                 <button className="minimize-button">
                     <Icon name="minus" />
@@ -35,14 +37,14 @@ export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
                         <div className="message-bubble">
                             <p>{settings.welcome_message}</p>
                         </div>
-                        <small className="message-time">Bot · Just now</small>
+                        <small className="message-time">{t('chat.bot_now')}</small>
                     </div>
                 </div>
 
                 <div className="quick-replies">
-                    <button className="quick-reply-btn">Track my order</button>
-                    <button className="quick-reply-btn">Contact support</button>
-                    <button className="quick-reply-btn">FAQs</button>
+                    <button className="quick-reply-btn">{t('chat.quick_track_order')}</button>
+                    <button className="quick-reply-btn">{t('chat.quick_contact_support')}</button>
+                    <button className="quick-reply-btn">{t('chat.quick_faqs')}</button>
                 </div>
             </div>
 
@@ -60,7 +62,7 @@ export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
                 </button>
             </div>
             <div className="powered-by">
-                <small>Powered by AlserNet</small>
+                <small>{t('powered_by')}</small>
             </div>
         </div>
     );

@@ -54,6 +54,10 @@ class ExpireInactiveSessionsCommand extends Command
                     }
 
                     $session->update(['status' => $status, 'ended_at' => now()]);
+                    // Unlike handleNodeTimeout(), this command was leaving the
+                    // conversation flagged handled_by_bot=true forever — an
+                    // abandoned/transferred session must return it to the inbox.
+                    $session->conversation?->releaseFromBot();
                     ChatFlowCompleted::dispatch($session);
                     $expired++;
                 }

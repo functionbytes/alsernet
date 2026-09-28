@@ -16,6 +16,8 @@ import { applyHostIdentity, HostCustomer } from './widget-identity';
 export interface WidgetShop {
     platform?: string;
     context_url?: string;
+    /** Ficha de producto para el panel "Productos" (?id=). */
+    product_url?: string;
     cart_url?: string;
     checkout_url?: string;
     currency?: string | null;

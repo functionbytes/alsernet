@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getDetectedLanguage, useTranslation } from '../i18n/useLanguage';
 import { Link } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { apiUrl } from '../api';
@@ -26,7 +27,7 @@ interface Ticket {
 }
 
 function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('es', {
+    return new Date(iso).toLocaleDateString(getDetectedLanguage(), {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -51,6 +52,7 @@ function StatusBadge({ status }: { status: TicketStatus }) {
 }
 
 export function TicketListScreen() {
+    const t = useTranslation();
     const settings = useWidgetStore(state => state.settings);
 
     const [email, setEmail] = useState(
@@ -88,13 +90,13 @@ export function TicketListScreen() {
             const data = await response.json();
 
             if (!response.ok || !data?.success) {
-                setError(data?.message || 'No se pudieron cargar los tickets.');
+                setError(data?.message || t('ui.tickets_load_error'));
                 setTickets([]);
             } else {
                 setTickets(data.data || []);
             }
         } catch {
-            setError('Error de conexión. Inténtalo de nuevo.');
+            setError(t('ui.connection_error'));
             setTickets([]);
         } finally {
             setLoading(false);
@@ -110,19 +112,19 @@ export function TicketListScreen() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </Link>
-                <span className="wgt-flex-1 wgt-screen-header-title">Mis tickets</span>
+                <span className="wgt-flex-1 wgt-screen-header-title">{t('ui.my_tickets')}</span>
             </div>
 
             <div className="wgt-flex-1 wgt-overflow-y wgt-px-4 wgt-py-4">
                 <form onSubmit={handleSubmit} className="wgt-stack-y wgt-gap-3" style={{ marginBottom: 20 }}>
                     <div className="wgt-form-group">
-                        <label className="wgt-label">Correo electrónico</label>
+                        <label className="wgt-label">{t('ui.email')}</label>
                         <input
                             type="email"
                             className="wgt-input"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            placeholder="tu@email.com"
+                            placeholder={t('ui.email_placeholder')}
                             required
                         />
                     </div>
@@ -132,7 +134,7 @@ export function TicketListScreen() {
                         disabled={loading || !email.trim()}
                         style={{ backgroundColor: settings.primary_color }}
                     >
-                        {loading ? 'Buscando...' : 'Ver mis tickets'}
+                        {loading ? t('ui.searching') : t('ui.view_my_tickets')}
                     </button>
                 </form>
 
