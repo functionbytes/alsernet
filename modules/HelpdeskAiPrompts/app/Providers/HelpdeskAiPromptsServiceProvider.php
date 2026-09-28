@@ -4,6 +4,7 @@ namespace Modules\HelpdeskAiPrompts\Providers;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskAiPrompts\Listeners\RecordAiAnswerFeedback;
@@ -12,6 +13,7 @@ use Modules\HelpdeskAiPrompts\Models\AiPromptCase;
 use Modules\HelpdeskAiPrompts\Observers\ConversationItemAiCaseObserver;
 use Modules\HelpdeskAiPrompts\Services\PromptLibrary;
 use Modules\HelpdeskLivechat\Events\AiAnswerRated;
+use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
 class HelpdeskAiPromptsServiceProvider extends ServiceProvider
@@ -28,9 +30,50 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
 
         $this->registerConfig();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
+        $this->loadViewsFrom(module_path($this->moduleName, 'resources/views'), $this->moduleNameLower);
+        $this->loadTranslationsFrom(module_path($this->moduleName, 'lang'), $this->moduleNameLower);
         $this->registerPromptCacheInvalidation();
         $this->registerConversationItemObserver();
         $this->registerFeedbackListener();
+        $this->registerRoutes();
+        $this->registerMenus();
+    }
+
+    protected function registerRoutes(): void
+    {
+        $path = module_path($this->moduleName, 'routes/web.php');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        Route::middleware(['web', 'auth', 'can:helpdesk.ai-prompts.view'])
+            ->prefix('panel/helpdesk/ai-prompts')
+            ->name('helpdesk-ai-prompts.')
+            ->group($path);
+    }
+
+    /**
+     * Entrada en el sidebar principal "Helpdesk" (sidebar_id registrado por
+     * el propio módulo Helpdesk), junto a Bandeja/Reportes/Herramientas.
+     */
+    protected function registerMenus(): void
+    {
+        if (! class_exists(NavService::class)) {
+            return;
+        }
+
+        NavService::registerSidebar('helpdesk', [
+            'title' => 'Asistente IA',
+            'items' => [
+                [
+                    'label' => 'Biblioteca de prompts',
+                    'route' => 'helpdesk-ai-prompts.index',
+                    'icon' => 'fas fa-wand-magic-sparkles',
+                    'permission' => 'helpdesk.ai-prompts.view',
+                ],
+            ],
+        ]);
     }
 
     public function register(): void

@@ -1,0 +1,39 @@
+/* HelpdeskAiPrompts admin panel */
+
+.ai-prompt-preview {
+    max-height: 420px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ai-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-height: 2rem;
+}
+
+.ai-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 500;
+}
+
+.ai-tag-remove {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
+}
+
+.ai-tag-remove:hover {
+    opacity: 1;
+}
+
+.ai-test-question-row {
+    background-color: rgba(144, 187, 19, 0.03);
+}

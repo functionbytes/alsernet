@@ -1,0 +1,20 @@
+<?php
+
+namespace Modules\HelpdeskAiPrompts\Http\Requests;
+
+use Illuminate\Validation\Rule;
+use Modules\HelpdeskAiPrompts\Models\AiPromptBlock;
+
+class UpdateAiPromptBlockRequest extends AiPromptBlockFormRequest
+{
+    public function rules(): array
+    {
+        $rules = $this->baseRules();
+        $rules['key'][] = Rule::unique(AiPromptBlock::class, 'key')
+            ->where('channel', $this->input('channel'))
+            ->where('locale', $this->input('locale'))
+            ->ignore($this->route('block'));
+
+        return $rules;
+    }
+}
