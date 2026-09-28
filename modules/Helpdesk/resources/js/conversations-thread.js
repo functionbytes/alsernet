@@ -1212,6 +1212,23 @@
                     '</div>';
             }
 
+            // Live commerce: carrusel de productos enviado al chat web (el
+            // widget lo pinta con "Añadir al carrito"; aquí, lista compacta).
+            let productsHtml = '';
+            if (item.type === 'product_carousel' && Array.isArray(meta.products) && meta.products.length) {
+                productsHtml = '<div class="bv-product-cards">' + meta.products.map(function (p) {
+                    const url = /^https?:\/\//i.test(p.url || '') ? p.url : '';
+                    const img = /^https?:\/\//i.test(p.image_url || '') ? p.image_url : '';
+                    const price = typeof p.price === 'number'
+                        ? new Intl.NumberFormat('es', { style: 'currency', currency: p.currency || 'EUR' }).format(p.price) : '';
+                    return (url ? '<a class="bv-product-card" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' : '<div class="bv-product-card">') +
+                        '<span class="bv-product-card-img">' + (img ? '<img src="' + escapeHtml(img) + '" alt="" loading="lazy">' : '<i class="fas fa-box"></i>') + '</span>' +
+                        '<span class="bv-product-card-name">' + escapeHtml(p.title || p.name || ('#' + p.id)) + '</span>' +
+                        (price ? '<span class="bv-product-card-price">' + escapeHtml(price) + '</span>' : '') +
+                        (url ? '</a>' : '</div>');
+                }).join('') + '</div>';
+            }
+
             // Server only renders an avatar for incoming messages / internal notes
             // (outgoing bubbles don't need one — the "out" alignment identifies
             // them), and only labels the "meta" line with the author name for
@@ -1240,6 +1257,7 @@
                         pendingHtml +
                         contactHtml +
                         locationHtml +
+                        productsHtml +
                         outTrHtml +
                         '<div class="meta">' +
                             '<span>' + metaLabel + '</span>' +
@@ -2512,6 +2530,157 @@
                 $(this).toggle(!q || text.includes(q));
             });
         });
+
+        // ─── Live commerce: enviar productos del catálogo (modal product-picker) ───
+        // Busca con la API de catálogo del chat web y publica un carrusel que el
+        // widget pinta con "Añadir al carrito". Todo el texto con .text().
+        (function () {
+            const selected = new Map();
+            let searchTimer = null;
+            let searchSeq = 0;
+
+            const $pp = function () { return $('[data-bv-modal-name="product-picker"]'); };
+            const ppText = function () {
+                try { return JSON.parse($pp().attr('data-i18n') || '{}'); } catch (e) { return {}; }
+            };
+            const ppUrl = function (attr) {
+                const convId = $('.bv-composer').data('bv-conversation-id');
+                return convId ? String($pp().attr(attr) || '').replace('__ID__', encodeURIComponent(convId)) : null;
+            };
+            const ppMoney = function (value, currency) {
+                if (typeof value !== 'number') return '';
+                try {
+                    return new Intl.NumberFormat('es', { style: 'currency', currency: currency || 'EUR' }).format(value);
+                } catch (e) {
+                    return value.toFixed(2);
+                }
+            };
+            const ppSyncSend = function () {
+                $('#bv-product-picker-send').prop('disabled', selected.size === 0);
+                $('#bv-product-picker-count').text(selected.size ? '(' + selected.size + ')' : '');
+            };
+            const ppRender = function (products) {
+                const $list = $('#bv-product-picker-list').empty();
+                if (!products.length) {
+                    $list.append($('<div class="bv-pp-empty"></div>').text(ppText().empty || ''));
+                    return;
+                }
+                products.forEach(function (p) {
+                    const id = String(p.id);
+                    const $row = $('<button type="button" class="bv-pp-item" role="option"></button>')
+                        .attr('data-product-id', id)
+                        .attr('aria-selected', selected.has(id) ? 'true' : 'false')
+                        .toggleClass('on', selected.has(id))
+                        .data('product', p);
+                    const $img = $('<span class="bv-pp-img"></span>');
+                    if (/^https?:\/\//i.test(p.image_url || '')) {
+                        $('<img alt="" loading="lazy">').attr('src', p.image_url)
+                            .on('error', function () { $img.empty().append('<i class="fas fa-box"></i>'); })
+                            .appendTo($img);
+                    } else {
+                        $img.append('<i class="fas fa-box"></i>');
+                    }
+                    const $body = $('<span class="bv-pp-body"></span>');
+                    $body.append($('<span class="bv-pp-name"></span>').text(p.title || ('#' + id)));
+                    const $meta = $('<span class="bv-pp-meta"></span>').text('#' + id);
+                    if (p.has_combinations) $meta.append($('<span class="bv-pp-badge"></span>').text(ppText().combinations || ''));
+                    if (p.available === false) $meta.append($('<span class="bv-pp-badge is-warn"></span>').text(ppText().unavailable || ''));
+                    $body.append($meta);
+                    $row.append($img, $body, $('<span class="bv-pp-price"></span>').text(ppMoney(p.price, p.currency)),
+                        $('<i class="fas fa-check bv-pp-check" aria-hidden="true"></i>'));
+                    $list.append($row);
+                });
+            };
+            const ppSearch = function (q) {
+                const url = ppUrl('data-search-url');
+                const seq = ++searchSeq;
+                if (!url || q.length < 2) {
+                    $('#bv-product-picker-list').empty();
+                    $('#bv-product-picker-hint').show();
+                    return;
+                }
+                $('#bv-product-picker-hint').hide();
+                $('#bv-product-picker-list').attr('aria-busy', 'true');
+                fetch(url + '?q=' + encodeURIComponent(q), {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                }).then(function (r) {
+                    return r.ok ? r.json() : Promise.reject(r.status);
+                }).then(function (json) {
+                    if (seq !== searchSeq) return; // respuesta vieja: el agente siguió tecleando
+                    ppRender((json && json.data && json.data.products) || []);
+                }).catch(function () {
+                    if (seq !== searchSeq) return;
+                    $('#bv-product-picker-list').empty()
+                        .append($('<div class="bv-pp-empty"></div>').text(ppText().error || ''));
+                }).finally(function () {
+                    if (seq === searchSeq) $('#bv-product-picker-list').removeAttr('aria-busy');
+                });
+            };
+
+            // Al abrir: estado limpio y foco en el buscador.
+            $(document).on('click', '[data-bv-modal="product-picker"]', function () {
+                selected.clear();
+                searchSeq++;
+                $('#bv-product-picker-input, #bv-product-picker-note').val('');
+                $('#bv-product-picker-list').empty();
+                $('#bv-product-picker-hint').show();
+                ppSyncSend();
+                setTimeout(function () { $('#bv-product-picker-input').trigger('focus'); }, 60);
+            });
+
+            $(document).on('input', '#bv-product-picker-input', function () {
+                const q = String($(this).val() || '').trim();
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function () { ppSearch(q); }, 300);
+            });
+
+            $(document).on('click', '.bv-pp-item', function () {
+                const $row = $(this);
+                const id = String($row.attr('data-product-id'));
+                if (selected.has(id)) {
+                    selected.delete(id);
+                } else if (selected.size < 12) {
+                    selected.set(id, $row.data('product'));
+                }
+                $row.toggleClass('on', selected.has(id)).attr('aria-selected', selected.has(id) ? 'true' : 'false');
+                ppSyncSend();
+            });
+
+            $(document).on('click', '#bv-product-picker-send', async function () {
+                const url = ppUrl('data-share-url');
+                if (!url || !selected.size) return;
+                $(this).prop('disabled', true);
+                try {
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            product_ids: Array.from(selected.keys()),
+                            note: String($('#bv-product-picker-note').val() || '').trim() || null,
+                        }),
+                    });
+                    const json = await resp.json().catch(function () { return null; });
+                    if (!resp.ok || !json || !json.success) throw new Error('share failed');
+                    $pp().removeClass('on');
+                    $('body').css('overflow', '');
+                    if (json.item && typeof window.appendBubbleToThread === 'function') {
+                        window.appendBubbleToThread(json.item, false);
+                    }
+                    if (window.toastr) toastr.success(ppText().sent || '');
+                } catch (e) {
+                    if (window.toastr) toastr.error(ppText().sendError || '');
+                } finally {
+                    ppSyncSend();
+                }
+            });
+        }());
 
         $(document).on('click', '#bv-recorder-stop', function () {
             if (mediaRecorder && mediaRecorder.state === 'recording') {

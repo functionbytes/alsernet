@@ -9,6 +9,7 @@ use Modules\HelpdeskLivechat\Events\WidgetSessionUpdated;
 use Modules\HelpdeskLivechat\Jobs\ResolveWidgetSessionGeoJob;
 use Modules\HelpdeskLivechat\Models\WidgetPageView;
 use Modules\HelpdeskLivechat\Models\WidgetSession;
+use Modules\HelpdeskLivechat\Services\Commerce\CartProof;
 
 class WidgetSessionService
 {
@@ -29,6 +30,9 @@ class WidgetSessionService
 
         $product = $this->extractProduct($request);
         $commerce = $this->extractCommerce($request);
+        // El token de cesta de invitado cambia en cada lectura (caduca): fuera
+        // de la huella para no invalidar el atajo; se guarda aparte.
+        $cartToken = $this->extractCartToken($request);
 
         // Huella de lo que el agente ve en vivo (producto, cesta, vistos): si
         // cambia sin cambiar la URL (p. ej. añade al carrito) hay que persistir
@@ -54,6 +58,16 @@ class WidgetSessionService
             $session = $this->createSession($token, $url, $title, $request, $product, $commerce);
         } else {
             $this->updateSession($session, $url, $title, $request, $product, $commerce);
+        }
+
+        // Solo si el latido trae cesta: token nuevo, o se borra si ya no hay
+        // cesta de invitado (p. ej. el visitante inició sesión).
+        if ($cartToken !== null && CartProof::cartId($cartToken) !== (int) ($commerce['cart']['id'] ?? 0)) {
+            $cartToken = null;
+        }
+        if (array_key_exists('cart', $commerce) && $session->cart_token !== $cartToken) {
+            $session->cart_token = $cartToken;
+            $session->saveQuietly();
         }
 
         // Refresh the Redis gate with current URL, session id and context fingerprint.
@@ -86,6 +100,7 @@ class WidgetSessionService
             'current_product' => $product,
             'cart_snapshot' => $commerce['cart'] ?? null,
             'cart_updated_at' => array_key_exists('cart', $commerce) ? now() : null,
+            'cart_id' => $this->provenCartId($request, $commerce),
             'viewed_products' => $commerce['viewed_products'] ?? null,
             'started_at' => now(),
             'last_activity_at' => now(),
@@ -135,6 +150,13 @@ class WidgetSessionService
         if (array_key_exists('cart', $commerce) && $commerce['cart'] !== $session->cart_snapshot) {
             $session->cart_snapshot = $commerce['cart'];
             $session->cart_updated_at = now();
+        }
+        // Indexada para atribuir el pedido de esta cesta al chat (fase 4).
+        // Solo con la prueba firmada por la tienda: el id del snapshot lo
+        // podría inventar el navegador.
+        $provenCartId = $this->provenCartId($request, $commerce);
+        if ($provenCartId !== null && (int) $session->cart_id !== $provenCartId) {
+            $session->cart_id = $provenCartId;
         }
 
         if (array_key_exists('viewed_products', $commerce)) {
@@ -241,6 +263,30 @@ class WidgetSessionService
         }
 
         return $out;
+    }
+
+    /**
+     * cart_id solo si la tienda firmó que esta sesión posee esa cesta.
+     *
+     * @param  array<string, mixed>  $commerce
+     */
+    private function provenCartId(Request $request, array $commerce): ?int
+    {
+        $cartId = (int) ($commerce['cart']['id'] ?? 0);
+        if ($cartId <= 0) {
+            return null;
+        }
+
+        return CartProof::cartId($this->extractCartToken($request)) === $cartId
+            ? $cartId
+            : null;
+    }
+
+    private function extractCartToken(Request $request): ?string
+    {
+        $token = $request->input('cart.token');
+
+        return is_string($token) && $token !== '' && strlen($token) <= 512 ? $token : null;
     }
 
     /**

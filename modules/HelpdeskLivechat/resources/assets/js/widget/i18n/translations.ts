@@ -1,5 +1,16 @@
 export const translations = {
     es: {
+        shop: {
+            recommended: 'Recomendados para ti',
+            view_product: 'Ver producto',
+            add_to_cart: 'Añadir',
+            adding: 'Añadiendo…',
+            added: 'Añadido',
+            choose_options: 'Elegir opciones',
+            checkout: 'Ir a pagar',
+            add_error: 'No se pudo añadir. Inténtalo en la ficha.',
+            out_of_stock: 'Sin stock',
+        },
         nav: {
             home: 'Inicio',
             messages: 'Conversaciones',
@@ -43,6 +54,17 @@ export const translations = {
         powered_by: 'Powered by AlserNet',
     },
     en: {
+        shop: {
+            recommended: 'Recommended for you',
+            view_product: 'View product',
+            add_to_cart: 'Add',
+            adding: 'Adding…',
+            added: 'Added',
+            choose_options: 'Choose options',
+            checkout: 'Checkout',
+            add_error: 'Could not add it. Please try on the product page.',
+            out_of_stock: 'Out of stock',
+        },
         nav: {
             home: 'Home',
             messages: 'Conversations',
@@ -86,6 +108,17 @@ export const translations = {
         powered_by: 'Powered by AlserNet',
     },
     pt: {
+        shop: {
+            recommended: 'Recomendados para si',
+            view_product: 'Ver produto',
+            add_to_cart: 'Adicionar',
+            adding: 'A adicionar…',
+            added: 'Adicionado',
+            choose_options: 'Escolher opções',
+            checkout: 'Finalizar compra',
+            add_error: 'Não foi possível adicionar. Tente na página do produto.',
+            out_of_stock: 'Sem stock',
+        },
         nav: {
             home: 'Início',
             messages: 'Conversas',
@@ -129,6 +162,17 @@ export const translations = {
         powered_by: 'Powered by AlserNet',
     },
     fr: {
+        shop: {
+            recommended: 'Recommandés pour vous',
+            view_product: 'Voir le produit',
+            add_to_cart: 'Ajouter',
+            adding: 'Ajout…',
+            added: 'Ajouté',
+            choose_options: 'Choisir les options',
+            checkout: 'Commander',
+            add_error: 'Impossible d’ajouter. Essayez depuis la fiche produit.',
+            out_of_stock: 'Rupture de stock',
+        },
         nav: {
             home: 'Accueil',
             messages: 'Conversations',
@@ -172,6 +216,17 @@ export const translations = {
         powered_by: 'Powered by AlserNet',
     },
     de: {
+        shop: {
+            recommended: 'Für dich empfohlen',
+            view_product: 'Produkt ansehen',
+            add_to_cart: 'Hinzufügen',
+            adding: 'Wird hinzugefügt…',
+            added: 'Hinzugefügt',
+            choose_options: 'Optionen wählen',
+            checkout: 'Zur Kasse',
+            add_error: 'Konnte nicht hinzugefügt werden. Bitte auf der Produktseite versuchen.',
+            out_of_stock: 'Nicht auf Lager',
+        },
         nav: {
             home: 'Startseite',
             messages: 'Nachrichten',
@@ -215,6 +270,17 @@ export const translations = {
         powered_by: 'Powered by AlserNet',
     },
     it: {
+        shop: {
+            recommended: 'Consigliati per te',
+            view_product: 'Vedi prodotto',
+            add_to_cart: 'Aggiungi',
+            adding: 'Aggiunta…',
+            added: 'Aggiunto',
+            choose_options: 'Scegli opzioni',
+            checkout: 'Vai alla cassa',
+            add_error: 'Impossibile aggiungere. Prova dalla scheda prodotto.',
+            out_of_stock: 'Esaurito',
+        },
         nav: {
             home: 'Home',
             messages: 'Conversazioni',

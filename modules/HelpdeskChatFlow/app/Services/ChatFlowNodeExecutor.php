@@ -10,6 +10,11 @@ use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
+use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Modules\HelpdeskLivechat\Services\Catalog\CatalogManager;
+use Modules\HelpdeskLivechat\Services\Catalog\Drivers\NullCatalogDriver;
+use Modules\HelpdeskLivechat\Services\Commerce\WidgetCartGateway;
+use Modules\HelpdeskLivechat\Services\Widget\ProductShowcaseService;
 
 class ChatFlowNodeExecutor
 {
@@ -284,12 +289,24 @@ class ChatFlowNodeExecutor
         $question = (string) ($session->getContextValue($data['question_variable'] ?? 'last_input') ?? '');
         $locale = (string) ($session->getContextValue('customer_lang') ?? $conversation->locale ?? config('app.locale', 'es'));
 
-        $result = $this->agent->run($question, $session->context ?? [], $data, $locale);
+        $catalog = $this->catalogFor($conversation);
+        $result = $this->agent->run($question, $session->context ?? [], $data, $locale, $catalog, $this->cartFor($conversation));
 
         $this->postBotMessage($conversation, $node['id'], $result['text'], [
             'ai_agent' => true,
             'used_tools' => $result['used_tools'],
         ]);
+
+        // Productos que consultó el agente IA → tarjetas con "Añadir al carrito"
+        // en el widget (mismo carrusel que envía un agente humano).
+        if (! empty($result['products']) && class_exists(ProductShowcaseService::class)) {
+            try {
+                app(ProductShowcaseService::class)
+                    ->showcase($conversation, $result['products'], null, null, true);
+            } catch (\Throwable $e) {
+                Log::warning('ChatFlow ai_agent: product showcase failed', ['conversation_id' => $conversation->id, 'error' => $e->getMessage()]);
+            }
+        }
 
         if ($result['action'] === 'escalate') {
             $conversation->releaseFromBot();
@@ -299,6 +316,53 @@ class ChatFlowNodeExecutor
         }
 
         return $this->getFirstChildId($node, $session);
+    }
+
+    /**
+     * Catálogo del canal web de la conversación (HelpdeskLivechat), o null si
+     * el módulo no está o el canal no tiene catálogo. Sin él, el agente IA no
+     * ofrece las herramientas de producto.
+     */
+    private function catalogFor(Conversation $conversation): ?object
+    {
+        if (! class_exists(CatalogManager::class)) {
+            return null;
+        }
+
+        $channel = $conversation->inbox?->channel;
+        if (! $channel instanceof Web) {
+            return null;
+        }
+
+        $driver = app(CatalogManager::class)->forWeb($channel);
+
+        return $driver instanceof NullCatalogDriver ? null : $driver;
+    }
+
+    /**
+     * Cesta del visitante (HelpdeskLivechat WidgetCartGateway) para las
+     * herramientas show_cart/add_to_cart del agente IA, o null sin módulo.
+     */
+    private function cartFor(Conversation $conversation): ?object
+    {
+        if (! class_exists(WidgetCartGateway::class)) {
+            return null;
+        }
+
+        return new class(app(WidgetCartGateway::class), $conversation)
+        {
+            public function __construct(private readonly object $gateway, private readonly Conversation $conversation) {}
+
+            public function show(): ?array
+            {
+                return $this->gateway->snapshot($this->conversation);
+            }
+
+            public function add(int $productId, int $attributeId, int $quantity): array
+            {
+                return $this->gateway->addProduct($this->conversation, $productId, $attributeId, $quantity);
+            }
+        };
     }
 
     /**

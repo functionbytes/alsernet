@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
+use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
@@ -40,7 +41,7 @@ class AgentCatalogTest extends TestCase
         $this->seedOpenConversationStatus();
 
         $this->agent = User::factory()->create();
-        $this->agent->givePermissionTo('helpdesk.conversations.reply');
+        $this->agent->givePermissionTo(['helpdesk.conversations.reply', 'helpdesk.conversations.view']);
 
         Http::fake([self::FEED_URL => Http::response([
             ['id' => '1', 'title' => 'Zapatillas running', 'price' => 90],
@@ -57,6 +58,12 @@ class AgentCatalogTest extends TestCase
             ['uid' => (string) Str::uuid(), 'name' => 'Agent Inbox', 'is_active' => true]
         );
 
+        // El agente pertenece a la bandeja (ConversationPolicy::canAccessInbox).
+        AgentInboxCapacity::firstOrCreate(
+            ['user_id' => $this->agent->id, 'inbox_id' => $inbox->id],
+            ['max_concurrent' => 5, 'accepts_new' => true]
+        );
+
         return Conversation::factory()->create([
             'customer_id' => $customer->id,
             'inbox_id' => $inbox->id,
@@ -70,6 +77,21 @@ class AgentCatalogTest extends TestCase
 
         $this->getJson(route('helpdesk-livechat.agent.catalog.search', $conversation).'?q=zapatillas')
             ->assertUnauthorized();
+    }
+
+    public function test_agent_who_cannot_view_the_conversation_cannot_use_its_catalog(): void
+    {
+        $conversation = $this->makeConversation();
+        $replyOnly = User::factory()->create();
+        $replyOnly->givePermissionTo('helpdesk.conversations.reply');
+
+        $this->actingAs($replyOnly)
+            ->getJson(route('helpdesk-livechat.agent.catalog.search', $conversation).'?q=zapatillas')
+            ->assertForbidden();
+
+        $this->actingAs($replyOnly)
+            ->postJson(route('helpdesk-livechat.agent.catalog.share', $conversation), ['product_ids' => ['1']])
+            ->assertForbidden();
     }
 
     public function test_agent_can_search_catalog(): void

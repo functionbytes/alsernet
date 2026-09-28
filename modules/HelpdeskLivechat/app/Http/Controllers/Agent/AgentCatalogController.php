@@ -28,6 +28,10 @@ class AgentCatalogController extends Controller
      */
     public function search(Request $request, Conversation $conversation): JsonResponse
     {
+        // El permiso de ruta (helpdesk.conversations.reply) no basta: el agente
+        // debe poder ver ESTA conversación (bandejas restringidas, solo propias).
+        $this->authorize('view', $conversation);
+
         $query = trim((string) $request->query('q', ''));
         if ($query === '') {
             return response()->json(['success' => true, 'data' => ['products' => []]]);
@@ -49,6 +53,8 @@ class AgentCatalogController extends Controller
      */
     public function share(Request $request, Conversation $conversation): JsonResponse
     {
+        $this->authorize('view', $conversation);
+
         $validated = $request->validate([
             'product_ids' => ['required', 'array', 'min:1', 'max:'.ProductShowcaseService::MAX_PRODUCTS],
             'product_ids.*' => ['required', 'string', 'max:64'],
@@ -84,6 +90,19 @@ class AgentCatalogController extends Controller
         return response()->json([
             'success' => true,
             'data' => ['message_id' => $item?->id],
+            // Misma forma que el resto de envíos del inbox, para que el hilo
+            // del agente pinte el carrusel al momento (appendBubbleToThread).
+            'item' => $item ? [
+                'id' => $item->id,
+                'type' => $item->type,
+                'body' => $item->body,
+                'metadata' => $item->metadata,
+                'is_internal' => false,
+                'created_at' => $item->created_at?->toIso8601String(),
+                'time' => $item->created_at?->format('H:i'),
+                'author' => $request->user()?->name,
+                'is_outgoing' => true,
+            ] : null,
         ]);
     }
 

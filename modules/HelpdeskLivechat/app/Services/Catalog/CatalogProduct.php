@@ -26,6 +26,10 @@ final class CatalogProduct implements JsonSerializable
         public readonly ?string $description = null,
         public readonly bool $available = true,
         public readonly array $variants = [],
+        // Live commerce: combinación por defecto y si tiene combinaciones (con
+        // ellas el widget abre la ficha en vez de añadir al carrito directo).
+        public readonly int $idProductAttribute = 0,
+        public readonly bool $hasCombinations = false,
     ) {}
 
     /**
@@ -43,6 +47,8 @@ final class CatalogProduct implements JsonSerializable
             description: isset($data['description']) ? (string) $data['description'] : null,
             available: (bool) ($data['available'] ?? true),
             variants: is_array($data['variants'] ?? null) ? $data['variants'] : [],
+            idProductAttribute: (int) ($data['id_product_attribute'] ?? 0),
+            hasCombinations: (bool) ($data['has_combinations'] ?? false),
         );
     }
 
@@ -61,6 +67,8 @@ final class CatalogProduct implements JsonSerializable
             'description' => $this->description,
             'available' => $this->available,
             'variants' => $this->variants,
+            'id_product_attribute' => $this->idProductAttribute,
+            'has_combinations' => $this->hasCombinations,
         ];
     }
 

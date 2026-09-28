@@ -49,6 +49,8 @@ class HeartbeatRequest extends FormRequest
             'cart.total_products' => ['nullable', 'numeric'],
             'cart.currency' => ['nullable', 'string', 'max:8'],
             'cart.customer_logged' => ['nullable', 'boolean'],
+            // Token de la tienda para editar la cesta de invitado (se guarda aparte).
+            'cart.token' => ['nullable', 'string', 'max:512'],
             'cart.lines' => ['nullable', 'array', 'max:50'],
             'cart.lines.*.id_product' => ['required', 'integer', 'min:1'],
             'cart.lines.*.id_product_attribute' => ['nullable', 'integer', 'min:0'],

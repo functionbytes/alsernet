@@ -512,6 +512,26 @@
                                 </div>
                             </div>
                         @endif
+                        @if($item->type === 'product_carousel' && ! empty($item->metadata['products']) && is_array($item->metadata['products']))
+                            {{-- Live commerce: productos enviados al chat web (en el widget llevan "Añadir al carrito"). --}}
+                            <div class="bv-product-cards">
+                                @foreach($item->metadata['products'] as $pc)
+                                    @php
+                                        $pcUrl = is_string($pc['url'] ?? null) && preg_match('#^https?://#i', $pc['url']) ? $pc['url'] : null;
+                                        $pcImg = is_string($pc['image_url'] ?? null) && preg_match('#^https?://#i', $pc['image_url']) ? $pc['image_url'] : null;
+                                    @endphp
+                                    @if($pcUrl)<a class="bv-product-card" href="{{ $pcUrl }}" target="_blank" rel="noopener noreferrer">@else<div class="bv-product-card">@endif
+                                        <span class="bv-product-card-img">
+                                            @if($pcImg)<img src="{{ $pcImg }}" alt="" loading="lazy">@else<i class="fas fa-box"></i>@endif
+                                        </span>
+                                        <span class="bv-product-card-name">{{ $pc['title'] ?? $pc['name'] ?? '#'.($pc['id'] ?? '') }}</span>
+                                        @if(isset($pc['price']) && is_numeric($pc['price']))
+                                            <span class="bv-product-card-price">{{ number_format((float) $pc['price'], 2, ',', '.') }} {{ ($pc['currency'] ?? 'EUR') === 'EUR' ? '€' : ($pc['currency'] ?? '') }}</span>
+                                        @endif
+                                    @if($pcUrl)</a>@else</div>@endif
+                                @endforeach
+                            </div>
+                        @endif
                         @if($item->type === 'location')
                             @php
                                 $locMeta = $item->metadata ?? [];
@@ -710,6 +730,16 @@
                                 <div class="s">MP4, MOV</div>
                             </div>
                         </button>
+                        @if($convo && ($convo->channel === 'web' || ($convo->inbox?->channel_type ?? null) === 'web') && \Illuminate\Support\Facades\Route::has('helpdesk-livechat.agent.catalog.search'))
+                        {{-- Live commerce: tarjetas de producto con Añadir al carrito (solo lo pinta el widget web). --}}
+                        <button class="bv-attach-row" data-bv-attach-type="product" data-bv-modal="product-picker">
+                            <div class="ico bv-attach-ico-green"><i class="fas fa-bag-shopping"></i></div>
+                            <div class="body">
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_product') }}</div>
+                                <div class="s">{{ __('helpdesk::helpdesk.inbox.thread.share_catalog_product') }}</div>
+                            </div>
+                        </button>
+                        @endif
                         <button class="bv-attach-row" data-bv-attach-type="store" data-bv-modal="store-picker">
                             <div class="ico bv-attach-ico-green"><i class="fas fa-store"></i></div>
                             <div class="body">

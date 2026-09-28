@@ -20,6 +20,9 @@ class ChatFlowAgentService
 {
     private const MAX_STEPS = 4;
 
+    /** Productos por búsqueda que ve el modelo (y como máximo se muestran). */
+    private const MAX_PRODUCTS = 6;
+
     private readonly ?AiClient $aiClient;
 
     private readonly ?PromptSanitizer $sanitizer;
@@ -40,16 +43,29 @@ class ChatFlowAgentService
     /**
      * @param  array<string,mixed>  $context  Session context (customer_*, etc.)
      * @param  array<string,mixed>  $data  Node data (instructions, tools enabled)
-     * @return array{action: string, text: string, used_tools: array<int,string>}
+     * @param  object|null  $catalog  Catálogo del canal (HelpdeskLivechat CatalogDriver:
+     *                                search()/find()); activa product_search y product_detail
+     * @param  object|null  $cart  Cesta del visitante (show(): ?array, add(int, int, int): array);
+     *                             activa show_cart y add_to_cart
+     * @return array{action: string, text: string, used_tools: array<int,string>, products: array<int, object>}
      */
-    public function run(string $question, array $context, array $data, string $locale = 'es'): array
+    public function run(string $question, array $context, array $data, string $locale = 'es', ?object $catalog = null, ?object $cart = null): array
     {
         $apiKey = config('services.openai.key', '');
         if (empty($apiKey) || trim($question) === '') {
-            return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => []];
+            return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => [], 'products' => []];
         }
 
-        $tools = $this->buildTools($data);
+        if (! ($data['tool_products'] ?? true) || ! $catalog || ! method_exists($catalog, 'search') || ! method_exists($catalog, 'find')) {
+            $catalog = null;
+        }
+        if (! ($data['tool_cart'] ?? true) || ! $cart || $catalog === null || ! method_exists($cart, 'show') || ! method_exists($cart, 'add')) {
+            $cart = null;
+        }
+        // Productos que el modelo consultó: se muestran al cliente como tarjetas.
+        $shown = [];
+
+        $tools = $this->buildTools($data, $catalog !== null, $cart !== null);
         $system = trim($data['instructions'] ?? 'Eres un agente de atención al cliente. Usa las herramientas disponibles cuando ayuden a resolver la consulta. Responde de forma breve y amable.');
         $lang = strtolower(substr($locale, 0, 2));
         if ($lang !== 'es') {
@@ -72,13 +88,13 @@ class ChatFlowAgentService
             $message = $this->callLlm($messages, $tools, $data);
 
             if ($message === null) {
-                return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => $usedTools];
+                return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => $usedTools, 'products' => []];
             }
 
             $toolCalls = $message['tool_calls'] ?? [];
 
             if (empty($toolCalls)) {
-                return ['action' => 'respond', 'text' => trim((string) ($message['content'] ?? '')), 'used_tools' => $usedTools];
+                return ['action' => 'respond', 'text' => trim((string) ($message['content'] ?? '')), 'used_tools' => $usedTools, 'products' => array_values($shown)];
             }
 
             $messages[] = $message; // assistant turn with tool_calls
@@ -89,21 +105,21 @@ class ChatFlowAgentService
                 $usedTools[] = $name;
 
                 if ($name === 'answer_customer') {
-                    return ['action' => 'respond', 'text' => trim((string) ($args['text'] ?? '')), 'used_tools' => $usedTools];
+                    return ['action' => 'respond', 'text' => trim((string) ($args['text'] ?? '')), 'used_tools' => $usedTools, 'products' => array_values($shown)];
                 }
                 if ($name === 'escalate_to_agent') {
-                    return ['action' => 'escalate', 'text' => trim((string) ($args['message'] ?? 'Te paso con un agente.')), 'used_tools' => $usedTools];
+                    return ['action' => 'escalate', 'text' => trim((string) ($args['message'] ?? 'Te paso con un agente.')), 'used_tools' => $usedTools, 'products' => []];
                 }
 
                 $messages[] = [
                     'role' => 'tool',
                     'tool_call_id' => $call['id'] ?? '',
-                    'content' => $this->executeTool($name, $args, $context),
+                    'content' => $this->executeTool($name, $args, $context, $catalog, $shown, $cart),
                 ];
             }
         }
 
-        return ['action' => 'escalate', 'text' => 'Te paso con un agente para ayudarte mejor.', 'used_tools' => $usedTools];
+        return ['action' => 'escalate', 'text' => 'Te paso con un agente para ayudarte mejor.', 'used_tools' => $usedTools, 'products' => []];
     }
 
     /**
@@ -128,7 +144,7 @@ class ChatFlowAgentService
      * @param  array<string,mixed>  $data
      * @return array<int, array<string,mixed>>
      */
-    private function buildTools(array $data): array
+    private function buildTools(array $data, bool $withProducts = false, bool $withCart = false): array
     {
         $fn = fn (string $name, string $desc, array $props, array $required = []) => [
             'type' => 'function',
@@ -152,6 +168,21 @@ class ChatFlowAgentService
             $tools[] = $fn('search_help', 'Busca información en el centro de ayuda para responder una pregunta.',
                 ['query' => ['type' => 'string', 'description' => 'Lo que se quiere buscar']], ['query']);
         }
+        if ($withProducts) {
+            $tools[] = $fn('product_search', 'Busca productos en el catálogo de la tienda. Los resultados se muestran al cliente como tarjetas con botón de añadir al carrito; en tu respuesta no repitas precios ni enlaces, resume y ayuda a elegir.',
+                ['query' => ['type' => 'string', 'description' => 'Palabras clave del producto (tipo, marca, uso), sin frases completas']], ['query']);
+            $tools[] = $fn('product_detail', 'Obtiene la ficha de un producto concreto del catálogo por su id (de product_search) para responder dudas sobre él.',
+                ['product_id' => ['type' => 'string', 'description' => 'Id del producto']], ['product_id']);
+        }
+        if ($withCart) {
+            $tools[] = $fn('show_cart', 'Muestra lo que el cliente tiene ahora en su cesta de la tienda (productos, cantidades y total).', []);
+            $tools[] = $fn('add_to_cart', 'Añade un producto a la cesta del cliente. Úsala SOLO si el cliente ha pedido o confirmado explícitamente en su último mensaje añadir ESE producto y cantidad; si no, pregúntale antes y no la llames.',
+                [
+                    'product_id' => ['type' => 'string', 'description' => 'Id del producto (de product_search)'],
+                    'quantity' => ['type' => 'integer', 'description' => 'Unidades (1 si no lo dice)'],
+                    'customer_confirmed' => ['type' => 'boolean', 'description' => 'true solo si el cliente lo pidió/confirmó expresamente'],
+                ], ['product_id', 'customer_confirmed']);
+        }
 
         return $tools;
     }
@@ -160,9 +191,84 @@ class ChatFlowAgentService
      * @param  array<string,mixed>  $args
      * @param  array<string,mixed>  $context
      */
-    private function executeTool(string $name, array $args, array $context): string
+    private function executeTool(string $name, array $args, array $context, ?object $catalog = null, array &$shown = [], ?object $cart = null): string
     {
         try {
+            if ($name === 'show_cart' && $cart !== null) {
+                $snapshot = $cart->show();
+                if (! is_array($snapshot) || empty($snapshot['lines'])) {
+                    return 'La cesta del cliente está vacía.';
+                }
+
+                return json_encode([
+                    'products_count' => $snapshot['products_count'] ?? null,
+                    'total' => $snapshot['total'] ?? null,
+                    'currency' => $snapshot['currency'] ?? null,
+                    'lines' => array_map(fn ($l) => [
+                        'product_id' => (string) ($l['id_product'] ?? ''),
+                        'name' => $this->sanitize((string) ($l['name'] ?? '')),
+                        'quantity' => $l['qty'] ?? null,
+                        'total' => $l['total'] ?? null,
+                    ], array_slice((array) $snapshot['lines'], 0, 20)),
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
+            if ($name === 'add_to_cart' && $cart !== null && $catalog !== null) {
+                if (($args['customer_confirmed'] ?? false) !== true) {
+                    return 'No añadido: primero pregunta al cliente si quiere añadir ese producto a su cesta.';
+                }
+                $product = $catalog->find(trim((string) ($args['product_id'] ?? '')));
+                if ($product === null || ! $product->available) {
+                    return 'No añadido: el producto no existe o no está disponible.';
+                }
+                $shown[(string) $product->id] = $product;
+                if ($product->hasCombinations ?? false) {
+                    return 'No añadido: el producto tiene opciones (talla, color...). Se le muestra la tarjeta para que las elija en la ficha.';
+                }
+
+                $result = $cart->add((int) $product->id, (int) ($product->idProductAttribute ?? 0), max(1, (int) ($args['quantity'] ?? 1)));
+
+                return ($result['ok'] ?? false)
+                    ? 'Añadido a la cesta del cliente.'
+                    : 'No se pudo añadir desde aquí; el cliente puede usar el botón Añadir de la tarjeta.';
+            }
+
+            if ($name === 'product_search' && $catalog !== null) {
+                $products = array_slice($catalog->search(trim((string) ($args['query'] ?? '')), self::MAX_PRODUCTS), 0, self::MAX_PRODUCTS);
+                foreach ($products as $p) {
+                    $shown[(string) $p->id] = $p;
+                }
+
+                return $products === []
+                    ? 'No hay productos en el catálogo que coincidan con esa búsqueda.'
+                    : json_encode(array_map(fn ($p) => [
+                        'id' => (string) $p->id,
+                        'title' => $this->sanitize((string) $p->title),
+                        'price' => $p->price,
+                        'currency' => $p->currency,
+                        'available' => $p->available,
+                        'has_options' => (bool) ($p->hasCombinations ?? false),
+                    ], $products), JSON_UNESCAPED_UNICODE);
+            }
+
+            if ($name === 'product_detail' && $catalog !== null) {
+                $product = $catalog->find(trim((string) ($args['product_id'] ?? '')));
+                if ($product === null) {
+                    return 'No se encontró ese producto en el catálogo.';
+                }
+                $shown[(string) $product->id] = $product;
+
+                return json_encode([
+                    'id' => (string) $product->id,
+                    'title' => $this->sanitize((string) $product->title),
+                    'description' => $this->sanitize((string) ($product->description ?? '')),
+                    'price' => $product->price,
+                    'currency' => $product->currency,
+                    'available' => $product->available,
+                    'has_options' => (bool) ($product->hasCombinations ?? false),
+                ], JSON_UNESCAPED_UNICODE);
+            }
+
             if ($name === 'lookup_order') {
                 // Defensa en profundidad: exige customer_identified_via_otp,
                 // no el customer_identified genérico — un nodo identify_customer

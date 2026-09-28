@@ -22,6 +22,9 @@ class StoreWidgetConversationRequest extends FormRequest
             'language' => ['nullable', 'string', 'max:10'],
             'customer_id' => ['nullable', 'integer'],
             'widget_session_token' => ['nullable', 'string', 'max:64'],
+            // Identidad firmada por la tienda (HMAC del email con el hmac_token del canal).
+            'identifier' => ['nullable', 'string', 'max:255'],
+            'identifier_hash' => ['nullable', 'string', 'size:64'],
             'custom_attributes' => ['nullable', 'array', 'max:20'],
             'custom_attributes.*' => ['nullable', 'string', 'max:255'],
             'engagement_context' => ['nullable', 'array'],

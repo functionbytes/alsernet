@@ -5,6 +5,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 use Illuminate\Support\Facades\Http;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
+use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 use Tests\TestCase;
 
 class ChatFlowAgentServiceTest extends TestCase
@@ -87,5 +88,170 @@ class ChatFlowAgentServiceTest extends TestCase
 
         $this->assertSame('escalate', $result['action']);
         $this->assertContains('escalate_to_agent', $result['used_tools']);
+    }
+
+    private function fakeCatalog(): object
+    {
+        return new class
+        {
+            public array $queries = [];
+
+            public function search(string $query, int $limit = 6): array
+            {
+                $this->queries[] = $query;
+
+                return [
+                    CatalogProduct::fromArray([
+                        'id' => '43141', 'title' => 'Estuche de limpieza MAXI', 'price' => 49.99, 'currency' => 'EUR',
+                    ]),
+                ];
+            }
+
+            public function find(string $id): ?object
+            {
+                return $id === '43141'
+                    ? CatalogProduct::fromArray([
+                        'id' => '43141', 'title' => 'Estuche de limpieza MAXI', 'description' => '60 piezas', 'price' => 49.99,
+                    ])
+                    : null;
+            }
+        };
+    }
+
+    public function test_product_search_tool_returns_products_to_show(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+
+        Http::fakeSequence('api.openai.com/*')
+            ->push(['choices' => [['message' => [
+                'content' => null,
+                'tool_calls' => [[
+                    'id' => 'call_p',
+                    'type' => 'function',
+                    'function' => ['name' => 'product_search', 'arguments' => '{"query":"estuche limpieza"}'],
+                ]],
+            ]]]], 200)
+            ->push(['choices' => [['message' => ['content' => 'Te muestro un estuche que encaja.', 'tool_calls' => []]]]], 200);
+
+        $catalog = $this->fakeCatalog();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('busco un estuche de limpieza', [], [], 'es', $catalog);
+
+        $this->assertSame('respond', $result['action']);
+        $this->assertContains('product_search', $result['used_tools']);
+        $this->assertSame(['estuche limpieza'], $catalog->queries);
+        $this->assertCount(1, $result['products']);
+        $this->assertSame('43141', $result['products'][0]->id);
+    }
+
+    public function test_product_tools_are_not_offered_without_catalog(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['content' => 'Hola', 'tool_calls' => []]]],
+            ], 200),
+        ]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('hola', [], []);
+
+        Http::assertSent(function ($request) {
+            $names = array_map(fn ($t) => $t['function']['name'] ?? '', $request->data()['tools'] ?? []);
+
+            return ! in_array('product_search', $names, true) && ! in_array('product_detail', $names, true);
+        });
+        $this->assertSame([], $result['products']);
+    }
+
+    public function test_product_tools_can_be_disabled_per_node(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['content' => 'Hola', 'tool_calls' => []]]],
+            ], 200),
+        ]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('hola', [], ['tool_products' => false], 'es', $this->fakeCatalog());
+
+        Http::assertSent(function ($request) {
+            $names = array_map(fn ($t) => $t['function']['name'] ?? '', $request->data()['tools'] ?? []);
+
+            return ! in_array('product_search', $names, true);
+        });
+    }
+
+    private function fakeCart(): object
+    {
+        return new class
+        {
+            public array $added = [];
+
+            public function show(): ?array
+            {
+                return ['products_count' => 1, 'total' => 57.98, 'currency' => 'EUR', 'lines' => [['id_product' => 43141, 'name' => 'Estuche', 'qty' => 1, 'total' => 49.99]]];
+            }
+
+            public function add(int $productId, int $attributeId, int $quantity): array
+            {
+                $this->added[] = [$productId, $attributeId, $quantity];
+
+                return ['ok' => true];
+            }
+        };
+    }
+
+    private function toolCall(string $name, array $args): array
+    {
+        return ['choices' => [['message' => [
+            'content' => null,
+            'tool_calls' => [['id' => 'call_'.$name, 'type' => 'function', 'function' => ['name' => $name, 'arguments' => json_encode($args)]]],
+        ]]]];
+    }
+
+    public function test_add_to_cart_requires_customer_confirmation(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('add_to_cart', ['product_id' => '43141', 'customer_confirmed' => false]), 200)
+            ->push(['choices' => [['message' => ['content' => '¿Quieres que lo añada?', 'tool_calls' => []]]]], 200);
+
+        $cart = $this->fakeCart();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('me interesa el estuche', [], [], 'es', $this->fakeCatalog(), $cart);
+
+        $this->assertSame([], $cart->added);
+    }
+
+    public function test_add_to_cart_adds_when_confirmed(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('add_to_cart', ['product_id' => '43141', 'quantity' => 2, 'customer_confirmed' => true]), 200)
+            ->push(['choices' => [['message' => ['content' => 'Listo, añadido.', 'tool_calls' => []]]]], 200);
+
+        $cart = $this->fakeCart();
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('sí, añade dos', [], [], 'es', $this->fakeCatalog(), $cart);
+
+        $this->assertSame([[43141, 0, 2]], $cart->added);
+        $this->assertContains('add_to_cart', $result['used_tools']);
+    }
+
+    public function test_cart_tools_need_catalog(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => 'Hola', 'tool_calls' => []]]]], 200)]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('hola', [], [], 'es', null, $this->fakeCart());
+
+        Http::assertSent(function ($request) {
+            $names = array_map(fn ($t) => $t['function']['name'] ?? '', $request->data()['tools'] ?? []);
+
+            return ! in_array('add_to_cart', $names, true) && ! in_array('show_cart', $names, true);
+        });
     }
 }

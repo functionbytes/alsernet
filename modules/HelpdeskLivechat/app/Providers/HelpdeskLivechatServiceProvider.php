@@ -16,8 +16,10 @@ use Modules\HelpdeskLivechat\Console\Commands\ProcessAutoActionsCommand;
 use Modules\HelpdeskLivechat\Http\Middleware\ValidateTrustedOrigin;
 use Modules\HelpdeskLivechat\Http\Middleware\VerifyWidgetHmac;
 use Modules\HelpdeskLivechat\Jobs\PruneLivestreamEventsJob;
+use Modules\HelpdeskLivechat\Listeners\AttributeChatSaleOnPsOrderCreated;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Services\Widget\WidgetConversationService;
+use Modules\HelpdeskPrestashop\Events\PsOrderCreated;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -87,6 +89,11 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
         Event::listen(ConversationCreated::class, [EngagementBridgeListener::class, 'handleConversationCreated']);
         Event::listen(ConversationMessageCreated::class, [EngagementBridgeListener::class, 'handleMessageCreated']);
         Event::listen(ConversationClosed::class, [EngagementBridgeListener::class, 'handleConversationClosed']);
+
+        // Live commerce: pedidos de la tienda atribuidos al chat (fase 4).
+        if (class_exists(PsOrderCreated::class)) {
+            Event::listen(PsOrderCreated::class, AttributeChatSaleOnPsOrderCreated::class);
+        }
     }
 
     /**
@@ -125,6 +132,7 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
             'order' => 230,
             'items' => [
                 ['label' => 'Configuración', 'route' => 'settings.helpdesk-livechat.index', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Disparadores', 'route' => 'settings.helpdesk-livechat.triggers.index', 'permission' => 'helpdesk.livechat.triggers.manage'],
             ],
         ]);
     }

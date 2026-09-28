@@ -152,4 +152,36 @@ class HeartbeatCommerceContextTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['cart.lines']);
     }
+
+    private function cartProof(int $cartId, int $ttl = 600): string
+    {
+        $key = hash_hmac('sha256', 'alsernet-guest-cart-token:v1', (string) config('helpdeskprestashop.webhook_secret'));
+        $body = rtrim(strtr(base64_encode(json_encode(['c' => $cartId, 'u' => 0, 'g' => 0, 'd' => 'x', 'e' => time() + $ttl])), '+/', '-_'), '=');
+
+        return $body.'.'.hash_hmac('sha256', $body, $key);
+    }
+
+    public function test_cart_id_is_only_linked_with_a_valid_store_proof(): void
+    {
+        config(['helpdeskprestashop.webhook_secret' => 'test-secret-'.uniqid()]);
+        $web = WebFactory::new()->create();
+
+        $cases = [
+            'sin prueba' => [null, null],
+            'prueba de otra cesta' => [$this->cartProof(111), null],
+            'prueba caducada' => [$this->cartProof(901, -10), null],
+            'prueba válida' => [$this->cartProof(901), 901],
+        ];
+
+        foreach ($cases as $label => [$token, $expected]) {
+            $sessionToken = 'sess_proof_'.uniqid();
+            $cart = $this->cart();
+            $cart['token'] = $token;
+            $this->beat($web->website_token, ['session_token' => $sessionToken, 'cart' => $cart])->assertOk();
+
+            $session = WidgetSession::on('helpdesk')->where('session_token', $sessionToken)->firstOrFail();
+            $this->assertSame($expected, $session->cart_id, $label);
+            $this->assertSame($expected === null ? null : $token, $session->cart_token, $label);
+        }
+    }
 }

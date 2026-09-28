@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { apiUrl, conversationAuthHeaders, getWebsiteToken, websiteTokenHeaders, setConversationToken, clearConversationToken } from '../api';
 import { ImageLightbox } from '../components/ImageLightbox';
-import { getVisitorIdentity } from '../widget-identity';
+import { getHostIdentityProof, getVisitorIdentity } from '../widget-identity';
 import { isScreenShareAvailable } from '../webrtc';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -215,6 +215,10 @@ export function ConversationScreen() {
 
         const messageContent = inputValue.trim() || `📎 ${attachedFiles.length} archivo(s) adjunto(s)`;
         const tempId = Date.now().toString();
+        // Último contacto con el chat (atribución de ventas, 30 días).
+        if (conversationId) {
+            import('../widget-attribution').then((m) => m.touchChatSession('chat', conversationId)).catch(() => {});
+        }
 
         setMessages(prev => [...prev, {
             id: tempId,
@@ -244,11 +248,14 @@ export function ConversationScreen() {
         };
 
         const identity = getVisitorIdentity();
+        // Solo textos: el servidor valida custom_attributes.* como string (un
+        // customer_id numérico o un objeto daban 422 al crear la conversación).
         const customAttributes = identity
             ? Object.fromEntries(
-                Object.entries(identity).filter(([k]) => !['email', 'name', 'phone', 'userId'].includes(k))
+                Object.entries(identity).filter(([k, v]) => !['email', 'name', 'phone', 'userId', 'source'].includes(k) && typeof v === 'string')
             )
             : null;
+        const identityProof = getHostIdentityProof();
 
         try {
             if (!conversationId) {
@@ -267,6 +274,7 @@ export function ConversationScreen() {
                         customer_id: customerId ?? null,
                         widget_session_token: sessionToken,
                         custom_attributes: customAttributes,
+                        ...(identityProof ?? {}),
                         engagement_context: {
                             score: engagementState.score,
                             segment: engagementState.segment,
@@ -282,6 +290,10 @@ export function ConversationScreen() {
                     if (data.data?.pubsub_token) setConversationToken(data.data.pubsub_token);
                     const newConvId = data.data?.conversation_id ?? data.data?.conversation?.id;
                     if (newConvId) setConversationId(String(newConvId));
+                    // Atribución de ventas: el pedido que haga en 30 días cuenta para este chat.
+                    if (newConvId) {
+                        import('../widget-attribution').then((m) => m.touchChatSession('chat', newConvId)).catch(() => {});
+                    }
                     if (data.data?.customer?.email) setCustomerEmail(data.data.customer.email);
                     if (data.data?.customer?.name) setCustomerName(data.data.customer.name);
                     if (data.data?.customer?.id) setCustomerId(data.data.customer.id);

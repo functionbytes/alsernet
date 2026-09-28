@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskLivechat\Http\Controllers\Settings\LivechatSettingsController;
 use Modules\HelpdeskLivechat\Http\Controllers\Settings\PreChatFormsController;
+use Modules\HelpdeskLivechat\Http\Controllers\Settings\WidgetTriggersController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,4 +31,16 @@ Route::prefix('pre-chat-forms')
         Route::get('{preChatForm}/edit', [PreChatFormsController::class, 'edit'])->name('edit');
         Route::put('{preChatForm}', [PreChatFormsController::class, 'update'])->name('update');
         Route::delete('{preChatForm}', [PreChatFormsController::class, 'destroy'])->name('destroy');
+    });
+
+// Disparadores proactivos del chat web (live commerce).
+Route::prefix('livechat/triggers')
+    ->name('triggers.')
+    ->group(function () {
+        Route::get('/', [WidgetTriggersController::class, 'index'])->name('index');
+        Route::get('create', [WidgetTriggersController::class, 'create'])->name('create');
+        Route::post('/', [WidgetTriggersController::class, 'store'])->name('store');
+        Route::get('{trigger}/edit', [WidgetTriggersController::class, 'edit'])->name('edit');
+        Route::put('{trigger}', [WidgetTriggersController::class, 'update'])->name('update');
+        Route::delete('{trigger}', [WidgetTriggersController::class, 'destroy'])->name('destroy');
     });

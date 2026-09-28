@@ -561,6 +561,41 @@ class PrestashopContextService
     }
 
     /**
+     * Cesta de INVITADO (sin cliente): el bridge solo la edita con el token
+     * que emitió para ese id_cart + id_guest (widgetcontext), que el widget
+     * entrega en el latido. Mismas acciones que las del cliente.
+     *
+     * @param  'add'|'update'|'remove'  $op
+     * @return array<string, mixed>|null
+     */
+    public function guestCartOperation(string $op, int $cartId, string $guestToken, int $productId, int $quantity = 1, ?int $attributeId = null, ?string $idempotencyKey = null): ?array
+    {
+        $action = match ($op) {
+            'add' => 'cart.add_product',
+            'update' => 'cart.update_quantity',
+            'remove' => 'cart.remove_product',
+            default => null,
+        };
+        if ($action === null || $cartId <= 0 || $productId <= 0 || trim($guestToken) === '') {
+            return null;
+        }
+
+        $payload = [
+            'cart_id' => $cartId,
+            'product_id' => $productId,
+            'guest_cart_token' => $guestToken,
+        ];
+        if ($op !== 'remove') {
+            $payload['quantity'] = $quantity;
+        }
+        if ($attributeId !== null) {
+            $payload['attribute_id'] = $attributeId;
+        }
+
+        return $this->callApi($action, $payload, $idempotencyKey);
+    }
+
+    /**
      * Quita un producto (toda su cantidad) del carrito real del cliente.
      *
      * @return array{cart_id:int,product_id:int,attribute_id:int|null}|null
@@ -1570,6 +1605,15 @@ class PrestashopContextService
             'ean13' => $p['ean13'] ?? null,
             'image' => $p['image_url'] ?? $p['image'] ?? null,
             'url' => $p['url'] ?? null,
+            // Combinaciones (live commerce): con combinaciones el chat abre la
+            // ficha en vez de añadir directo.
+            'id_product_attribute' => isset($p['id_product_attribute']) ? (int) $p['id_product_attribute'] : 0,
+            'has_combinations' => (bool) ($p['has_combinations'] ?? false),
+            'available_for_order' => (bool) ($p['available_for_order'] ?? true),
+            // Precio final calculado por PrestaShop (getPriceStatic): el que ve
+            // el visitante en la ficha, con todas las reglas de descuento.
+            'final_price_with_tax' => isset($p['final_price_with_tax']) ? (float) $p['final_price_with_tax'] : null,
+            'final_price_original' => isset($p['final_price_original']) ? (float) $p['final_price_original'] : null,
         ];
     }
 }

@@ -170,6 +170,8 @@ export function startHeartbeat(): void {
         }
     });
     watchCart(() => { sendHeartbeat(); });
+    // Añadido desde el chat (widget-commerce ya releyó la cesta).
+    window.addEventListener('helpdesk:cart-changed', () => { sendHeartbeat(); });
     heartbeatTimer = setInterval(sendHeartbeat, resolveHeartbeatIntervalMs());
 
     window.addEventListener('popstate', sendIfUrlChanged);

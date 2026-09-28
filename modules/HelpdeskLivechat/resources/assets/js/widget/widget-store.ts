@@ -98,6 +98,9 @@ interface WidgetState {
 
     // Engagement actions (widget commands)
     pushBotMessage: (text: string) => void;
+    /** Pantalla a la que ir desde fuera del router (p. ej. un disparador proactivo). */
+    requestedRoute: string | null;
+    requestRoute: (path: string | null) => void;
     setPrefillData: (fields: Record<string, string>) => void;
     setShowPostChat: (show: boolean) => void;
     pushRecommendations: (products: RecommendationProduct[]) => void;
@@ -298,6 +301,9 @@ export const useWidgetStore = create<WidgetState>()((set) => ({
     engagement: defaultEngagement,
 
     setOpen: (open) => set({ isOpen: open }),
+
+    requestedRoute: null,
+    requestRoute: (path) => set({ requestedRoute: path }),
 
     pushBotMessage: (text) => set((state) => ({
         botMessages: [

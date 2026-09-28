@@ -73,6 +73,12 @@ class HelpdeskAnalyticsServiceProvider extends ServiceProvider
                     'icon' => 'fas fa-chart-line',
                     'permission' => 'helpdeskanalytics.view',
                 ],
+                [
+                    'label' => __('helpdeskanalytics::messages.chat_sales_nav'),
+                    'route' => 'helpdeskanalytics.chat-sales',
+                    'icon' => 'fas fa-bag-shopping',
+                    'permission' => 'helpdeskanalytics.chat-sales',
+                ],
             ],
         ]);
     }

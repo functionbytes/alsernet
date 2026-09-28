@@ -112,6 +112,9 @@
 {{-- Modal: Compartir tienda de la empresa --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.store-picker')
 
+{{-- Modal: Enviar productos del catálogo (live commerce, chat web) --}}
+@include('helpdesk::helpdesk.inbox.partials.modals.product-picker')
+
 {{-- Modales: Adjuntar (contacto, ubicación) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.attach-contact')
 @include('helpdesk::helpdesk.inbox.partials.modals.attach-location')

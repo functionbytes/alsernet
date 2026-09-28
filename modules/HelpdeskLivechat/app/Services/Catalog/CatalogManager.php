@@ -5,9 +5,11 @@ namespace Modules\HelpdeskLivechat\Services\Catalog;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
+use Modules\HelpdeskLivechat\Services\Catalog\Drivers\BridgeCatalogDriver;
 use Modules\HelpdeskLivechat\Services\Catalog\Drivers\FeedCatalogDriver;
 use Modules\HelpdeskLivechat\Services\Catalog\Drivers\NullCatalogDriver;
 use Modules\HelpdeskLivechat\Services\Catalog\Drivers\PrestashopCatalogDriver;
+use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 
 /**
  * Resuelve el driver de catálogo adecuado para un canal Web.
@@ -30,6 +32,12 @@ class CatalogManager
         // configurada (Setting livechat.catalog.prestashop, JSON), se lee el
         // catálogo real de la tienda directamente (modelo connector de Oct8ne).
         if (($web->cms_type ?? null) === 'prestashop') {
+            // Preferido: la API firmada del bridge (búsqueda y visibilidad de
+            // la propia tienda). La BD directa queda como alternativa.
+            if ($this->bridgeConfigured()) {
+                return new BridgeCatalogDriver(app(PrestashopContextService::class));
+            }
+
             $psConfig = $this->prestashopConfig();
             if ($psConfig !== null) {
                 return new PrestashopCatalogDriver($psConfig);
@@ -59,6 +67,13 @@ class CatalogManager
         }
 
         return is_array($raw) && ! empty($raw['database']) ? $raw : null;
+    }
+
+    private function bridgeConfigured(): bool
+    {
+        return class_exists(PrestashopContextService::class)
+            && (string) config('helpdeskprestashop.api_url', '') !== ''
+            && (string) config('helpdeskprestashop.webhook_secret', '') !== '';
     }
 
     /**

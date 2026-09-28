@@ -15,6 +15,7 @@ class HelpdeskLivechatPermissionsSeeder extends Seeder
             'helpdesk.livechat.settings.view' => 'Ver configuración de chat en vivo',
             'helpdesk.livechat.settings.update' => 'Actualizar configuración de chat en vivo',
             'helpdesk.pre-chat.manage' => 'Gestionar formulario previo al chat',
+            'helpdesk.livechat.triggers.manage' => 'Gestionar disparadores proactivos del chat',
         ];
 
         foreach ($permissions as $name => $description) {

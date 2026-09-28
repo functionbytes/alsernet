@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
-use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -55,7 +54,12 @@ class WidgetConversationService
                 ]
             );
 
-            $email = $data['email'] ?? null;
+            // Identidad verificada: la tienda firma el email del cliente logueado
+            // con el hmac_token del canal (identifier_hash). Solo entonces el
+            // email está probado y manda sobre lo que diga la sesión.
+            $verifiedEmail = $this->verifiedIdentityEmail($web, $data);
+
+            $email = $verifiedEmail ?? ($data['email'] ?? null);
             if (empty($email)) {
                 $email = 'guest-'.Str::random(8).'@anonymous.local';
             }
@@ -66,7 +70,9 @@ class WidgetConversationService
                 'language' => $data['language'] ?? 'es',
             ];
 
-            $customer = null;
+            $customer = $verifiedEmail !== null
+                ? Customer::firstOrCreate(['email' => $verifiedEmail], $customerDefaults)
+                : null;
 
             // La identidad se resuelve desde la sesión del widget del lado del
             // SERVIDOR (WidgetSession.customer_id), NUNCA desde el customer_id
@@ -77,7 +83,7 @@ class WidgetConversationService
                 ? WidgetSession::where('session_token', $data['widget_session_token'])->first()
                 : null;
 
-            if ($session && $session->customer_id) {
+            if (! $customer && $session && $session->customer_id) {
                 $customer = Customer::find($session->customer_id);
             }
 
@@ -97,7 +103,7 @@ class WidgetConversationService
             // Promociona el email placeholder de invitado al real cuando el
             // visitante se identifica — solo sobre el cliente de SU sesión,
             // nunca uno ajeno, y sin machacar un email ya real.
-            if (! empty($data['email']) && str_ends_with((string) $customer->email, '@anonymous.local')) {
+            if ($verifiedEmail === null && ! empty($data['email']) && str_ends_with((string) $customer->email, '@anonymous.local')) {
                 $customer->update([
                     'email' => $data['email'],
                     'name' => $data['name'] ?? $customer->name,
@@ -181,6 +187,9 @@ class WidgetConversationService
             $pubsubToken = Str::random(32);
 
             $metadata = ['widget_pubsub_token' => $pubsubToken];
+            if ($verifiedEmail !== null) {
+                $metadata['identity_verified'] = true;
+            }
             if (! empty($data['engagement_context']) && is_array($data['engagement_context'])) {
                 $metadata['engagement_context'] = $data['engagement_context'];
             }
@@ -251,10 +260,16 @@ class WidgetConversationService
         // write transaction and needlessly extended its lock lifetime.
         if (! $result['reused'] && ! empty($data['widget_session_token'])) {
             $sessionToken = (string) $data['widget_session_token'];
-            $req = request();
-            $referer = $req->header('Referer') ?? $req->header('Origin') ?? 'https://unknown';
 
-            $this->sessionService->heartbeat($sessionToken, $referer, null, $req);
+            // Solo si el widget aún no la creó: el Referer de una petición
+            // entre orígenes suele traer solo el dominio, y usarlo sobre una
+            // sesión existente pisaba la URL y el producto reales del visitante.
+            if (! WidgetSession::where('session_token', $sessionToken)->exists()) {
+                $req = request();
+                $referer = $req->header('Referer') ?? $req->header('Origin') ?? 'https://unknown';
+
+                $this->sessionService->heartbeat($sessionToken, $referer, null, $req);
+            }
 
             WidgetSession::query()
                 ->where('session_token', $sessionToken)
@@ -378,8 +393,13 @@ class WidgetConversationService
 
         $conversation->update($updates);
 
-        // Broadcast to widget + agent panel + sidebar (single event reaches both).
-        event(new MessageReceived($conversation, $item));
+        // Broadcast to agent panel + sidebar. MessageReceived (widget channel +
+        // "Nuevo mensaje del cliente" notification) is NOT dispatched here —
+        // ConversationItem::create() above already triggers it via
+        // ConversationItemLinkPreviewObserver, the single source of truth (see
+        // its docblock). Dispatching it here too doubled every notification
+        // sent to the agent for every widget message (bug: a burst of N
+        // customer messages piled up 2N identical toasts).
         broadcast(new ConversationMessageCreated(
             $item,
             $conversation->wasRecentlyCreated ?? false,
@@ -596,5 +616,27 @@ class WidgetConversationService
                 'last_seen_at' => now(),
             ],
         ]);
+    }
+
+    /**
+     * Email del cliente si la tienda lo firmó con el hmac_token del canal
+     * (identifier + identifier_hash, HMAC-SHA256). null si no viene firmado
+     * o la firma no cuadra: entonces el email es solo declarado por el
+     * visitante y no se usa para elegir el cliente por encima de la sesión.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function verifiedIdentityEmail(Web $web, array $data): ?string
+    {
+        $identifier = $data['identifier'] ?? null;
+        $hash = $data['identifier_hash'] ?? null;
+        $secret = (string) ($web->hmac_token ?? '');
+
+        if (! is_string($identifier) || ! is_string($hash) || $secret === ''
+            || filter_var($identifier, FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        return hash_equals(hash_hmac('sha256', $identifier, $secret), $hash) ? $identifier : null;
     }
 }

@@ -29,6 +29,16 @@ interface WidgetAppProps {
  */
 function WidgetScreens({ conversationId }: { conversationId?: string }) {
     const navigate = useNavigate();
+    const requestedRoute = useWidgetStore(state => state.requestedRoute);
+    const requestRoute = useWidgetStore(state => state.requestRoute);
+
+    // Navegación pedida desde fuera del router (disparadores proactivos).
+    useEffect(() => {
+        if (requestedRoute) {
+            navigate(requestedRoute);
+            requestRoute(null);
+        }
+    }, [requestedRoute, navigate, requestRoute]);
 
     return (
         <ErrorBoundary onReset={() => navigate('/')}>

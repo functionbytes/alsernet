@@ -5,11 +5,14 @@ import { WidgetContainer } from './WidgetContainer';
 import { registerGlobalApi } from './widget-identity';
 import { useWidgetStore, RecommendationProduct } from './widget-store';
 import { startHeartbeat } from './widget-session';
+import { startTriggers } from './widget-triggers';
 import './widget.css';
 
 // Register window.helpdeskWidgetIdentify() so the host site can update
 // visitor data (name, email, cart, orders) at any time — e.g. after login.
 registerGlobalApi();
+// El cliente logueado de la tienda llega con la cesta (widget-commerce →
+// endpoint de contexto de la tienda), no del HTML, que se cachea.
 
 // Expose window.HelpdeskWidget so the Engagement bridge (spa.blade.php)
 // and any host-site code can programmatically open/close/toggle the widget.
@@ -107,7 +110,19 @@ const root = ReactDOM.createRoot(rootElement);
 // Start visitor heartbeat immediately for external embed mode so page views
 // and session data are tracked regardless of whether the chat panel is open.
 if (isLauncher && !isPreview) {
+    // Clases en <html> para que la tienda coloque sus propios flotantes (p. ej.
+    // el botón de WhatsApp): hd-chat-launcher = lanzador visible,
+    // hd-chat-open = chat abierto.
+    const html = document.documentElement;
+    html.classList.add('hd-chat-launcher');
+    html.classList.toggle('hd-chat-open', useWidgetStore.getState().isOpen);
+    useWidgetStore.subscribe((state) => html.classList.toggle('hd-chat-open', state.isOpen));
+
     startHeartbeat();
+    // Disparadores proactivos del canal. Import estático a propósito: un chunk
+    // dinámico importa '../main.js' sin el ?v= del cargador y el navegador
+    // ejecutaría el widget dos veces (dos módulos distintos).
+    startTriggers().catch(() => {});
 }
 
 // NOTE: StrictMode is intentionally disabled. It double-mounts effects on

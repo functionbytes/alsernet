@@ -16,6 +16,7 @@ class HelpdeskAnalyticsPermissionsSeeder extends Seeder
         $permissions = [
             'helpdeskanalytics.view' => 'Ver analítica del helpdesk',
             'helpdeskanalytics.export' => 'Exportar analítica del helpdesk',
+            'helpdeskanalytics.chat-sales' => 'Ver ventas atribuidas al chat (importes de pedidos)',
         ];
 
         foreach ($permissions as $name => $description) {

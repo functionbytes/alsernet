@@ -81,6 +81,68 @@ export function getCustomAttributes(): Record<string, unknown> | null {
     return Object.keys(extras).length > 0 ? extras : null;
 }
 
+export interface HostCustomer {
+    email?: unknown;
+    name?: unknown;
+    customer_id?: unknown;
+    platform?: unknown;
+    identifier?: unknown;
+    identifier_hash?: unknown;
+}
+
+const HOST_SOURCE = 'host';
+
+/** Prueba de identidad de la última lectura de la tienda (solo en memoria). */
+let hostProof: { identifier: string; identifier_hash: string } | null = null;
+
+/**
+ * Prueba de identidad que firma la tienda (HMAC del email con el hmac_token
+ * del canal). El servidor solo da por verificado al cliente si cuadra.
+ */
+export function getHostIdentityProof(): { identifier: string; identifier_hash: string } | null {
+    return hostProof;
+}
+
+/**
+ * Aplica el cliente logueado que devuelve la tienda en su endpoint de contexto
+ * (no en el HTML, que pasa por la caché de página). null = invitado: si la
+ * identidad guardada venía de la tienda se borra — en un ordenador compartido
+ * el siguiente visitante no hereda el chat.
+ */
+export function applyHostIdentity(c: HostCustomer | null): void {
+    const current = getVisitorIdentity();
+
+    if (c === null) {
+        hostProof = null;
+        if (current?.source === HOST_SOURCE) {
+            clearVisitorIdentity();
+            ['livechat_customer_email', 'livechat_customer_name', 'livechat_customer_id'].forEach(k => {
+                try { localStorage.removeItem(k); } catch { /* best-effort */ }
+            });
+        }
+        return;
+    }
+    if (typeof c.email !== 'string' || c.email === '') {
+        return;
+    }
+
+    hostProof = typeof c.identifier === 'string' && typeof c.identifier_hash === 'string'
+        ? { identifier: c.identifier, identifier_hash: c.identifier_hash }
+        : null;
+
+    if (current?.email === c.email && String(current?.customer_id ?? '') === String(c.customer_id ?? '')) {
+        return;
+    }
+
+    setVisitorIdentity({
+        email: c.email,
+        name: typeof c.name === 'string' ? c.name : undefined,
+        customer_id: typeof c.customer_id === 'number' || typeof c.customer_id === 'string' ? c.customer_id : undefined,
+        platform: typeof c.platform === 'string' ? c.platform : undefined,
+        source: HOST_SOURCE,
+    });
+}
+
 /** Register the global API so the host site can identify the visitor. */
 export function registerGlobalApi(): void {
     (window as any).helpdeskWidgetIdentify = (identity: VisitorIdentity) => {

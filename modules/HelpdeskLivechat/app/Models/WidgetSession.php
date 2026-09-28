@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskLivechat\Database\Factories\WidgetSessionFactory;
 
@@ -29,11 +30,40 @@ class WidgetSession extends Model
         'country_code',
         'current_product',
         'cart_snapshot',
+        'cart_id',
         'cart_updated_at',
         'viewed_products',
+        'cart_token',
         'started_at',
         'last_activity_at',
     ];
+
+    /**
+     * El token de la cesta de invitado solo lo usa el servidor para llamar a
+     * la tienda; nunca sale en arrays/JSON (panel, broadcast, API).
+     */
+    protected $hidden = ['cart_token'];
+
+    /**
+     * Token firmado por la tienda para editar la cesta de invitado; se guarda
+     * cifrado en reposo.
+     */
+    protected function cartToken(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if ($value === null || $value === '') {
+                    return null;
+                }
+                try {
+                    return Crypt::decryptString($value);
+                } catch (\Throwable) {
+                    return null;
+                }
+            },
+            set: fn (?string $value): ?string => $value === null || $value === '' ? null : Crypt::encryptString($value),
+        );
+    }
 
     protected function casts(): array
     {

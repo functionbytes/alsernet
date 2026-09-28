@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Models\User;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Database\Events\ConnectionEstablished;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Cache;
@@ -52,6 +53,24 @@ abstract class TestCase extends BaseTestCase
         // impacto sobre una suite de cientos de tests y merece su propia
         // revisión, no un cambio de golpe.
         config(['cache.default' => 'array']);
+
+        // El singleton RateLimiter (throttle:*, ThrottleByWebsiteToken...) ya
+        // se resolvió durante el arranque con el store de entonces — el Redis
+        // REAL — y el config() de arriba no lo cambia: los contadores se
+        // compartían entre tests, entre corridas y con el entorno de
+        // desarrollo (429 intermitentes en WebsiteTokenRateLimitTest según
+        // cuántas peticiones hubiera hecho alguien en el último minuto).
+        // Se sustituye por uno sobre el store 'array', conservando los
+        // limitadores con nombre (RateLimiter::for('api'...)) que registraron
+        // los ServiceProvider al arrancar.
+        $oldLimiter = $this->app->make(RateLimiter::class);
+        $newLimiter = new RateLimiter($this->app['cache']->store('array'));
+        $namedLimiters = \Closure::bind(fn () => $this->limiters, $oldLimiter, RateLimiter::class)();
+        \Closure::bind(function () use ($namedLimiters) {
+            $this->limiters = $namedLimiters;
+        }, $newLimiter, RateLimiter::class)();
+        $this->app->instance(RateLimiter::class, $newLimiter);
+        \Illuminate\Support\Facades\RateLimiter::clearResolvedInstance(RateLimiter::class);
 
         // QUEUE_CONNECTION sufre el mismo desajuste y aquí SÍ hace falta: un
         // listener con ShouldQueue (ej. LogActivityOnConversationTagAdded)

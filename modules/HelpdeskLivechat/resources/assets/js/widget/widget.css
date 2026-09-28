@@ -3674,7 +3674,7 @@
 }
 
 .wgt-rec-item {
-    flex: 0 0 140px;
+    flex: 0 0 150px;
     scroll-snap-align: start;
     display: flex;
     flex-direction: column;
@@ -3749,6 +3749,89 @@
     align-items: center;
     gap: 3px;
     margin-top: 2px;
+}
+
+/* Live commerce: tarjeta = zona que abre la ficha + acciones (Añadir / Elegir opciones) */
+.wgt-rec-open {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+}
+
+.wgt-rec-open:disabled {
+    cursor: default;
+}
+
+.wgt-rec-stock {
+    font-size: 11px;
+    color: var(--wgt-gray-500);
+}
+
+.wgt-rec-actions {
+    padding: 0 8px 8px;
+    margin-top: auto;
+}
+
+.wgt-rec-add,
+.wgt-rec-options {
+    width: 100%;
+    min-height: 30px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.wgt-rec-add {
+    border: 0;
+    color: #fff;
+}
+
+.wgt-rec-add:disabled {
+    opacity: .7;
+    cursor: progress;
+}
+
+.wgt-rec-add.is-added {
+    background: var(--wgt-gray-100);
+    color: var(--wgt-gray-800);
+}
+
+.wgt-rec-options {
+    border: 1px solid var(--wgt-border);
+    background: var(--wgt-white);
+    color: var(--wgt-gray-800);
+}
+
+.wgt-rec-options:hover {
+    background: var(--wgt-gray-100);
+}
+
+.wgt-rec-error {
+    font-size: 11px;
+    color: #b91c1c;
+    margin: 4px 0 0;
+    line-height: 1.3;
+}
+
+.wgt-rec-checkout {
+    display: block;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: var(--wgt-radius);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
 }
 
 /* --- Engagement segment banners --- */

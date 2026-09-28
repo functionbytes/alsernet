@@ -6,6 +6,7 @@ use Modules\HelpdeskLivechat\Http\Controllers\Api\LivestreamController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WebRtcSignalingController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WidgetConversationController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WidgetSessionController;
+use Modules\HelpdeskLivechat\Http\Controllers\Api\WidgetTriggersApiController;
 use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetController as WidgetPageController;
 use Modules\HelpdeskLivechat\Http\Middleware\ThrottleByWebsiteToken;
 use Modules\HelpdeskTickets\Http\Controllers\Api\WidgetTicketsController;
@@ -89,6 +90,11 @@ Route::middleware('throttle:60,1,widget-conv-read')->group(function () {
 // Email transcript — 5 per minute (anti-spam)
 Route::middleware('throttle:5,1,widget-transcript')->group(function () {
     Route::post('/conversation/{id}/email-transcript', [WidgetConversationController::class, 'emailTranscript'])->name('conversation.email-transcript');
+});
+
+// Disparadores proactivos (live commerce) — 60 por minuto, cupo propio.
+Route::middleware('throttle:60,1,widget-triggers')->group(function () {
+    Route::get('/triggers', [WidgetTriggersApiController::class, 'index'])->name('triggers');
 });
 
 // Heartbeat — 120 per minute (frequent polling)

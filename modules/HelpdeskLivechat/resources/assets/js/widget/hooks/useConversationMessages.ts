@@ -62,6 +62,11 @@ export interface CarouselProduct {
     currency?: string;
     image_url?: string;
     url?: string;
+    // Live commerce (catálogo): combinación por defecto, si tiene
+    // combinaciones (entonces se abre la ficha) y si se puede comprar.
+    id_product_attribute?: number;
+    has_combinations?: boolean;
+    available?: boolean;
 }
 
 export interface Message {
@@ -93,6 +98,9 @@ function parseCarouselProducts(raw: any): CarouselProduct[] | undefined {
             currency: p.currency ?? undefined,
             image_url: p.image_url ?? p.image ?? undefined,
             url: p.url ?? undefined,
+            id_product_attribute: typeof p.id_product_attribute === 'number' ? p.id_product_attribute : undefined,
+            has_combinations: typeof p.has_combinations === 'boolean' ? p.has_combinations : undefined,
+            available: typeof p.available === 'boolean' ? p.available : undefined,
         }));
 }
 
@@ -317,6 +325,11 @@ export function useConversationMessages({
                 if (!isUpdateOnly && event.id) {
                     scheduleMarkAsRead(String(event.id));
                 }
+            })
+            // Live commerce: el agente o el bot añadieron algo a la cesta desde
+            // el servidor → releer cesta y refrescar el minicarrito de la tienda.
+            .listen('.cart.changed', () => {
+                import('../widget-commerce').then((m) => m.onServerCartChange()).catch(() => {});
             })
             .listen('.language.detected', (event: any) => {
                 const lang = event?.language;
