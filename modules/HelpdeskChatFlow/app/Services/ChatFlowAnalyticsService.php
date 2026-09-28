@@ -9,7 +9,7 @@ use Modules\HelpdeskChatFlow\Models\ChatFlowExecution;
 /**
  * Analytics blocks for the flow dashboard (summary, CSAT, AI resolution,
  * drop-off per node and A/B comparison). Extracted verbatim from
- * ChatFlowsController so the controller only orchestrates range + cache.
+ * ChatFlowAnalyticsController so the controller only orchestrates range + cache.
  */
 class ChatFlowAnalyticsService
 {
@@ -147,24 +147,16 @@ class ChatFlowAnalyticsService
     {
         $empty = ['answered' => 0, 'average' => 0.0, 'satisfied' => 0, 'rate' => 0.0, 'max' => 5];
 
-        $csatNode = collect($chatFlow->nodes ?? [])->firstWhere('type', 'csat');
-        $scale = $csatNode['data']['scale'] ?? '1-5';
+        [$max, $threshold, $thumbs] = $this->resolveCsatScale($chatFlow);
 
-        [$max, $threshold, $thumbs] = match ($scale) {
-            'thumbs' => [2, 1, true],
-            '1-10' => [10, 8, false],
-            default => [5, 4, false],
-        };
-
-        // Project only the score out of the JSON context (instead of pulling the
-        // whole context blob into PHP) and bound it to the window. The score may
-        // be stored as a free-text answer when the customer didn't reply with a
-        // number, so the numeric guard stays in PHP.
+        // `csat_score_value` is a VIRTUAL column over context->csat_score, covered
+        // by the (chat_flow_id, started_at, csat_score_value) index, so the JSON
+        // blob is never read. The score may be stored as a free-text answer when
+        // the customer didn't reply with a number, so the numeric guard stays in PHP.
         $scores = $chatFlow->sessions()
             ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->whereNotNull('context->csat_score')
-            ->selectRaw("JSON_UNQUOTE(JSON_EXTRACT(context, '$.csat_score')) as csat_value")
-            ->pluck('csat_value')
+            ->whereNotNull('csat_score_value')
+            ->pluck('csat_score_value')
             ->filter(fn ($v) => is_numeric($v))
             ->map(fn ($v) => (int) $v)
             ->filter(fn ($v) => $v > 0);
@@ -187,6 +179,69 @@ class ChatFlowAnalyticsService
     }
 
     /**
+     * Weekly CSAT trend: for every ISO week with at least one numeric answer,
+     * the number of responses, average score and satisfaction rate — same
+     * scale/threshold logic as buildCsatMetrics(). Bucketed in PHP over the
+     * rows selected from the (chat_flow_id, started_at, csat_score_value)
+     * index, since MariaDB week-bucketing in SQL would need to run per driver.
+     *
+     * @return array<int, array{week: string, answered: int, average: float, rate: float}>
+     */
+    public function buildCsatTrend(ChatFlow $chatFlow, ?Carbon $from = null): array
+    {
+        [, $threshold, $thumbs] = $this->resolveCsatScale($chatFlow);
+
+        $scores = $chatFlow->sessions()
+            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
+            ->whereNotNull('csat_score_value')
+            ->get(['started_at', 'csat_score_value'])
+            ->filter(fn ($session) => is_numeric($session->csat_score_value))
+            ->map(fn ($session) => [
+                'week' => $session->started_at->copy()->startOfWeek()->toDateString(),
+                'value' => (int) $session->csat_score_value,
+            ])
+            ->filter(fn ($row) => $row['value'] > 0);
+
+        return $scores
+            ->groupBy('week')
+            ->map(function ($rows, $week) use ($threshold, $thumbs) {
+                $values = $rows->pluck('value');
+                $satisfied = $thumbs
+                    ? $values->filter(fn ($v) => $v === 1)->count()
+                    : $values->filter(fn ($v) => $v >= $threshold)->count();
+
+                return [
+                    'week' => $week,
+                    'answered' => $values->count(),
+                    'average' => round($values->avg(), 1),
+                    'rate' => round($satisfied / $values->count() * 100, 1),
+                ];
+            })
+            ->sortKeys()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * [max, satisfied threshold, is-thumbs-scale] for the flow's first `csat`
+     * node, so buildCsatMetrics() and buildCsatTrend() agree on what counts as
+     * a satisfied answer.
+     *
+     * @return array{0: int, 1: int, 2: bool}
+     */
+    private function resolveCsatScale(ChatFlow $chatFlow): array
+    {
+        $csatNode = collect($chatFlow->nodes ?? [])->firstWhere('type', 'csat');
+        $scale = $csatNode['data']['scale'] ?? '1-5';
+
+        return match ($scale) {
+            'thumbs' => [2, 1, true],
+            '1-10' => [10, 8, false],
+            default => [5, 4, false],
+        };
+    }
+
+    /**
      * Drop-off per node: how many sessions reached each node, and how many got
      * stuck/abandoned there (their last node) without completing the flow.
      *
@@ -194,24 +249,22 @@ class ChatFlowAnalyticsService
      */
     public function buildDropOff(ChatFlow $chatFlow, ?Carbon $from = null): array
     {
-        $sessionIds = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->pluck('id');
+        $sessionsInWindow = fn () => $chatFlow->sessions()
+            ->when($from, fn ($q) => $q->where('started_at', '>=', $from));
 
-        if ($sessionIds->isEmpty()) {
+        if (! $sessionsInWindow()->exists()) {
             return [];
         }
 
         // How many distinct sessions executed each node.
         $reached = ChatFlowExecution::query()
-            ->whereIn('session_id', $sessionIds)
+            ->whereIn('session_id', $sessionsInWindow()->select('id'))
             ->selectRaw('node_id, count(distinct session_id) as total')
             ->groupBy('node_id')
             ->pluck('total', 'node_id');
 
         // Sessions that ended without completing — where did they stop?
-        $dropped = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
+        $dropped = $sessionsInWindow()
             ->whereIn('status', ['abandoned', 'failed'])
             ->whereNotNull('current_node_id')
             ->selectRaw('current_node_id, count(*) as total')
@@ -236,6 +289,80 @@ class ChatFlowAnalyticsService
         })
             ->filter(fn ($row) => $row['reached'] > 0 || $row['dropped'] > 0)
             ->sortByDesc('dropped')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Per-node reliability/performance: for each node run by this flow's
+     * sessions in the window, executions, average/max duration and failure
+     * rate. Sorted slowest-first so hotspots surface immediately.
+     *
+     * @return array<int, array{node_id: string, label: string, node_type: string, executions: int, avg_ms: float, max_ms: int, failures: int, failure_rate: float}>
+     */
+    public function buildNodeLatency(ChatFlow $chatFlow, ?Carbon $from = null): array
+    {
+        $sessionsInWindow = $chatFlow->sessions()
+            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
+            ->select('id');
+
+        $rows = ChatFlowExecution::query()
+            ->whereIn('session_id', $sessionsInWindow)
+            ->selectRaw(
+                'node_id, node_type, count(*) as executions, avg(duration_ms) as avg_ms, '.
+                'max(duration_ms) as max_ms, sum(case when status = ? then 1 else 0 end) as failures',
+                ['failed']
+            )
+            ->groupBy('node_id', 'node_type')
+            ->get();
+
+        $nodes = collect($chatFlow->nodes ?? [])->keyBy('id');
+
+        return $rows
+            ->map(function ($row) use ($nodes) {
+                $executions = (int) $row->executions;
+                $failures = (int) $row->failures;
+
+                return [
+                    'node_id' => $row->node_id,
+                    'label' => $nodes[$row->node_id]['label'] ?? $row->node_type,
+                    'node_type' => $row->node_type,
+                    'executions' => $executions,
+                    'avg_ms' => round((float) $row->avg_ms, 1),
+                    'max_ms' => (int) $row->max_ms,
+                    'failures' => $failures,
+                    'failure_rate' => $executions > 0 ? round($failures / $executions * 100, 1) : 0.0,
+                ];
+            })
+            ->sortByDesc('avg_ms')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Flow-level alert: `http_request` nodes whose failure rate breaches the
+     * configured threshold, with enough executions to be meaningful, so a
+     * single flaky webhook surfaces above the raw per-node latency table.
+     *
+     * @param  array<int, array{node_id: string, label: string, node_type: string, executions: int, avg_ms: float, max_ms: int, failures: int, failure_rate: float}>  $nodeLatency
+     * @return array<int, array{node_id: string, label: string, executions: int, failures: int, failure_rate: float}>
+     */
+    public function buildHttpFailureAlerts(array $nodeLatency): array
+    {
+        $minExecutions = (int) config('helpdeskchatflow.analytics.http_failure_alert_min', 5);
+        $thresholdRate = (float) config('helpdeskchatflow.analytics.http_failure_alert_rate', 0.2) * 100;
+
+        return collect($nodeLatency)
+            ->filter(fn ($node) => $node['node_type'] === 'http_request')
+            ->filter(fn ($node) => $node['executions'] >= $minExecutions)
+            ->filter(fn ($node) => $node['failure_rate'] >= $thresholdRate)
+            ->map(fn ($node) => [
+                'node_id' => $node['node_id'],
+                'label' => $node['label'],
+                'executions' => $node['executions'],
+                'failures' => $node['failures'],
+                'failure_rate' => $node['failure_rate'],
+            ])
             ->values()
             ->all();
     }

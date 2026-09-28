@@ -4,13 +4,42 @@ namespace Modules\HelpdeskChatFlow\Services;
 
 use Illuminate\Support\Str;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBranchConditions;
-use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
+use Modules\HelpdeskChatFlow\Services\Simulation\SimulatedChatFlowSession;
+use Modules\HelpdeskChatFlow\Services\Simulation\SimulatedConversation;
 
+/**
+ * Editor test panel. What the customer sees is rendered by the SAME node
+ * handlers production uses (HANDLER_RENDERED_TYPES), run against an in-memory
+ * session/conversation. Nodes with external side effects (AI, order lookup,
+ * HTTP, tickets, tags, handoff…) are simulated and annotated instead.
+ */
 class ChatFlowTestSimulator
 {
-    use EvaluatesBranchConditions, EvaluatesBusinessHours, FormatsNumberedOptions, ValidatesUserInput;
+    use EvaluatesBranchConditions, FormatsNumberedOptions, ValidatesUserInput;
+
+    /** Rendered by the production NodeHandler (no side effects outside the conversation). */
+    private const HANDLER_RENDERED_TYPES = ['message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'csat', 'rich_message', 'send_file', 'business_hours'];
+
+    /** Simulated here: routing, or nodes whose real effect must not happen in a test. */
+    private const SIMULATED_TYPES = ['start', 'branches', 'branchItem', 'delay', 'go_to_step', 'action', 'add_tag', 'set_attribute', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'document_link', 'create_ticket', 'transfer', 'close', 'end'];
+
+    public function __construct(
+        private readonly ?NodeHandlerRegistry $handlers = null,
+    ) {}
+
+    /**
+     * Node types the simulator knows how to run (a type outside this list is
+     * skipped with a visible warning instead of silently ending the test).
+     *
+     * @return array<int, string>
+     */
+    public static function supportedTypes(): array
+    {
+        return [...self::HANDLER_RENDERED_TYPES, ...self::SIMULATED_TYPES];
+    }
 
     private const WAIT_TYPES = ['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat'];
 
@@ -141,7 +170,8 @@ class ChatFlowTestSimulator
             $isRichWait = $node['type'] === 'rich_message' && ! empty($node['data']['options']);
 
             if (in_array($node['type'], self::WAIT_TYPES) || $isRichWait) {
-                $messages = array_merge($messages, $this->buildWaitMessages($session, $node));
+                [$waitMessages, , $session] = $this->renderWithHandler($session, $node);
+                $messages = array_merge($messages, $waitMessages, $this->waitHints($session, $node));
                 break;
             }
 
@@ -162,19 +192,22 @@ class ChatFlowTestSimulator
 
     private function executeNode(array $session, array $node): array
     {
+        if (in_array($node['type'], self::HANDLER_RENDERED_TYPES, true)) {
+            [$messages, $nextId, $session] = $this->renderWithHandler($session, $node);
+
+            if ($node['type'] === 'business_hours') {
+                $label = ($session['context']['within_business_hours'] ?? false) ? 'dentro de horario' : 'fuera de horario';
+                $messages[] = ['type' => 'bot', 'text' => "🕒 [Horario de atención: {$label}]", 'system' => true];
+            }
+
+            return [$messages, $nextId, $session];
+        }
+
         $messages = [];
         $nextId = null;
 
         switch ($node['type']) {
             case 'start':
-                $nextId = $this->firstChildId($session, $node['id']);
-                break;
-
-            case 'message':
-                $text = $this->interpolate($node['data']['text'] ?? '', $session['context']);
-                if ($text) {
-                    $messages[] = ['type' => 'bot', 'text' => $text];
-                }
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
 
@@ -251,17 +284,21 @@ class ChatFlowTestSimulator
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
 
-            case 'business_hours':
-                $within = $this->isWithinBusinessHours($node['data'] ?? []);
-                $session['context']['within_business_hours'] = $within;
-                $label = $within ? 'dentro de horario' : 'fuera de horario';
-                $messages[] = ['type' => 'bot', 'text' => "🕒 [Horario de atención: {$label}]", 'system' => true];
+            case 'document_link':
+                // The real node reads the conversation's document request (HelpdeskDocument).
+                $session['context'] += ['doc_upload_url' => 'https://ejemplo.test/documentos?token=SIMULACION', 'doc_missing' => '', 'doc_found' => ''];
+                $messages[] = ['type' => 'bot', 'text' => '📄 [Enlace al portal de documentos: {{doc_upload_url}} se genera al ejecutar]', 'system' => true];
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
 
-            case 'rich_message':
-                // Without options it is informational and continues; with options it waits (handled in runFrom).
-                $messages = array_merge($messages, $this->buildRichMessages($session, $node));
+            case 'create_ticket':
+                // Never create a real ticket from the test panel.
+                $number = 'SIM-0001';
+                $session['context']['created_ticket_number'] ??= $number;
+                $subject = $this->interpolate((string) ($node['data']['subject'] ?? ''), $session['context']);
+                $messages[] = ['type' => 'bot', 'text' => '🎫 [Se crearía un ticket'.($subject !== '' ? ': '.e($subject) : '').']', 'system' => true];
+                $confirmation = $node['data']['confirmation'] ?? 'He creado el ticket :number para dar seguimiento a tu solicitud.';
+                $messages[] = ['type' => 'bot', 'text' => e(str_replace([':number', '{{ticket_number}}'], $number, $confirmation))];
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
 
@@ -272,69 +309,91 @@ class ChatFlowTestSimulator
             case 'branchItem':
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
+
+            default:
+                // A type the simulator doesn't know (e.g. contributed by another
+                // module): say so and keep going instead of silently ending.
+                $messages[] = ['type' => 'bot', 'text' => '⚠️ [Nodo «'.e($node['type']).'» no simulable: se omite en modo prueba]', 'system' => true];
+                $nextId = $this->firstChildId($session, $node['id']);
         }
 
         return [$messages, $nextId, $session];
     }
 
-    private function buildWaitMessages(array $session, array $node): array
+    /**
+     * Runs the production NodeHandler for this node against an in-memory
+     * session/conversation and turns what it posted into test-panel messages.
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: ?string, 2: array<string, mixed>}
+     */
+    private function renderWithHandler(array $session, array $node): array
+    {
+        $conversation = new SimulatedConversation;
+        $simSession = SimulatedChatFlowSession::for($session['nodes'], $session['context'] ?? [], $conversation);
+
+        $handler = ($this->handlers ?? app(NodeHandlerRegistry::class))->for($node['type']);
+        $nextId = $handler?->handle($node, $simSession, $conversation);
+
+        $session['context'] = $simSession->context ?? [];
+
+        return [$this->toPanelMessages($conversation->takeCaptured()), $nextId, $session];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items  Captured bot message payloads.
+     * @return array<int, array<string, mixed>>
+     */
+    private function toPanelMessages(array $items): array
     {
         $messages = [];
-        $data = $node['data'] ?? [];
 
-        switch ($node['type']) {
-            case 'collect_input':
-                $text = $this->interpolate($data['question'] ?? '', $session['context']);
-                if ($text) {
-                    $messages[] = ['type' => 'bot', 'text' => $text];
-                }
-                break;
+        foreach ($items as $item) {
+            $meta = $item['metadata'] ?? [];
 
-            case 'quick_replies':
-                $header = $this->interpolate($data['text'] ?? 'Selecciona una opción:', $session['context']);
-                $options = array_values($data['options'] ?? []);
-                $messages[] = ['type' => 'bot', 'text' => $options ? $this->numberedPrompt($header, $options) : $header];
-                break;
+            foreach ($meta['cards'] ?? [] as $card) {
+                $messages[] = ['type' => 'bot', 'text' => '🖼️ '.e(trim(($card['title'] ?? '').' '.($card['image_url'] ?? ''))), 'system' => true];
+            }
+            if (! empty($meta['card']['image_url'])) {
+                $messages[] = ['type' => 'bot', 'text' => '🖼️ '.e($meta['card']['image_url']), 'system' => true];
+            }
+            if (! empty($meta['attachment']['url'])) {
+                $messages[] = ['type' => 'bot', 'text' => '📎 ['.e($meta['attachment']['type'] ?? 'document').': '.e($meta['attachment']['url']).']', 'system' => true];
+            }
 
-            case 'csat':
-                $question = $this->interpolate($data['question'] ?? '¿Cómo valorarías nuestra atención?', $session['context']);
-                $options = $this->simulatorCsatOptions($data);
-                $messages[] = ['type' => 'bot', 'text' => $this->numberedPrompt($question, $options)];
-                break;
-
-            case 'rich_message':
-                $messages = array_merge($messages, $this->buildRichMessages($session, $node));
-                break;
-
-            case 'identify_customer':
-                $q = $this->interpolate(
-                    $data['question'] ?? 'Para identificarte, escribe tu email, teléfono o documento.',
-                    $session['context']
-                );
-                $messages[] = ['type' => 'bot', 'text' => $q];
-                $messages[] = ['type' => 'bot', 'text' => '💡 Escribe <strong>test</strong> para simular identificación exitosa, o cualquier otro texto para simular fallo.', 'system' => true];
-                break;
-
-            case 'request_documents':
-                $required = $data['doc_types'] ?? [];
-                $uploadKey = '_doc_uploads_'.$node['id'];
-                $uploaded = $session['context'][$uploadKey] ?? [];
-                $pending = array_values(array_diff($required, $uploaded));
-                $introText = $this->interpolate($data['text'] ?? 'Por favor sube los siguientes documentos:', $session['context']);
-
-                $messages[] = ['type' => 'bot', 'text' => $introText];
-
-                if (! empty($pending)) {
-                    $chips = array_map(fn ($t) => [
-                        'key' => $t,
-                        'label' => '📎 '.(config('helpdeskchatflow.document_labels', [])[$t] ?? $t),
-                    ], $pending);
-                    $messages[] = ['type' => 'doc_upload_chips', 'chips' => array_values($chips)];
-                }
-                break;
+            // The panel inserts bot text as HTML: escape what the flow produced.
+            $body = trim((string) ($item['body'] ?? ''));
+            if ($body !== '') {
+                $messages[] = ['type' => 'bot', 'text' => nl2br(e($body), false)];
+            }
         }
 
         return $messages;
+    }
+
+    /**
+     * Test-panel-only helpers shown under a waiting node's prompt.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function waitHints(array $session, array $node): array
+    {
+        if ($node['type'] === 'identify_customer') {
+            return [['type' => 'bot', 'text' => '💡 Escribe <strong>test</strong> para simular identificación exitosa, o cualquier otro texto para simular fallo.', 'system' => true]];
+        }
+
+        if ($node['type'] === 'request_documents') {
+            $uploaded = $session['context']['_doc_uploads_'.$node['id']] ?? [];
+            $pending = array_values(array_diff($node['data']['doc_types'] ?? [], $uploaded));
+
+            if ($pending !== []) {
+                return [['type' => 'doc_upload_chips', 'chips' => array_map(fn ($t) => [
+                    'key' => $t,
+                    'label' => '📎 '.(config('helpdeskchatflow.document_labels', [])[$t] ?? $t),
+                ], $pending)]];
+            }
+        }
+
+        return [];
     }
 
     private function processInput(array $session, array $node, string $userMessage): array
@@ -633,50 +692,6 @@ class ChatFlowTestSimulator
         }
 
         return [$messages, $session];
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function simulatorCsatOptions(array $data): array
-    {
-        if (! empty($data['options']) && is_array($data['options'])) {
-            return array_values($data['options']);
-        }
-
-        return match ($data['scale'] ?? '1-5') {
-            'thumbs' => ['👍 Sí', '👎 No'],
-            '1-10' => array_map('strval', range(1, 10)),
-            default => ['⭐ Muy malo', '⭐⭐ Malo', '⭐⭐⭐ Normal', '⭐⭐⭐⭐ Bueno', '⭐⭐⭐⭐⭐ Excelente'],
-        };
-    }
-
-    private function buildRichMessages(array $session, array $node): array
-    {
-        $data = $node['data'] ?? [];
-        $ctx = $session['context'];
-        $title = $this->interpolate($data['title'] ?? '', $ctx);
-        $subtitle = $this->interpolate($data['subtitle'] ?? '', $ctx);
-        $imageUrl = $data['image_url'] ?? null;
-        $options = array_values($data['options'] ?? []);
-
-        $messages = [];
-
-        if ($imageUrl) {
-            $messages[] = ['type' => 'bot', 'text' => '🖼️ '.$imageUrl, 'system' => true];
-        }
-
-        $body = implode("\n", array_filter([$title, $subtitle]));
-
-        if ($options) {
-            $body = $this->numberedPrompt($body, $options);
-        }
-
-        if ($body !== '') {
-            $messages[] = ['type' => 'bot', 'text' => $body];
-        }
-
-        return $messages;
     }
 
     // ─── Branches ──────────────────────────────────────────────────────────────

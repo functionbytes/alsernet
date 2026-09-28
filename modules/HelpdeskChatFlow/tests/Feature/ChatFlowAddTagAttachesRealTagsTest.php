@@ -7,17 +7,11 @@ use Mockery;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
-use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
-use Modules\HelpdeskChatFlow\Services\ChatFlowAiResponder;
-use Modules\HelpdeskChatFlow\Services\ChatFlowDocumentLink;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHandoffSummary;
-use Modules\HelpdeskChatFlow\Services\ChatFlowHttpRequester;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
-use Modules\HelpdeskChatFlow\Services\ChatFlowNodeExecutor;
-use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
+use Modules\HelpdeskChatFlow\Services\Nodes\ConversationNodeHandler;
 use Modules\HelpdeskChatFlow\Tests\Support\InMemoryChatFlowSession;
-use ReflectionMethod;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 /**
  * Regresión: el nodo `add_tag` y la opción `add_tag` del nodo `action` solo
@@ -31,25 +25,10 @@ class ChatFlowAddTagAttachesRealTagsTest extends TestCase
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
-    private function executor(): ChatFlowNodeExecutor
+    private function handle(array $args): ?string
     {
-        return new ChatFlowNodeExecutor(
-            Mockery::mock(ChatFlowAiResponder::class),
-            Mockery::mock(ChatFlowOrderLookup::class),
-            new ChatFlowHttpRequester,
-            new ChatFlowLocalizer(null),
-            Mockery::mock(ChatFlowAgentService::class),
-            Mockery::mock(ChatFlowHandoffSummary::class),
-            new ChatFlowDocumentLink(null),
-        );
-    }
-
-    private function invoke(string $method, array $args): mixed
-    {
-        $m = new ReflectionMethod(ChatFlowNodeExecutor::class, $method);
-        $m->setAccessible(true);
-
-        return $m->invoke($this->executor(), ...$args);
+        return (new ConversationNodeHandler(new ChatFlowLocalizer(null), Mockery::mock(ChatFlowHandoffSummary::class)))
+            ->handle(...$args);
     }
 
     private function newSession(): InMemoryChatFlowSession
@@ -64,7 +43,7 @@ class ChatFlowAddTagAttachesRealTagsTest extends TestCase
 
         $node = ['id' => 'tag1', 'type' => 'add_tag', 'data' => ['tags' => ['VIP', 'Reclamación']]];
 
-        $this->invoke('executeAddTag', [$node, $this->newSession(), $conversation]);
+        $this->handle([$node, $this->newSession(), $conversation]);
 
         $this->assertSame(2, $conversation->conversationTags()->count());
         $this->assertDatabaseHas('helpdesk_conversation_tags', ['name' => 'VIP'], 'helpdesk');
@@ -79,8 +58,8 @@ class ChatFlowAddTagAttachesRealTagsTest extends TestCase
 
         $node = ['id' => 'tag1', 'type' => 'add_tag', 'data' => ['tags' => ['VIP']]];
 
-        $this->invoke('executeAddTag', [$node, $this->newSession(), $conversation]);
-        $this->invoke('executeAddTag', [$node, $this->newSession(), $conversation]);
+        $this->handle([$node, $this->newSession(), $conversation]);
+        $this->handle([$node, $this->newSession(), $conversation]);
 
         $this->assertSame(1, $conversation->conversationTags()->count());
     }
@@ -92,7 +71,7 @@ class ChatFlowAddTagAttachesRealTagsTest extends TestCase
 
         $node = ['id' => 'act1', 'type' => 'action', 'data' => ['action_type' => 'add_tag', 'tags' => ['Urgente']]];
 
-        $this->invoke('executeAction', [$node, $this->newSession(), $conversation]);
+        $this->handle([$node, $this->newSession(), $conversation]);
 
         $this->assertSame(1, $conversation->conversationTags()->count());
         $this->assertDatabaseHas('helpdesk_conversation_tags', ['name' => 'Urgente'], 'helpdesk');

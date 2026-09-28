@@ -41,6 +41,8 @@ trait ResolvesVisitorContext
             'current_product' => is_array($session->current_product) ? $session->current_product : null,
             'cart' => is_array($session->cart_snapshot) ? $session->cart_snapshot : null,
             'viewed_products' => is_array($session->viewed_products) ? $session->viewed_products : [],
+            // Página actual: los casos de la librería de prompts pueden filtrar por URL.
+            'page_url' => is_string($session->current_url) ? $session->current_url : null,
         ];
     }
 }

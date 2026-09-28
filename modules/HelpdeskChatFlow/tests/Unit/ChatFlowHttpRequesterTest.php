@@ -4,7 +4,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Illuminate\Support\Facades\Http;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHttpRequester;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowHttpRequesterTest extends TestCase
 {

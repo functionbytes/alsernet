@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskChatFlow\Models\ChatFlowExecution;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class PruneEndedSessionsCommandTest extends TestCase
 {

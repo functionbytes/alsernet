@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
+use Modules\HelpdeskAiPrompts\Services\PromptComposer;
+use Modules\HelpdeskAiPrompts\Services\PromptRunRecorder;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 
 /**
@@ -68,6 +70,101 @@ class ChatFlowAgentService
         array $history = [],
         ?array $visitorContext = null,
     ): array {
+        $startedAt = microtime(true);
+        $composed = $this->composePrompt($question, $context, $data, $locale, $visitorContext);
+
+        // Casos que siempre pasan a una persona (p. ej. quejas): sin llamar al modelo.
+        if ($composed !== null && ($composed['escalation'] ?? '') === 'always') {
+            $result = [
+                'action' => 'escalate',
+                'text' => trim((string) ($composed['escalation_message'] ?? '')) ?: (string) ($data['fallback_message'] ?? 'Te paso con un agente.'),
+                'used_tools' => [],
+                'products' => [],
+            ];
+        } else {
+            $result = $this->runAgent($question, $context, $data, $locale, $catalog, $cart, $history, $visitorContext, $composed);
+        }
+
+        $result['case'] = $composed['case_key'] ?? null;
+        $this->recordRun($context, $composed, $result, $startedAt);
+
+        return $result;
+    }
+
+    /**
+     * Prompt de la librería (HelpdeskAiPrompts): base + caso detectado +
+     * conocimiento. Solo si el nodo lo pide (use_prompt_library) y el módulo
+     * está instalado; si no, se usan las instrucciones del nodo como siempre.
+     *
+     * @param  array<string,mixed>  $context
+     * @param  array<string,mixed>  $data
+     * @param  array<string,mixed>|null  $visitorContext
+     * @return array<string,mixed>|null
+     */
+    private function composePrompt(string $question, array $context, array $data, string $locale, ?array $visitorContext): ?array
+    {
+        if (! ($data['use_prompt_library'] ?? false) || ! class_exists(PromptComposer::class)) {
+            return null;
+        }
+
+        try {
+            return app(PromptComposer::class)->compose($question, [
+                'channel' => $data['_channel'] ?? ($visitorContext !== null ? 'web' : null),
+                'locale' => strtolower(substr($locale, 0, 2)),
+                'page_url' => $visitorContext['page_url'] ?? null,
+                'logged_in' => $this->isVerifiedCustomer($context),
+                'now' => now(),
+            ], $data, $data['_forced_case'] ?? null, $data['_draft_case'] ?? null);
+        } catch (\Throwable $e) {
+            Log::warning('ChatFlowAgentService: prompt library failed, using node instructions', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Métricas por caso (resolución, derivación, herramientas) para el panel
+     * de prompts. Las pruebas del panel (trace "test-*") no cuentan.
+     *
+     * @param  array<string,mixed>  $context
+     * @param  array<string,mixed>|null  $composed
+     * @param  array<string,mixed>  $result
+     */
+    private function recordRun(array $context, ?array $composed, array $result, float $startedAt): void
+    {
+        $traceId = (string) ($context['_trace_id'] ?? '');
+        if ($composed === null || str_starts_with($traceId, 'test-') || ! class_exists(PromptRunRecorder::class)) {
+            return;
+        }
+
+        try {
+            app(PromptRunRecorder::class)->record(
+                $traceId !== '' ? $traceId : null,
+                $composed['case_key'] ?? null,
+                (string) ($composed['routed_by'] ?? 'none'),
+                (string) ($result['action'] ?? 'respond'),
+                array_values(array_unique($result['used_tools'] ?? [])),
+                (int) round((microtime(true) - $startedAt) * 1000),
+            );
+        } catch (\Throwable $e) {
+            Log::warning('ChatFlowAgentService: prompt run not recorded', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @param  array<string,mixed>|null  $composed
+     */
+    private function runAgent(
+        string $question,
+        array $context,
+        array $data,
+        string $locale,
+        ?object $catalog,
+        ?object $cart,
+        array $history,
+        ?array $visitorContext,
+        ?array $composed,
+    ): array {
         $apiKey = config('services.openai.key', '');
         if (empty($apiKey) || trim($question) === '') {
             return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => [], 'products' => []];
@@ -83,8 +180,14 @@ class ChatFlowAgentService
         $shown = [];
 
         $tools = $this->buildTools($data, $catalog !== null, $cart !== null, $this->isVerifiedCustomer($context));
+        // El caso limita las herramientas (p. ej. devoluciones no añade a la cesta);
+        // responder y derivar están siempre disponibles.
+        if ($composed !== null && is_array($composed['allowed_tools'] ?? null)) {
+            $allowed = array_merge($composed['allowed_tools'], ['answer_customer', 'escalate_to_agent']);
+            $tools = array_values(array_filter($tools, fn ($t) => in_array($t['function']['name'] ?? '', $allowed, true)));
+        }
         $context['_locale'] = strtolower(substr($locale, 0, 2));
-        $system = trim($data['instructions'] ?? 'Eres un agente de atención al cliente. Usa las herramientas disponibles cuando ayuden a resolver la consulta. Responde de forma breve y amable.');
+        $system = trim((string) ($composed['system'] ?? '')) ?: trim($data['instructions'] ?? 'Eres un agente de atención al cliente. Usa las herramientas disponibles cuando ayuden a resolver la consulta. Responde de forma breve y amable.');
         $lang = strtolower(substr($locale, 0, 2));
         if ($lang !== 'es') {
             $system .= " Responde SIEMPRE en el idioma del cliente (ISO: {$lang}).";

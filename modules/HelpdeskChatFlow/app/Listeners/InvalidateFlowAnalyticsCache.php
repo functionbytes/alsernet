@@ -4,7 +4,7 @@ namespace Modules\HelpdeskChatFlow\Listeners;
 
 use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
-use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowsController;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowAnalyticsController;
 
 /**
  * Forgets the cached analytics for a flow whenever one of its sessions finishes,
@@ -20,8 +20,8 @@ class InvalidateFlowAnalyticsCache
             return;
         }
 
-        foreach (ChatFlowsController::ANALYTICS_DAY_KEYS as $days) {
-            Cache::forget(ChatFlowsController::analyticsCacheKey($flowId, $days));
+        foreach (array_keys(ChatFlowAnalyticsController::RANGE_OPTIONS) as $days) {
+            Cache::forget(ChatFlowAnalyticsController::analyticsCacheKey($flowId, $days));
         }
     }
 }

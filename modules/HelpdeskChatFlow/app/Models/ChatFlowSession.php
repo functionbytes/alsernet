@@ -40,6 +40,9 @@ class ChatFlowSession extends Model
         'last_customer_reply_at',
     ];
 
+    /** VIRTUAL column derived from context (analytics index); never part of the model payload. */
+    protected $hidden = ['csat_score_value'];
+
     protected function casts(): array
     {
         return [

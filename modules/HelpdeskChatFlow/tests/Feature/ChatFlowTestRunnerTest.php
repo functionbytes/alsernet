@@ -4,7 +4,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Feature;
 
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTestRunner;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowTestRunnerTest extends TestCase
 {

@@ -74,7 +74,7 @@ class ImportChatFlowRequest extends FormRequest
             'flow.nodes' => ['required', 'array', 'min:1', 'max:'.$maxNodes],
             'flow.nodes.*' => ['array'],
             'flow.nodes.*.id' => ['required', 'string', 'max:64'],
-            'flow.nodes.*.type' => ['required', 'string', 'in:'.implode(',', ChatFlow::NODE_TYPES)],
+            'flow.nodes.*.type' => ['required', 'string', 'in:'.implode(',', ChatFlow::nodeTypes())],
             'flow.edges' => ['sometimes', 'array', 'max:'.($maxNodes * 4)],
         ];
     }

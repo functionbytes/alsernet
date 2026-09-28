@@ -13,8 +13,8 @@ use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskChatFlow\Database\Seeders\ChatFlowPermissionsSeeder;
 use Modules\HelpdeskChatFlow\Jobs\ExecuteChatFlowNodeJob;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Spatie\Permission\Models\Role;
-use Tests\TestCase;
 
 /**
  * Regression coverage for the Settings → Integraciones kill switch
@@ -56,11 +56,12 @@ class ChatFlowIntegrationToggleTest extends TestCase
 
         Queue::fake();
 
-        ConversationItem::factory()->create([
+        // Mensaje real del cliente: el observer ignora los mensajes sin autor
+        // (respuestas automáticas), así que el guard probado aquí es el toggle.
+        ConversationItem::factory()->fromCustomer((int) ($conversation->customer_id ?? 1))->create([
             'conversation_id' => $conversation->id,
             'type' => 'message',
             'is_internal' => false,
-            'user_id' => null,
         ]);
 
         Queue::assertNotPushed(ExecuteChatFlowNodeJob::class);
@@ -72,11 +73,12 @@ class ChatFlowIntegrationToggleTest extends TestCase
 
         Queue::fake();
 
-        ConversationItem::factory()->create([
+        // Mensaje real del cliente: el observer ignora los mensajes sin autor
+        // (respuestas automáticas), así que el guard probado aquí es el toggle.
+        ConversationItem::factory()->fromCustomer((int) ($conversation->customer_id ?? 1))->create([
             'conversation_id' => $conversation->id,
             'type' => 'message',
             'is_internal' => false,
-            'user_id' => null,
         ]);
 
         Queue::assertPushed(ExecuteChatFlowNodeJob::class);

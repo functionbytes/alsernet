@@ -8,8 +8,8 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskChatFlow\Listeners\LaunchOutboundFlowOnBusinessEvent;
 use Modules\HelpdeskChatFlow\Services\ChatFlowBusinessEventLauncher;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Modules\HelpdeskPrestashop\Events\PsCartAbandoned;
-use Tests\TestCase;
 
 /**
  * Regression coverage for the Settings → Integraciones kill switch

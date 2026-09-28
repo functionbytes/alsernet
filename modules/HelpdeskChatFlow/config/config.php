@@ -61,6 +61,19 @@ return [
     ],
 
     /*
+    |--------------------------------------------------------------------------
+    | Analytics
+    |--------------------------------------------------------------------------
+    | Threshold used by the flow analytics dashboard to flag `http_request`
+    | nodes with a high failure rate (rate is a 0-1 ratio; min is the minimum
+    | number of executions in the window before a node is judged at all).
+    */
+    'analytics' => [
+        'http_failure_alert_rate' => (float) env('CHATFLOW_HTTP_FAILURE_ALERT_RATE', 0.2),
+        'http_failure_alert_min' => (int) env('CHATFLOW_HTTP_FAILURE_ALERT_MIN', 5),
+    ],
+
+    /*
      * Human labels for document-request keys, shown to the customer in the
      * document-collection node. Centralised here so they can be edited without
      * touching the engine (fallback is the raw key).

@@ -6,9 +6,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Policies\ChatFlowPolicy;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
-use Tests\TestCase;
 
 class ChatFlowPolicyTest extends TestCase
 {

@@ -55,6 +55,9 @@
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
+                                                    <a href="{{ route('chatflow.versions.diff', [$chatFlow, $version->id]) }}" class="dropdown-item">Comparar</a>
+                                                </li>
+                                                <li>
                                                     <form action="{{ route('chatflow.versions.restore', [$chatFlow, $version->id]) }}" method="POST"
                                                           onsubmit="return confirm('¿Restaurar esta versión? Sobrescribe el flow actual.');">
                                                         @csrf

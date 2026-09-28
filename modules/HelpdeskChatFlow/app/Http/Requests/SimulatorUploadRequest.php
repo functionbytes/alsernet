@@ -16,7 +16,8 @@ class SimulatorUploadRequest extends FormRequest
         return [
             'session_key' => ['required', 'string', 'max:191', 'regex:/^[A-Za-z0-9_-]+$/'],
             'doc_key' => ['required', 'string', 'max:191', 'regex:/^[A-Za-z0-9_-]+$/'],
-            'file' => ['required', 'file', 'max:20480'],
+            // Mismos tipos que el <input accept> del editor; se valida por contenido real, no solo por extensión.
+            'file' => ['required', 'file', 'max:20480', 'mimes:pdf,jpg,jpeg,png,gif,webp,doc,docx'],
         ];
     }
 
@@ -29,6 +30,7 @@ class SimulatorUploadRequest extends FormRequest
             'doc_key.regex' => 'El identificador del documento no es válido.',
             'file.required' => 'Adjunta un archivo.',
             'file.max' => 'El archivo no puede superar los 20 MB.',
+            'file.mimes' => 'Formato no admitido. Usa PDF, imagen (JPG, PNG, GIF, WEBP) o Word (DOC, DOCX).',
         ];
     }
 

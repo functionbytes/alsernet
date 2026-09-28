@@ -7,7 +7,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskChatFlow\Services\ChatFlowVoiceTranscriber;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowVoiceTranscriberTest extends TestCase
 {

@@ -9,7 +9,7 @@ use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOutboundService;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowOutboundServiceTest extends TestCase
 {

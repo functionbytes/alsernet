@@ -9,7 +9,7 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\HelpdeskChatFlow\Services\BotMessageDispatcher;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHsmDelivery;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class BotMessageDispatcherTest extends TestCase
 {

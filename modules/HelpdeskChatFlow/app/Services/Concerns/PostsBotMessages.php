@@ -4,6 +4,7 @@ namespace Modules\HelpdeskChatFlow\Services\Concerns;
 
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\HelpdeskChatFlow\Services\Simulation\CapturesBotMessages;
 
 /**
  * Single source of truth for persisting a bot-authored message on the
@@ -25,7 +26,7 @@ trait PostsBotMessages
         array $metadata = [],
         array $attributes = [],
     ): ?ConversationItem {
-        return $conversation?->items()->create([
+        $item = [
             'type' => 'message',
             'body' => $body,
             'is_internal' => false,
@@ -35,6 +36,15 @@ trait PostsBotMessages
                 'flow_node_id' => $nodeId,
                 ...$metadata,
             ],
-        ]);
+        ];
+
+        // Flow simulator: keep the message in memory instead of persisting it.
+        if ($conversation instanceof CapturesBotMessages) {
+            $conversation->captureBotMessage($item);
+
+            return null;
+        }
+
+        return $conversation?->items()->create($item);
     }
 }

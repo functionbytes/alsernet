@@ -6,7 +6,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Services\ChatFlowDocumentLink;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowDocumentLinkTest extends TestCase
 {

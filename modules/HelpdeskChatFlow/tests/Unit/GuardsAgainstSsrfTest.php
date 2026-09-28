@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Modules\HelpdeskChatFlow\Services\Concerns\GuardsAgainstSsrf;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class GuardsAgainstSsrfTest extends TestCase
 {

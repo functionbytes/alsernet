@@ -8,7 +8,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHandoffSummary;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowHandoffSummaryTest extends TestCase
 {

@@ -4,8 +4,9 @@ namespace Modules\HelpdeskChatFlow\Tests\Feature;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTestSimulator;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowTestSimulatorTest extends TestCase
 {
@@ -252,5 +253,77 @@ class ChatFlowTestSimulatorTest extends TestCase
         $text = $this->textOf($reply['messages']);
         $this->assertStringContainsString('Pedido #12345', $text);
         $this->assertStringContainsString('Pedido de ejemplo', $text);
+    }
+
+    public function test_every_node_type_is_supported_by_the_simulator(): void
+    {
+        $this->assertSame([], array_values(array_diff(ChatFlow::NODE_TYPES, ChatFlowTestSimulator::supportedTypes())));
+    }
+
+    public function test_prompts_are_rendered_by_the_production_handlers(): void
+    {
+        // request_documents uses the production key `intro_message` (the old
+        // simulator read `text`, so the test panel showed a different intro).
+        $nodes = [
+            $this->node('start', 'start', null),
+            $this->node('docs', 'request_documents', 'start', ['intro_message' => 'Envíanos esto:', 'doc_types' => ['factura']]),
+        ];
+
+        $start = $this->sim->start($nodes);
+
+        $this->assertStringContainsString('Envíanos esto:', $this->textOf($start['messages']));
+        $this->assertStringContainsString('1. Factura de compra', $this->textOf($start['messages']));
+        $this->assertContains('doc_upload_chips', array_column($start['messages'], 'type'));
+    }
+
+    public function test_flow_text_is_html_escaped_for_the_panel(): void
+    {
+        $nodes = [
+            $this->node('start', 'start', null),
+            $this->node('ask', 'collect_input', 'start', ['question' => '¿Nombre?', 'variable_name' => 'nombre']),
+            $this->node('m', 'message', 'ask', ['text' => "Hola {{nombre}}\nBienvenido"]),
+        ];
+
+        $start = $this->sim->start($nodes);
+        $reply = $this->sim->reply($start['session_key'], '<img src=x onerror=alert(1)>');
+
+        $text = $this->textOf($reply['messages']);
+        $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $text);
+        $this->assertStringContainsString('<br>', $text);
+    }
+
+    public function test_send_file_document_link_and_create_ticket_continue_the_flow(): void
+    {
+        $nodes = [
+            $this->node('start', 'start', null),
+            $this->node('f', 'send_file', 'start', ['file_url' => 'https://x/cat.pdf', 'caption' => 'Catálogo']),
+            $this->node('d', 'document_link', 'f'),
+            $this->node('t', 'create_ticket', 'd', ['subject' => 'Incidencia']),
+            $this->node('m', 'message', 't', ['text' => 'Ticket {{created_ticket_number}}']),
+        ];
+
+        $start = $this->sim->start($nodes);
+        $text = $this->textOf($start['messages']);
+
+        $this->assertStringContainsString('https://x/cat.pdf', $text);
+        $this->assertStringContainsString('Catálogo', $text);
+        $this->assertStringContainsString('portal de documentos', $text);
+        $this->assertStringContainsString('Se crearía un ticket: Incidencia', $text);
+        $this->assertStringContainsString('Ticket SIM-0001', $text);
+        $this->assertSame('completed', $start['status']);
+    }
+
+    public function test_unknown_node_type_is_skipped_with_a_warning(): void
+    {
+        $nodes = [
+            $this->node('start', 'start', null),
+            $this->node('x', 'plugin_node', 'start'),
+            $this->node('m', 'message', 'x', ['text' => 'Después']),
+        ];
+
+        $text = $this->textOf($this->sim->start($nodes)['messages']);
+
+        $this->assertStringContainsString('no simulable', $text);
+        $this->assertStringContainsString('Después', $text);
     }
 }

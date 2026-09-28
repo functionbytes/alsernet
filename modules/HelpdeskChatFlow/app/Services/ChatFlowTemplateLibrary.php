@@ -130,6 +130,10 @@ TXT;
                 'instructions' => self::SHOPPING_ASSISTANT_INSTRUCTIONS,
                 'question_variable' => 'last_input',
                 'use_memory' => true,
+                // Con el módulo HelpdeskAiPrompts el prompt sale del panel (base +
+                // caso + conocimiento); estas instrucciones quedan como respaldo.
+                'use_prompt_library' => true,
+                'append_instructions' => false,
                 'tool_products' => true,
                 'tool_cart' => true,
                 'tool_order_lookup' => true,

@@ -17,6 +17,7 @@ use Modules\HelpdeskChatFlow\Console\Commands\ExpireInactiveSessionsCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\LaunchOutboundFlowCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\PollAbandonedCartsCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\PruneEndedSessionsCommand;
+use Modules\HelpdeskChatFlow\Console\Commands\RunChatFlowTestCasesCommand;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
 use Modules\HelpdeskChatFlow\Listeners\InvalidateFlowAnalyticsCache;
 use Modules\HelpdeskChatFlow\Listeners\LaunchOutboundFlowOnBusinessEvent;
@@ -34,6 +35,12 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowSentiment;
 use Modules\HelpdeskChatFlow\Services\ChatFlowVoiceTranscriber;
 use Modules\HelpdeskChatFlow\Services\Compliance\ChatflowGdprExportContributor;
 use Modules\HelpdeskChatFlow\Services\CustomerIdentityResolver;
+use Modules\HelpdeskChatFlow\Services\Nodes\AiNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\ConversationNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\IntegrationNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\MessagingNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
+use Modules\HelpdeskChatFlow\Services\Nodes\RichContentNodeHandler;
 use Modules\HelpdeskDocument\Services\ConversationDocumentLinker;
 use Modules\HelpdeskErp\Events\ErpOrdersReady;
 use Modules\HelpdeskErp\Services\ErpContextService;
@@ -81,6 +88,7 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
                 LaunchOutboundFlowCommand::class,
                 PollAbandonedCartsCommand::class,
                 PruneEndedSessionsCommand::class,
+                RunChatFlowTestCasesCommand::class,
             ]);
         }
 
@@ -217,6 +225,18 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
 
             return new ChatFlowDocumentLink($linker);
         });
+
+        // Node handlers of the flow executor. Other modules add node types by
+        // tagging their own NodeHandler with NodeHandlerRegistry::TAG.
+        $this->app->tag([
+            MessagingNodeHandler::class,
+            AiNodeHandler::class,
+            IntegrationNodeHandler::class,
+            RichContentNodeHandler::class,
+            ConversationNodeHandler::class,
+        ], NodeHandlerRegistry::TAG);
+
+        $this->app->bind(NodeHandlerRegistry::class, fn ($app) => new NodeHandlerRegistry($app->tagged(NodeHandlerRegistry::TAG)));
     }
 
     protected function registerPolicies(): void

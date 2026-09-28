@@ -7,22 +7,17 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\Inbox;
-use Modules\HelpdeskChatFlow\Http\Requests\ImportChatFlowRequest;
 use Modules\HelpdeskChatFlow\Http\Requests\StoreChatFlowRequest;
 use Modules\HelpdeskChatFlow\Http\Requests\UpdateChatFlowRequest;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
-use Modules\HelpdeskChatFlow\Services\ChatFlowAnalyticsService;
-use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
-use Modules\HelpdeskChatFlow\Services\ChatFlowReplayService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTemplateLibrary;
+use Modules\HelpdeskChatFlow\Services\ChatFlowTestRunner;
 use Modules\HelpdeskChatFlow\Services\ChatFlowValidator;
 
 class ChatFlowsController extends Controller
@@ -30,6 +25,7 @@ class ChatFlowsController extends Controller
     public function __construct(
         private readonly ChatFlowTemplateLibrary $templates,
         private readonly ChatFlowValidator $validator,
+        private readonly ChatFlowTestRunner $testRunner,
     ) {}
 
     public function index(): View
@@ -167,25 +163,6 @@ class ChatFlowsController extends Controller
         return redirect()->route('chatflow.index')->with('success', 'Flow eliminado.');
     }
 
-    /**
-     * Supervisor takes over a conversation the bot is handling: stops the bot
-     * session, releases it to the inbox and assigns it to the current agent.
-     */
-    public function takeOver(int $conversationId, ChatFlowEngine $engine): JsonResponse
-    {
-        $this->authorize('takeOver', ChatFlow::class);
-
-        $conversation = Conversation::on('helpdesk')->findOrFail($conversationId);
-
-        // Only act on conversations actually handled by the bot — keeps the
-        // endpoint scoped to its purpose (the route is already gated to supervisors).
-        abort_unless($conversation->metadata['handled_by_bot'] ?? false, 422, 'La conversación no está siendo atendida por el bot.');
-
-        $engine->takeOver($conversation, (int) auth()->id());
-
-        return response()->json(['success' => true, 'message' => 'Has tomado el control de la conversación.']);
-    }
-
     public function publish(Request $request, ChatFlow $chatFlow): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $chatFlow);
@@ -200,6 +177,26 @@ class ChatFlowsController extends Controller
             }
 
             return back()->with('error', $error);
+        }
+
+        if ($request->boolean('skip_tests')) {
+            Log::info('Chat flow publicado saltando escenarios de prueba', [
+                'chat_flow_id' => $chatFlow->id,
+                'user_id' => auth()->id(),
+            ]);
+        } else {
+            $failingCases = $this->failingTestCaseNames($chatFlow);
+
+            if (! empty($failingCases)) {
+                $error = 'No se puede publicar: fallan los escenarios de prueba «'.implode('», «', $failingCases).'».';
+
+                if ($request->expectsJson()) {
+                    // failing_tests lets the editor offer an explicit "publish anyway" (skip_tests=1).
+                    return response()->json(['success' => false, 'message' => $error, 'failing_tests' => $failingCases], 422);
+                }
+
+                return back()->with('error', $error);
+            }
         }
 
         // Snapshot the current node tree before activating, so it can be restored.
@@ -230,80 +227,6 @@ class ChatFlowsController extends Controller
         return back()->with('success', $message);
     }
 
-    public function versions(ChatFlow $chatFlow): View
-    {
-        $this->authorize('view', $chatFlow);
-
-        $versions = $chatFlow->versions()->paginate(20);
-
-        return view('chatflow::versions', compact('chatFlow', 'versions'));
-    }
-
-    public function restoreVersion(ChatFlow $chatFlow, int $version): RedirectResponse
-    {
-        $this->authorize('update', $chatFlow);
-
-        $snapshot = $chatFlow->versions()->whereKey($version)->firstOrFail();
-
-        $chatFlow->update(['nodes' => $snapshot->nodes]);
-
-        return redirect()->route('chatflow.edit', $chatFlow)
-            ->with('success', 'Versión restaurada. Revísala y vuelve a publicar.');
-    }
-
-    public function export(ChatFlow $chatFlow): JsonResponse
-    {
-        $this->authorize('view', $chatFlow);
-
-        $payload = [
-            'format' => 'chatflow/v1',
-            'name' => $chatFlow->name,
-            'description' => $chatFlow->description,
-            'trigger_type' => $chatFlow->trigger_type,
-            'trigger_conditions' => $chatFlow->trigger_conditions,
-            'nodes' => $chatFlow->nodes,
-            'exported_at' => now()->toIso8601String(),
-        ];
-
-        $filename = Str::slug($chatFlow->name ?: 'chatflow').'-flow.json';
-
-        return response()->json($payload, 200, [
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    }
-
-    public function import(ImportChatFlowRequest $request): RedirectResponse
-    {
-        // Structural validation (JSON shape, node/edge caps, node types, start
-        // node, trigger_type and trigger_conditions shape) lives in
-        // ImportChatFlowRequest. Here only the runtime graph validation runs —
-        // the same validator used on publish, so we never import a flow that
-        // would break at runtime (broken go_to_step, unreachable nodes, etc.).
-        $data = $request->flowData();
-
-        $candidate = new ChatFlow(['nodes' => $data['nodes']]);
-        $validation = $this->validator->validate($candidate);
-
-        if (! empty($validation['errors'])) {
-            return back()->with('error', 'El flow importado no es válido: '.implode(' ', $validation['errors']));
-        }
-
-        $flow = ChatFlow::create([
-            'uid' => Str::uuid(),
-            'name' => ($data['name'] ?? 'Flow importado').' (importado)',
-            'description' => $data['description'] ?? null,
-            'trigger_type' => in_array($data['trigger_type'] ?? '', ChatFlow::TRIGGER_TYPES, true)
-                ? $data['trigger_type']
-                : 'conversation_start',
-            'trigger_conditions' => is_array($data['trigger_conditions'] ?? null) ? $data['trigger_conditions'] : null,
-            'nodes' => $data['nodes'],
-            'status' => 'draft',
-            'created_by' => auth()->id(),
-        ]);
-
-        return redirect()->route('chatflow.edit', $flow)->with('success', 'Flow importado como borrador. Revísalo y publícalo.');
-    }
-
     public function duplicate(ChatFlow $chatFlow): RedirectResponse
     {
         $this->authorize('create', ChatFlow::class);
@@ -320,103 +243,30 @@ class ChatFlowsController extends Controller
         return redirect()->route('chatflow.edit', $new)->with('success', 'Flow duplicado correctamente.');
     }
 
-    public function sessions(ChatFlow $chatFlow): View
-    {
-        $this->authorize('view', $chatFlow);
-
-        $sessions = $chatFlow->sessions()
-            ->with('conversation.customer')
-            ->when(request('status'), fn ($q, $s) => $q->where('status', $s))
-            ->latest('started_at')
-            ->paginate(30)
-            ->withQueryString();
-
-        return view('chatflow::sessions', compact('chatFlow', 'sessions'));
-    }
-
-    public function replaySession(ChatFlow $chatFlow, ChatFlowSession $session, ChatFlowReplayService $replay): View
-    {
-        $this->authorize('view', $chatFlow);
-        abort_unless($session->chat_flow_id === $chatFlow->id, 404);
-
-        $result = $replay->replay($session);
-
-        return view('chatflow::replay', compact('chatFlow', 'session', 'result'));
-    }
-
-    /** Selectable analytics windows (days); 0 = all-time. Shared with cache invalidation. */
-    public const ANALYTICS_DAY_KEYS = [7, 30, 90, 365, 0];
-
-    public static function analyticsCacheKey(int $flowId, int $days): string
-    {
-        return "helpdeskchatflow:analytics:{$flowId}:{$days}";
-    }
-
-    public function analytics(Request $request, ChatFlow $chatFlow, ChatFlowAnalyticsService $analytics): View
-    {
-        $this->authorize('view', $chatFlow);
-
-        $range = $this->resolveAnalyticsRange($request);
-
-        // The metric blocks scan the flow's whole session history; cache them per
-        // (flow, days). Invalidated by InvalidateFlowAnalyticsCache when a session
-        // of this flow completes, so the numbers stay fresh without re-querying on
-        // every dashboard open. TTL is a safety net for other mutations.
-        $metrics = Cache::remember(
-            self::analyticsCacheKey($chatFlow->id, $range['days']),
-            now()->addMinutes(15),
-            function () use ($chatFlow, $range, $analytics): array {
-                $from = $range['from'];
-                $summary = $analytics->buildSummary($chatFlow, $from);
-                $csat = $analytics->buildCsatMetrics($chatFlow, $from);
-                $aiMetrics = $analytics->buildAiMetrics($chatFlow, $from);
-
-                return [
-                    'summary' => $summary,
-                    'dropOff' => $analytics->buildDropOff($chatFlow, $from),
-                    'aiMetrics' => $aiMetrics,
-                    'csat' => $csat,
-                    'comparison' => $analytics->buildAbComparison($chatFlow, $from, [
-                        'summary' => $summary,
-                        'csat' => $csat,
-                        'ai' => $aiMetrics,
-                    ]),
-                ];
-            }
-        );
-
-        return view('chatflow::analytics', array_merge(
-            ['chatFlow' => $chatFlow, 'range' => $range],
-            $metrics
-        ));
-    }
-
     /**
-     * Resolve the analytics time window from the request. Defaults to the last
-     * 30 days so high-volume flows don't full-scan their session history; an
-     * "all time" option (`days=0`) recovers the previous unbounded behaviour.
+     * Re-runs every regression test case against the draft nodes about to be
+     * published, updating each case's last result. Returns the names of the
+     * ones that fail, so publish() can refuse to go live with a broken flow.
      *
-     * @return array{days: int, from: ?Carbon, options: array<int, string>}
+     * @return array<int, string>
      */
-    private function resolveAnalyticsRange(Request $request): array
+    private function failingTestCaseNames(ChatFlow $chatFlow): array
     {
-        $options = [
-            7 => 'Últimos 7 días',
-            30 => 'Últimos 30 días',
-            90 => 'Últimos 90 días',
-            365 => 'Último año',
-            0 => 'Todo el histórico',
-        ];
+        $failing = [];
 
-        $days = (int) $request->input('days', 30);
-        if (! array_key_exists($days, $options)) {
-            $days = 30;
+        foreach ($chatFlow->testCases as $testCase) {
+            $result = $this->testRunner->run($chatFlow, $testCase->steps ?? []);
+
+            $testCase->update([
+                'last_result' => $result['passed'] ? 'passed' : 'failed',
+                'last_run_at' => now(),
+            ]);
+
+            if (! $result['passed']) {
+                $failing[] = $testCase->name;
+            }
         }
 
-        return [
-            'days' => $days,
-            'from' => $days > 0 ? now()->subDays($days)->startOfDay() : null,
-            'options' => $options,
-        ];
+        return $failing;
     }
 }

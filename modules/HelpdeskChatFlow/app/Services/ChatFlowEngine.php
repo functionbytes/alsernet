@@ -9,10 +9,7 @@ use Illuminate\Support\Str;
 use Modules\Helpdesk\Events\CustomerLanguageDetected;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
-use Modules\HelpdeskChatFlow\Events\ChatFlowCsatRecorded;
 use Modules\HelpdeskChatFlow\Events\ChatFlowStarted;
-use Modules\HelpdeskChatFlow\Jobs\HandleNodeTimeoutJob;
-use Modules\HelpdeskChatFlow\Jobs\ResumeChatFlowAfterDelayJob;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBranchConditions;
@@ -20,6 +17,9 @@ use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\ResolvesVisitorContext;
 use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
+use Modules\HelpdeskChatFlow\Services\Input\CsatInputHandler;
+use Modules\HelpdeskChatFlow\Services\Input\DocumentUploadInputHandler;
+use Modules\HelpdeskChatFlow\Services\Input\IdentificationInputHandler;
 
 class ChatFlowEngine
 {
@@ -29,17 +29,19 @@ class ChatFlowEngine
 
     // Nodes that ALWAYS pause execution. rich_message is intentionally excluded:
     // it pauses only when it has options (returns null), otherwise it continues.
-    private const PAUSE_TYPES = ['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat'];
+    public const PAUSE_TYPES = ['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat'];
 
     public function __construct(
         private readonly ChatFlowNodeExecutor $executor,
         private readonly ChatFlowTriggerResolver $resolver,
-        private readonly CustomerIdentityResolver $identityResolver,
         private readonly ChatFlowAiResponder $aiResponder,
         private readonly ChatFlowSentiment $sentiment,
         private readonly ChatFlowLocalizer $localizer,
         private readonly ChatFlowHandoffSummary $handoff,
-        private readonly ChatFlowIdentityOtp $identityOtp,
+        private readonly IdentificationInputHandler $identification,
+        private readonly DocumentUploadInputHandler $documentUploads,
+        private readonly CsatInputHandler $csat,
+        private readonly ChatFlowScheduler $scheduler,
     ) {}
 
     /**
@@ -240,13 +242,13 @@ class ChatFlowEngine
         }
 
         if ($currentNode['type'] === 'identify_customer') {
-            $this->processIdentification($session, $currentNode, $message);
+            $this->continueFrom($session, $this->identification->handle($session, $currentNode, $message));
 
             return;
         }
 
         if ($currentNode['type'] === 'request_documents') {
-            $this->processDocumentUpload($session, $currentNode, $message, $attachmentUrls);
+            $this->continueFrom($session, $this->documentUploads->handle($session, $currentNode, $message, $attachmentUrls));
 
             return;
         }
@@ -290,8 +292,11 @@ class ChatFlowEngine
         }
 
         if ($currentNode['type'] === 'csat') {
-            if ($this->captureCsat($session, $currentNode, $message)) {
-                return; // a low score handed the conversation to a human
+            if ($this->csat->capture($session, $currentNode, $message)) {
+                // Low score → service recovery: hand the conversation to a human.
+                $this->escalateToHuman($session, $currentNode, $currentNode['data']['csat_low_message'] ?? null);
+
+                return;
             }
         } else {
             $this->captureInput($session, $currentNode, $message);
@@ -299,14 +304,18 @@ class ChatFlowEngine
 
         $nextNodeId = $this->getNextNodeAfterInput($session, $currentNode, $message);
 
-        if (! $nextNodeId) {
-            return;
-        }
+        $this->continueFrom($session, $nextNodeId);
+    }
 
-        $nextNode = $flow->getNodeById($nextNodeId);
+    /**
+     * Resume the run at `$nodeId` (no-op for null or a node that no longer exists).
+     */
+    private function continueFrom(ChatFlowSession $session, ?string $nodeId): void
+    {
+        $node = $nodeId ? $session->chatFlow->getNodeById($nodeId) : null;
 
-        if ($nextNode) {
-            $this->runFrom($session, $nextNode);
+        if ($node) {
+            $this->runFrom($session, $node);
         }
     }
 
@@ -398,275 +407,9 @@ class ChatFlowEngine
         $this->postBotMessage($session->conversation, $node['id'] ?? null, $body, $extraMetadata);
     }
 
-    private function processIdentification(ChatFlowSession $session, array $node, string $message): void
-    {
-        $data = $node['data'] ?? [];
-        $sources = $data['sources'] ?? ['erp', 'ps'];
-        $maxAttempts = (int) ($data['max_attempts'] ?? 3);
-
-        // Verificación de identidad por OTP (por defecto activa): sin ella, un
-        // cliente auto-identificado con el email de un tercero podía ver sus
-        // pedidos (IDOR). Se puede desactivar por nodo con require_otp=false
-        // para flujos que no exponen datos sensibles.
-        $requireOtp = $data['require_otp'] ?? true;
-
-        // Si ya enviamos un código, este mensaje es la respuesta con el código.
-        if ($requireOtp && $this->identityOtp->isPending($session)) {
-            $this->processIdentificationOtpReply($session, $node, $data, $message, $maxAttempts);
-
-            return;
-        }
-
-        $customer = $this->identityResolver->resolve($message, $sources);
-
-        if ($customer !== null) {
-            // Con OTP: no marcar identificado todavía — enviar el código al
-            // email registrado (fuera de banda) y esperar a que lo introduzca.
-            if ($requireOtp) {
-                if ($this->identityOtp->challenge($session, $customer)) {
-                    $this->sendBotMessage($session, $node, $data['otp_sent_message']
-                        ?? 'Por tu seguridad, te hemos enviado un código de verificación a tu email registrado. Introdúcelo aquí para continuar.');
-
-                    return; // sigue en este nodo esperando el código
-                }
-
-                // Sin email al que enviar el código: no se puede verificar, así
-                // que NO exponemos sus datos (fail-closed).
-                $this->handleIdentificationFailure($session, $node, $data);
-
-                return;
-            }
-
-            $this->markIdentified($session, $node, $customer, $data, viaOtp: false);
-
-            return;
-        }
-
-        $attempts = (int) ($session->getContextValue('_identify_attempts_'.$node['id']) ?? 0) + 1;
-        $session->setContextValue('_identify_attempts_'.$node['id'], $attempts);
-
-        if ($attempts >= $maxAttempts) {
-            $this->handleIdentificationFailure($session, $node, $data);
-
-            return;
-        }
-
-        $notFoundMsg = $data['not_found_message'] ?? 'No encontramos ningún cliente con ese dato. Intenta con tu email, teléfono o número de documento de identidad.';
-        $this->sendBotMessage($session, $node, $notFoundMsg);
-    }
-
     /**
-     * Procesa el código OTP que el cliente introduce tras la identificación.
-     *
-     * @param  array<string, mixed>  $node
-     * @param  array<string, mixed>  $data
-     */
-    private function processIdentificationOtpReply(ChatFlowSession $session, array $node, array $data, string $message, int $maxAttempts): void
-    {
-        $result = $this->identityOtp->verify($session, $message);
-
-        if ($result === 'ok') {
-            $customer = $this->identityOtp->pendingCustomer($session) ?? [];
-            $this->identityOtp->clear($session);
-            $this->markIdentified($session, $node, $customer, $data, viaOtp: true);
-
-            return;
-        }
-
-        // Código caducado o demasiados intentos: se cierra el intento de
-        // verificación y se trata como identificación fallida.
-        if (in_array($result, ['expired', 'locked'], true)) {
-            $this->identityOtp->clear($session);
-            $this->handleIdentificationFailure($session, $node, $data);
-
-            return;
-        }
-
-        // Código incorrecto: pedir de nuevo (los intentos los acota el propio
-        // verificador, que devuelve 'locked' al agotarlos).
-        $this->sendBotMessage($session, $node, $data['otp_invalid_message']
-            ?? 'El código no es correcto. Revísalo e introdúcelo de nuevo.');
-    }
-
-    /**
-     * Marca al cliente como identificado en el contexto, emite el mensaje de
-     * bienvenida y avanza al siguiente nodo. Solo se llama tras verificar la
-     * identidad (o con require_otp=false).
-     *
-     * @param  array<string, mixed>  $node
-     * @param  array<string, mixed>  $customer
-     * @param  array<string, mixed>  $data
-     * @param  bool  $viaOtp  true solo cuando esta identificación pasó por la
-     *                        verificación OTP real — customer_identified por
-     *                        sí solo NO basta para exponer datos sensibles
-     *                        (pedidos): un flow con require_otp=false deja
-     *                        "identificado" a cualquiera que escriba el email
-     *                        de un tercero, sin verificar que sea suyo de
-     *                        verdad. customer_identified_via_otp es el flag
-     *                        que ChatFlowAgentService::lookup_order exige.
-     */
-    private function markIdentified(ChatFlowSession $session, array $node, array $customer, array $data, bool $viaOtp): void
-    {
-        $values = ['customer_identified' => true, 'customer_identified_via_otp' => $viaOtp];
-        foreach ($customer as $key => $value) {
-            $values['customer_'.$key] = $value;
-        }
-        $values['customer_name'] = $customer['name'] ?? '';
-        $values['customer_email'] = $customer['email'] ?? '';
-        $session->setContextValues($values);
-
-        if (! empty($data['found_message'])) {
-            $text = preg_replace_callback('/\{\{(\w+)\}\}/', fn ($m) => $session->getContextValue($m[1], $m[0]), $data['found_message']);
-            $this->sendBotMessage($session, $node, $text);
-        }
-
-        // Continue linearly — designer places branches node next if found/not_found split needed
-        $nextNodeId = $this->getFirstChildId($session, $node['id']);
-
-        if ($nextNodeId) {
-            $nextNode = $session->chatFlow->getNodeById($nextNodeId);
-            if ($nextNode) {
-                $this->runFrom($session, $nextNode);
-            }
-        }
-    }
-
-    /**
-     * Handles document uploads in a request_documents node.
-     *
-     * Channels that support file attachments (WP, FB, email) pass $attachmentUrls.
-     * Text-only interaction: customer types the number of the doc they want to send,
-     * and then sends a subsequent message with the file (handled in the next call).
-     *
-     * Logic:
-     * - If $attachmentUrls not empty → assign first URL to the next pending doc type
-     * - If $message is a number matching a pending doc → ask customer to send the file
-     * - When all docs are collected → advance to next node
-     */
-    private function processDocumentUpload(ChatFlowSession $session, array $node, string $message, array $attachmentUrls): void
-    {
-        $data = $node['data'] ?? [];
-        $required = $data['doc_types'] ?? [];
-        $uploadKey = '_doc_uploads_'.$node['id'];
-        $uploaded = $session->getContextValue($uploadKey) ?? [];
-        $pending = array_values(array_diff($required, array_keys($uploaded)));
-
-        $docLabels = config('helpdeskchatflow.document_labels', []);
-
-        if (! empty($attachmentUrls)) {
-            // File arrived — assign to pending doc that was announced (or first pending)
-            $announcedKey = $session->getContextValue('_announced_doc_'.$node['id']);
-            $docKey = ($announcedKey && in_array($announcedKey, $pending))
-                ? $announcedKey
-                : ($pending[0] ?? null);
-
-            if ($docKey) {
-                $uploaded[$docKey] = $attachmentUrls[0];
-                $session->setContextValue($uploadKey, $uploaded);
-                $session->setContextValue('_announced_doc_'.$node['id'], null);
-
-                $label = $docLabels[$docKey] ?? $docKey;
-                $this->sendBotMessage($session, $node, "✅ {$label} recibido. Gracias.");
-
-                $pending = array_values(array_diff($required, array_keys($uploaded)));
-            }
-        } elseif (is_numeric(trim($message))) {
-            // Customer typed a number to select which doc to send next
-            $idx = (int) trim($message) - 1;
-            $docKey = $pending[$idx] ?? null;
-
-            if ($docKey) {
-                $session->setContextValue('_announced_doc_'.$node['id'], $docKey);
-                $label = $docLabels[$docKey] ?? $docKey;
-                $this->sendBotMessage($session, $node, $this->localize($session, "Entendido. Por favor envía el archivo para **{$label}**."));
-
-                return; // Stay on this node waiting for the file
-            }
-
-            // Out-of-range number → tell the customer instead of going silent.
-            $this->sendBotMessage($session, $node, $this->localize($session, 'Ese número no corresponde a ningún documento pendiente. Escribe el número de uno de la lista.'));
-
-            return;
-        }
-
-        if (empty($pending)) {
-            // All documents received — save list and continue
-            $varName = $data['variable_name'] ?? 'uploaded_docs';
-            $session->setContextValue($varName, array_keys($uploaded));
-
-            $doneMsg = $data['done_message'] ?? '📂 ¡Todos los documentos recibidos! Continuamos.';
-            $this->sendBotMessage($session, $node, $doneMsg);
-
-            $nextNodeId = $this->getFirstChildId($session, $node['id']);
-            $nextNode = $nextNodeId ? $session->chatFlow->getNodeById($nextNodeId) : null;
-
-            if ($nextNode) {
-                $this->runFrom($session, $nextNode);
-            }
-        } else {
-            // Still pending — re-send the list of remaining docs
-            $list = implode("\n", array_map(
-                fn ($k, $t) => ($k + 1).'. '.($docLabels[$t] ?? $t),
-                array_keys($pending),
-                $pending
-            ));
-            $this->sendBotMessage($session, $node, "Aún faltan los siguientes documentos:\n{$list}\n\nEscribe el número del documento y envía el archivo.");
-        }
-    }
-
-    private function handleIdentificationFailure(ChatFlowSession $session, array $node, array $data): void
-    {
-        $session->setContextValue('customer_identified', false);
-        $session->setContextValue('customer_identified_via_otp', false);
-
-        // Look for an else branchItem sibling if the next node is a branches container
-        $nextNodeId = $this->getFirstChildId($session, $node['id']);
-        $nextNode = $nextNodeId ? $session->chatFlow->getNodeById($nextNodeId) : null;
-
-        if ($nextNode && $nextNode['type'] === 'branches') {
-            $elseBranchItem = collect($session->chatFlow->getBranchItems($nextNode['id']))
-                ->first(fn ($b) => $b['data']['isElse'] ?? false);
-
-            if ($elseBranchItem) {
-                $afterElse = $this->getFirstChildId($session, $elseBranchItem['id']);
-                $afterNode = $afterElse ? $session->chatFlow->getNodeById($afterElse) : null;
-                if ($afterNode) {
-                    $this->runFrom($session, $afterNode);
-
-                    return;
-                }
-            }
-        }
-
-        if ($data['transfer_on_failure'] ?? true) {
-            $session->conversation?->releaseFromBot();
-            $session->update(['status' => 'transferred', 'ended_at' => now()]);
-            ChatFlowCompleted::dispatch($session);
-        }
-    }
-
-    /**
-     * Schedule a timeout job for a waiting node so the bot reacts if the customer
-     * goes quiet. No-op unless the node is a wait node with timeout_minutes set.
-     */
-    private function scheduleTimeout(ChatFlowSession $session, array $node): void
-    {
-        $minutes = (int) ($node['data']['timeout_minutes'] ?? 0);
-
-        if ($minutes < 1 || ! in_array($node['type'], self::PAUSE_TYPES, true)) {
-            return;
-        }
-
-        $lastItemId = (int) ($session->conversation?->items()->max('id') ?? 0);
-
-        HandleNodeTimeoutJob::dispatch($session->id, $node['id'], $lastItemId, $session->conversation_id)
-            ->delay(now()->addMinutes($minutes));
-    }
-
-    /**
-     * Schedules the resume of a `delay` node's child after `data.seconds`
-     * (default 5s, clamped 1-300s to match the editor's input range). When the
-     * node has no child, finalize immediately — nothing to resume.
+     * `delay` node: schedule the resume of its child. When the node has no
+     * child, finalize immediately — nothing to resume.
      */
     private function scheduleDelay(ChatFlowSession $session, array $node): void
     {
@@ -678,10 +421,7 @@ class ChatFlowEngine
             return;
         }
 
-        $seconds = max(1, min(300, (int) ($node['data']['seconds'] ?? 5)));
-
-        ResumeChatFlowAfterDelayJob::dispatch($session->id, $nextNodeId, $session->conversation_id)
-            ->delay(now()->addSeconds($seconds));
+        $this->scheduler->scheduleResume($session, $node, $nextNodeId);
     }
 
     /**
@@ -885,7 +625,7 @@ class ChatFlowEngine
 
             if (in_array($node['type'], self::PAUSE_TYPES) || $nextNodeId === null) {
                 $this->finalizeIfNeeded($session, $node, $nextNodeId);
-                $this->scheduleTimeout($session, $node);
+                $this->scheduler->scheduleTimeout($session, $node);
 
                 return;
             }
@@ -1005,74 +745,6 @@ class ChatFlowEngine
     {
         $variableName = $node['data']['variable_name'] ?? 'last_input';
         $session->setContextValue($variableName, $message);
-    }
-
-    /**
-     * Capture a CSAT answer. Returns true when a low score escalated the
-     * conversation to a human (service recovery), so the caller stops the flow.
-     */
-    private function captureCsat(ChatFlowSession $session, array $node, string $message): bool
-    {
-        $data = $node['data'] ?? [];
-        $variableName = $data['variable_name'] ?? 'csat_score';
-        $score = is_numeric(trim($message)) ? (int) trim($message) : $message;
-
-        $session->setContextValues([$variableName => $score, 'csat_score' => $score]);
-
-        // Persist the score on the conversation and announce it so agents, CRM and
-        // reporting can react — not just the analytics widget.
-        if (is_numeric($score)) {
-            $this->recordCsat($session, (int) $score);
-        }
-
-        // Service recovery: a low score can hand the conversation to a human.
-        if (is_numeric($score) && $this->isLowCsat($data, (int) $score)) {
-            $this->escalateToHuman($session, $node, $data['csat_low_message'] ?? null);
-
-            return true;
-        }
-
-        if (! empty($data['thanks_message'])) {
-            $text = $this->localize($session, $this->interpolate($data['thanks_message'], $session));
-            $this->sendBotMessage($session, $node, $text);
-        }
-
-        return false;
-    }
-
-    /**
-     * Persist the CSAT score on the conversation metadata and broadcast the event.
-     */
-    private function recordCsat(ChatFlowSession $session, int $score): void
-    {
-        $conversation = $session->conversation;
-
-        if ($conversation) {
-            $conversation->update([
-                'metadata' => array_merge($conversation->metadata ?? [], ['csat_score' => $score]),
-            ]);
-        }
-
-        ChatFlowCsatRecorded::dispatch($session, $score);
-    }
-
-    /**
-     * @param  array<string, mixed>  $data  CSAT node data
-     */
-    private function isLowCsat(array $data, int $score): bool
-    {
-        if (($data['csat_low_action'] ?? 'none') !== 'escalate') {
-            return false;
-        }
-
-        $threshold = (int) ($data['csat_low_threshold'] ?? 0);
-
-        return $threshold > 0 && $score <= $threshold;
-    }
-
-    private function interpolate(string $text, ChatFlowSession $session): string
-    {
-        return preg_replace_callback('/\{\{(\w+)\}\}/', fn ($m) => $session->getContextValue($m[1], $m[0]), $text);
     }
 
     /**

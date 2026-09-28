@@ -5,8 +5,8 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
-use Tests\TestCase;
 
 class EvaluatesBusinessHoursTest extends TestCase
 {

@@ -1,9 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowAnalyticsController;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowsController;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowSessionsController;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowTestCasesController;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowTestController;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowTransferController;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowVersionsController;
 
 Route::prefix('chatflows')
     ->name('chatflow.')
@@ -13,10 +17,11 @@ Route::prefix('chatflows')
         Route::get('/create', [ChatFlowsController::class, 'create'])->name('create');
         Route::post('/', [ChatFlowsController::class, 'store'])->name('store');
         Route::post('/template/{template}', [ChatFlowsController::class, 'storeFromTemplate'])->name('store-template');
-        Route::post('/import', [ChatFlowsController::class, 'import'])->name('import');
-        Route::get('/{chatFlow}/export', [ChatFlowsController::class, 'export'])->name('export');
-        Route::get('/{chatFlow}/versions', [ChatFlowsController::class, 'versions'])->name('versions');
-        Route::post('/{chatFlow}/versions/{version}/restore', [ChatFlowsController::class, 'restoreVersion'])->name('versions.restore');
+        Route::post('/import', [ChatFlowTransferController::class, 'import'])->name('import');
+        Route::get('/{chatFlow}/export', [ChatFlowTransferController::class, 'export'])->name('export');
+        Route::get('/{chatFlow}/versions', [ChatFlowVersionsController::class, 'index'])->name('versions');
+        Route::get('/{chatFlow}/versions/{version}/diff', [ChatFlowVersionsController::class, 'diff'])->name('versions.diff');
+        Route::post('/{chatFlow}/versions/{version}/restore', [ChatFlowVersionsController::class, 'restore'])->name('versions.restore');
 
         // Test scenarios (regression)
         Route::get('/{chatFlow}/test-cases', [ChatFlowTestCasesController::class, 'index'])->name('test-cases.index');
@@ -36,13 +41,13 @@ Route::prefix('chatflows')
         Route::delete('/{chatFlow}', [ChatFlowsController::class, 'destroy'])->name('destroy');
         Route::post('/{chatFlow}/publish', [ChatFlowsController::class, 'publish'])->name('publish');
         Route::post('/{chatFlow}/duplicate', [ChatFlowsController::class, 'duplicate'])->name('duplicate');
-        Route::get('/{chatFlow}/sessions', [ChatFlowsController::class, 'sessions'])->name('sessions');
-        Route::get('/{chatFlow}/sessions/{session}/replay', [ChatFlowsController::class, 'replaySession'])->name('sessions.replay');
-        Route::get('/{chatFlow}/analytics', [ChatFlowsController::class, 'analytics'])->name('analytics');
+        Route::get('/{chatFlow}/sessions', [ChatFlowSessionsController::class, 'index'])->name('sessions');
+        Route::get('/{chatFlow}/sessions/{session}/replay', [ChatFlowSessionsController::class, 'replay'])->name('sessions.replay');
+        Route::get('/{chatFlow}/analytics', [ChatFlowAnalyticsController::class, 'show'])->name('analytics');
         Route::post('/{chatFlow}/test/start', [ChatFlowTestController::class, 'start'])
             ->middleware('throttle:30,1')->name('test.start');
 
         // Supervisor takes over a bot-handled conversation (stops the bot + assigns to self).
-        Route::post('/takeover/{conversationId}', [ChatFlowsController::class, 'takeOver'])
+        Route::post('/takeover/{conversationId}', [ChatFlowSessionsController::class, 'takeOver'])
             ->middleware('throttle:30,1')->name('takeover');
     });

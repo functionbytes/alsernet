@@ -5,7 +5,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Feature;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 /**
  * Contract for the shared PostsBotMessages helper: every ChatFlow bot message

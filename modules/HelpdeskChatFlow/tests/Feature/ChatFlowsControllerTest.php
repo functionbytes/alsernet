@@ -6,8 +6,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskChatFlow\Database\Seeders\ChatFlowPermissionsSeeder;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Spatie\Permission\Models\Role;
-use Tests\TestCase;
 
 class ChatFlowsControllerTest extends TestCase
 {

@@ -17,28 +17,43 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowHttpRequester;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowNodeExecutor;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
+use Modules\HelpdeskChatFlow\Services\Nodes\AiNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\ConversationNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\IntegrationNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\MessagingNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
+use Modules\HelpdeskChatFlow\Services\Nodes\RichContentNodeHandler;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use ReflectionMethod;
-use Tests\TestCase;
 
 /**
- * Exercises the real executor's node methods directly (via reflection) with a
- * mocked items() relation, so we cover the live executor without a database.
+ * Exercises the executor's node handlers through their public handle() with a
+ * mocked items() relation, so the live node logic is covered without a database.
  */
 class ChatFlowNodeExecutorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-    private function executor(): ChatFlowNodeExecutor
+    private function registry(): NodeHandlerRegistry
     {
-        return new ChatFlowNodeExecutor(
-            Mockery::mock(ChatFlowAiResponder::class),
-            Mockery::mock(ChatFlowOrderLookup::class),
-            new ChatFlowHttpRequester,
-            new ChatFlowLocalizer(null),
-            Mockery::mock(ChatFlowAgentService::class),
-            Mockery::mock(ChatFlowHandoffSummary::class),
-            new ChatFlowDocumentLink(null),
-        );
+        $localizer = new ChatFlowLocalizer(null);
+
+        return new NodeHandlerRegistry([
+            new MessagingNodeHandler($localizer),
+            new AiNodeHandler(Mockery::mock(ChatFlowAiResponder::class), Mockery::mock(ChatFlowAgentService::class), $localizer),
+            new IntegrationNodeHandler(Mockery::mock(ChatFlowOrderLookup::class), new ChatFlowHttpRequester, $localizer),
+            new RichContentNodeHandler($localizer, new ChatFlowDocumentLink(null)),
+            new ConversationNodeHandler($localizer, Mockery::mock(ChatFlowHandoffSummary::class)),
+        ]);
+    }
+
+    /**
+     * Runs a node through the handler registered for its type.
+     */
+    private function handle(array $args): ?string
+    {
+        return $this->registry()->for($args[0]['type'])->handle(...$args);
     }
 
     private function makeSession(array $context = []): ChatFlowSession
@@ -67,14 +82,6 @@ class ChatFlowNodeExecutorTest extends TestCase
         return $conversation;
     }
 
-    private function invoke(string $method, array $args): mixed
-    {
-        $m = new ReflectionMethod(ChatFlowNodeExecutor::class, $method);
-        $m->setAccessible(true);
-
-        return $m->invoke($this->executor(), ...$args);
-    }
-
     public function test_collect_input_sends_the_question_and_waits(): void
     {
         $conversation = $this->conversationExpectingItem(
@@ -84,7 +91,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 'n1', 'type' => 'collect_input', 'data' => ['question' => '¿Cuál es tu número de pedido?']];
 
-        $result = $this->invoke('executeCollectInput', [$node, $this->makeSession(), $conversation]);
+        $result = $this->handle([$node, $this->makeSession(), $conversation]);
 
         $this->assertNull($result); // pauses for the customer reply
     }
@@ -97,7 +104,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 'n1', 'type' => 'collect_input', 'data' => ['question' => 'Gracias {{nombre}}, ¿tu email?']];
 
-        $this->invoke('executeCollectInput', [$node, $this->makeSession(['nombre' => 'Ada']), $conversation]);
+        $this->handle([$node, $this->makeSession(['nombre' => 'Ada']), $conversation]);
     }
 
     public function test_collect_input_without_question_sends_nothing(): void
@@ -106,7 +113,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 'n1', 'type' => 'collect_input', 'data' => []];
 
-        $result = $this->invoke('executeCollectInput', [$node, $this->makeSession(), $conversation]);
+        $result = $this->handle([$node, $this->makeSession(), $conversation]);
 
         $this->assertNull($result);
     }
@@ -130,7 +137,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 't', 'type' => 'transfer', 'data' => ['message' => 'Te transfiero', 'assignee_id' => 5, 'group_id' => 2]];
 
-        $this->assertNull($this->invoke('executeTransfer', [$node, $session, $conversation]));
+        $this->assertNull($this->handle([$node, $session, $conversation]));
     }
 
     public function test_transfer_without_assignment_does_not_update_conversation(): void
@@ -152,7 +159,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 't', 'type' => 'transfer', 'data' => ['message' => 'Te transfiero']];
 
-        $this->invoke('executeTransfer', [$node, $session, $conversation]);
+        $this->handle([$node, $session, $conversation]);
     }
 
     public function test_rich_message_with_multiple_cards_renders_carousel(): void
@@ -174,7 +181,7 @@ class ChatFlowNodeExecutorTest extends TestCase
             ],
         ]];
 
-        $result = $this->invoke('executeRichMessage', [$node, $this->makeSession(), $conversation]);
+        $result = $this->handle([$node, $this->makeSession(), $conversation]);
 
         $this->assertNull($result); // waits for the customer's numbered selection
     }
@@ -193,7 +200,7 @@ class ChatFlowNodeExecutorTest extends TestCase
             ],
         ]];
 
-        $this->invoke('executeRichMessage', [$node, $this->makeSession(['nombre' => 'Ada']), $conversation]);
+        $this->handle([$node, $this->makeSession(['nombre' => 'Ada']), $conversation]);
     }
 
     public function test_send_file_creates_native_attachment_item(): void
@@ -213,7 +220,7 @@ class ChatFlowNodeExecutorTest extends TestCase
             'file_url' => 'https://x/factura.pdf', 'file_type' => 'document', 'caption' => 'Aquí tienes tu factura',
         ]];
 
-        $this->invoke('executeSendFile', [$node, $session, $conversation]);
+        $this->handle([$node, $session, $conversation]);
     }
 
     public function test_create_ticket_does_not_call_contract_when_already_created(): void
@@ -231,7 +238,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 'ct', 'type' => 'create_ticket', 'data' => []];
 
-        $this->assertNull($this->invoke('executeCreateTicket', [$node, $session, $conversation]));
+        $this->assertNull($this->handle([$node, $session, $conversation]));
     }
 
     public function test_create_ticket_degrades_cleanly_when_tickets_unavailable(): void
@@ -251,7 +258,7 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 'ct', 'type' => 'create_ticket', 'data' => []];
 
-        $this->assertNull($this->invoke('executeCreateTicket', [$node, $session, $conversation]));
+        $this->assertNull($this->handle([$node, $session, $conversation]));
     }
 
     public function test_quick_replies_renders_numbered_prompt(): void
@@ -265,8 +272,51 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $node = ['id' => 'n1', 'type' => 'quick_replies', 'data' => ['text' => 'Elige', 'options' => ['Ventas', 'Soporte']]];
 
-        $result = $this->invoke('executeQuickReplies', [$node, $this->makeSession(), $conversation]);
+        $result = $this->handle([$node, $this->makeSession(), $conversation]);
 
         $this->assertNull($result);
+    }
+
+    public function test_executor_dispatches_each_type_to_its_registered_handler(): void
+    {
+        $conversation = Mockery::mock(Conversation::class);
+        $session = new ChatFlowSession;
+        $session->setRelation('conversation', $conversation);
+
+        $handler = Mockery::mock(NodeHandler::class);
+        $handler->shouldReceive('types')->andReturn(['custom_node']);
+        $handler->shouldReceive('handle')->once()
+            ->with(['id' => 'x', 'type' => 'custom_node'], $session, $conversation)->andReturn('next');
+
+        $executeNode = new ReflectionMethod(ChatFlowNodeExecutor::class, 'executeNode');
+        $executor = new ChatFlowNodeExecutor(new NodeHandlerRegistry([$handler]));
+
+        $this->assertSame('next', $executeNode->invoke($executor, ['id' => 'x', 'type' => 'custom_node'], $session));
+        $this->assertNull($executeNode->invoke($executor, ['id' => 'y', 'type' => 'unknown'], $session));
+    }
+
+    public function test_every_core_node_type_is_handled_or_routed(): void
+    {
+        $covered = [...$this->registry()->types(), ...ChatFlowNodeExecutor::ROUTING_TYPES];
+
+        $this->assertSame([], array_values(array_diff(ChatFlow::NODE_TYPES, $covered)));
+        $this->assertSame([], array_values(array_intersect($this->registry()->types(), ChatFlowNodeExecutor::ROUTING_TYPES)));
+    }
+
+    public function test_registry_rejects_two_handlers_for_the_same_type(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $localizer = new ChatFlowLocalizer(null);
+        new NodeHandlerRegistry([new MessagingNodeHandler($localizer), new MessagingNodeHandler($localizer)]);
+    }
+
+    public function test_container_registry_covers_core_types_and_model_exposes_them(): void
+    {
+        $types = app(NodeHandlerRegistry::class)->types();
+
+        $this->assertContains('ai_agent', $types);
+        $this->assertContains('create_ticket', $types);
+        $this->assertEqualsCanonicalizing(ChatFlow::NODE_TYPES, ChatFlow::nodeTypes());
     }
 }

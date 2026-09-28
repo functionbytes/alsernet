@@ -4,7 +4,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\ChatFlowValidator;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ChatFlowValidatorTest extends TestCase
 {

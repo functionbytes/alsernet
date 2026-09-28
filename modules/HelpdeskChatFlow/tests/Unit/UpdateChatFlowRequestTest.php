@@ -4,7 +4,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Illuminate\Support\Facades\Validator;
 use Modules\HelpdeskChatFlow\Http\Requests\UpdateChatFlowRequest;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class UpdateChatFlowRequestTest extends TestCase
 {

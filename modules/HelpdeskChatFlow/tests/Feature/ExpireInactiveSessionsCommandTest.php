@@ -5,8 +5,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Feature;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
-use Nwidart\Modules\Facades\Module;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 /**
  * Regresión: a diferencia de handleNodeTimeout() (ChatFlowEngine), este
@@ -24,13 +23,6 @@ class ExpireInactiveSessionsCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // HelpdeskChatFlow está deshabilitado en modules_statuses.json en este
-        // entorno: su ServiceProvider no registra el comando artisan. Se salta
-        // en vez de fallar con "command does not exist" (falso negativo).
-        if (Module::find('HelpdeskChatFlow')?->isEnabled() !== true) {
-            $this->markTestSkipped('Módulo HelpdeskChatFlow deshabilitado: el comando artisan no está registrado.');
-        }
     }
 
     public function test_expired_session_releases_the_conversation_from_the_bot(): void

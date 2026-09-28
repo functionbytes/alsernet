@@ -3,9 +3,9 @@
 namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
-use Tests\TestCase;
 
 /**
  * Covers the rich condition operators and AND/OR grouping of

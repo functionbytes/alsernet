@@ -42,6 +42,22 @@
         </div>
     </div>
 
+    {{-- HTTP request failure alerts --}}
+    @if(count($httpAlerts) > 0)
+        <div class="alert alert-danger" role="alert">
+            <h6 class="alert-heading fw-bold mb-2"><i class="fas fa-triangle-exclamation me-2"></i>Nodos HTTP con fallos frecuentes</h6>
+            <ul class="mb-0 ps-3">
+                @foreach($httpAlerts as $alert)
+                    <li>
+                        <strong>{{ $alert['label'] }}</strong>
+                        — {{ $alert['failure_rate'] }}% de fallos
+                        ({{ number_format($alert['failures']) }} de {{ number_format($alert['executions']) }} ejecuciones)
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- Summary stats --}}
     <div class="row g-3 mb-3">
         <div class="col-6 col-md-3">
@@ -208,6 +224,33 @@
                         <h4 class="mb-0 fw-bold">{{ $csat['rate'] }}%</h4>
                     </div>
                 </div>
+
+                @if(count($csatTrend) > 0)
+                    <hr>
+                    <h6 class="fw-bold mb-3">Evolución semanal</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Semana</th>
+                                    <th class="text-end">Respuestas</th>
+                                    <th class="text-end">Media</th>
+                                    <th class="text-end">% Satisfacción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($csatTrend as $week)
+                                    <tr>
+                                        <td>{{ \Illuminate\Support\Carbon::parse($week['week'])->format('d/m/Y') }}</td>
+                                        <td class="text-end">{{ number_format($week['answered']) }}</td>
+                                        <td class="text-end">{{ $week['average'] }}<small class="text-muted">/{{ $csat['max'] }}</small></td>
+                                        <td class="text-end">{{ $week['rate'] }}%</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         </div>
     @endif
@@ -262,6 +305,52 @@
                     <i class="fas fa-chart-column fa-3x mb-3 text-muted opacity-50"></i>
                     <h6 class="fw-bold mb-2">Aún no hay datos</h6>
                     <p class="text-muted mb-0">Cuando el flow tenga sesiones, aquí verás dónde abandonan los usuarios.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- Latencia y fallos por nodo --}}
+    <div class="card mt-3">
+        <div class="card-header p-4 border-bottom border-light">
+            <h6 class="mb-1 fw-bold">Latencia y fallos por nodo</h6>
+            <p class="small mb-0 text-muted">Duración media y tasa de error de cada paso ejecutado</p>
+        </div>
+        <div class="card-body">
+            @if(count($nodeLatency) > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Paso</th>
+                                <th>Tipo</th>
+                                <th class="text-end">Ejecuciones</th>
+                                <th class="text-end">Media</th>
+                                <th class="text-end">Máx.</th>
+                                <th class="text-end">Fallos</th>
+                                <th class="text-end">Tasa de fallo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($nodeLatency as $row)
+                                <tr>
+                                    <td class="fw-semibold">{{ $row['label'] }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ $row['node_type'] }}</span></td>
+                                    <td class="text-end">{{ number_format($row['executions']) }}</td>
+                                    <td class="text-end">{{ number_format($row['avg_ms']) }} ms</td>
+                                    <td class="text-end">{{ number_format($row['max_ms']) }} ms</td>
+                                    <td class="text-end">{{ number_format($row['failures']) }}</td>
+                                    <td class="text-end {{ $row['failure_rate'] >= 20 ? 'text-danger fw-bold' : '' }}">{{ $row['failure_rate'] }}%</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-gauge-high fa-3x mb-3 text-muted opacity-50"></i>
+                    <h6 class="fw-bold mb-2">Aún no hay datos</h6>
+                    <p class="text-muted mb-0">Cuando el flow tenga ejecuciones, aquí verás su rendimiento por nodo.</p>
                 </div>
             @endif
         </div>

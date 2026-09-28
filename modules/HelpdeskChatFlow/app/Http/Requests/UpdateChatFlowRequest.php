@@ -54,7 +54,7 @@ class UpdateChatFlowRequest extends FormRequest
             'trigger_conditions.use_nlu' => ['sometimes', 'boolean'],
             'trigger_conditions.intent' => ['sometimes', 'nullable', 'string', 'max:255'],
             'nodes' => ['nullable', 'array'],
-            'nodes.*.type' => ['required', 'string', 'in:'.implode(',', ChatFlow::NODE_TYPES)],
+            'nodes.*.type' => ['required', 'string', 'in:'.implode(',', ChatFlow::nodeTypes())],
             'status' => ['nullable', 'in:draft,active,archived'],
             'priority' => ['nullable', 'integer', 'min:0', 'max:100'],
         ];

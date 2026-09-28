@@ -4,10 +4,10 @@ namespace Modules\HelpdeskChatFlow\Tests\Feature;
 
 use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
-use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowsController;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowAnalyticsController;
 use Modules\HelpdeskChatFlow\Listeners\InvalidateFlowAnalyticsCache;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 /**
  * analytics() cachea los bloques de métricas por (flow, days). Cuando una sesión
@@ -18,10 +18,10 @@ class FlowAnalyticsCacheTest extends TestCase
 {
     public function test_cache_key_is_scoped_by_flow_and_days(): void
     {
-        $this->assertSame('helpdeskchatflow:analytics:7:30', ChatFlowsController::analyticsCacheKey(7, 30));
+        $this->assertSame('helpdeskchatflow:analytics:7:30', ChatFlowAnalyticsController::analyticsCacheKey(7, 30));
         $this->assertNotSame(
-            ChatFlowsController::analyticsCacheKey(7, 30),
-            ChatFlowsController::analyticsCacheKey(7, 90),
+            ChatFlowAnalyticsController::analyticsCacheKey(7, 30),
+            ChatFlowAnalyticsController::analyticsCacheKey(7, 90),
             'Distinta ventana => distinta clave.'
         );
     }
@@ -30,23 +30,23 @@ class FlowAnalyticsCacheTest extends TestCase
     {
         $flowId = 987654;
 
-        foreach (ChatFlowsController::ANALYTICS_DAY_KEYS as $days) {
-            Cache::put(ChatFlowsController::analyticsCacheKey($flowId, $days), ['cached'], 600);
+        foreach (array_keys(ChatFlowAnalyticsController::RANGE_OPTIONS) as $days) {
+            Cache::put(ChatFlowAnalyticsController::analyticsCacheKey($flowId, $days), ['cached'], 600);
         }
         // Otro flujo no debe verse afectado.
-        Cache::put(ChatFlowsController::analyticsCacheKey(111, 30), ['keep'], 600);
+        Cache::put(ChatFlowAnalyticsController::analyticsCacheKey(111, 30), ['keep'], 600);
 
         $session = new ChatFlowSession;
         $session->chat_flow_id = $flowId;
         (new InvalidateFlowAnalyticsCache)->handle(new ChatFlowCompleted($session));
 
-        foreach (ChatFlowsController::ANALYTICS_DAY_KEYS as $days) {
+        foreach (array_keys(ChatFlowAnalyticsController::RANGE_OPTIONS) as $days) {
             $this->assertFalse(
-                Cache::has(ChatFlowsController::analyticsCacheKey($flowId, $days)),
+                Cache::has(ChatFlowAnalyticsController::analyticsCacheKey($flowId, $days)),
                 "La ventana {$days} del flujo debe invalidarse."
             );
         }
 
-        $this->assertTrue(Cache::has(ChatFlowsController::analyticsCacheKey(111, 30)), 'Otros flujos no deben tocarse.');
+        $this->assertTrue(Cache::has(ChatFlowAnalyticsController::analyticsCacheKey(111, 30)), 'Otros flujos no deben tocarse.');
     }
 }

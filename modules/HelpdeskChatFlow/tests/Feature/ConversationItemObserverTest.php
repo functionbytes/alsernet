@@ -9,7 +9,7 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskChatFlow\Jobs\DeliverBotMessageJob;
 use Modules\HelpdeskChatFlow\Observers\ConversationItemObserver;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
-use Tests\TestCase;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 
 class ConversationItemObserverTest extends TestCase
 {

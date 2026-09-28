@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskChatFlow\Database\Factories\ChatFlowFactory;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
 
 class ChatFlow extends Model
 {
@@ -45,6 +46,21 @@ class ChatFlow extends Model
             'published_nodes' => 'array',
             'published_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Node types a flow may contain: the core NODE_TYPES plus any type that
+     * another module contributes through a tagged NodeHandler.
+     *
+     * @return array<int, string>
+     */
+    public static function nodeTypes(): array
+    {
+        $contributed = app()->bound(NodeHandlerRegistry::class)
+            ? app(NodeHandlerRegistry::class)->types()
+            : [];
+
+        return array_values(array_unique([...self::NODE_TYPES, ...$contributed]));
     }
 
     const TRIGGER_TYPES = ['conversation_start', 'keyword', 'manual', 'no_agent', 'intent'];

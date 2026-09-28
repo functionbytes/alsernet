@@ -6,10 +6,10 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Modules\HelpdeskChatFlow\Listeners\LaunchOutboundFlowOnBusinessEvent;
 use Modules\HelpdeskChatFlow\Services\ChatFlowBusinessEventLauncher;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Modules\HelpdeskErp\Events\ErpOrdersReady;
 use Modules\HelpdeskPrestashop\Events\PsCartAbandoned;
 use Modules\HelpdeskPrestashop\Events\PsOrderStatusChanged;
-use Tests\TestCase;
 
 class LaunchOutboundFlowOnBusinessEventTest extends TestCase
 {

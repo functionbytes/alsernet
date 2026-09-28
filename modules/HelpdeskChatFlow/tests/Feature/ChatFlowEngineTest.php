@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
@@ -21,15 +22,22 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowHandoffSummary;
 use Modules\HelpdeskChatFlow\Services\ChatFlowIdentityOtp;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowNodeExecutor;
+use Modules\HelpdeskChatFlow\Services\ChatFlowScheduler;
 use Modules\HelpdeskChatFlow\Services\ChatFlowSentiment;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTriggerResolver;
 use Modules\HelpdeskChatFlow\Services\CustomerIdentityResolver;
+use Modules\HelpdeskChatFlow\Services\Input\CsatInputHandler;
+use Modules\HelpdeskChatFlow\Services\Input\DocumentUploadInputHandler;
+use Modules\HelpdeskChatFlow\Services\Input\IdentificationInputHandler;
 use Modules\HelpdeskChatFlow\Tests\Support\InMemoryChatFlowSession;
+use Modules\HelpdeskChatFlow\Tests\TestCase;
 use ReflectionMethod;
-use Tests\TestCase;
 
 class ChatFlowEngineTest extends TestCase
 {
+    // Counts Mockery expectations as assertions (several tests only assert via mocks).
+    use MockeryPHPUnitIntegration;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -51,12 +59,14 @@ class ChatFlowEngineTest extends TestCase
         return new ChatFlowEngine(
             $executor ?? Mockery::mock(ChatFlowNodeExecutor::class),
             $resolver ?? Mockery::mock(ChatFlowTriggerResolver::class),
-            $identityResolver ?? Mockery::mock(CustomerIdentityResolver::class),
             $aiResponder ?? Mockery::mock(ChatFlowAiResponder::class),
             new ChatFlowSentiment(null),
             new ChatFlowLocalizer(null),
             Mockery::mock(ChatFlowHandoffSummary::class),
-            new ChatFlowIdentityOtp,
+            new IdentificationInputHandler($identityResolver ?? Mockery::mock(CustomerIdentityResolver::class), new ChatFlowIdentityOtp),
+            new DocumentUploadInputHandler(new ChatFlowLocalizer(null)),
+            new CsatInputHandler(new ChatFlowLocalizer(null)),
+            new ChatFlowScheduler,
         );
     }
 
