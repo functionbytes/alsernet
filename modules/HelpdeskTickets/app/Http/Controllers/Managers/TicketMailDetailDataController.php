@@ -46,11 +46,15 @@ class TicketMailDetailDataController extends Controller
         // del hilo — sin eager load esto eran 3-4 queries extra por email
         // (120-180 en un hilo largo). Tope de 100 porque el panel solo
         // muestra un hilo, no un histórico completo.
+        // Todo el hilo comparte el ticket ya cargado arriba en $mail: se
+        // reutiliza con setRelation() en vez de volver a eager-cargar
+        // ticket.customer (2 queries repetidas por petición).
         $thread = TicketMail::where('ticket_id', $mail->ticket_id)
-            ->with(['ticket.customer', 'user:id,firstname,lastname', 'category:id,name'])
+            ->with(['user:id,firstname,lastname', 'category:id,name'])
             ->oldest()
             ->limit(100)
-            ->get();
+            ->get()
+            ->each(fn (TicketMail $threadMail) => $threadMail->setRelation('ticket', $mail->ticket));
 
         return response()->json([
             'success' => true,

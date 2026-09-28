@@ -50,6 +50,23 @@ class HelpdeskSettings
             [],
         );
 
+        $extensions = $this->normalizeExtensions($value);
+
+        // Un campo vaciado en Ajustes → Subida de archivos se guarda como ''
+        // (no null), y get() solo cae al config con null: sin esto la lista
+        // quedaba vacía y se descartaban TODOS los adjuntos entrantes sin aviso.
+        if ($extensions === []) {
+            $extensions = $this->normalizeExtensions(config('helpdesk.attachments.allowed_extensions', []));
+        }
+
+        return $extensions;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function normalizeExtensions(mixed $value): array
+    {
         if (is_string($value)) {
             $value = preg_split('/[,\s]+/', $value) ?: [];
         }

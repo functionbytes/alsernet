@@ -36,9 +36,10 @@ class FetchTicketEmailsAllowedExtensionsTest extends TestCase
         HelpdeskGeneralSetting::set('uploading.allowed_extensions', '', 'uploading');
     }
 
-    public function test_usa_el_default_fijo_sin_nada_configurado(): void
+    public function test_usa_el_default_del_config_con_el_ajuste_vacio(): void
     {
-        $this->assertSame(['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'], $this->allowedExtensions());
+        $this->assertSame(config('helpdesk.attachments.allowed_extensions'), $this->allowedExtensions());
+        $this->assertContains('pdf', $this->allowedExtensions());
     }
 
     public function test_usa_lo_configurado_en_ajustes_subida_de_archivos(): void

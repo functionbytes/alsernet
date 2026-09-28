@@ -133,6 +133,13 @@ class AssignmentService
             }
 
             return $this->transactional(function () use ($ticket, $newAgentId, $reason) {
+                // No se simplifica a un solo assignTicket(): éste ya
+                // desasigna internamente cuando el assignee cambia, pero lo
+                // hace con el motivo fijo 'Reassigning to another agent',
+                // perdiendo el $reason que pasó quien llama a reassignTicket().
+                // Llamando a unassignTicket() explícitamente aquí, ese motivo
+                // queda en el registro de TicketAssignment/TicketHistory del
+                // lado "desasignado" en vez de un texto genérico.
                 if ($ticket->assignee_id) {
                     $this->unassignTicket($ticket, $reason ?? 'Reassigning to another agent');
                 }
@@ -179,10 +186,20 @@ class AssignmentService
             ])->sortBy('workload');
 
             $minWorkload = $agentWorkloads->first()['workload'];
-            $candidateAgents = $agentWorkloads->where('workload', $minWorkload);
+
+            // Ordenados por agent_id (y reindexados) para que el "siguiente
+            // candidato" de abajo sea una rotación estable: sin esto,
+            // ->where('agent_id', '>', $lastAgentId)->first() devolvía el
+            // primer empatado en el orden de sortBy('workload') —que no es
+            // orden de agent_id—, así que el mismo agente podía repetirse en
+            // vez de rotar.
+            $candidateAgents = $agentWorkloads->where('workload', $minWorkload)
+                ->sortBy('agent_id')
+                ->values();
 
             $lastAssignment = TicketAssignment::whereIn('assigned_to', $candidateAgents->pluck('agent_id'))
                 ->orderByDesc('assigned_at')
+                ->orderByDesc('id')
                 ->first();
 
             if ($lastAssignment) {

@@ -16,7 +16,7 @@ use Tests\TestCase;
 /**
  * Regresión N+1 del panel lateral de un email (TicketMailDetailDataController::data()):
  * toListRow() lee ticket->customer, category y user por cada mensaje del hilo.
- * Sin with(['ticket.customer', 'user:...', 'category:...']) en el hilo (línea
+ * Sin eager load de user/category (y el ticket compartido vía setRelation) en el hilo (línea
  * ~33), cada mensaje disparaba 3-4 queries propias — 120-180 en un hilo largo.
  */
 class TicketMailDetailQueryCountTest extends TestCase
@@ -52,8 +52,34 @@ class TicketMailDetailQueryCountTest extends TestCase
         $manager = User::factory()->create();
         $manager->givePermissionTo('helpdesk.tickets.emails.view');
 
+        // Se compara el mismo panel con un hilo de 1 y de 15 mensajes: un N+1
+        // sobre el hilo sumaría >= 14 queries al segundo. Antes el test solo
+        // tenía un techo absoluto que había que ir subiendo (25 → 28 → 30)
+        // cada vez que el resumen de cliente 360 ganaba una consulta fija
+        // (CustomerSummaryService / ContactAggregatorService), aunque no
+        // escalara con el hilo. Una petición previa calienta las cachés de
+        // permisos/settings: la primera petición en frío hace ~30 queries
+        // más que las siguientes y esa diferencia tapaba el N+1.
+        $this->countQueriesForThreadOf(1, $manager);
+
+        $shortThread = $this->countQueriesForThreadOf(1, $manager);
+        $longThread = $this->countQueriesForThreadOf(15, $manager);
+
+        $this->assertLessThanOrEqual(
+            $shortThread,
+            $longThread,
+            "El panel de detalle de email no debe hacer una query por mensaje del hilo ({$shortThread} con 1 mensaje, {$longThread} con 15)."
+        );
+
+        // Techo del coste fijo con cachés calientes (13 medidas el
+        // 28-sep-2026, casi todas del resumen de cliente 360).
+        $this->assertLessThanOrEqual(20, $shortThread);
+    }
+
+    private function countQueriesForThreadOf(int $size, User $manager): int
+    {
         $ticket = Ticket::create([
-            'subject' => 'Hilo largo de prueba',
+            'subject' => 'Hilo de prueba',
             'description' => 'Test description.',
             'customer_id' => $this->customer->id,
             'status_id' => $this->status->id,
@@ -61,8 +87,9 @@ class TicketMailDetailQueryCountTest extends TestCase
             'source' => 'web',
         ]);
 
-        $mails = collect(range(1, 15))->map(fn (int $i) => TicketMail::create([
+        $mails = collect(range(1, $size))->map(fn (int $i) => TicketMail::create([
             'ticket_id' => $ticket->id,
+            'user_id' => $manager->id,
             'direction' => 'outbound',
             'from' => 'soporte@alvarez.mx',
             'to' => 'cliente@example.com',
@@ -73,39 +100,27 @@ class TicketMailDetailQueryCountTest extends TestCase
             'message_id' => '<'.uniqid().'@alvarez.mx>',
         ]));
 
-        $lastMail = $mails->last();
+        // Incluye la conexión por defecto: App\Models\User (relación user
+        // del hilo, vía BelongsToHelpdeskUser) no vive en mariadb/helpdesk, y
+        // sin contarla un N+1 sobre el agente de cada mensaje pasaba invisible.
+        $connections = array_unique(['mariadb', 'helpdesk', config('database.default')]);
 
-        DB::connection('mariadb')->flushQueryLog();
-        DB::connection('mariadb')->enableQueryLog();
-        DB::connection('helpdesk')->flushQueryLog();
-        DB::connection('helpdesk')->enableQueryLog();
+        foreach ($connections as $connection) {
+            DB::connection($connection)->flushQueryLog();
+            DB::connection($connection)->enableQueryLog();
+        }
 
         $this->actingAs($manager)
-            ->getJson(route('manager.helpdesk.tickets.emails.data', $lastMail))
+            ->getJson(route('manager.helpdesk.tickets.emails.data', $mails->last()))
             ->assertOk();
 
-        $queryCount = count(DB::connection('mariadb')->getQueryLog())
-            + count(DB::connection('helpdesk')->getQueryLog());
+        $queryCount = 0;
+        foreach ($connections as $connection) {
+            $queryCount += count(DB::connection($connection)->getQueryLog());
+            DB::connection($connection)->disableQueryLog();
+        }
 
-        DB::connection('mariadb')->disableQueryLog();
-        DB::connection('helpdesk')->disableQueryLog();
-
-        // Presupuesto generoso: mail + hilo (1 query con eager load) + trace
-        // + actividad + relacionados + auth/permisos. Un N+1 sobre el hilo
-        // de 15 mensajes dispararía esto por encima de 40-50. Subido de 25 a
-        // 28 (1-sep-2026): traceFor() ahora también cruza clics
-        // (EmailLog::with(['opens', 'clicks']), ver EmailLogLookupService) —
-        // hasManyThrough eager-load es una query propia, no gratis, pero
-        // fija (no escala con el tamaño del hilo, así que sigue sin ser un
-        // N+1 real). Subido de 28 a 30 (3-sep-2026): una llamada directa al
-        // controlador (sin stack HTTP/middleware) reproduce 24 queries fijas;
-        // las ~5 restantes son overhead de auth/permisos de la petición real,
-        // no del tamaño del hilo — verificado con hilos de distinto tamaño.
-        $this->assertLessThanOrEqual(
-            30,
-            $queryCount,
-            'El panel de detalle de email no debe hacer una query por mensaje del hilo.'
-        );
+        return $queryCount;
     }
 
     private function helpdeskConnectionAvailable(): bool

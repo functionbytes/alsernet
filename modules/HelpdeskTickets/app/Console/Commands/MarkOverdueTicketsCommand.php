@@ -67,6 +67,7 @@ class MarkOverdueTicketsCommand extends Command
     private function markFirstResponseBreaches(int $fallbackDays): int
     {
         return Ticket::query()
+            ->whereNull('closed_at')
             ->whereNull('first_response_at')
             ->whereNull('sla_paused_at')
             ->where('sla_first_response_breached', false)
