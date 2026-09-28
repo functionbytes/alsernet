@@ -56,11 +56,11 @@ body:has(.tkt) .mc-content {
   --tkt-text-strong: #27272a;
   --tkt-text-mid: #3f3f46;
   --tkt-text-soft: #52525b;
-  --tkt-text-mute: #71717a;
+  --tkt-text-mute: #63636b;
   --tkt-text-faint: #a1a1aa;
   /* verde de marca */
   --tkt-accent: #90bb13;
-  --tkt-accent-dark: #5b7a0d;
+  --tkt-accent-dark: #4f6b0a;
   --tkt-accent-bg: #eef5d9;
   --tkt-accent-soft: #f4f8e8;
   --tkt-accent-line: #d3e5a3;
@@ -72,8 +72,8 @@ body:has(.tkt) .mc-content {
      sirve como color de texto suelto: con el chip en negro sobre negro,
      -fg vale #fff y pintaría invisible un ".tkt-sla-breach". De ahí
      -text, que es el tono que se usa cuando el color va sin fondo. */
-  --tkt-ok: #90bb13;      --tkt-ok-bg: #eef5d9;    --tkt-ok-fg: #5b7a0d;
-  --tkt-ok-text: #5b7a0d;
+  --tkt-ok: #90bb13;      --tkt-ok-bg: #eef5d9;    --tkt-ok-fg: #4f6b0a;
+  --tkt-ok-text: #4f6b0a;
   --tkt-warn: #3f3f46;    --tkt-warn-bg: #e4e4e7;  --tkt-warn-fg: #18181b;
   --tkt-warn-text: #3f3f46;
   --tkt-warn-soft: #f4f8e8; --tkt-warn-line: #d3e5a3;
@@ -187,7 +187,7 @@ body:has(.tkt) .mc-content {
    ticket", "Responder", "Enviar ahora", "Programar", "Insertar plantilla",
    "Responder al cliente") son #90bb13 con el texto en blanco. El negro
    queda reservado para los chips de prioridad alta/urgente. */
-.tkt-btn-primary { background: var(--tkt-accent); color: #fff; border-color: var(--tkt-accent); }
+.tkt-btn-primary { background: var(--tkt-accent); color: var(--tkt-text); border-color: var(--tkt-accent); }
 .tkt-btn-primary:hover { background: var(--tkt-accent-dark); border-color: var(--tkt-accent-dark); }
 /* Variante oscura para el botón que en el mockup sí va en negro (el
    segmentado de vista activo y los iconos de la cabecera del detalle). */
@@ -201,7 +201,7 @@ body:has(.tkt) .mc-content {
 .tkt-seg { display: flex; gap: 2px; padding: 2px; background: #fff; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); flex-wrap: wrap; }
 .tkt-seg > button { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 6px; font-size: var(--tkt-t-md); font-weight: 600; color: var(--tkt-text-soft); background: transparent; border: none; }
 .tkt-seg > button > i { font-size: 10px; color: var(--tkt-text-mute); }
-.tkt-seg > button.on { background: var(--tkt-accent); color: #fff; }
+.tkt-seg > button.on { background: var(--tkt-accent); color: var(--tkt-text); }
 .tkt-seg > button.on > i { color: #fff; }
 
 /* ── Shell de la aplicación ──────────────────────────────── */
@@ -212,7 +212,7 @@ body:has(.tkt) .mc-content {
 .tkt-app-scroll { height: 100%; display: flex; flex-direction: column; overflow-x: auto; overflow-y: hidden; }
 .tkt-app-card { flex: 1; min-height: 0; width: 100%; min-width: 1180px; display: flex; flex-direction: column; background: var(--tkt-panel); overflow: hidden; }
 .tkt-app-bar { display: flex; align-items: center; gap: 12px; row-gap: 8px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
-.tkt-crumbs { display: flex; align-items: center; gap: 7px; font-size: var(--tkt-t-md); color: var(--tkt-text-faint); }
+.tkt-crumbs { display: flex; align-items: center; gap: 7px; font-size: var(--tkt-t-md); color: var(--tkt-text-mute); }
 .tkt-crumbs .on { color: var(--tkt-text); font-weight: 600; }
 .tkt-crumbs i { font-size: 8px; }
 
@@ -224,7 +224,7 @@ body:has(.tkt) .mc-content {
 .tkt-state-tabs { display: flex; align-items: center; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-panel); overflow-x: auto; }
 .tkt-state-tab { padding: 10px 12px; font-size: var(--tkt-t); font-weight: 600; color: var(--tkt-text-soft); white-space: nowrap; border: none; background: transparent; }
 .tkt-state-tab.on { font-weight: 700; color: var(--tkt-text); box-shadow: inset 0 -2px 0 var(--tkt-text); }
-.tkt-state-tab .c { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); margin-left: 4px; }
+.tkt-state-tab .c { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-mute); margin-left: 4px; }
 .tkt-state-tab[data-filter="unassigned"] .c { color: var(--tkt-danger-text); }
 .tkt-state-tab[data-filter="pending"] .c { color: var(--tkt-warn-text); }
 /* "Plantillas": misma caja que un tab, pero es un enlace, no un filtro. */
@@ -270,7 +270,7 @@ body:has(.tkt) .mc-content {
 
 /* vistas guardadas */
 .tkt-views-bar { display: flex; align-items: center; gap: 14px; row-gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-panel); flex-wrap: wrap; }
-.tkt-cap { font-size: var(--tkt-t-xs); font-weight: 700; color: var(--tkt-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+.tkt-cap { font-size: var(--tkt-t-xs); font-weight: 700; color: var(--tkt-text-mute); text-transform: uppercase; letter-spacing: .06em; }
 .tkt-view-pill { padding: 3px 9px; border-radius: 20px; border: 1px solid var(--tkt-border); background: var(--tkt-panel); color: var(--tkt-text-soft); font-size: 11px; font-weight: 600; }
 /* Sin borde, como en el mockup: con él la píldora activa medía 22px y las
    inactivas 20px, y la fila de vistas quedaba desalineada. El padding sube en
@@ -323,8 +323,9 @@ body:has(.tkt) .mc-content {
    oculto. Se queda el estilo mínimo para el instante previo al init, mismo
    criterio que .tkt-fsel en la barra de filtros. */
 .tkt select.tkt-sort-select { font-size: var(--tkt-t-sm); color: var(--tkt-text-soft); cursor: pointer; border: 1px solid var(--tkt-border); border-radius: 5px; padding: 2px 5px; background: var(--tkt-panel); }
-.tkt-list-head-icons { margin-left: auto; display: flex; align-items: center; gap: 10px; color: var(--tkt-text-faint); font-size: 11px; }
-.tkt-list-head-icons > button { border: none; background: none; padding: 0; color: inherit; }
+.tkt-list-head-icons { margin-left: auto; display: flex; align-items: center; gap: 2px; color: var(--tkt-text-mute); font-size: 11px; }
+/* 24x24 mínimo (WCAG 2.5.8 / Lighthouse target-size): antes 16px de zona segura entre iconos. */
+.tkt-list-head-icons > button { border: none; background: none; padding: 0; color: inherit; min-width: 26px; min-height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--tkt-r-sm); }
 .tkt-list-head-icons > button:hover { color: var(--tkt-text); }
 .tkt-list { display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0; }
 .tkt-split-list.is-compact .tkt-ticket-row { padding-top: 7px; padding-bottom: 7px; gap: 8px; }
@@ -403,6 +404,8 @@ body:has(.tkt) .mc-content {
    escala zinc (sin rojos): filete oscuro, discontinuo o trama. */
 .tkt-rchip.prio-high { background: #fff; border-color: var(--tkt-text); color: var(--tkt-text); }
 .tkt-rchip.attn { background: #fff; border: 1px dashed var(--tkt-text-soft); color: var(--tkt-text); }
+/* Ticket abierto que se conserva en la lista aunque ya no cumpla el filtro. */
+.tkt-rchip.outside { background: var(--tkt-subtle); border: 1px dotted var(--tkt-text-mute); color: var(--tkt-text-mid); font-style: italic; }
 .tkt-rchip.bounce { background: var(--tkt-warn-bg); border-color: var(--tkt-border-strong); color: var(--tkt-text); }
 .tkt-rchip.sla-breach {
   border-color: var(--tkt-border-strong);
@@ -3322,7 +3325,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
    ══════════════════════════════════════════════════════════════ */
 .tkt-compact-toggle { display: none; background: transparent; border: 0; }
 .tkt-compact-toggle[aria-expanded="true"] { color: var(--tkt-text); }
-.tkt-compact-toggle .c { margin-left: 4px; padding: 0 5px; border-radius: var(--tkt-r-md); background: var(--tkt-accent); color: #fff; font-size: var(--tkt-t-xs); }
+.tkt-compact-toggle .c { margin-left: 4px; padding: 0 5px; border-radius: var(--tkt-r-md); background: var(--tkt-accent); color: var(--tkt-text); font-size: var(--tkt-t-xs); }
 
 @media (max-height: 960px) {
   .tkt-compact-toggle { display: inline-flex; align-items: center; }
@@ -3427,3 +3430,19 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
    prioridad (negro) y de "Sin responder" (discontinuo). */
 .tkt-rchip.escalated,
 .tkt-chip.tkt-chip-escalated { background: var(--tkt-accent-bg); border: 1px solid var(--tkt-accent-line); color: var(--tkt-accent-dark); font-weight: 700; }
+
+/* Contraste AA (QA 28-sep-2026): "+ guardar vista" usaba --tkt-text-faint
+   (#a1a1aa, 2.56:1 sobre blanco). */
+#tkt-save-view { color: var(--tkt-text-mute); }
+
+/* Contraste AA en textos secundarios y botones de acento del panel (QA
+   28-sep-2026, Lighthouse color-contrast). El verde de marca (#90bb13) con
+   texto blanco daba 2.25:1; con el texto oscuro del panel supera 8:1 sin
+   cambiar el color del botón. Los grises de horas/posición usaban
+   --tkt-text-faint (#a1a1aa, ~2.4:1). Van al final porque varias reglas más
+   específicas de arriba (a#tkt-new-ticket, .tkt-comp-send) fijan color: #fff. */
+.tkt a.tkt-btn-primary, .tkt a.tkt-btn-primary:hover, .tkt .tkt-comp-send { color: var(--tkt-text); }
+.tkt .tkt-detail-position,
+.tkt .tkt-thread-day span,
+.tkt .tkt-tevent-time,
+.tkt .tkt-tmsg-time { color: var(--tkt-text-mute); }
