@@ -58,7 +58,12 @@ class StoreMessageTest extends InboxTestCase
         Storage::fake('public');
 
         $conversation = $this->createConversation();
-        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+        // ValidMimeMagicBytes mira los bytes reales (finfo), no el nombre ni el
+        // mime declarado: un fake()->create() vacío se detecta como octet-stream.
+        $file = UploadedFile::fake()->createWithContent(
+            'document.pdf',
+            "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"
+        );
 
         $this->actingAs($this->manager)
             ->postJson(route('manager.helpdesk.conversations.messages.store', $conversation), [

@@ -16,8 +16,9 @@ class AddLabelActionTest extends HelpdeskTestCase
 {
     public function test_execute_attaches_existing_tags(): void
     {
+        // Slug único: la BD de test es una copia que ya trae una etiqueta 'vip'.
         $tag = ConversationTag::create([
-            'name' => 'VIP', 'slug' => 'vip', 'color' => '#ff0000', 'is_active' => true,
+            'name' => 'VIP test', 'slug' => 'vip-'.uniqid(), 'color' => '#ff0000', 'is_active' => true,
         ]);
         $conversation = Conversation::factory()->create(['status_id' => $this->openStatus->id]);
 

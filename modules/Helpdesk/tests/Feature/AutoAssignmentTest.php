@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Conversation;
@@ -168,6 +169,14 @@ class AutoAssignmentTest extends HelpdeskTestCase
     public function test_supervisor_fallback_assigns_to_an_admin_role(): void
     {
         Role::firstOrCreate(['name' => 'helpdesk-admin', 'guard_name' => 'web']);
+
+        // applyFallback() elige al primer usuario (por id) con rol de
+        // supervisor; la BD de test es una copia con admins reales. Se quitan
+        // esos roles dentro de la transacción del test (se revierte sola).
+        DB::table('model_has_roles')
+            ->whereIn('role_id', Role::whereIn('name', ['helpdesk-admin', 'manager', 'super-admin'])->pluck('id'))
+            ->delete();
+
         $supervisor = User::factory()->create();
         $supervisor->assignRole('helpdesk-admin');
 
@@ -197,12 +206,12 @@ class AutoAssignmentTest extends HelpdeskTestCase
 
         $this->actingAs($this->manager)
             ->putJson(route('manager.helpdesk.auto-assignment.update'), [
-                'strategy' => 'skills', 'retry' => '2', 'fallback' => 'queue',
+                'strategy' => 'least_load', 'retry' => '2', 'fallback' => 'queue',
             ])
             ->assertOk()
             ->assertJson(['success' => true]);
 
-        $this->assertSame('skills', Setting::get('auto_assign.strategy'));
+        $this->assertSame('least_load', Setting::get('auto_assign.strategy'));
     }
 
     public function test_update_endpoint_rejects_invalid_strategy(): void

@@ -62,7 +62,7 @@ class V1ScopingTest extends TestCase
     {
         [$agent, $convA, $convB] = $this->scenario();
 
-        Sanctum::actingAs($agent);
+        Sanctum::actingAs($agent, ['helpdesk.read']);
         $response = $this->getJson('/api/v1/helpdesk/conversations?per_page=100')->assertOk();
 
         $ids = $this->ids($response->json('data'));
@@ -74,7 +74,7 @@ class V1ScopingTest extends TestCase
     {
         [$agent, $convA, $convB] = $this->scenario();
 
-        Sanctum::actingAs($agent);
+        Sanctum::actingAs($agent, ['helpdesk.read']);
         $response = $this->getJson('/api/v1/helpdesk/customers?per_page=100')->assertOk();
 
         $ids = $this->ids($response->json('data'));

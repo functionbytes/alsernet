@@ -12,6 +12,7 @@ use Modules\Helpdesk\Services\Compliance\GdprExportService;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Nwidart\Modules\Facades\Module;
 use Tests\TestCase;
 
 /**
@@ -48,11 +49,16 @@ class GdprExportContributorsTest extends TestCase
         // existir (vacías): un export sin la clave no permite distinguir "sin
         // datos" de "módulo no exportado".
         $this->assertArrayHasKey('tickets', $data);
-        $this->assertArrayHasKey('chatflow_sessions', $data);
         $this->assertArrayHasKey('documents', $data);
         $this->assertSame([], $data['tickets']);
-        $this->assertSame([], $data['chatflow_sessions']);
         $this->assertSame([], $data['documents']);
+
+        // El contribuidor de ChatFlow solo se registra con el módulo activo
+        // (modules_statuses.json); apagado, la sección no existe.
+        if (Module::isEnabled('HelpdeskChatFlow')) {
+            $this->assertArrayHasKey('chatflow_sessions', $data);
+            $this->assertSame([], $data['chatflow_sessions']);
+        }
     }
 
     public function test_export_includes_customer_tickets_with_non_internal_messages(): void
@@ -90,6 +96,10 @@ class GdprExportContributorsTest extends TestCase
 
     public function test_export_includes_chatflow_sessions_of_the_customer_conversations(): void
     {
+        if (! Module::isEnabled('HelpdeskChatFlow')) {
+            $this->markTestSkipped('HelpdeskChatFlow está desactivado en modules_statuses.json: su contribuidor GDPR no se registra.');
+        }
+
         $customer = Customer::factory()->create();
         $conversation = Conversation::factory()->create(['customer_id' => $customer->id]);
         $flow = ChatFlow::factory()->create();

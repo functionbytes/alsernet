@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Modules\Helpdesk\Models\ConversationStatus;
+use Tests\Concerns\DisablesPreexistingWebhooks;
 use Tests\TestCase;
 
 /**
@@ -20,8 +21,16 @@ use Tests\TestCase;
 class RateLimiterRegistrationTest extends TestCase
 {
     use DatabaseTransactions;
+    use DisablesPreexistingWebhooks;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->disablePreexistingWebhooks();
+    }
 
     /**
      * (8b) Regresión puntual de HOTFIX-00: el webhook de correo entrante no
