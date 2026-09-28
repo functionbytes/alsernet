@@ -9,6 +9,7 @@
         "php": "^8.4",
         "aerni/cloudflared": "^1.1",
         "guzzlehttp/psr7": "^2.13",
+        "keepsuit/liquid": "^0.9.1",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.49",
         "laravel/mcp": "^0.5.1",
