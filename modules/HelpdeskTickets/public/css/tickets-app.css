@@ -3418,7 +3418,7 @@ button.tkt-slacal-toggle > .s { text-transform: none; }
 .tkt-qsum-dot.warn { background: var(--tkt-accent); }
 .tkt-qsum-subject { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tkt-qsum-sla { font-family: var(--tkt-mono); font-size: var(--tkt-t-xs); color: var(--tkt-text-mute); white-space: nowrap; }
-.tkt-qsum-hint { margin: 4px 0 0; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+.tkt-qsum-hint { margin: 4px 0 0; font-size: var(--tkt-t-sm); color: var(--tkt-text-mute); }
 
 
 /* Aviso del Kanban filtrado por pestaña y columna vacía (24-sep-2026). */

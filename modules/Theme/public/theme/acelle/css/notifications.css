@@ -45,7 +45,7 @@
     background: #eee;
     border: 1px solid #ddd;
     border-radius: 4px;
-    color: #999;
+    color: #616161; /* #999 sobre #eee daba 2.45:1 (Lighthouse, QA 28-sep-2026) */
     font-family: inherit;
 }
 

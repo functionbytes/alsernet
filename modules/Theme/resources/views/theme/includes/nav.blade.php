@@ -23,7 +23,13 @@
 <aside class="app-menubar-tabs{{ !$panelIsOpen ? ' no-sidebar-open' : '' }}" id="appMenubar">
 
     <div class="app-navbar-tabs" data-simplebar="">
-        <ul class="nav" id="appMenubarTabs" role="list" aria-orientation="vertical">
+        {{-- role="tablist" y no "list": Bootstrap (Tab::_setInitialAttributes) solo
+             pone tablist si el contenedor no trae rol propio, así que "list"
+             dejaba sus role="tab" sin padre válido y aria-orientation sobre un
+             rol que no lo admite (Lighthouse aria-required-parent/-children,
+             QA 28-sep-2026). Los enlaces directos también llevan role="tab"
+             para que el tablist no mezcle hijos de otro tipo. --}}
+        <ul class="nav" id="appMenubarTabs" role="tablist" aria-orientation="vertical">
 
             @foreach($mainSidebars as $sidebarId => $sidebar)
                 @php
@@ -42,7 +48,7 @@
                 @endphp
                 <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $label }}">
                     @if($allItems->count() === 1)
-                        <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}" aria-label="{{ $label }}">
+                        <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}" aria-label="{{ $label }}" role="tab" aria-selected="{{ $isActive ? 'true' : 'false' }}">
                             <span class="nav-icon">{!! \Modules\Theme\Helpers\NavIconHelper::render($iconKey) !!}</span>
                         </a>
                     @else

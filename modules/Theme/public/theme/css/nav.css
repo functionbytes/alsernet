@@ -476,7 +476,10 @@
     color: var(--bs-body-color);
 }
 .app-menubar-tabs .side-menubar .menu-item .menu-link.active {
-    color: #90bb13 !important;
+    /* Verde de marca oscurecido: #90bb13 sobre blanco daba 2.25:1
+       (Lighthouse color-contrast, QA 28-sep-2026); mismo tono que
+       --tkt-accent-dark del panel de tickets. */
+    color: #4f6b0a !important;
     font-weight: 700;
 }
 .app-menubar-tabs .side-menubar .menu-item .menu-link.active i {
