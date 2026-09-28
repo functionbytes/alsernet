@@ -169,8 +169,9 @@ export function startHeartbeat(): void {
             sendHeartbeat();
         }
     });
-    watchCart(() => { sendHeartbeat(); });
-    // Añadido desde el chat (widget-commerce ya releyó la cesta).
+    // watchCart() ya emite 'helpdesk:cart-changed' cuando la cesta cambia
+    // (tienda, chat, u otra pestaña); un único listener basta para el latido.
+    watchCart(() => {});
     window.addEventListener('helpdesk:cart-changed', () => { sendHeartbeat(); });
     heartbeatTimer = setInterval(sendHeartbeat, resolveHeartbeatIntervalMs());
 

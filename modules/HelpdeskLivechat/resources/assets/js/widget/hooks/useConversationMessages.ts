@@ -404,8 +404,10 @@ export function useConversationMessages({
                 setAgentTyping(isTyping);
 
                 // Auto-clear in case no follow-up "stopped"/message event arrives.
+                // El asistente IA manda un ttl más largo (piensa y consulta la tienda).
                 if (isTyping) {
-                    agentTypingTimerRef.current = setTimeout(() => setAgentTyping(false), 5000);
+                    const ttlMs = Math.min(Math.max(Number(event?.ttl) || 5, 1), 60) * 1000;
+                    agentTypingTimerRef.current = setTimeout(() => setAgentTyping(false), ttlMs);
                 }
             });
 

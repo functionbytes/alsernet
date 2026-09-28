@@ -1,16 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { useTranslation } from '../i18n/useLanguage';
 import {
     addToCart,
+    applyCartVoucher,
     canAddToCart,
+    CartLine,
     CartSnapshot,
     findVariantOption,
     getCart,
+    getProductVariants,
     getShop,
     getViewedProducts,
+    ProductVariants,
     refreshCart,
+    removeCartLine,
+    removeCartVoucher,
+    updateCartQuantity,
     VariantGroup,
     VariantOption,
     ViewedProduct,
@@ -20,9 +27,9 @@ import { VariantPicker } from '../components/VariantPicker';
 
 /**
  * Panel "Productos" del visitante (equivalente al coviewer de Oct8ne):
- * productos vistos, su cesta y la ficha de un producto con Añadir / Pagar.
- * Datos de la propia tienda (mismo origen): precio, stock y cesta los decide
- * siempre PrestaShop.
+ * productos vistos, su cesta (editable, en sincronía con el minicarrito de la
+ * tienda) y la ficha de un producto con Añadir / Pagar. Datos de la propia
+ * tienda (mismo origen): precio, stock y cesta los decide siempre PrestaShop.
  */
 
 interface ProductDetail {
@@ -44,6 +51,9 @@ interface ProductDetail {
 
 type Tab = 'viewed' | 'cart';
 
+/** Segundos que dura el "Deshacer" tras quitar una línea de la cesta. */
+const UNDO_REMOVE_MS = 5000;
+
 function money(value: number | null | undefined, currency?: string | null): string {
     if (typeof value !== 'number') return '';
     try {
@@ -51,6 +61,10 @@ function money(value: number | null | undefined, currency?: string | null): stri
     } catch {
         return value.toFixed(2);
     }
+}
+
+function lineKey(line: Pick<CartLine, 'id_product' | 'id_product_attribute'>): string {
+    return `${line.id_product}-${line.id_product_attribute}`;
 }
 
 function Thumb({ src, alt, className }: { src?: string | null; alt: string; className: string }) {
@@ -89,6 +103,104 @@ function EmptyState({ title, sub, icon }: { title: string; sub: string; icon: 'e
     );
 }
 
+function TrashIcon() {
+    return (
+        <svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7m2 0-.7 12.1A2 2 0 0 1 14.3 21H9.7a2 2 0 0 1-2-1.9L7 7" />
+        </svg>
+    );
+}
+
+interface CartLineRowProps {
+    line: CartLine;
+    currency?: string | null;
+    primaryColor: string;
+    busy: boolean;
+    error?: string | null;
+    hasCombinations: boolean;
+    variantEditing: boolean;
+    variantLoading: boolean;
+    variantData: ProductVariants | null;
+    variantSelection: Record<string, string>;
+    t: (key: string, vars?: Record<string, string>) => string;
+    onOpenDetail: () => void;
+    onQtyDelta: (delta: number) => void;
+    onRemove: () => void;
+    onToggleVariantEdit: () => void;
+    onSelectVariant: (group: string, value: string) => void;
+    onConfirmVariant: () => void;
+    onCancelVariantEdit: () => void;
+}
+
+function CartLineRow({
+    line, currency, primaryColor, busy, error, hasCombinations,
+    variantEditing, variantLoading, variantData, variantSelection, t,
+    onOpenDetail, onQtyDelta, onRemove, onToggleVariantEdit, onSelectVariant, onConfirmVariant, onCancelVariantEdit,
+}: CartLineRowProps) {
+    const atMin = line.qty <= 1;
+    const atMax = typeof line.max_qty === 'number' && line.qty >= line.max_qty;
+    const selectedMatch = variantData ? findVariantOption(variantData, variantSelection) : null;
+    const title = line.name || `#${line.id_product}`;
+
+    return (
+        <li className={`wgt-cart-line${busy ? ' is-busy' : ''}`}>
+            <div className="wgt-cart-line-row">
+                <button type="button" className="wgt-cart-line-thumb" onClick={onOpenDetail} aria-label={title}>
+                    <Thumb src={line.image_url} alt="" className="wgt-shop-thumb" />
+                </button>
+                <div className="wgt-cart-line-body">
+                    <button type="button" className="wgt-cart-line-title" onClick={onOpenDetail}>{title}</button>
+                    {line.attributes && <span className="wgt-cart-line-attrs">{line.attributes}</span>}
+                    {hasCombinations && (
+                        <button type="button" className="wgt-cart-line-change" onClick={onToggleVariantEdit} disabled={busy}>
+                            {t('shop.change_variant')}
+                        </button>
+                    )}
+                </div>
+                <span className="wgt-cart-line-price">{money(line.total ?? line.price, currency)}</span>
+            </div>
+            <div className="wgt-cart-line-row wgt-cart-line-actions">
+                <div className="wgt-cart-stepper" role="group" aria-label={title}>
+                    <button type="button" className="wgt-cart-step-btn" aria-label={t('shop.qty_decrease')} onClick={() => onQtyDelta(-1)} disabled={busy || atMin}>−</button>
+                    <span className="wgt-cart-step-qty" aria-live="polite">{line.qty}</span>
+                    <button type="button" className="wgt-cart-step-btn" aria-label={t('shop.qty_increase')} onClick={() => onQtyDelta(1)} disabled={busy || atMax}>+</button>
+                </div>
+                <button type="button" className="wgt-cart-remove-btn" aria-label={t('shop.remove_line')} onClick={onRemove} disabled={busy}>
+                    <TrashIcon />
+                </button>
+            </div>
+            {atMax && !busy && <p className="wgt-cart-line-hint">{line.max_qty === 1 ? t('shop.max_reached_one') : t('shop.max_reached', { count: String(line.max_qty) })}</p>}
+            {error && <p className="wgt-cart-line-error" role="alert">{error}</p>}
+            {variantEditing && (
+                <div className="wgt-cart-variant-edit">
+                    {variantLoading ? (
+                        <p className="wgt-shop-loading">{t('shop.loading')}</p>
+                    ) : variantData ? (
+                        <>
+                            <VariantPicker
+                                groups={variantData.groups}
+                                options={variantData.options}
+                                selection={variantSelection}
+                                onSelect={onSelectVariant}
+                                primaryColor={primaryColor}
+                            />
+                            <div className="wgt-cart-variant-actions">
+                                <button type="button" className="wgt-pd-primary" style={{ background: primaryColor }}
+                                    onClick={onConfirmVariant} disabled={busy || !selectedMatch || !selectedMatch.available}>
+                                    {t('shop.use_option')}
+                                </button>
+                                <button type="button" className="wgt-pd-secondary" onClick={onCancelVariantEdit}>{t('ui.close')}</button>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="wgt-shop-error" role="alert">{t('shop.line_error')}</p>
+                    )}
+                </div>
+            )}
+        </li>
+    );
+}
+
 export function ShopScreen() {
     const t = useTranslation();
     const navigate = useNavigate();
@@ -105,12 +217,41 @@ export function ShopScreen() {
     const [addState, setAddState] = useState<'idle' | 'adding' | 'added' | 'error'>('idle');
     const [variantSelection, setVariantSelection] = useState<Record<string, string>>({});
 
+    // Cesta editable: estado por línea (cantidad/eliminar/cambiar opción).
+    const [lineBusy, setLineBusy] = useState<Record<string, boolean>>({});
+    const [lineError, setLineError] = useState<Record<string, string | null>>({});
+    const [pendingRemoval, setPendingRemoval] = useState<CartLine | null>(null);
+    const removalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pendingRemovalRef = useRef<CartLine | null>(null);
+    const [variantEditKey, setVariantEditKey] = useState<string | null>(null);
+    const [variantEditData, setVariantEditData] = useState<ProductVariants | null>(null);
+    const [variantEditLoading, setVariantEditLoading] = useState(false);
+    const [variantEditSelection, setVariantEditSelection] = useState<Record<string, string>>({});
+    const [voucherOpen, setVoucherOpen] = useState(false);
+    const [voucherCode, setVoucherCode] = useState('');
+    const [voucherBusy, setVoucherBusy] = useState(false);
+    const [voucherMessage, setVoucherMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
     // La cesta puede cambiar en otra parte (tema, agente, otra pestaña).
     useEffect(() => {
         const sync = () => { setCart(getCart()); setViewed(getViewedProducts()); };
         refreshCart().finally(sync);
         window.addEventListener('helpdesk:cart-changed', sync);
         return () => window.removeEventListener('helpdesk:cart-changed', sync);
+    }, []);
+
+    useEffect(() => {
+        pendingRemovalRef.current = pendingRemoval;
+    }, [pendingRemoval]);
+
+    // Si el widget se cierra con un "Deshacer" pendiente, se confirma la
+    // eliminación (ya se le dijo al visitante que se había eliminado).
+    useEffect(() => () => {
+        if (removalTimer.current) {
+            clearTimeout(removalTimer.current);
+            const line = pendingRemovalRef.current;
+            if (line) removeCartLine(line.id_product, line.id_product_attribute);
+        }
     }, []);
 
     useEffect(() => {
@@ -131,7 +272,8 @@ export function ShopScreen() {
         return () => { cancelled = true; };
     }, [detailId, shop?.product_url]);
 
-    const cartLines = cart?.lines ?? [];
+    const allLines = cart?.lines ?? [];
+    const cartLines = pendingRemoval ? allLines.filter(l => lineKey(l) !== lineKey(pendingRemoval)) : allLines;
     const cartCount = cart?.products_count ?? 0;
 
     const variantMatch = detail?.has_combinations && detail.groups?.length && detail.options?.length
@@ -148,6 +290,120 @@ export function ShopScreen() {
             touchChatSession('cart');
             setCart(getCart());
         }
+    };
+
+    // ── Cesta editable ──────────────────────────────────────────────
+    const setBusy = (key: string, value: boolean) => setLineBusy(b => ({ ...b, [key]: value }));
+    const setError = (key: string, message: string | null) => setLineError(e => ({ ...e, [key]: message }));
+
+    const handleQtyDelta = async (line: CartLine, delta: number) => {
+        const key = lineKey(line);
+        if (lineBusy[key]) return;
+        const qty = line.qty + delta;
+        if (qty < 1 || (typeof line.max_qty === 'number' && qty > line.max_qty)) return;
+        setBusy(key, true);
+        setError(key, null);
+        const res = await updateCartQuantity(line.id_product, line.id_product_attribute, qty);
+        if (!res.ok) setError(key, res.message || t('shop.line_error'));
+        setCart(getCart());
+        setBusy(key, false);
+    };
+
+    const commitRemoval = async (line: CartLine) => {
+        // pendingRemoval sigue ocultando la línea mientras la baja está en
+        // vuelo, para que no reaparezca un instante antes de desaparecer de
+        // verdad. Solo se limpia si sigue siendo la línea pendiente (otra
+        // pudo empezar a eliminarse mientras tanto).
+        removalTimer.current = null;
+        await removeCartLine(line.id_product, line.id_product_attribute);
+        setCart(getCart());
+        if (pendingRemovalRef.current && lineKey(pendingRemovalRef.current) === lineKey(line)) {
+            setPendingRemoval(null);
+        }
+    };
+
+    const handleRemoveClick = (line: CartLine) => {
+        if (removalTimer.current && pendingRemovalRef.current) {
+            clearTimeout(removalTimer.current);
+            commitRemoval(pendingRemovalRef.current);
+        }
+        setPendingRemoval(line);
+        removalTimer.current = setTimeout(() => { commitRemoval(line); }, UNDO_REMOVE_MS);
+    };
+
+    const handleUndoRemoval = () => {
+        if (removalTimer.current) {
+            clearTimeout(removalTimer.current);
+            removalTimer.current = null;
+        }
+        setPendingRemoval(null);
+    };
+
+    const handleToggleVariantEdit = async (line: CartLine) => {
+        const key = lineKey(line);
+        if (variantEditKey === key) {
+            setVariantEditKey(null);
+            return;
+        }
+        setVariantEditKey(key);
+        setVariantEditData(null);
+        setVariantEditSelection({});
+        setVariantEditLoading(true);
+        const data = await getProductVariants(line.id_product);
+        setVariantEditLoading(false);
+        setVariantEditData(data);
+        if (data) {
+            const current = data.options.find(o => o.id_product_attribute === line.id_product_attribute);
+            setVariantEditSelection(current ? current.groups : {});
+        }
+    };
+
+    const handleConfirmVariant = async (line: CartLine) => {
+        if (!variantEditData) return;
+        const match = findVariantOption(variantEditData, variantEditSelection);
+        if (!match || match.id_product_attribute === line.id_product_attribute) {
+            setVariantEditKey(null);
+            return;
+        }
+        const key = lineKey(line);
+        setBusy(key, true);
+        setError(key, null);
+        const addRes = await addToCart(line.id_product, match.id_product_attribute, line.qty);
+        if (!addRes.ok) {
+            setError(key, addRes.message || t('shop.line_error'));
+            setBusy(key, false);
+            return;
+        }
+        const removeRes = await removeCartLine(line.id_product, line.id_product_attribute);
+        if (!removeRes.ok) setError(key, removeRes.message || t('shop.line_error'));
+        setVariantEditKey(null);
+        setCart(getCart());
+        setBusy(key, false);
+    };
+
+    const handleApplyVoucher = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const code = voucherCode.trim();
+        if (!code || voucherBusy) return;
+        setVoucherBusy(true);
+        setVoucherMessage(null);
+        const res = await applyCartVoucher(code);
+        setVoucherBusy(false);
+        if (res.ok) {
+            setVoucherCode('');
+            setCart(getCart());
+        } else {
+            // PrestaShop responde en el idioma de su contexto (a veces inglés):
+            // mensaje propio traducido.
+            setVoucherMessage({ ok: false, text: t('shop.voucher_invalid') });
+        }
+    };
+
+    const handleRemoveVoucher = async (id: number) => {
+        setVoucherBusy(true);
+        await removeCartVoucher(id);
+        setCart(getCart());
+        setVoucherBusy(false);
     };
 
     const tabs = useMemo(() => ([
@@ -276,39 +532,102 @@ export function ShopScreen() {
                             ))}
                         </ul>
                     )
-                ) : cartLines.length === 0 ? (
+                ) : cartLines.length === 0 && !pendingRemoval ? (
                     <EmptyState icon="cart" title={t('shop.empty_cart')} sub={t('shop.empty_cart_sub')} />
                 ) : (
                     <>
-                        <ul className="wgt-shop-list">
-                            {cartLines.map(line => (
-                                <li key={`${line.id_product}-${line.id_product_attribute}`}>
-                                    <button type="button" className="wgt-shop-row" onClick={() => setDetailId(String(line.id_product))}>
-                                        <Thumb src={line.image_url} alt="" className="wgt-shop-thumb" />
-                                        <span className="wgt-shop-row-body">
-                                            <span className="wgt-shop-row-title">{line.name || `#${line.id_product}`}</span>
-                                            <span className="wgt-shop-row-meta">
-                                                {line.qty} {t('shop.units')}{line.attributes ? ` · ${line.attributes}` : ''}
-                                            </span>
-                                        </span>
-                                        <span className="wgt-shop-row-price">{money(line.total ?? line.price, cart?.currency)}</span>
-                                    </button>
-                                </li>
-                            ))}
+                        {cart?.free_shipping && (
+                            <div className="wgt-cart-shipping" role="status">
+                                {cart.free_shipping.remaining <= 0 ? (
+                                    <p className="wgt-cart-shipping-done">✓ {t('shop.free_shipping_done')}</p>
+                                ) : (
+                                    <>
+                                        <p className="wgt-cart-shipping-text">
+                                            {t('shop.free_shipping_remaining', { amount: money(cart.free_shipping.remaining, cart.currency) })}
+                                        </p>
+                                        <div className="wgt-cart-shipping-bar">
+                                            <div className="wgt-cart-shipping-fill" style={{
+                                                width: `${Math.min(100, Math.round(((cart.free_shipping.threshold - cart.free_shipping.remaining) / cart.free_shipping.threshold) * 100))}%`,
+                                                background: primaryColor,
+                                            }} />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                        <ul className="wgt-shop-list wgt-cart-lines">
+                            {cartLines.map(line => {
+                                const key = lineKey(line);
+                                return (
+                                    <CartLineRow
+                                        key={key}
+                                        line={line}
+                                        currency={cart?.currency}
+                                        primaryColor={primaryColor}
+                                        busy={!!lineBusy[key]}
+                                        error={lineError[key]}
+                                        hasCombinations={!!line.attributes && line.id_product_attribute > 0}
+                                        variantEditing={variantEditKey === key}
+                                        variantLoading={variantEditLoading}
+                                        variantData={variantEditData}
+                                        variantSelection={variantEditSelection}
+                                        t={t}
+                                        onOpenDetail={() => setDetailId(String(line.id_product))}
+                                        onQtyDelta={(delta) => handleQtyDelta(line, delta)}
+                                        onRemove={() => handleRemoveClick(line)}
+                                        onToggleVariantEdit={() => handleToggleVariantEdit(line)}
+                                        onSelectVariant={(group, value) => setVariantEditSelection(s => ({ ...s, [group]: value }))}
+                                        onConfirmVariant={() => handleConfirmVariant(line)}
+                                        onCancelVariantEdit={() => setVariantEditKey(null)}
+                                    />
+                                );
+                            })}
                         </ul>
-                        <div className="wgt-shop-summary">
-                            {typeof cart?.total_products === 'number' && typeof cart?.total === 'number' && cart.total - cart.total_products > 0.005 && (
-                                <>
-                                    <div className="wgt-shop-line">
-                                        <span>{t('shop.subtotal')}</span>
-                                        <span>{money(cart.total_products, cart.currency)}</span>
-                                    </div>
-                                    <div className="wgt-shop-line">
-                                        <span>{t('shop.shipping')}</span>
-                                        <span>{money(cart.total - cart.total_products, cart.currency)}</span>
-                                    </div>
-                                </>
+                        <details className="wgt-cart-voucher" open={voucherOpen} onToggle={(e) => setVoucherOpen(e.currentTarget.open)}>
+                            <summary>{t('shop.voucher_title')}</summary>
+                            {!!cart?.vouchers?.length && (
+                                <ul className="wgt-cart-voucher-list">
+                                    {cart.vouchers.map(v => (
+                                        <li key={v.id}>
+                                            <span className="wgt-cart-voucher-code">{v.code}</span>
+                                            <span className="wgt-cart-voucher-amount">-{money(v.amount, cart.currency)}</span>
+                                            <button type="button" onClick={() => handleRemoveVoucher(v.id)} disabled={voucherBusy} aria-label={`${t('shop.voucher_remove')} ${v.code}`}>
+                                                {t('shop.voucher_remove')}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
                             )}
+                            <form className="wgt-cart-voucher-form" onSubmit={handleApplyVoucher}>
+                                <label className="wgt-sr-only" htmlFor="wgt-voucher-code">{t('shop.voucher_placeholder')}</label>
+                                <input id="wgt-voucher-code" type="text" value={voucherCode}
+                                    onChange={(e) => setVoucherCode(e.target.value)}
+                                    placeholder={t('shop.voucher_placeholder')} disabled={voucherBusy} />
+                                <button type="submit" style={{ background: primaryColor }} disabled={voucherBusy || !voucherCode.trim()}>
+                                    {voucherBusy ? t('shop.voucher_applying') : t('shop.voucher_apply')}
+                                </button>
+                            </form>
+                            {voucherMessage && (
+                                <p className={`wgt-cart-voucher-message${voucherMessage.ok ? ' is-ok' : ' is-error'}`} role="alert">
+                                    {voucherMessage.text}
+                                </p>
+                            )}
+                        </details>
+                        <div className="wgt-shop-summary" aria-live="polite">
+                            <div className="wgt-shop-line">
+                                <span>{t('shop.subtotal')}</span>
+                                <span>{money(cart?.total_products, cart?.currency)}</span>
+                            </div>
+                            {typeof cart?.total_discounts === 'number' && cart.total_discounts > 0.005 && (
+                                <div className="wgt-shop-line wgt-cart-discount-line">
+                                    <span>{t('shop.discounts')}</span>
+                                    <span>-{money(cart.total_discounts, cart.currency)}</span>
+                                </div>
+                            )}
+                            <div className="wgt-shop-line">
+                                <span>{t('shop.shipping')}</span>
+                                <span>{money(cart?.total_shipping, cart?.currency)}</span>
+                            </div>
                             <div className="wgt-shop-total">
                                 <span>{t('shop.total')}</span>
                                 <strong>{money(cart?.total, cart?.currency)}</strong>
@@ -321,6 +640,12 @@ export function ShopScreen() {
                     </>
                 )}
             </div>
+            {pendingRemoval && (
+                <div className="wgt-cart-toast" role="status">
+                    <span>{t('shop.line_removed')}</span>
+                    <button type="button" onClick={handleUndoRemoval}>{t('shop.undo')}</button>
+                </div>
+            )}
         </div>
     );
 }

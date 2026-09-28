@@ -41,10 +41,26 @@ export interface CartLine {
     attributes?: string | null;
     reference?: string | null;
     qty: number;
+    /** Máximo pedible (stock disponible; ~1000 si la tienda permite reservar sin stock). */
+    max_qty?: number;
     price?: number;
     total?: number;
     image_url?: string | null;
     url?: string | null;
+}
+
+export interface CartVoucher {
+    id: number;
+    code: string;
+    name?: string;
+    /** Importe del descuento (positivo), con impuestos. */
+    amount: number;
+}
+
+export interface FreeShippingProgress {
+    threshold: number;
+    /** 0 = ya hay envío gratis. */
+    remaining: number;
 }
 
 export interface CartSnapshot {
@@ -54,9 +70,13 @@ export interface CartSnapshot {
     products_count: number;
     total: number;
     total_products?: number;
+    total_discounts?: number;
+    total_shipping?: number;
     currency?: string | null;
     customer_logged?: boolean;
     lines: CartLine[];
+    vouchers?: CartVoucher[];
+    free_shipping?: FreeShippingProgress | null;
 }
 
 interface HostProduct {
@@ -200,6 +220,9 @@ export function watchCart(onChange: () => void): void {
         refreshTimer = setTimeout(async () => {
             refreshTimer = null;
             if (await refreshCart()) {
+                // Único punto de aviso: cualquier pestaña de "Mi cesta" abierta
+                // se entera sin que quien llamó a watchCart() tenga que saberlo.
+                window.dispatchEvent(new CustomEvent('helpdesk:cart-changed'));
                 onChange();
             }
         }, CART_REFRESH_DEBOUNCE_MS);
@@ -244,11 +267,27 @@ export interface AddToCartResult {
 interface ShopAdapter {
     addToCart?: (p: { id_product: number; id_product_attribute: number; qty: number }) => Promise<AddToCartResult | null>;
     refreshCart?: () => Promise<void> | void;
+    /** Cantidad absoluta de la línea; 0 = eliminarla. */
+    updateQuantity?: (p: { id_product: number; id_product_attribute: number; qty: number }) => Promise<AddToCartResult | null>;
+    removeLine?: (p: { id_product: number; id_product_attribute: number }) => Promise<AddToCartResult | null>;
+    applyVoucher?: (code: string) => Promise<AddToCartResult | null>;
+    removeVoucher?: (id: number) => Promise<AddToCartResult | null>;
+}
+
+function getShopAdapter(): ShopAdapter | undefined {
+    return (window as unknown as { HELPDESK_WIDGET_SHOP_ADAPTER?: ShopAdapter }).HELPDESK_WIDGET_SHOP_ADAPTER;
+}
+
+/** La cesta cambió: relee y, si cambió de verdad, avisa a quien esté escuchando (Mi cesta, latido…). */
+async function afterCartMutation(ok: boolean): Promise<void> {
+    if (ok && await refreshCart()) {
+        window.dispatchEvent(new CustomEvent('helpdesk:cart-changed'));
+    }
 }
 
 /** ¿La tienda permite añadir al carrito desde el chat? (adaptador o carrito nativo PrestaShop) */
 export function canAddToCart(): boolean {
-    const adapter = (window as unknown as { HELPDESK_WIDGET_SHOP_ADAPTER?: ShopAdapter }).HELPDESK_WIDGET_SHOP_ADAPTER;
+    const adapter = getShopAdapter();
     if (typeof adapter?.addToCart === 'function') {
         return true;
     }
@@ -265,7 +304,7 @@ export function canAddToCart(): boolean {
  * Precio, stock e impuestos los decide siempre la tienda.
  */
 export async function addToCart(idProduct: number, idProductAttribute = 0, qty = 1): Promise<AddToCartResult> {
-    const adapter = (window as unknown as { HELPDESK_WIDGET_SHOP_ADAPTER?: ShopAdapter }).HELPDESK_WIDGET_SHOP_ADAPTER;
+    const adapter = getShopAdapter();
     let result: AddToCartResult | null = null;
 
     try {
@@ -279,11 +318,93 @@ export async function addToCart(idProduct: number, idProductAttribute = 0, qty =
         result = { ok: false };
     }
 
-    // La cesta cambió: el latido la lleva al agente (watchCart también lo
-    // detecta por la URL, esto cubre adaptadores con otras rutas).
-    if (result.ok && await refreshCart()) {
-        window.dispatchEvent(new CustomEvent('helpdesk:cart-changed'));
+    await afterCartMutation(result.ok);
+
+    return result;
+}
+
+/**
+ * Cambia la cantidad de una línea de la cesta a un valor absoluto (0 la
+ * elimina). Usa el adaptador de la tienda si lo publica; si no, el carrito
+ * nativo de PrestaShop. La cantidad, el stock y el precio final los decide
+ * siempre la tienda: esto es solo la petición, el estado real llega con el
+ * siguiente `refreshCart()`.
+ */
+export async function updateCartQuantity(idProduct: number, idProductAttribute: number, qty: number): Promise<AddToCartResult> {
+    const adapter = getShopAdapter();
+    let result: AddToCartResult | null = null;
+
+    try {
+        if (typeof adapter?.updateQuantity === 'function') {
+            result = await adapter.updateQuantity({ id_product: idProduct, id_product_attribute: idProductAttribute, qty });
+        }
+        if (result === null) {
+            result = await updateNativePrestashopCartQuantity(idProduct, idProductAttribute, qty);
+        }
+    } catch {
+        result = { ok: false };
     }
+
+    await afterCartMutation(result.ok);
+
+    return result;
+}
+
+/** Quita una línea entera de la cesta. */
+export async function removeCartLine(idProduct: number, idProductAttribute: number): Promise<AddToCartResult> {
+    const adapter = getShopAdapter();
+    let result: AddToCartResult | null = null;
+
+    try {
+        if (typeof adapter?.removeLine === 'function') {
+            result = await adapter.removeLine({ id_product: idProduct, id_product_attribute: idProductAttribute });
+        }
+        if (result === null) {
+            result = await updateNativePrestashopCartQuantity(idProduct, idProductAttribute, 0);
+        }
+    } catch {
+        result = { ok: false };
+    }
+
+    await afterCartMutation(result.ok);
+
+    return result;
+}
+
+/** Aplica un código de descuento a la cesta. */
+export async function applyCartVoucher(code: string): Promise<AddToCartResult> {
+    const adapter = getShopAdapter();
+    let result: AddToCartResult | null = null;
+
+    try {
+        if (typeof adapter?.applyVoucher === 'function') {
+            result = await adapter.applyVoucher(code);
+        }
+    } catch {
+        result = { ok: false };
+    }
+    result ??= { ok: false, message: null };
+
+    await afterCartMutation(result.ok);
+
+    return result;
+}
+
+/** Quita un código de descuento ya aplicado. */
+export async function removeCartVoucher(id: number): Promise<AddToCartResult> {
+    const adapter = getShopAdapter();
+    let result: AddToCartResult | null = null;
+
+    try {
+        if (typeof adapter?.removeVoucher === 'function') {
+            result = await adapter.removeVoucher(id);
+        }
+    } catch {
+        result = { ok: false };
+    }
+    result ??= { ok: false, message: null };
+
+    await afterCartMutation(result.ok);
 
     return result;
 }
@@ -323,6 +444,51 @@ async function addToNativePrestashopCart(idProduct: number, idProductAttribute: 
         // Minicarrito del tema clásico de PrestaShop (core.js escucha updateCart).
         ps.emit?.('updateCart', {
             reason: { idProduct, idProductAttribute, linkAction: 'add-to-cart' },
+            resp: json,
+        });
+    }
+
+    return { ok, message: json?.errors?.[0] ?? null };
+}
+
+/** Carrito nativo de PrestaShop: cantidad absoluta (0 = eliminar), best-effort para temas sin adaptador. */
+async function updateNativePrestashopCartQuantity(idProduct: number, idProductAttribute: number, qty: number): Promise<AddToCartResult> {
+    const ps = (window as unknown as { prestashop?: { static_token?: string; emit?: (ev: string, data: unknown) => void } }).prestashop;
+    const cartUrl = getShop()?.cart_url;
+    if (!ps?.static_token || !cartUrl) {
+        return { ok: false };
+    }
+
+    const url = new URL(cartUrl, window.location.href);
+    url.searchParams.delete('action');
+    const body = new URLSearchParams({
+        token: ps.static_token,
+        id_product: String(idProduct),
+        id_product_attribute: String(idProductAttribute),
+        action: 'update',
+        ajax: '1',
+    });
+    if (qty <= 0) {
+        body.set('delete', '1');
+    } else {
+        body.set('qty', String(qty));
+    }
+
+    const res = await fetch(url.toString(), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body,
+    });
+    const json = await res.json().catch(() => null) as { success?: boolean; hasError?: boolean; errors?: string[] } | null;
+    const ok = res.ok && !!json && json.hasError !== true && json.success !== false;
+    if (ok) {
+        ps.emit?.('updateCart', {
+            reason: { idProduct, idProductAttribute, linkAction: qty <= 0 ? 'remove-from-cart' : 'update-quantity' },
             resp: json,
         });
     }
@@ -419,7 +585,7 @@ export async function onServerCartChange(): Promise<void> {
     if (await refreshCart()) {
         window.dispatchEvent(new CustomEvent('helpdesk:cart-changed'));
     }
-    const adapter = (window as unknown as { HELPDESK_WIDGET_SHOP_ADAPTER?: ShopAdapter }).HELPDESK_WIDGET_SHOP_ADAPTER;
+    const adapter = getShopAdapter();
     try {
         if (typeof adapter?.refreshCart === 'function') {
             await adapter.refreshCart();
