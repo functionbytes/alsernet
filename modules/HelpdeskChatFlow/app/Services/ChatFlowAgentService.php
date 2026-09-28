@@ -4,11 +4,15 @@ namespace Modules\HelpdeskChatFlow\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
 use Modules\HelpdeskAiPrompts\Services\PromptComposer;
 use Modules\HelpdeskAiPrompts\Services\PromptRunRecorder;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
+use Modules\HelpdeskPrestashop\Services\Ext\CatalogService;
+use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
+use Modules\HelpdeskPrestashop\Services\PrestashopProductQueryService;
 
 /**
  * An autonomous AI agent (function/tool calling): given the customer message and
@@ -43,7 +47,7 @@ class ChatFlowAgentService
         private readonly ?object $embeddings = null,
         ?AiClient $aiClient = null,
         ?PromptSanitizer $sanitizer = null,
-        private readonly ?object $insights = null,
+        private ?object $insights = null,
     ) {
         $this->aiClient = $aiClient ?? (class_exists(AiClient::class) ? new AiClient : null);
         $this->sanitizer = $sanitizer ?? (class_exists(PromptSanitizer::class) ? new PromptSanitizer : null);
@@ -108,13 +112,30 @@ class ChatFlowAgentService
         }
 
         try {
-            return app(PromptComposer::class)->compose($question, [
+            $composer = app(PromptComposer::class);
+            $ctx = [
                 'channel' => $data['_channel'] ?? ($visitorContext !== null ? 'web' : null),
                 'locale' => strtolower(substr($locale, 0, 2)),
                 'page_url' => $visitorContext['page_url'] ?? null,
                 'logged_in' => $this->isVerifiedCustomer($context),
                 'now' => now(),
-            ], $data, $data['_forced_case'] ?? null, $data['_draft_case'] ?? null);
+            ];
+            $composed = $composer->compose($question, $ctx, $data, $data['_forced_case'] ?? null, $data['_draft_case'] ?? null);
+
+            // Respuesta a una pregunta del propio bot (ask_customer): sigue en el
+            // mismo caso salvo que el cliente cambie claramente de tema (una
+            // palabra clave de otro caso), p. ej. "¿y dónde está mi pedido?".
+            $pending = $context['ai_pending_case'] ?? null;
+            if (is_string($pending) && $pending !== '' && ! isset($data['_forced_case']) && ! isset($data['_draft_case'])
+                && ($composed['case_key'] ?? null) !== $pending) {
+                $options = array_map(fn ($o) => mb_strtolower(trim((string) $o)), (array) ($context['ai_pending_options'] ?? []));
+                $pickedOption = in_array(mb_strtolower(trim($question)), $options, true);
+                if ($pickedOption || ($composed['routed_by'] ?? '') !== 'keyword') {
+                    $composed = $composer->compose($question, $ctx, $data, $pending);
+                }
+            }
+
+            return $composed;
         } catch (\Throwable $e) {
             Log::warning('ChatFlowAgentService: prompt library failed, using node instructions', ['error' => $e->getMessage()]);
 
@@ -232,7 +253,7 @@ class ChatFlowAgentService
                 $text = trim((string) ($message['content'] ?? ''));
 
                 return $text !== ''
-                    ? ['action' => 'respond', 'text' => $text, 'used_tools' => $usedTools, 'products' => array_values($shown)]
+                    ? ['action' => 'respond', 'text' => $text, 'used_tools' => $usedTools, 'products' => $this->productsToShow($shown, $text)]
                     : ['action' => 'escalate', 'text' => $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
             }
 
@@ -249,8 +270,15 @@ class ChatFlowAgentService
                     $text = trim((string) ($args['text'] ?? ''));
 
                     return $text !== ''
-                        ? ['action' => 'respond', 'text' => $text, 'used_tools' => $usedTools, 'products' => array_values($shown)]
+                        ? ['action' => 'respond', 'text' => $text, 'used_tools' => $usedTools, 'products' => $this->productsToShow($shown, $text)]
                         : ['action' => 'escalate', 'text' => $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
+                }
+                if ($name === 'ask_customer') {
+                    $asked = $this->buildQuestion($args);
+                    if ($asked !== null) {
+                        return ['action' => 'respond', 'text' => $asked['text'], 'used_tools' => $usedTools, 'products' => array_values($shown)]
+                            + array_filter(['options' => $asked['options'], 'prompt' => $asked['prompt'], 'cards' => $asked['cards']]);
+                    }
                 }
                 if ($name === 'escalate_to_agent') {
                     return ['action' => 'escalate', 'text' => trim((string) ($args['message'] ?? $fallbackMessage)) ?: $fallbackMessage, 'used_tools' => $usedTools, 'products' => []];
@@ -400,6 +428,14 @@ class ChatFlowAgentService
                 ['text' => ['type' => 'string', 'description' => 'La respuesta para el cliente']], ['text']),
             $fn('escalate_to_agent', 'Transfiere la conversación a un agente humano cuando no puedas resolverla.',
                 ['message' => ['type' => 'string', 'description' => 'Mensaje de transición para el cliente']]),
+            $fn('ask_customer', 'Haz UNA pregunta para concretar lo que necesita el cliente (uso, talla, presupuesto…) con opciones cortas que pulsará como botones, y opcionalmente enlaces a categorías de la tienda (de category_links). Úsala cuando la petición sea amplia ("busco botas") antes de recomendar; no la uses si ya tienes datos suficientes.',
+                [
+                    'question' => ['type' => 'string', 'description' => 'La pregunta, breve y amable'],
+                    'options' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => '2 a 6 respuestas cortas (1-4 palabras), p. ej. ["Caza", "Montaña", "Pesca", "Uso diario"]'],
+                    'links' => ['type' => 'array', 'items' => ['type' => 'object', 'properties' => [
+                        'label' => ['type' => 'string'], 'url' => ['type' => 'string'],
+                    ], 'required' => ['label', 'url']], 'description' => 'Hasta 3 enlaces "Ver …" a categorías (URL exacta de category_links)'],
+                ], ['question', 'options']),
         ];
 
         if (($data['tool_order_lookup'] ?? true)) {
@@ -428,17 +464,20 @@ class ChatFlowAgentService
                     'price_max' => ['type' => 'number', 'description' => 'Precio máximo en € ("menos de 150" → 150)'],
                     'in_stock' => ['type' => 'boolean', 'description' => 'Solo con stock (true si lo necesita ya)'],
                     'sort' => ['type' => 'string', 'enum' => ['relevance', 'price_asc', 'price_desc', 'newest'], 'description' => 'Orden (relevance por defecto; price_asc si busca lo más barato)'],
+                    'size' => ['type' => 'string', 'description' => 'Talla u opción que ha dicho el cliente ("43", "XL"): se comprueba su stock en cada producto'],
                 ], ['query']);
+            $tools[] = $fn('category_links', 'Busca categorías de la tienda (con su URL) para ofrecer enlaces "Ver botas de caza"… mientras concretas con el cliente.',
+                ['query' => ['type' => 'string', 'description' => 'Tipo de producto o deporte, p. ej. "botas caza"']], ['query']);
             $tools[] = $fn('product_detail', 'Obtiene la ficha de un producto concreto del catálogo por su id (de product_search, o el que aparece como "Viendo ahora" en el contexto del visitante) para responder dudas sobre él.',
                 ['product_id' => ['type' => 'string', 'description' => 'Id del producto. Omítelo para usar el producto que el visitante está viendo ahora mismo.']]);
-            if ($this->insights !== null && ($data['tool_variants'] ?? true)) {
+            if ($this->insights() !== null && ($data['tool_variants'] ?? true)) {
                 $tools[] = $fn('product_variants', 'Tallas/colores/variantes de un producto con su disponibilidad y plazo de entrega, y stock en tiendas físicas. Con "option" comprueba una concreta ("44", "talla XL", "marrón 42").',
                     [
                         'product_id' => ['type' => 'string', 'description' => 'Id del producto. Omítelo para el que está viendo ahora.'],
                         'option' => ['type' => 'string', 'description' => 'Opción que pregunta el cliente (opcional)'],
                     ]);
             }
-            if ($this->insights !== null && ($data['tool_compare'] ?? true)) {
+            if ($this->insights() !== null && ($data['tool_compare'] ?? true)) {
                 $tools[] = $fn('compare_products', 'Compara 2 o 3 productos (marca, precio, disponibilidad, plazo, variantes y descripción). Los ids salen de product_search o del contexto.',
                     ['product_ids' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Ids de 2 a 3 productos']], ['product_ids']);
             }
@@ -512,8 +551,8 @@ class ChatFlowAgentService
                 $idProductAttribute = (int) ($product->idProductAttribute ?? 0);
                 if ($product->hasCombinations ?? false) {
                     $wanted = trim((string) ($args['option'] ?? ''));
-                    $option = ($wanted !== '' && $this->insights !== null)
-                        ? $this->insights->optionFor((int) $product->id, $wanted, $context['_locale'] ?? null)
+                    $option = ($wanted !== '' && $this->insights() !== null)
+                        ? $this->insights()->optionFor((int) $product->id, $wanted, $context['_locale'] ?? null)
                         : null;
                     if ($option === null) {
                         return 'No añadido: el producto tiene opciones (talla, color...). Pregunta cuál quiere (consulta product_variants) o que la elija en la tarjeta.';
@@ -560,8 +599,23 @@ class ChatFlowAgentService
                     $products = array_slice($catalog->search($query, self::MAX_PRODUCTS), 0, self::MAX_PRODUCTS);
                     $relaxed = [];
                 }
-                foreach ($products as $p) {
+                // Talla pedida: se comprueba en la tienda para cada resultado (el
+                // modelo no puede inventarse "talla disponible") y, si hay stock,
+                // la tarjeta sale ya con esa talla elegida.
+                $size = trim((string) ($args['size'] ?? ''));
+                $sizeStatus = [];
+                foreach ($products as $i => $p) {
+                    if ($size !== '' && $this->insights() !== null && ($p->hasCombinations ?? false)) {
+                        $option = $this->insights()->optionFor((int) $p->id, $size, $context['_locale'] ?? null);
+                        $sizeStatus[(string) $p->id] = $option === null
+                            ? 'no existe esa talla'
+                            : (($option['available'] ?? false) ? ($option['stock_level'] ?? 'disponible') : 'agotada');
+                        if ($option !== null && ($option['available'] ?? false)) {
+                            $products[$i] = $p = $this->withChosenOption($p, $option);
+                        }
+                    }
                     $shown[(string) $p->id] = $p;
+                    $this->searchOnly[(string) $p->id] = true;
                 }
 
                 if ($products === []) {
@@ -579,6 +633,7 @@ class ChatFlowAgentService
                         'currency' => $p->currency,
                         'available' => $p->available,
                         'has_options' => (bool) ($p->hasCombinations ?? false),
+                        'requested_size' => $sizeStatus[(string) $p->id] ?? null,
                     ], fn ($v) => $v !== null), $products),
                 ], fn ($v) => $v !== null), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
@@ -589,6 +644,7 @@ class ChatFlowAgentService
                     return 'No se encontró ese producto en el catálogo.';
                 }
                 $shown[(string) $product->id] = $product;
+                unset($this->searchOnly[(string) $product->id]);
 
                 return json_encode([
                     'id' => (string) $product->id,
@@ -601,21 +657,22 @@ class ChatFlowAgentService
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
-            if ($name === 'product_variants' && $catalog !== null && $this->insights !== null) {
+            if ($name === 'product_variants' && $catalog !== null && $this->insights() !== null) {
                 $productId = (int) $this->resolveProductId($args, $context);
                 if ($productId <= 0) {
                     return 'Indica de qué producto (id de product_search) o usa el que está viendo.';
                 }
                 $wanted = trim((string) ($args['option'] ?? ''));
-                $variants = $this->insights->variants($productId, $context['_locale'] ?? null);
+                $variants = $this->insights()->variants($productId, $context['_locale'] ?? null);
                 if ($variants === null) {
                     return 'No se encontró ese producto en el catálogo.';
                 }
                 if (($product = $catalog->find((string) $productId)) !== null) {
                     $shown[(string) $product->id] = $product;
+                    unset($this->searchOnly[(string) $product->id]);
                 }
                 if ($wanted !== '') {
-                    $asked = $this->insights->optionFor($productId, $wanted, $context['_locale'] ?? null);
+                    $asked = $this->insights()->optionFor($productId, $wanted, $context['_locale'] ?? null);
                     $variants['asked_option'] = $asked ?? 'No existe esa opción para este producto.';
                     // Con stock: la tarjeta que ve el cliente ya lleva esa talla.
                     if ($asked !== null && ($asked['available'] ?? false) && isset($product)) {
@@ -626,12 +683,12 @@ class ChatFlowAgentService
                 return json_encode($this->sanitizeDeep($variants), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
-            if ($name === 'compare_products' && $catalog !== null && $this->insights !== null) {
+            if ($name === 'compare_products' && $catalog !== null && $this->insights() !== null) {
                 $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($args['product_ids'] ?? [])))));
                 if (count($ids) < 2) {
                     return 'Necesito al menos 2 productos para comparar (usa product_search para obtener sus ids).';
                 }
-                $comparison = $this->insights->compare(array_slice($ids, 0, 3), $context['_locale'] ?? null);
+                $comparison = $this->insights()->compare(array_slice($ids, 0, 3), $context['_locale'] ?? null);
                 foreach (array_slice($ids, 0, 3) as $id) {
                     if (($product = $catalog->find((string) $id)) !== null) {
                         $shown[(string) $product->id] = $product;
@@ -639,6 +696,12 @@ class ChatFlowAgentService
                 }
 
                 return $comparison ? json_encode($this->sanitizeDeep($comparison), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : 'No se pudo comparar esos productos.';
+            }
+
+            if ($name === 'category_links') {
+                $links = $this->findCategoryLinks(trim((string) ($args['query'] ?? '')), $context['_locale'] ?? null);
+
+                return $links === [] ? 'No hay categorías que coincidan.' : json_encode($this->sanitizeDeep($links), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             if ($name === 'list_my_orders') {
@@ -713,6 +776,157 @@ class ChatFlowAgentService
     }
 
     /**
+     * Pregunta con botones (ask_customer): opciones cortas y, como tarjetas,
+     * enlaces "Ver …" SOLO a URLs de la tienda (nunca enlaces que invente el
+     * modelo a otros dominios). El cuerpo lleva la lista numerada para los
+     * canales sin botones (WhatsApp, email); el widget muestra prompt + botones.
+     *
+     * @param  array<string,mixed>  $args
+     * @return array{text: string, prompt: string, options: array<int,string>, cards: array<int,array<string,string>>}|null
+     */
+    private function buildQuestion(array $args): ?array
+    {
+        $question = trim((string) ($args['question'] ?? ''));
+        $options = array_values(array_unique(array_filter(array_map(
+            fn ($o) => mb_substr(trim((string) $o), 0, 40),
+            is_array($args['options'] ?? null) ? $args['options'] : [],
+        ))));
+        $options = array_slice($options, 0, 6);
+
+        if ($question === '' || count($options) < 2) {
+            return null;
+        }
+
+        $storeHost = parse_url((string) (config('helpdeskchatflow.store_url') ?: ''), PHP_URL_HOST);
+        $cards = [];
+        foreach (array_slice(is_array($args['links'] ?? null) ? $args['links'] : [], 0, 3) as $link) {
+            $url = trim((string) ($link['url'] ?? ''));
+            $label = mb_substr(trim((string) ($link['label'] ?? '')), 0, 60);
+            if ($label === '' || ! in_array($url, $this->knownCategoryUrls, true) && ! ($storeHost && parse_url($url, PHP_URL_HOST) === $storeHost)) {
+                continue;
+            }
+            $cards[] = ['title' => $label, 'subtitle' => '', 'image_url' => null, 'url' => $url];
+        }
+
+        $numbered = implode("\n", array_map(fn ($i, $o) => ($i + 1).'. '.$o, array_keys($options), $options));
+
+        return ['text' => $question."\n\n".$numbered, 'prompt' => $question, 'options' => $options, 'cards' => $cards];
+    }
+
+    /** @var array<string, bool> Productos que solo salieron en una búsqueda (sin ficha/tallas consultadas). */
+    private array $searchOnly = [];
+
+    /**
+     * Tarjetas a mostrar: las que el modelo consultó en detalle y, de las de
+     * búsqueda, solo las que menciona en su respuesta (así no salen resultados
+     * que descartó, p. ej. un bastón al pedir botas). Si no nombra ninguna, todas.
+     *
+     * @param  array<string, object>  $shown
+     * @return array<int, object>
+     */
+    private function productsToShow(array $shown, string $text): array
+    {
+        $normalize = fn (string $t) => mb_strtolower(Str::ascii($t));
+        $haystack = $normalize($text);
+
+        $mentioned = array_filter($shown, function ($p, $id) use ($haystack, $normalize) {
+            if (! isset($this->searchOnly[(string) $id])) {
+                return true;
+            }
+            // Título base (sin " · Talla: 43") y primeras palabras significativas.
+            $title = $normalize(explode(' · ', (string) ($p->title ?? ''))[0]);
+            $words = array_slice(array_values(array_filter(preg_split('/\s+/', $title) ?: [], fn ($w) => mb_strlen($w) > 3)), 0, 3);
+
+            return $words !== [] && count(array_filter($words, fn ($w) => str_contains($haystack, $w))) >= min(2, count($words));
+        }, ARRAY_FILTER_USE_BOTH);
+
+        $this->searchOnly = [];
+
+        return array_values($mentioned !== [] ? $mentioned : $shown);
+    }
+
+    /** @var array<int, string> URLs de categoría devueltas por category_links en esta ejecución. */
+    private array $knownCategoryUrls = [];
+
+    /**
+     * @return array<int, array{name: string, url: string}>
+     */
+    private function findCategoryLinks(string $query, ?string $lang): array
+    {
+        if ($query === '' || ! class_exists(PrestashopContextService::class)) {
+            return [];
+        }
+
+        $normalize = fn (string $t) => mb_strtolower(Str::ascii($t));
+        $words = array_values(array_filter(preg_split('/\s+/', $normalize($query)) ?: [], fn ($w) => mb_strlen($w) >= 3));
+        if ($words === []) {
+            return [];
+        }
+        // Sinónimos de cómo se llaman las categorías en la tienda ("Calzado",
+        // "Ropa"…): con solo "botas" no salían las de caza o montaña.
+        $synonyms = [
+            'botas' => ['calzado'], 'bota' => ['calzado'], 'zapatillas' => ['calzado'], 'zapatos' => ['calzado'],
+            'chaqueta' => ['ropa', 'chaquetas'], 'chaquetas' => ['ropa'], 'pantalon' => ['ropa', 'pantalones'],
+            'pantalones' => ['ropa'], 'camiseta' => ['ropa'], 'chaleco' => ['ropa', 'chalecos'],
+        ];
+        foreach ($words as $w) {
+            foreach ($synonyms[$w] ?? [] as $extra) {
+                $words[] = $extra;
+            }
+        }
+        $words = array_values(array_unique($words));
+
+        $scored = [];
+        foreach (app(PrestashopContextService::class)->getCategories($lang) as $cat) {
+            if (empty($cat['url']) || empty($cat['name'])) {
+                continue;
+            }
+            $haystack = $normalize($cat['name'].' '.($cat['parent'] ?? ''));
+            // Coincidencia por palabra con raíz (botas ~ bota): prefijo de 4 letras.
+            $score = 0;
+            foreach ($words as $w) {
+                if (str_contains($haystack, mb_substr($w, 0, max(4, mb_strlen($w) - 1)))) {
+                    $score++;
+                }
+            }
+            if ($score > 0) {
+                $scored[] = [$score, $cat];
+            }
+        }
+        usort($scored, fn ($a, $b) => $b[0] <=> $a[0]);
+
+        // Variedad: primero una categoría por sección padre (Caza, Pesca,
+        // Esquí…) para que el modelo elija las que encajan con sus opciones;
+        // con empate de puntuación salían solo "botas de esquí".
+        $picked = [];
+        $parents = [];
+        foreach ($scored as [$score, $cat]) {
+            $parent = mb_strtolower((string) ($cat['parent'] ?? ''));
+            if (! isset($parents[$parent])) {
+                $parents[$parent] = true;
+                $picked[] = [$score, $cat];
+            }
+        }
+        foreach ($scored as $entry) {
+            if (count($picked) >= 6) {
+                break;
+            }
+            if (! in_array($entry, $picked, true)) {
+                $picked[] = $entry;
+            }
+        }
+
+        $links = [];
+        foreach (array_slice($picked, 0, 6) as [, $cat]) {
+            $name = $cat['parent'] ? $cat['name'].' ('.$cat['parent'].')' : $cat['name'];
+            $links[] = ['name' => $name, 'url' => (string) $cat['url']];
+            $this->knownCategoryUrls[] = (string) $cat['url'];
+        }
+
+        return $links;
+    }
+
+    /**
      * Copia del producto con la combinación elegida ("Talla: 42") para que la
      * tarjeta del widget la añada directamente en vez de pedir "Elegir opciones".
      * El precio lo sigue calculando la tienda al añadir.
@@ -732,6 +946,22 @@ class ChatFlowAgentService
             'has_combinations' => false,
             'title' => $label !== '' ? $product->title.' · '.$label : $product->title,
         ]));
+    }
+
+    /**
+     * Tallas/stock/plazos (ChatFlowProductInsights). Si no se inyectó (provider
+     * de ChatFlow sin registrar) se resuelve aquí, igual que el catálogo.
+     */
+    private function insights(): ?object
+    {
+        if ($this->insights === null && class_exists(ChatFlowProductInsights::class) && class_exists(PrestashopProductQueryService::class)) {
+            $this->insights = new ChatFlowProductInsights(
+                class_exists(CatalogService::class) ? app(CatalogService::class) : null,
+                app(PrestashopProductQueryService::class),
+            );
+        }
+
+        return $this->insights;
     }
 
     /**

@@ -11,6 +11,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\RendersNodeMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\ResolvesVisitorContext;
+use Modules\HelpdeskLivechat\Events\BotTyping;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogManager;
 use Modules\HelpdeskLivechat\Services\Catalog\Drivers\NullCatalogDriver;
@@ -77,6 +78,19 @@ class AiNodeHandler implements NodeHandler
         return $this->getFirstChildId($node, $session);
     }
 
+    private function broadcastBotTyping(Conversation $conversation, bool $typing): void
+    {
+        if (! class_exists(BotTyping::class)) {
+            return;
+        }
+
+        try {
+            broadcast(new BotTyping($conversation, $typing));
+        } catch (\Throwable) {
+            // Reverb caído: solo se pierde el indicador.
+        }
+    }
+
     private function executeAiAgent(array $node, ChatFlowSession $session, Conversation $conversation): ?string
     {
         $data = $node['data'] ?? [];
@@ -86,12 +100,24 @@ class AiNodeHandler implements NodeHandler
         $catalog = $this->catalogFor($conversation);
         $history = ($data['use_memory'] ?? true) ? $this->conversationHistory($conversation) : [];
         $visitorContext = $this->resolveVisitorContext($conversation);
-        $result = $this->agent->run($question, $session->context ?? [], $data, $locale, $catalog, $this->cartFor($conversation), $history, $visitorContext);
+        // "Escribiendo…" en el widget mientras la IA piensa (3-10 s con herramientas).
+        $this->broadcastBotTyping($conversation, true);
 
-        $this->postBotMessage($conversation, $node['id'], $result['text'], [
+        try {
+            $result = $this->agent->run($question, $session->context ?? [], $data, $locale, $catalog, $this->cartFor($conversation), $history, $visitorContext);
+        } finally {
+            $this->broadcastBotTyping($conversation, false);
+        }
+
+        // Pregunta con botones/enlaces (ask_customer): el widget pinta prompt +
+        // opciones pulsables y tarjetas "Ver …"; otros canales, la lista numerada.
+        $this->postBotMessage($conversation, $node['id'], $result['text'], array_filter([
             'ai_agent' => true,
             'used_tools' => $result['used_tools'],
-        ]);
+            'bot_options' => $result['options'] ?? null,
+            'bot_prompt' => isset($result['options']) ? ($result['prompt'] ?? null) : null,
+            'cards' => ! empty($result['cards']) ? $result['cards'] : null,
+        ], fn ($v) => $v !== null));
 
         // Productos que consultó el agente IA → tarjetas con "Añadir al carrito"
         // en el widget (mismo carrusel que envía un agente humano).
@@ -103,6 +129,13 @@ class AiNodeHandler implements NodeHandler
                 Log::warning('ChatFlow ai_agent: product showcase failed', ['conversation_id' => $conversation->id, 'error' => $e->getMessage()]);
             }
         }
+
+        // Si el bot acaba de preguntar con opciones, la respuesta del cliente
+        // sigue en el mismo caso de prompt (ver ChatFlowAgentService).
+        $session->setContextValues([
+            'ai_pending_case' => ! empty($result['options']) ? ($result['case'] ?? null) : null,
+            'ai_pending_options' => ! empty($result['options']) ? $result['options'] : null,
+        ]);
 
         if ($result['action'] === 'escalate') {
             $conversation->releaseFromBot();

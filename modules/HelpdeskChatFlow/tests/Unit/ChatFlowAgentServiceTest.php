@@ -3,10 +3,12 @@
 namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Illuminate\Support\Facades\Http;
+use Mockery;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
 use Modules\HelpdeskChatFlow\Tests\TestCase;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
+use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 
 class ChatFlowAgentServiceTest extends TestCase
 {
@@ -637,5 +639,51 @@ class ChatFlowAgentServiceTest extends TestCase
 
             return $tool && str_contains($tool['content'], '"relaxed":["price"]') && str_contains($tool['content'], '"brand":"Chiruca"');
         });
+    }
+
+    public function test_ask_customer_returns_options_and_only_store_category_links(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        $ps = Mockery::mock(PrestashopContextService::class);
+        $ps->shouldReceive('getCategories')->andReturn([
+            ['id' => 1, 'name' => 'Botas', 'parent' => 'Caza', 'url' => 'https://shop.example/caza/botas'],
+            ['id' => 2, 'name' => 'Cañas', 'parent' => 'Pesca', 'url' => 'https://shop.example/pesca/canas'],
+        ]);
+        $this->app->instance(PrestashopContextService::class, $ps);
+
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('category_links', ['query' => 'botas caza']), 200)
+            ->push($this->toolCall('ask_customer', [
+                'question' => '¿Para qué las quieres?',
+                'options' => ['Caza', 'Montaña', 'Pesca', 'Caza'],
+                'links' => [
+                    ['label' => 'Ver botas de caza', 'url' => 'https://shop.example/caza/botas'],
+                    ['label' => 'Oferta', 'url' => 'https://phishing.example/x'],
+                ],
+            ]), 200);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('busco botas', [], [], 'es', $this->fakeCatalog());
+
+        $this->assertSame('respond', $result['action']);
+        $this->assertSame(['Caza', 'Montaña', 'Pesca'], $result['options']);
+        $this->assertSame('¿Para qué las quieres?', $result['prompt']);
+        // Solo el enlace que devolvió category_links; el inventado se descarta.
+        $this->assertSame(['https://shop.example/caza/botas'], array_column($result['cards'], 'url'));
+        $this->assertStringContainsString("1. Caza\n2. Montaña", $result['text']);
+    }
+
+    public function test_ask_customer_with_fewer_than_two_options_is_ignored(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('ask_customer', ['question' => '¿Talla?', 'options' => ['42']]), 200)
+            ->push(['choices' => [['message' => ['content' => '¿Qué talla usas?', 'tool_calls' => []]]]], 200);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('botas', [], []);
+
+        $this->assertSame('¿Qué talla usas?', $result['text']);
+        $this->assertArrayNotHasKey('options', $result);
     }
 }
