@@ -11,6 +11,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Services\EmailInboundService;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
+use Tests\Concerns\DisablesPreexistingWebhooks;
 use Tests\TestCase;
 
 /**
@@ -24,12 +25,14 @@ use Tests\TestCase;
 class EmailInboundErpLinkTest extends TestCase
 {
     use DatabaseTransactions;
+    use DisablesPreexistingWebhooks;
 
     protected $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->disablePreexistingWebhooks();
 
         ConversationStatus::firstOrCreate(
             ['slug' => 'open'],

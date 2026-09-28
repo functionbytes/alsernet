@@ -21,6 +21,16 @@ use Modules\Helpdesk\Tests\HelpdeskTestCase;
 
 class WorkflowTriggerWiringTest extends HelpdeskTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // La BD de test es una copia con workflows activos preexistentes
+        // (p. ej. conversation_created): estos tests asumen que solo existen
+        // los que crean ellos. Dentro de la transacción del test.
+        Workflow::query()->where('is_active', true)->update(['is_active' => false]);
+    }
+
     private function makeWorkflow(string $trigger, bool $active, array $overrides = []): Workflow
     {
         return Workflow::create(array_merge([

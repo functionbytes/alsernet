@@ -8,12 +8,14 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\Webhooks\InboundMessageIngestor;
 use Modules\Helpdesk\Support\ChannelMetrics;
+use Tests\Concerns\DisablesPreexistingWebhooks;
 use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class InboundMessageIngestorTest extends TestCase
 {
     use DatabaseTransactions;
+    use DisablesPreexistingWebhooks;
     use SeedsHelpdeskRoles;
 
     protected $connectionsToTransact = [null, 'helpdesk'];
@@ -21,6 +23,7 @@ class InboundMessageIngestorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->disablePreexistingWebhooks();
 
         // Los listeners de inbound consultan User::role('helpdesk-agent').
         $this->seedHelpdeskRoles();

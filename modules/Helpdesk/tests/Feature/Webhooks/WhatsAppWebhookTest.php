@@ -16,6 +16,7 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\FacebookMessengerService;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
+use Tests\Concerns\DisablesPreexistingWebhooks;
 use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
@@ -29,6 +30,7 @@ use Tests\TestCase;
 class WhatsAppWebhookTest extends TestCase
 {
     use DatabaseTransactions;
+    use DisablesPreexistingWebhooks;
     use SeedsHelpdeskRoles;
 
     /** Wrap both connections so each test is fully isolated. */
@@ -39,6 +41,7 @@ class WhatsAppWebhookTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->disablePreexistingWebhooks();
 
         // Pulse stub — ErpContextService calls Pulse::set() with an array which
         // fails without this; the stub accepts any type for the $value parameter.

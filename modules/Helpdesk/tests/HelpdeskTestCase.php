@@ -6,12 +6,14 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Models\ConversationStatus;
+use Tests\Concerns\DisablesPreexistingWebhooks;
 use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 abstract class HelpdeskTestCase extends TestCase
 {
     use DatabaseTransactions;
+    use DisablesPreexistingWebhooks;
     use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
@@ -23,6 +25,8 @@ abstract class HelpdeskTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->disablePreexistingWebhooks();
 
         $this->seed(PermissionsSeeder::class);
 

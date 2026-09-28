@@ -4,17 +4,20 @@ namespace Modules\Helpdesk\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\ConversationStatus;
+use Tests\Concerns\DisablesPreexistingWebhooks;
 use Tests\TestCase;
 
 class EmailInboundSignatureTest extends TestCase
 {
     use DatabaseTransactions;
+    use DisablesPreexistingWebhooks;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->disablePreexistingWebhooks();
 
         ConversationStatus::firstOrCreate(
             ['slug' => 'open'],
