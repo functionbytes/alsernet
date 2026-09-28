@@ -92,6 +92,47 @@
     <link rel="stylesheet" href="{{ url('core/tooltipster/css/tooltipster.bundle.min.css') }}">
     <link rel="stylesheet" href="{{ url('core/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-light.min.css') }}">
 
+    {{-- ─── Toastr: fondo/texto siempre legibles (global, 21-sep-2026) ───
+         toastr.js genera class="toast toast-success/error/warning/info" —
+         el componente .toast de Bootstrap 5 (fondo blanco semitransparente,
+         --bs-toast-bg) empata en especificidad con .toast-error de
+         toastr.css y gana por orden de carga en cualquier página sin este
+         override, dejando fondo blanco + texto blanco (ilegible). Antes
+         solo vivía en el inbox de Helpdesk (inbox/index.blade.php); movido
+         aquí para que aplique en todo el panel. --}}
+    <style>
+    #toast-container > div {
+        background-color: #18181b !important;
+        color: #fff !important;
+        opacity: 1 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, .28) !important;
+    }
+    /* Gris neutro + texto negro (antes: verde en success, rojo en error,
+       azul en info) — fuera de la paleta de marca (verdes) y de la política
+       de no usar rojo en la UI. warning se deja en ámbar: no es rojo y
+       ayuda a distinguir un aviso de un éxito/error a simple vista. */
+    #toast-container > .toast-success,
+    #toast-container > .toast-error,
+    #toast-container > .toast-info {
+        background-color: #9da3aa !important;
+        color: #000 !important;
+    }
+    #toast-container > .toast-warning { background-color: #b45309 !important; }
+    #toast-container > div .toast-title,
+    #toast-container > div .toast-message,
+    #toast-container > div .toast-close-button { color: #fff !important; }
+    #toast-container > .toast-success .toast-title,
+    #toast-container > .toast-success .toast-message,
+    #toast-container > .toast-success .toast-close-button,
+    #toast-container > .toast-error .toast-title,
+    #toast-container > .toast-error .toast-message,
+    #toast-container > .toast-error .toast-close-button,
+    #toast-container > .toast-info .toast-title,
+    #toast-container > .toast-info .toast-message,
+    #toast-container > .toast-info .toast-close-button { color: #000 !important; }
+    </style>
+
     @stack('css')
     {{-- Alias legacy: muchas vistas del admin usan @push('styles') en vez de
          @push('css'); sin este stack su CSS era fantasma (nunca se renderizaba). --}}

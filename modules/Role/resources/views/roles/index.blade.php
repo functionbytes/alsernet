@@ -137,9 +137,15 @@
                                         </td>
                                         <td>
                                             <a href="{{ route('settings.roles.edit', $role->id) }}" class="text-decoration-none fw-semibold">
-                                                {{ $role->name }}
+                                                {{ $role->description ?: $role->name }}
                                             </a>
-                                            @if($role->slug)
+                                            {{-- name es el identificador técnico que usa el código
+                                                 (hasRole('helpdesk-agent'), etc.) — nunca se traduce.
+                                                 Cuando hay description en español se usa como nombre
+                                                 visible arriba y el name técnico queda de referencia aquí. --}}
+                                            @if($role->description)
+                                                <small class="d-block text-muted">{{ $role->name }}</small>
+                                            @elseif($role->slug)
                                                 <small class="d-block text-muted">{{ $role->slug }}</small>
                                             @endif
                                         </td>

@@ -170,9 +170,7 @@
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Tipo</th>
-                                    <th>Descripción</th>
                                     <th class="text-center">Estado</th>
-                                    <th class="text-center">Confianza</th>
                                     <th class="text-center">Prioridad</th>
                                     <th>Última conexión</th>
                                     <th>Procesamiento</th>
@@ -183,7 +181,7 @@
                                 @foreach($sources as $source)
                                     @php
                                         $typeBadges = [
-                                            'website' => ['text' => 'Web',     'color' => 'info'],
+                                            'website' => ['text' => 'Web',     'color' => 'secondary'],
                                             'ftp'     => ['text' => 'FTP',     'color' => 'warning'],
                                             'sftp'    => ['text' => 'SFTP',    'color' => 'warning'],
                                             'api'     => ['text' => 'API',     'color' => 'primary'],
@@ -216,17 +214,9 @@
                                         </td>
 
                                         <td>
-                                            <span class="badge bg-{{ $badge['color'] }}">{{ $badge['text'] }}</span>
+                                            <span class="badge bg-{{ $badge['color'] }}-subtle text-{{ $badge['color'] }}">{{ $badge['text'] }}</span>
                                             @if($platBadge)
-                                                <span class="badge bg-{{ $platBadge['color'] }} ms-1">{{ $platBadge['text'] }}</span>
-                                            @endif
-                                        </td>
-
-                                        <td>
-                                            @if($source->description)
-                                                <small class="text-muted">{{ Str::limit($source->description, 50) }}</small>
-                                            @else
-                                                <span class="text-muted">—</span>
+                                                <span class="badge bg-{{ $platBadge['color'] }}-subtle text-{{ $platBadge['color'] }} ms-1">{{ $platBadge['text'] }}</span>
                                             @endif
                                         </td>
 
@@ -236,12 +226,6 @@
                                             @else
                                                 <span class="badge bg-info-subtle text-info">Inactivo</span>
                                             @endif
-                                        </td>
-
-                                        <td class="text-center">
-                                            <span class="badge bg-{{ $trustColor }}-subtle text-{{ $trustColor }}">
-                                                {{ ucfirst($source->trust_level) }}
-                                            </span>
                                         </td>
 
                                         <td class="text-center">
@@ -274,14 +258,14 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
                                                         <a class="dropdown-item" href="{{ route('settings.suppliers.sources.edit', [$supplier->uid, $source->uid]) }}">
-                                                            <i class="fas fa-pencil me-2 text-muted"></i>Editar
+                                                            Editar
                                                         </a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item confirm-delete text-danger"
                                                            data-href="{{ route('settings.suppliers.sources.destroy', [$supplier->uid, $source->uid]) }}">
-                                                            <i class="fas fa-trash me-2"></i>Eliminar
+                                                            Eliminar
                                                         </a>
                                                     </li>
                                                 </ul>

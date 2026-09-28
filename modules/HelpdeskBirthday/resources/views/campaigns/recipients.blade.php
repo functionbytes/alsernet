@@ -25,11 +25,11 @@
             </div>
 
             <form method="GET" class="ms-auto d-flex gap-2">
-                <input type="search" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Buscar por email" aria-label="Buscar por email">
+                <input type="search" name="search" value="{{ $search }}" class="form-control form-control-sm" placeholder="Buscar por email" aria-label="Buscar por email">
                 <select name="status" class="form-select form-select-sm" aria-label="Filtrar por estado">
                     <option value="">Todos los estados</option>
                     @foreach($statuses as $status)
-                        <option value="{{ $status }}" @selected(request('status') === $status)>
+                        <option value="{{ $status }}" @selected($filterStatus === $status)>
                             {{ __('helpdeskbirthday::messages.recipient_status.'.$status) }}
                         </option>
                     @endforeach
@@ -41,16 +41,16 @@
         {{-- Con un filtro puesto, la tabla enseña 1 fila de 577 sin decir por
              qué. El aviso da el número real y la salida en un clic: vaciar el
              buscador a mano era la única forma de volver. --}}
-        @if(request()->filled('search') || request()->filled('status'))
+        @if($search !== '' || $filterStatus !== null)
             <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
                 <span class="text-muted small">
                     {{ $recipients->total() }}
                     {{ $recipients->total() === 1 ? 'destinatario' : 'destinatarios' }}
-                    @if(request()->filled('search'))
-                        con «{{ request('search') }}»
+                    @if($search !== '')
+                        con «{{ $search }}»
                     @endif
-                    @if(request()->filled('status'))
-                        en estado «{{ __('helpdeskbirthday::messages.recipient_status.'.request('status')) }}»
+                    @if($filterStatus !== null)
+                        en estado «{{ __('helpdeskbirthday::messages.recipient_status.'.$filterStatus) }}»
                     @endif
                     de {{ $campaign->recipients_total }} en total
                 </span>

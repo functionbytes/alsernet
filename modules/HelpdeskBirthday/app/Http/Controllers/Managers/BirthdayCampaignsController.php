@@ -84,9 +84,24 @@ class BirthdayCampaignsController extends Controller
         EmailDeliveryLookupService $lookup,
         BirthdayCampaignDashboardService $dashboard,
     ): View {
+        $statuses = [
+            BirthdayRecipient::STATUS_PENDING,
+            BirthdayRecipient::STATUS_SENDING,
+            BirthdayRecipient::STATUS_SENT,
+            BirthdayRecipient::STATUS_FAILED,
+            BirthdayRecipient::STATUS_SKIPPED,
+        ];
+
+        // Los filtros llegan del query string y pueden ser arrays (?status[]=x):
+        // string() sobre un array daba 500, y la vista reimprimía request('search').
+        $status = is_string($request->query('status')) && in_array($request->query('status'), $statuses, true)
+            ? $request->query('status')
+            : null;
+        $search = is_string($request->query('search')) ? trim($request->query('search')) : '';
+
         $recipients = $campaign->recipients()
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->filled('search'), fn ($q) => $q->where('email', 'like', '%'.$request->string('search').'%'))
+            ->when($status !== null, fn ($q) => $q->where('status', $status))
+            ->when($search !== '', fn ($q) => $q->where('email', 'like', '%'.$search.'%'))
             // Los omitidos no tienen hora: al final, no encabezando la tabla.
             ->orderByRaw('scheduled_at IS NULL, scheduled_at')
             ->paginate(50)
@@ -115,13 +130,9 @@ class BirthdayCampaignsController extends Controller
             'delivery' => $delivery,
             'redeemers' => $redeemers,
             'withoutCoupon' => $dashboard->bonos($campaign)['missing'],
-            'statuses' => [
-                BirthdayRecipient::STATUS_PENDING,
-                BirthdayRecipient::STATUS_SENDING,
-                BirthdayRecipient::STATUS_SENT,
-                BirthdayRecipient::STATUS_FAILED,
-                BirthdayRecipient::STATUS_SKIPPED,
-            ],
+            'statuses' => $statuses,
+            'search' => $search,
+            'filterStatus' => $status,
         ]);
     }
 
@@ -419,8 +430,11 @@ class BirthdayCampaignsController extends Controller
 
     public function prepare(Request $request): RedirectResponse
     {
-        $date = $request->filled('date')
-            ? CarbonImmutable::parse($request->string('date')->toString())->startOfDay()
+        // Sin validar, una fecha rota o ?date[]= daba 500 al parsear.
+        $validated = $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+
+        $date = filled($validated['date'] ?? null)
+            ? CarbonImmutable::createFromFormat('Y-m-d', $validated['date'])->startOfDay()
             : CarbonImmutable::today();
 
         $campaign = $this->campaigns->prepare($date);

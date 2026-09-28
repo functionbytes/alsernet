@@ -59,7 +59,7 @@ class FakeIntegrationDriver implements IntegrationDriverContract
         return true;
     }
 
-    public function search(string $query, string $type): DriverResult
+    public function search(string $query, string $type, int $offset = 0): DriverResult
     {
         return self::$platformUp
             ? DriverResult::ok(self::$searchResults)

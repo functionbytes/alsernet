@@ -86,6 +86,43 @@ class BirthdayPanelTest extends TestCase
             ->assertSee('910001-AAA');
     }
 
+    /**
+     * ?status[]=x y ?search[]=y llegaban como array: string() daba 500 y la
+     * vista reimprimía request('search'). Ahora se ignoran y sale la lista.
+     */
+    public function test_los_filtros_de_destinatarios_toleran_valores_de_tipo_array(): void
+    {
+        $campaign = $this->campaign();
+        $this->recipient($campaign, 'ana@ejemplo.test');
+
+        $this->actingAs($this->admin)
+            ->get(route('helpdeskbirthday.campaigns.recipients', [
+                'campaign' => $campaign->id,
+                'status' => ['x'],
+                'search' => ['y'],
+            ]))
+            ->assertOk()
+            ->assertSee('ana@ejemplo.test');
+    }
+
+    public function test_un_estado_desconocido_no_filtra_los_destinatarios(): void
+    {
+        $campaign = $this->campaign();
+        $this->recipient($campaign, 'ana@ejemplo.test');
+
+        $this->actingAs($this->admin)
+            ->get(route('helpdeskbirthday.campaigns.recipients', ['campaign' => $campaign->id, 'status' => 'inventado']))
+            ->assertOk()
+            ->assertSee('ana@ejemplo.test');
+    }
+
+    public function test_preparar_una_campana_con_una_fecha_invalida_es_un_error_de_validacion(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('helpdeskbirthday.campaigns.prepare'), ['date' => 'no-es-una-fecha'])
+            ->assertSessionHasErrors('date');
+    }
+
     public function test_la_pantalla_de_descuadre_carga(): void
     {
         $campaign = $this->campaign();
