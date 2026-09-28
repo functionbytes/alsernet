@@ -5,11 +5,20 @@ namespace Modules\HelpdeskTickets\Models;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Database\Factories\RecurringTicketFactory;
 
 class RecurringTicket extends Model
 {
+    use HasFactory;
+
+    protected static function newFactory(): RecurringTicketFactory
+    {
+        return RecurringTicketFactory::new();
+    }
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_recurring_tickets';

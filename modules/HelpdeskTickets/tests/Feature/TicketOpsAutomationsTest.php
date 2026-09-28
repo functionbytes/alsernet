@@ -154,10 +154,12 @@ class TicketOpsAutomationsTest extends TestCase
 
         $tipos = array_column($catalogo['actions'], 'type');
 
-        // Los nueve del match de AutomationEngine::runActions(), ni uno más.
+        // Los diez del match de AutomationEngine::runActions(), ni uno más.
+        // stop_processing no ejecuta nada en el match (rama nula): corta la
+        // cadena de reglas posteriores (ver AutomationEngine::stopsProcessing).
         $this->assertEqualsCanonicalizing([
             'assign_group', 'assign_user', 'set_priority', 'set_status', 'add_tag',
-            'close', 'add_internal_note', 'notify_agent', 'ai_route',
+            'close', 'add_internal_note', 'notify_agent', 'ai_route', 'stop_processing',
         ], $tipos);
 
         // El mockup pedía además estas tres; el motor no las implementa.

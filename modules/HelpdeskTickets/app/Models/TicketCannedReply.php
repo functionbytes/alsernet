@@ -8,10 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Modules\HelpdeskTickets\Database\Factories\TicketCannedReplyFactory;
 
 class TicketCannedReply extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function newFactory(): TicketCannedReplyFactory
+    {
+        return TicketCannedReplyFactory::new();
+    }
 
     protected $connection = 'helpdesk';
 

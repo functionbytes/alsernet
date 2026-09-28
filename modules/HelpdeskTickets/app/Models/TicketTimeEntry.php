@@ -5,13 +5,20 @@ namespace Modules\HelpdeskTickets\Models;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Database\Factories\TicketTimeEntryFactory;
 use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketTimeEntry extends Model
 {
-    use BelongsToHelpdeskUser;
+    use BelongsToHelpdeskUser, HasFactory;
+
+    protected static function newFactory(): TicketTimeEntryFactory
+    {
+        return TicketTimeEntryFactory::new();
+    }
 
     protected $connection = 'helpdesk';
 

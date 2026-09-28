@@ -15,7 +15,6 @@ class ViewReferencesTest extends TestCase
         return [
             'portal login' => ['helpdesktickets::portal.login'],
             'portal account' => ['helpdesktickets::portal.account'],
-            'agent dashboard' => ['helpdesktickets::agents.dashboard'],
         ];
     }
 

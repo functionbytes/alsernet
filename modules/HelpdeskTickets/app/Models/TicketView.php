@@ -3,12 +3,19 @@
 namespace Modules\HelpdeskTickets\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\HelpdeskTickets\Database\Factories\TicketViewFactory;
 use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketView extends Model
 {
-    use BelongsToHelpdeskUser;
+    use BelongsToHelpdeskUser, HasFactory;
+
+    protected static function newFactory(): TicketViewFactory
+    {
+        return TicketViewFactory::new();
+    }
 
     protected $connection = 'helpdesk';
 

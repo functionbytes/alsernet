@@ -814,13 +814,16 @@ class FetchTicketEmailsJobTest extends TestCase
             'attachments' => [],
         ];
 
-        $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
+        $ticket = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
 
         $customer = Customer::where('email', 'erp.newcustomer@example.com')->first();
         $this->assertNotNull($customer);
+        $this->assertNotNull($ticket);
 
-        Queue::assertPushed(LinkCustomerToErpJob::class, function (LinkCustomerToErpJob $job) use ($customer) {
-            return $job->uniqueId() === (string) $customer->id;
+        // uniqueId() incluye el origen (cliente:ticket:id:) desde que cada
+        // ticket tiene su propio trabajo — ver LinkCustomerToErpJob::uniqueId().
+        Queue::assertPushed(LinkCustomerToErpJob::class, function (LinkCustomerToErpJob $job) use ($customer, $ticket) {
+            return $job->uniqueId() === "{$customer->id}:ticket:{$ticket->id}:";
         });
     }
 

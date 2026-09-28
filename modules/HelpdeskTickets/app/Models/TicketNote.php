@@ -2,14 +2,21 @@
 
 namespace Modules\HelpdeskTickets\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\HelpdeskTickets\Database\Factories\TicketNoteFactory;
 use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketNote extends Model
 {
-    use BelongsToHelpdeskUser, SoftDeletes;
+    use BelongsToHelpdeskUser, HasFactory, SoftDeletes;
+
+    protected static function newFactory(): TicketNoteFactory
+    {
+        return TicketNoteFactory::new();
+    }
 
     protected $connection = 'helpdesk';
 

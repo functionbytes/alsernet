@@ -3,16 +3,23 @@
 namespace Modules\HelpdeskTickets\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Database\Factories\TicketCommentFactory;
 use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketComment extends Model
 {
-    use BelongsToHelpdeskUser, SoftDeletes;
+    use BelongsToHelpdeskUser, HasFactory, SoftDeletes;
+
+    protected static function newFactory(): TicketCommentFactory
+    {
+        return TicketCommentFactory::new();
+    }
 
     protected $connection = 'helpdesk';
 
