@@ -125,7 +125,7 @@
                     $backdrop.find('#tkt-tpl-list').html(listHtml($('#tkt-tpl-search').val()));
                     $backdrop.find('#tkt-tpl-preview').text(selected.content);
                 }
-                if (window.toastr) toastr.success((res && res.message) || 'Plantilla duplicada.');
+                if (window.toastr) toastr.success((res && res.message) || TKA.t('template_duplicated', 'Plantilla duplicada.'));
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo duplicar la plantilla.');
                 tktNotify('error', msg);

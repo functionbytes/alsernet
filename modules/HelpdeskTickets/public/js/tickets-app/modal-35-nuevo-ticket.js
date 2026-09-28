@@ -93,8 +93,8 @@
             var customerId = $backdrop.find('#tkt-new-customer').val();
             var description = ($backdrop.find('#tkt-new-description').val() || '').trim();
 
-            if (!customerId) { if (window.toastr) toastr.error('Elige un cliente'); return; }
-            if (!description) { if (window.toastr) toastr.error('Escribe la descripción'); return; }
+            if (!customerId) { if (window.toastr) toastr.error(TKA.t('choose_a_customer', 'Elige un cliente')); return; }
+            if (!description) { if (window.toastr) toastr.error(TKA.t('write_the_description', 'Escribe la descripción')); return; }
 
             var $btn = $(this).prop('disabled', true).text('Creando…');
 
@@ -113,7 +113,7 @@
                 },
                 headers: { Accept: 'application/json' },
             }).done(function (resp) {
-                if (window.toastr) toastr.success('Ticket creado');
+                if (window.toastr) toastr.success(TKA.t('ticket_created', 'Ticket creado'));
                 // El controlador redirige al detalle; con Accept JSON llega el
                 // id, y si no, se recarga el listado sin más.
                 var id = resp && (resp.id || (resp.ticket && resp.ticket.id));

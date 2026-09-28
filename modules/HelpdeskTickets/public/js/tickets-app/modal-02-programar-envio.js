@@ -62,7 +62,7 @@
             var date = $('#tkt-sched-date').val();
             var time = $('#tkt-sched-time').val() || '18:00';
             if (!date) {
-                if (window.toastr) toastr.error('Elige una fecha o uno de los atajos de arriba');
+                if (window.toastr) toastr.error(TKA.t('schedule_pick_date_required', 'Elige una fecha o uno de los atajos de arriba'));
                 return;
             }
             pick(date + 'T' + time);

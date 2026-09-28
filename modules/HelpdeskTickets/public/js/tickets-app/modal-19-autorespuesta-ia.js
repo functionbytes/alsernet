@@ -50,7 +50,7 @@
                 var sg = res && res.suggestion;
                 if (!sg || !sg.draft) {
                     $backdrop.find('#tkt-ai-draft-box').html('<div class="tkt-empty-box">' +
-                        escapeHtml((res && res.message) || 'No se pudo generar una sugerencia.') + '</div>');
+                        escapeHtml((res && res.message) || TKA.t('suggestion_generate_failed', 'No se pudo generar una sugerencia.')) + '</div>');
 
                     return;
                 }

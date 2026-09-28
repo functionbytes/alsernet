@@ -2,7 +2,7 @@
 
     // ── Modal 27: Etiquetado automático ───────────────────────
     function openAiTaggingModal(t, suggestion) {
-        if (!suggestion) { if (window.toastr) toastr.info('No hay sugerencias de clasificación para este ticket'); return; }
+        if (!suggestion) { if (window.toastr) toastr.info(TKA.t('no_classification_suggestions', 'No hay sugerencias de clasificación para este ticket')); return; }
 
         // % de confianza real (cuota de coincidencia de palabras clave, ver
         // TicketAiService::suggestCategory()) — no todas las sugerencias
@@ -54,7 +54,7 @@
             $.ajax({ url: TKA.urls.aiAutoApply, method: 'PATCH', data: { enabled: checked ? 1 : 0 } })
                 .done(function (resp) {
                     d.ai_auto_apply_high_confidence = checked;
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Guardado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('saved_generic', 'Guardado'));
                 })
                 .fail(function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo guardar.');

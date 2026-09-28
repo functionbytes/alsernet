@@ -285,13 +285,29 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdesktickets/js/bulk-list-actions.js') }}"></script>
 {{-- Solo datos: la lógica entera vive en email-channels-index.js. --}}
+@php
+    $ltChannels = __('helpdesktickets::helpdesktickets.lists_js');
+@endphp
 <script>
 window.hdtEmailChannelsIndexConfig = {
     syncUrlBase: @json(url('panel/helpdesk/settings/tickets/email-channels')),
     bulkActionUrl: @json(route('manager.helpdesk.settings.email-channels.bulk-action')),
     successMessage: @json(session('success')),
     errorMessage: @json(session('error')),
+    i18n: {
+        successTitle: @json($ltChannels['success_title']),
+        errorTitle: @json($ltChannels['error_title']),
+        applyLabel: @json($ltChannels['apply_label']),
+        busyLabel: @json($ltChannels['busy_label']),
+        genericError: @json($ltChannels['generic_error']),
+        chooseAction: @json($ltChannels['email_channels']['choose_action']),
+        chooseItems: @json($ltChannels['email_channels']['choose_items']),
+        confirmDelete: @json($ltChannels['email_channels']['confirm_delete']),
+        syncing: @json($ltChannels['email_channels']['syncing']),
+        syncError: @json($ltChannels['email_channels']['sync_error']),
+    },
 };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/email-channels-index.js') }}"></script>

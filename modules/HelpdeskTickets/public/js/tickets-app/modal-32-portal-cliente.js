@@ -38,7 +38,7 @@
         $backdrop.on('click', '#tkt-portal-send-access', function () {
             var $btn = $(this).prop('disabled', true).text('Enviando…');
             $.post(t.url_portal_send_access).done(function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Acceso enviado');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('access_sent', 'Acceso enviado'));
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo enviar el acceso.');
                 tktNotify('error', msg);

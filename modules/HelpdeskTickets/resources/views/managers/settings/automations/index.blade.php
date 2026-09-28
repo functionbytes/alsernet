@@ -251,12 +251,26 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdesktickets/js/bulk-list-actions.js') }}"></script>
 {{-- Solo datos: la lógica entera vive en automations-index.js. --}}
+@php
+    $ltAutomations = __('helpdesktickets::helpdesktickets.lists_js');
+@endphp
 <script>
 window.hdtAutomationsIndexConfig = {
     bulkActionUrl: @json(route('manager.helpdesk.settings.automations.bulk-action')),
     successMessage: @json(session('success')),
     errorMessage: @json(session('error')),
+    i18n: {
+        successTitle: @json($ltAutomations['success_title']),
+        errorTitle: @json($ltAutomations['error_title']),
+        applyLabel: @json($ltAutomations['apply_label']),
+        busyLabel: @json($ltAutomations['busy_label']),
+        genericError: @json($ltAutomations['generic_error']),
+        chooseAction: @json($ltAutomations['automations']['choose_action']),
+        chooseItems: @json($ltAutomations['automations']['choose_items']),
+        confirmDelete: @json($ltAutomations['automations']['confirm_delete']),
+    },
 };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/automations-index.js') }}"></script>

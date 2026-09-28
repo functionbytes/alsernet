@@ -21,7 +21,7 @@
                     auto_suppress: $backdrop.find('#tkt-rep-suppress').is(':checked') ? 1 : 0,
                 },
             }).done(function (resp) {
-                tktNotify('success', resp.message || 'Guardado');
+                tktNotify('success', resp.message || TKA.t('saved_generic', 'Guardado'));
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo guardar.');
                 tktNotify('error', msg);

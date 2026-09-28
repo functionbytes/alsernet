@@ -53,7 +53,7 @@
             if (!t.url_presence_nudge) { $btn.prop('disabled', false); return; }
             $.post(t.url_presence_nudge, { to_user_id: $(this).data('nudge') })
                 .done(function (resp) {
-                    tktNotify('success', (resp && resp.message) || 'Aviso enviado');
+                    tktNotify('success', (resp && resp.message) || TKA.t('notice_sent', 'Aviso enviado'));
                 })
                 .fail(function (xhr) {
                     var msg = apiErrorMessage(xhr, 'No se pudo avisar.');

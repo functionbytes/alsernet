@@ -5,7 +5,7 @@
         var d = TKA.state.currentDetail;
         var thread = (d && d.thread) || [];
         if (thread.length < 2) {
-            if (window.toastr) toastr.info('Hace falta más de un mensaje en el hilo para poder dividirlo');
+            if (window.toastr) toastr.info(TKA.t('thread_needs_more_messages_to_split', 'Hace falta más de un mensaje en el hilo para poder dividirlo'));
             return;
         }
         var picked = {};
@@ -60,7 +60,7 @@
 
         $backdrop.on('click', '#tkt-split-confirm', function () {
             var subject = ($('#tkt-split-subject').val() || '').trim();
-            if (!subject) { if (window.toastr) toastr.error('Indica el asunto del nuevo ticket'); return; }
+            if (!subject) { if (window.toastr) toastr.error(TKA.t('new_ticket_subject_required', 'Indica el asunto del nuevo ticket')); return; }
             var $btn = $(this).prop('disabled', true).text('Dividiendo…');
             $.ajax({
                 url: t.url_split, method: 'POST',
@@ -72,7 +72,7 @@
                 },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Ticket dividido');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('ticket_split', 'Ticket dividido'));
                     closeModal();
                     window.location = TKA.urls.index + '?ticket=' + resp.ticket_id;
                 },

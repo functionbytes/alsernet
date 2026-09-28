@@ -36,7 +36,7 @@
                 data: { mode: mode },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Envío cancelado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('send_cancelled', 'Envío cancelado'));
                     closeModal();
                     fetchDetailData(t);
                 },

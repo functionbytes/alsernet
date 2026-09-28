@@ -2,7 +2,7 @@
 
     // ── Modal 25: Cliente 360 ─────────────────────────────────
     function openCustomer360Modal(t, customer) {
-        if (!customer) { if (window.toastr) toastr.info('Este ticket no tiene un cliente asociado'); return; }
+        if (!customer) { if (window.toastr) toastr.info(TKA.t('ticket_has_no_customer', 'Este ticket no tiene un cliente asociado')); return; }
         var integraciones = (customer.integrations || []).map(function (i) {
             return '<span class="tkt-rchip">' + escapeHtml(i.label || i.name || i) + '</span>';
         }).join('');

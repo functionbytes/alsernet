@@ -123,7 +123,7 @@
             });
             $.ajax({ url: TKA.urls.notifTeamChannels, method: 'PATCH', data: data })
                 .done(function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Guardado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('saved_generic', 'Guardado'));
                     cargar();
                 })
                 .fail(function (xhr) {
@@ -136,7 +136,7 @@
         $backdrop.on('click', '#tkt-notif-channels-test', function () {
             var $btn = $(this).prop('disabled', true).text('Enviando…');
             $.post(TKA.urls.notifTeamChannelsTest).done(function (resp) {
-                tktNotify('success', (resp && resp.message) || 'Prueba enviada');
+                tktNotify('success', (resp && resp.message) || TKA.t('test_sent', 'Prueba enviada'));
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo enviar la prueba.');
                 tktNotify('error', msg);
@@ -199,7 +199,7 @@
             if (TKA.urls.notificationsIndex) {
                 window.location = TKA.urls.notificationsIndex;
             } else if (window.toastr) {
-                toastr.info('El panel de avisos no está disponible en esta instalación.');
+                toastr.info(TKA.t('notifications_panel_unavailable', 'El panel de avisos no está disponible en esta instalación.'));
             }
         });
     }

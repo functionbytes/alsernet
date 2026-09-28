@@ -46,7 +46,7 @@
 
     function openTicketTemplatesModal() {
         var all = TKA.state.ticketTemplates || [];
-        if (!all.length) { if (window.toastr) toastr.info('No hay plantillas de ticket activas'); return; }
+        if (!all.length) { if (window.toastr) toastr.info(TKA.t('no_active_ticket_templates', 'No hay plantillas de ticket activas')); return; }
         var chosen = null;
 
         function listHtml(filter) {

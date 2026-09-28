@@ -322,12 +322,26 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdesktickets/js/bulk-list-actions.js') }}"></script>
 {{-- Solo datos: la lógica entera vive en recurring-tickets-index.js. --}}
+@php
+    $ltRecurring = __('helpdesktickets::helpdesktickets.lists_js');
+@endphp
 <script>
 window.hdtRecurringTicketsIndexConfig = {
     bulkActionUrl: @json(route('manager.helpdesk.recurring-tickets.bulk-action')),
     successMessage: @json(session('success')),
     errorMessage: @json(session('error')),
+    i18n: {
+        successTitle: @json($ltRecurring['success_title']),
+        errorTitle: @json($ltRecurring['error_title']),
+        applyLabel: @json($ltRecurring['apply_label']),
+        busyLabel: @json($ltRecurring['busy_label']),
+        genericError: @json($ltRecurring['generic_error']),
+        chooseAction: @json($ltRecurring['recurring_tickets']['choose_action']),
+        chooseItems: @json($ltRecurring['recurring_tickets']['choose_items']),
+        confirmDelete: @json($ltRecurring['recurring_tickets']['confirm_delete']),
+    },
 };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/recurring-tickets-index.js') }}"></script>

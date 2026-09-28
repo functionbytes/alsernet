@@ -195,7 +195,7 @@
                 method: 'POST',
                 headers: { Accept: 'application/json' },
                 success: function (res) {
-                    note('ok', (res && res.message) || 'El servidor acepta conexiones.');
+                    note('ok', (res && res.message) || TKA.t('smtp_test_ok', 'El servidor acepta conexiones.'));
                 },
                 error: function (xhr) {
                     // La prueba es un chequeo TCP: no valida credenciales, así que

@@ -267,12 +267,26 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdesktickets/js/bulk-list-actions.js') }}"></script>
 {{-- Solo datos: la lógica entera vive en ticket-templates-index.js. --}}
+@php
+    $ltTemplates = __('helpdesktickets::helpdesktickets.lists_js');
+@endphp
 <script>
 window.hdtTicketTemplatesIndexConfig = {
     bulkActionUrl: @json(route('manager.helpdesk.ticket-templates.bulk-action')),
     successMessage: @json(session('success')),
     errorMessage: @json(session('error')),
+    i18n: {
+        successTitle: @json($ltTemplates['success_title']),
+        errorTitle: @json($ltTemplates['error_title']),
+        applyLabel: @json($ltTemplates['apply_label']),
+        busyLabel: @json($ltTemplates['busy_label']),
+        genericError: @json($ltTemplates['generic_error']),
+        chooseAction: @json($ltTemplates['ticket_templates']['choose_action']),
+        chooseItems: @json($ltTemplates['ticket_templates']['choose_items']),
+        confirmDelete: @json($ltTemplates['ticket_templates']['confirm_delete']),
+    },
 };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/ticket-templates-index.js') }}"></script>

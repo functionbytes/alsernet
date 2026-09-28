@@ -39,7 +39,7 @@
             var mode = $backdrop.find('[name="tkt-resend-mode"]:checked').val();
             var to = ($('#tkt-resend-to').val() || '').trim();
             if (!to) {
-                if (window.toastr) toastr.error('Indica el destinatario');
+                if (window.toastr) toastr.error(TKA.t('recipient_required', 'Indica el destinatario'));
                 return;
             }
 
@@ -64,7 +64,7 @@
                 data: { to: to, without_attachments: mode === 'noatt' ? 1 : 0 },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Correo reenviado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('email_resent', 'Correo reenviado'));
                     closeModal();
                     fetchDetailData(t);
                 },

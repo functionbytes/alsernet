@@ -29,7 +29,7 @@
         $backdrop.on('click', '#tkt-tpled-save', function () {
             var title = ($('#tkt-tpled-title').val() || '').trim();
             var content = ($('#tkt-tpled-body').val() || '').trim();
-            if (!title || !content) { if (window.toastr) toastr.error('El nombre y el contenido son obligatorios'); return; }
+            if (!title || !content) { if (window.toastr) toastr.error(TKA.t('name_and_content_required', 'El nombre y el contenido son obligatorios')); return; }
             var $btn = $(this).prop('disabled', true).text('Guardando…');
             $.ajax({
                 // POST + _method=PUT: un PUT real por AJAX devuelve 405 en este
@@ -39,7 +39,7 @@
                 data: { _method: 'PUT', title: title, content: content, short_code: ($('#tkt-tpled-code').val() || '').trim() || null },
                 headers: { Accept: 'application/json' },
                 success: function () {
-                    if (window.toastr) toastr.success('Plantilla guardada');
+                    if (window.toastr) toastr.success(TKA.t('template_saved', 'Plantilla guardada'));
                     var local = (TKA.state.cannedReplies || []).find(function (r) { return String(r.id) === String(reply.id); });
                     if (local) { local.title = title; local.content = content; }
                     closeModal(); if (onSaved) onSaved();

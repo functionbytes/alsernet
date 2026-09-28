@@ -56,7 +56,7 @@
 
         $backdrop.on('click', '#tkt-state-save', function () {
             var statusId = $backdrop.find('[name="tkt-state-pick"]:checked').val();
-            if (!statusId) { if (window.toastr) toastr.error('Elige un estado'); return; }
+            if (!statusId) { if (window.toastr) toastr.error(TKA.t('choose_a_status', 'Elige un estado')); return; }
 
             var note = ($backdrop.find('#tkt-state-note').val() || '').trim();
             var notify = $backdrop.find('#tkt-state-notify').is(':checked');
@@ -72,7 +72,7 @@
                 // termine ANTES de recargar: recargar con la petición en vuelo
                 // la aborta y la nota se pierde sin avisar.
                 function done() {
-                    if (window.toastr) toastr.success('Estado actualizado');
+                    if (window.toastr) toastr.success(TKA.t('status_updated', 'Estado actualizado'));
                     closeModal();
                     applyLocalTicketField(t, 'status_id', statusId);
                     queueTicketListRefresh('ticket-status-changed', t, {
@@ -93,7 +93,7 @@
                     data: { ticket_id: t.id, body: note },
                     headers: { Accept: 'application/json' },
                 }).fail(function () {
-                    if (window.toastr) toastr.warning('El estado se guardó, pero no se pudo añadir la nota.');
+                    if (window.toastr) toastr.warning(TKA.t('status_saved_note_failed', 'El estado se guardó, pero no se pudo añadir la nota.'));
                 }).always(done);
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo cambiar el estado');

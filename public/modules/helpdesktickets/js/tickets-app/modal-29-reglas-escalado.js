@@ -450,7 +450,7 @@
                 method: 'POST',
                 headers: { Accept: 'application/json' },
             }).done(function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Regla actualizada.');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('escalation_rule_updated', 'Regla actualizada.'));
                 for (var i = 0; i < TKT_ESC.rules.length; i++) {
                     if (TKT_ESC.rules[i].id === id) TKT_ESC.rules[i] = resp.rule;
                 }
@@ -566,7 +566,7 @@
             $.ajax({
                 url: url, method: 'POST', headers: { Accept: 'application/json' }, data: datos,
             }).done(function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Regla creada.');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('escalation_rule_created', 'Regla creada.'));
                 TKT_ESC.rules.push(resp.rule);
                 TKT_ESC.tab = 'list';
                 TKT_ESC.errors = null;

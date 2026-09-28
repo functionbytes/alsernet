@@ -63,7 +63,7 @@
                 data: { linked_ticket_id: target, link_type: 'related' },
                 headers: { Accept: 'application/json' },
             }).done(function () {
-                if (window.toastr) toastr.success('Marcados como relacionados, no duplicados.');
+                if (window.toastr) toastr.success(TKA.t('marked_as_related_not_duplicate', 'Marcados como relacionados, no duplicados.'));
                 closeModal();
                 dismissDuplicateBanner();
             }).fail(function (xhr) {

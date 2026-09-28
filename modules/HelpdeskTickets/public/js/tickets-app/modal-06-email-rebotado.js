@@ -29,11 +29,11 @@
         $backdrop.on('click', '#tkt-bounce-confirm', function () {
             var to = ($('#tkt-bounce-to').val() || '').trim();
             if (!to) {
-                if (window.toastr) toastr.error('Indica el destinatario corregido');
+                if (window.toastr) toastr.error(TKA.t('corrected_recipient_required', 'Indica el destinatario corregido'));
                 return;
             }
             if (to === mail.to) {
-                if (window.toastr) toastr.error('El destinatario es el mismo que rebotó: corrígelo antes de reenviar');
+                if (window.toastr) toastr.error(TKA.t('recipient_same_as_bounced', 'El destinatario es el mismo que rebotó: corrígelo antes de reenviar'));
                 return;
             }
             var $btn = $(this).prop('disabled', true).text('Reenviando…');
@@ -47,7 +47,7 @@
                 },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Destinatario corregido y correo reenviado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('recipient_fixed_and_resent', 'Destinatario corregido y correo reenviado'));
                     closeModal();
                     fetchDetailData(t);
                 },

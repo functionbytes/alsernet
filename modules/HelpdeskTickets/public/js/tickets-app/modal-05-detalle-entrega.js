@@ -46,7 +46,7 @@
         $backdrop.on('click', '[data-copy]', function () {
             if (!navigator.clipboard) return;
             navigator.clipboard.writeText($(this).data('copy')).then(function () {
-                if (window.toastr) toastr.success('Message-ID copiado');
+                if (window.toastr) toastr.success(TKA.t('message_id_copied', 'Message-ID copiado'));
             });
         });
     }

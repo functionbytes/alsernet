@@ -37,7 +37,7 @@
         $backdrop.on('click', '#tkt-sum-copy', function () {
             if (!current || !navigator.clipboard) return;
             navigator.clipboard.writeText(current).then(function () {
-                if (window.toastr) toastr.success('Resumen copiado');
+                if (window.toastr) toastr.success(TKA.t('summary_copied', 'Resumen copiado'));
             });
         });
         load();

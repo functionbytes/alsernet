@@ -208,7 +208,7 @@
             };
 
             if (!datos.name || !datos.subject) {
-                if (window.toastr) toastr.error('El nombre y el asunto son obligatorios');
+                if (window.toastr) toastr.error(TKA.t('name_and_subject_required', 'El nombre y el asunto son obligatorios'));
                 return;
             }
 
@@ -228,7 +228,7 @@
                 data: datos,
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Recurrencia guardada');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('recurrence_saved', 'Recurrencia guardada'));
                     cargar();
                 },
                 error: function (xhr) {
@@ -251,7 +251,7 @@
                 method: 'POST',
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Recurrencia actualizada');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('recurrence_updated', 'Recurrencia actualizada'));
                     // Se recarga y se vuelve a la lista: pausar desde el
                     // formulario cambia además la próxima ejecución (el backend
                     // la reprograma al reanudar), y hay que verla al día.

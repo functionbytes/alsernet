@@ -74,7 +74,7 @@
                 method: 'POST',
                 headers: { Accept: 'application/json' },
             }).done(function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Encuesta reenviada.');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('survey_resent', 'Encuesta reenviada.'));
                 closeModal();
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, 'No se pudo reenviar la encuesta.');

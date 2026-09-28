@@ -178,10 +178,22 @@
 
 @push('scripts')
 <script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
+<script src="{{ asset('modules/helpdesktickets/js/bulk-list-actions.js') }}"></script>
 {{-- Solo datos: la lógica entera vive en macros-index.js. --}}
+@php
+    $ltMacros = __('helpdesktickets::helpdesktickets.lists_js');
+@endphp
 <script>
 window.hdtMacrosIndexConfig = {
     bulkActionUrl: @json(route('manager.helpdesk.settings.macros.bulk-action')),
+    i18n: {
+        applyLabel: @json($ltMacros['apply_label']),
+        busyLabel: @json($ltMacros['busy_label']),
+        genericError: @json($ltMacros['generic_error']),
+        chooseAction: @json($ltMacros['macros']['choose_action']),
+        chooseItems: @json($ltMacros['macros']['choose_items']),
+        confirmDelete: @json($ltMacros['macros']['confirm_delete']),
+    },
 };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/macros-index.js') }}"></script>

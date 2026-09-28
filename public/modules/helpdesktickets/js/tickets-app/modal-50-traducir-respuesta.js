@@ -26,7 +26,7 @@
             : ($hilo.val() || '');
 
         if (!source.trim()) {
-            if (window.toastr) toastr.info('Escribe primero el texto que quieres traducir');
+            if (window.toastr) toastr.info(TKA.t('write_text_to_translate_first', 'Escribe primero el texto que quieres traducir'));
             return;
         }
         // Idioma detectado del cliente, si el contacto lo tiene guardado.
@@ -264,9 +264,9 @@
                     to: composeDraft.to, cc: composeDraft.cc, bcc: composeDraft.bcc,
                     subject: composeDraft.subject, body: composeDraft.body,
                 }));
-                if (window.toastr) toastr.success('Borrador guardado en este navegador');
+                if (window.toastr) toastr.success(TKA.t('draft_saved_in_browser', 'Borrador guardado en este navegador'));
             } catch (e) {
-                if (window.toastr) toastr.error('No se pudo guardar el borrador');
+                if (window.toastr) toastr.error(TKA.t('draft_save_failed', 'No se pudo guardar el borrador'));
             }
             closeModal();
         });
@@ -274,7 +274,7 @@
         $backdrop.on('click', '#tkt-compose-confirm', function () {
             readComposeDraft();
             if (!composeDraft.to || !composeDraft.subject || !composeDraft.body) {
-                if (window.toastr) toastr.error('Rellena destinatario, asunto y mensaje');
+                if (window.toastr) toastr.error(TKA.t('fill_recipient_subject_message', 'Rellena destinatario, asunto y mensaje'));
                 return;
             }
 
@@ -300,7 +300,7 @@
                 contentType: false,
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || (scheduled ? 'Email programado' : 'Email enviado'));
+                    if (window.toastr) toastr.success((resp && resp.message) || (scheduled ? TKA.t('email_scheduled', 'Email programado') : TKA.t('email_sent', 'Email enviado')));
                     try { window.localStorage.removeItem('tkt-draft-' + t.id); } catch (e) { /* sin localStorage */ }
                     composeDraft = null;
                     closeModal();

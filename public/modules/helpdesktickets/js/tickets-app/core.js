@@ -432,7 +432,7 @@
         TKA.state.networkListenersBound = true;
         window.addEventListener('offline', function () {
             setNetworkState(false);
-            if (window.toastr) toastr.warning('Se perdió la conexión. Las respuestas de texto se guardarán para reintentarlas.');
+            if (window.toastr) toastr.warning(TKA.t('offline_connection_lost', 'Se perdió la conexión. Las respuestas de texto se guardarán para reintentarlas.'));
         });
         window.addEventListener('online', function () {
             setNetworkState(true, 'Conexión recuperada');
@@ -572,6 +572,12 @@
                 method: 'POST',
                 headers: { Accept: 'application/json' },
                 data: { body: String(body || ''), mode: mode === 'note' ? 'note' : 'reply' },
+            }).fail(function () {
+                // Silencioso a propósito: es la copia EN SERVIDOR del
+                // borrador, cada pocas teclas — la copia local
+                // (saveComposerDraft, localStorage) ya cubre "no perder lo
+                // escrito" y un toast por cada fallo de red sería spam.
+                if (window.console && console.debug) console.debug('[tickets-app] syncServerDraft failed', ticket.id);
             });
         }, 1500);
     }
@@ -885,6 +891,8 @@
                 return String(extension).toLowerCase().replace(/^\./, '');
             });
         }
+        // Textos de los toasts (ver TKA.t más abajo, cerca de safeJson).
+        TKA.i18n = safeJson($data.attr('data-i18n'), {});
         TKA.state.closeReasons = safeJson($data.attr('data-close-reasons'), []);
         TKA.state.closeRootCauses = safeJson($data.attr('data-close-root-causes'), []);
         var selectedId = $data.attr('data-selected-id');
@@ -1011,6 +1019,17 @@
         if (!raw) return fallback;
         try { return JSON.parse(raw); } catch (e) { return fallback; }
     }
+
+    // Traducción de los textos que el JS pinta directamente (toasts, sobre
+    // todo). TKA.i18n lo rellena initTicketsApp() desde data-i18n (JSON con
+    // las claves de lang/{es,en}/helpdesktickets.php → tickets_index_js.*).
+    // El segundo argumento es SIEMPRE el texto español original: si la clave
+    // no llega (blade viejo en caché, entorno sin recompilar) el toast sigue
+    // funcionando exactamente igual que antes de esta traducción.
+    TKA.t = function (key, fallback) {
+        var value = TKA.i18n && TKA.i18n[key];
+        return (typeof value === 'string' && value) ? value : fallback;
+    };
 
     // Settings → Helpdesk · Tickets → Funcionalidades (14-sep-2026). Mismo
     // criterio que el backend (helpdesk_ticket_feature_enabled()): si la key
@@ -1178,7 +1197,7 @@
                 // filtraba/paginaba perdía selección múltiple y filtros sin
                 // aplicar, sin que nada explicara por qué la pantalla se
                 // refrescó sola) — 14-sep-2026, auditoría de calidad JS.
-                if (window.toastr) toastr.error('No se pudo actualizar el listado, recargando la página…');
+                if (window.toastr) toastr.error(TKA.t('list_refresh_failed', 'No se pudo actualizar el listado, recargando la página…'));
                 window.location = url;
             })
             .always(function () {
@@ -1991,7 +2010,7 @@
 
         var targetStatus = (TKA.state.statuses || []).find(function (s) { return s.slug === bucket; });
         if (!targetStatus) {
-            if (window.toastr) toastr.error('No existe un estado "' + bucket + '" configurado.');
+            if (window.toastr) toastr.error(TKA.t('status_not_configured_prefix', 'No existe un estado "') + bucket + TKA.t('status_not_configured_suffix', '" configurado.'));
             renderKanban();
             return;
         }
@@ -2015,7 +2034,7 @@
             data: data,
             headers: { Accept: 'application/json' },
             success: function () {
-                if (window.toastr) toastr.success('Ticket actualizado');
+                if (window.toastr) toastr.success(TKA.t('ticket_updated', 'Ticket actualizado'));
                 onSuccess();
                 queueTicketListRefresh('ticket-field-updated', t, {
                     freshCounts: true,
@@ -2027,7 +2046,7 @@
                 renderList();
             },
             error: function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo mover el ticket');
+                var msg = apiErrorMessage(xhr, TKA.t('ticket_move_failed', 'No se pudo mover el ticket'));
                 tktNotify('error', msg);
                 renderKanban();
             },
@@ -2068,7 +2087,7 @@
 
         $backdrop.on('click', '#tkt-save-view-confirm', function () {
             var name = ($backdrop.find('#tkt-save-view-name').val() || '').trim();
-            if (!name) { if (window.toastr) toastr.error('Escribe un nombre para la vista'); return; }
+            if (!name) { if (window.toastr) toastr.error(TKA.t('view_name_required', 'Escribe un nombre para la vista')); return; }
             var shared = $backdrop.find('#tkt-save-view-shared').is(':checked');
 
             var params = source
@@ -2100,11 +2119,11 @@
                 data: { name: name, filters: filters, shared: shared ? 1 : 0 },
                 headers: { Accept: 'application/json' },
                 success: function () {
-                    if (window.toastr) toastr.success('Vista guardada');
+                    if (window.toastr) toastr.success(TKA.t('view_saved', 'Vista guardada'));
                     window.location.reload();
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo guardar la vista');
+                    var msg = apiErrorMessage(xhr, TKA.t('view_save_failed', 'No se pudo guardar la vista'));
                     tktNotify('error', msg);
                 },
             });
@@ -2149,7 +2168,7 @@
                 tktNotify('success', msg);
             },
             error: function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo sincronizar las integraciones del cliente.');
+                var msg = apiErrorMessage(xhr, TKA.t('customer_integrations_sync_failed', 'No se pudo sincronizar las integraciones del cliente.'));
                 tktNotify('error', msg);
             },
             complete: function () {
@@ -2659,6 +2678,11 @@
                 $('#tkt-ai-banner-text').text(res.summary);
                 $('#tkt-ai-banner').show();
             }
+        }).fail(function () {
+            // Mejora opcional silenciosa: sin resumen el banner se queda
+            // oculto (estado por defecto), no hace falta molestar con un
+            // toast por un banner que ni siquiera se sabe si iba a aparecer.
+            if (window.console && console.debug) console.debug('[tickets-app] fetchAiSummary failed', t.id);
         });
     }
 
@@ -2801,7 +2825,7 @@
             .fail(function () {
                 TKA.state.threadLoadingMore = false;
                 if (opts.appendThread) {
-                    if (window.toastr) toastr.error('No se pudieron cargar los mensajes anteriores.');
+                    if (window.toastr) toastr.error(TKA.t('thread_load_more_failed', 'No se pudieron cargar los mensajes anteriores.'));
                     return;
                 }
                 showDetailError(t);
@@ -3616,6 +3640,10 @@
         if (t && t.url_canned_replies) {
             $.getJSON(t.url_canned_replies).done(function (resolved) {
                 if (resolved) templatesForSlash = resolved;
+            }).fail(function () {
+                // Silencioso: "/" se queda con la lista en bruto ya cargada
+                // (templatesForSlash), sin bloquear el redactor por esto.
+                if (window.console && console.debug) console.debug('[tickets-app] canned replies (slash) failed', t.id);
             });
         }
         bindTemplateAutocomplete($body, $('#tkt-reply-tpl-drop'), function () { return templatesForSlash; });
@@ -3778,7 +3806,7 @@
             var s = res && res.suggestion;
             if (!s || !s.draft) {
                 $box.attr('hidden', true);
-                if (refresh && window.toastr) toastr.info((res && res.message) || 'No hay ninguna sugerencia disponible.');
+                if (refresh && window.toastr) toastr.info((res && res.message) || TKA.t('no_suggestion_available', 'No hay ninguna sugerencia disponible.'));
                 return;
             }
             TKA.state.aiDraft = s.draft;
@@ -3799,7 +3827,7 @@
             if (!refresh) scrollThreadToBottom();
         }).fail(function () {
             $box.attr('hidden', true);
-            if (refresh && window.toastr) toastr.error('No se pudo generar el borrador.');
+            if (refresh && window.toastr) toastr.error(TKA.t('draft_generate_failed', 'No se pudo generar el borrador.'));
         });
     }
 
@@ -3812,7 +3840,7 @@
         var email = (t.customer && t.customer.email) ? String(t.customer.email) : '';
 
         if (!email || email.indexOf('@') === -1) {
-            if (window.toastr) toastr.info('Este ticket no tiene correo de cliente que bloquear.');
+            if (window.toastr) toastr.info(TKA.t('no_customer_email_to_block', 'Este ticket no tiene correo de cliente que bloquear.'));
             return;
         }
 
@@ -3860,7 +3888,7 @@
             var dom = $('#tkt-bl-domain').is(':checked');
 
             if (!email && !dom) {
-                if (window.toastr) toastr.error('Elige si bloquear el correo, el dominio o ambos.');
+                if (window.toastr) toastr.error(TKA.t('blacklist_choose_target', 'Elige si bloquear el correo, el dominio o ambos.'));
                 return;
             }
 
@@ -3878,12 +3906,12 @@
                 headers: { Accept: 'application/json' },
             }).done(function (res) {
                 closeModal();
-                if (window.toastr) toastr.success(res.message || 'Remitente bloqueado.');
+                if (window.toastr) toastr.success(res.message || TKA.t('sender_blocked', 'Remitente bloqueado.'));
                 // Si el ticket se ha borrado, la fila y el detalle abiertos ya
                 // no valen: se recarga, como el resto de acciones destructivas.
                 if (res.ticket_deleted) window.location.reload();
             }).fail(function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo bloquear el remitente.');
+                var msg = apiErrorMessage(xhr, TKA.t('sender_block_failed', 'No se pudo bloquear el remitente.'));
                 tktNotify('error', msg);
                 $btn.prop('disabled', false).text('Bloquear');
             });
@@ -4051,14 +4079,14 @@
             closeModal();
             dismissDuplicateBanner();
             if (window.toastr) {
-                toastr.success((res.message || 'Tickets unificados.') + (res.notified ? ' Cliente avisado.' : ''));
+                toastr.success((res.message || TKA.t('tickets_merged', 'Tickets unificados.')) + (res.notified ? TKA.t('customer_notified_suffix', ' Cliente avisado.') : ''));
             }
             // El ticket abierto puede ser uno de los que se acaban de cerrar,
             // así que su fila y su detalle ya no valen: se recarga el listado
             // por la misma vía que el resto de acciones destructivas del panel.
             window.location.reload();
         }).fail(function (xhr) {
-            var msg = apiErrorMessage(xhr, 'No se pudieron unificar los tickets.');
+            var msg = apiErrorMessage(xhr, TKA.t('tickets_merge_failed', 'No se pudieron unificar los tickets.'));
             tktNotify('error', msg);
             $btn.prop('disabled', false).text('Unificar');
         });
@@ -4154,6 +4182,11 @@
             $banner.find('#tkt-dupe-unify').on('click', function () { openUnifyModal(t); });
             $banner.find('#tkt-dupe-close').on('click', dismissDuplicateBanner);
             $('#tkt-collision-banner').after($banner);
+        }).fail(function () {
+            // Silencioso: es un aviso discreto ("nunca 0 duplicados"), sin
+            // candidatos no se pinta nada — un fallo de red se comporta
+            // igual que "no hay duplicados" para el agente.
+            if (window.console && console.debug) console.debug('[tickets-app] checkDuplicates failed', t.id);
         });
     }
 
@@ -4185,11 +4218,11 @@
             method: 'POST',
             headers: { Accept: 'application/json' },
             success: function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Macro aplicada');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('macro_applied', 'Macro aplicada'));
                 fetchDetailData(t);
             },
             error: function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo aplicar la macro');
+                var msg = apiErrorMessage(xhr, TKA.t('macro_apply_failed', 'No se pudo aplicar la macro'));
                 tktNotify('error', msg);
             },
         });
@@ -4243,17 +4276,17 @@
 
         if (files && files.length) {
             if ((TKA.state.offlineQueue || []).length + (TKA.state.offlineAttachmentQueue || []).length >= TKT_OFFLINE_MAX_ENTRIES) {
-                if (window.toastr) toastr.error('La cola offline está llena. Conéctate y envía las respuestas pendientes antes de añadir otra.');
+                if (window.toastr) toastr.error(TKA.t('offline_queue_full', 'La cola offline está llena. Conéctate y envía las respuestas pendientes antes de añadir otra.'));
                 return Promise.resolve(false);
             }
             entry.files = Array.prototype.slice.call(files);
             return putOfflineAttachmentReply(entry).then(function () {
                 TKA.state.offlineAttachmentQueue = (TKA.state.offlineAttachmentQueue || []).concat([entry]);
                 updateOfflineQueueStatus();
-                if (window.toastr) toastr.info('Respuesta y adjuntos guardados. Se enviarán al recuperar la conexión.');
+                if (window.toastr) toastr.info(TKA.t('offline_reply_saved_with_attachments', 'Respuesta y adjuntos guardados. Se enviarán al recuperar la conexión.'));
                 return true;
             }).catch(function () {
-                if (window.toastr) toastr.error('No se pudo guardar el adjunto offline. Mantén esta ventana abierta y reintenta con conexión.');
+                if (window.toastr) toastr.error(TKA.t('offline_attachment_save_failed', 'No se pudo guardar el adjunto offline. Mantén esta ventana abierta y reintenta con conexión.'));
                 return false;
             });
         }
@@ -4261,7 +4294,7 @@
         var queue = (TKA.state.offlineQueue || []).slice();
         queue.push(entry);
         writeOfflineQueue(queue);
-        if (window.toastr) toastr.info('Respuesta guardada. Se enviará automáticamente al recuperar la conexión.');
+        if (window.toastr) toastr.info(TKA.t('offline_reply_saved', 'Respuesta guardada. Se enviará automáticamente al recuperar la conexión.'));
         return Promise.resolve(true);
     }
 
@@ -4365,7 +4398,7 @@
         function next() {
             if (!TKA.state.networkOnline || (!pending.length && !pendingAttachments.length)) {
                 TKA.state.offlineFlushInFlight = false;
-                if (delivered && window.toastr) toastr.success(delivered + (delivered === 1 ? ' respuesta enviada' : ' respuestas enviadas'));
+                if (delivered && window.toastr) toastr.success(delivered + (delivered === 1 ? TKA.t('offline_reply_sent_one', ' respuesta enviada') : TKA.t('offline_reply_sent_many', ' respuestas enviadas')));
                 return;
             }
 
@@ -4410,7 +4443,7 @@
                 next();
             }).fail(function (xhr) {
                 entry.attempts = (entry.attempts || 0) + 1;
-                entry.lastError = apiErrorMessage(xhr, xhr.status ? 'Servidor respondió ' + xhr.status : 'No hay conexión');
+                entry.lastError = apiErrorMessage(xhr, xhr.status ? TKA.t('server_responded_prefix', 'Servidor respondió ') + xhr.status : TKA.t('no_connection', 'No hay conexión'));
                 entry.dead = entry.attempts >= TKT_OFFLINE_MAX_ATTEMPTS;
                 entry.nextAttemptAt = entry.dead ? null : new Date(Date.now() + offlineRetryDelay(entry)).toISOString();
                 if (isAttachment) {
@@ -4428,7 +4461,7 @@
                 // corregir el problema sin perder una respuesta escrita.
                 updateOfflineQueueStatus();
                 if (!entry.dead && navigator.onLine !== false) scheduleOfflineFlush(offlineRetryDelay(entry));
-                if (entry.dead && window.toastr) toastr.error('Una respuesta quedó bloqueada tras varios intentos. Revisa la cola offline.');
+                if (entry.dead && window.toastr) toastr.error(TKA.t('offline_reply_stuck', 'Una respuesta quedó bloqueada tras varios intentos. Revisa la cola offline.'));
             });
         }
 
@@ -4533,7 +4566,7 @@
                     $('#tkt-reply-attach-count').text(draftFiles.length ? draftFiles.length + (draftFiles.length === 1 ? ' adjunto' : ' adjuntos') : '');
                 } catch (e) { /* navegador sin DataTransfer: el texto sí vuelve */ }
             }
-            if (window.toastr) toastr.info('Envío cancelado');
+            if (window.toastr) toastr.info(TKA.t('send_cancelled', 'Envío cancelado'));
         });
         clearTimeout(TKA.state.undoTimer);
         TKA.state.undoTimer = setTimeout(hideUndo, SEND_UNDO_MS);
@@ -4564,7 +4597,7 @@
             headers: { Accept: 'application/json' },
             beforeSend: function (xhr) { xhr.setRequestHeader('X-Idempotency-Key', idempotencyKey); },
             success: function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Mensaje enviado');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('message_sent', 'Mensaje enviado'));
                 clearComposerDraft(t);
                 // Con el envío retenido, el agente puede estar ya en otro
                 // ticket: solo se toca el composer si sigue en este.
@@ -4748,7 +4781,7 @@
             headers: { Accept: 'application/json' },
             beforeSend: function (xhr) { xhr.setRequestHeader('X-Idempotency-Key', idempotencyKey); },
             success: function () {
-                if (window.toastr) toastr.success('Archivo adjuntado');
+                if (window.toastr) toastr.success(TKA.t('attachment_added', 'Archivo adjuntado'));
                 fetchDetailData(t);
             },
             error: function (xhr) {
@@ -4757,7 +4790,7 @@
                     queueOfflineReply(t, '(archivo adjunto)', false, fileList, idempotencyKey);
                     return;
                 }
-                var msg = apiErrorMessage(xhr, 'No se pudo adjuntar el archivo');
+                var msg = apiErrorMessage(xhr, TKA.t('attachment_upload_failed', 'No se pudo adjuntar el archivo'));
                 tktNotify('error', msg);
             },
         });
@@ -5020,7 +5053,7 @@
             var value = $(this).data('copy');
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(value).then(function () {
-                    if (window.toastr) toastr.success('Message-ID copiado');
+                    if (window.toastr) toastr.success(TKA.t('message_id_copied', 'Message-ID copiado'));
                 });
             }
         });
@@ -5701,11 +5734,11 @@
             $.ajax({
                 url: t.url_send_csat, method: 'POST', headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Encuesta enviada');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('survey_sent', 'Encuesta enviada'));
                     $btn.text('Enviada').prop('disabled', true);
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo enviar la encuesta');
+                    var msg = apiErrorMessage(xhr, TKA.t('survey_send_failed', 'No se pudo enviar la encuesta'));
                     tktNotify('error', msg);
                     $btn.prop('disabled', false).text('Reenviar encuesta de satisfacción');
                 },
@@ -5779,6 +5812,8 @@
                             '<span class="s">' + escapeHtml([f.customer_name, f.status_name, f.updated_at_human]
                                 .filter(Boolean).join(' · ')) + '</span></span></button>';
                     }).join(''));
+                }).fail(function (xhr) {
+                    $results.html('<div class="tkt-empty-box">' + escapeHtml(apiErrorMessage(xhr, TKA.t('search_request_failed', 'No se pudo pedir la búsqueda.'))) + '</div>');
                 });
             }, 250);
         });
@@ -5856,7 +5891,7 @@
 
         $backdrop.on('click', '#tkt-merge-confirm', function () {
             var input = $('#tkt-merge-target').val().trim();
-            if (!/^\d+$/.test(input)) { if (window.toastr) toastr.error('Escribe un ID numérico de ticket'); return; }
+            if (!/^\d+$/.test(input)) { if (window.toastr) toastr.error(TKA.t('enter_numeric_ticket_id', 'Escribe un ID numérico de ticket')); return; }
 
             $.ajax({
                 url: t.url_merge,
@@ -5864,7 +5899,7 @@
                 data: { merge_into_id: input },
                 headers: { Accept: 'application/json' },
                 success: function () {
-                    if (window.toastr) toastr.success('Ticket fusionado');
+                    if (window.toastr) toastr.success(TKA.t('ticket_merged', 'Ticket fusionado'));
                     window.location = TKA.urls.index;
                 },
                 error: function (xhr) {
@@ -5955,7 +5990,7 @@
 
         $backdrop.on('click', '#tkt-snooze-confirm', function () {
             var input = $('#tkt-snooze-until').val();
-            if (!input) { if (window.toastr) toastr.error('Indica fecha y hora'); return; }
+            if (!input) { if (window.toastr) toastr.error(TKA.t('enter_date_and_time', 'Indica fecha y hora')); return; }
 
             $.ajax({
                 url: t.url_snooze,
@@ -5966,7 +6001,7 @@
                 },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Ticket pospuesto');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('ticket_snoozed', 'Ticket pospuesto'));
                     closeModal();
                     queueTicketListRefresh('ticket-snoozed', t, {
                         freshCounts: true,
@@ -6171,6 +6206,8 @@
                             }).join('')
                             : '<div class="tkt-empty-box">Sin coincidencias.</div>'
                     );
+                }).fail(function (xhr) {
+                    $backdrop.find('#tkt-merge-search-results').html('<div class="tkt-empty-box">' + escapeHtml(apiErrorMessage(xhr, TKA.t('search_request_failed', 'No se pudo pedir la búsqueda.'))) + '</div>');
                 });
             }, 300);
         });
@@ -6181,15 +6218,18 @@
             $(this).addClass('on');
 
             var previewUrl = TKA.urls.contactsMergePreviewTemplate.replace('__CUSTOMER__', customer.id);
+            var previewFailed = function (xhr) {
+                $backdrop.find('#tkt-merge-preview').html('<div class="tkt-empty-box">' + escapeHtml(apiErrorMessage(xhr, TKA.t('merge_preview_failed', 'No se pudo cargar la vista previa.'))) + '</div>');
+            };
             $.getJSON(previewUrl, { loser_id: selectedLoserId }).done(function (res) {
-                if (!res || !res.success) { $backdrop.find('#tkt-merge-preview').html('<div class="tkt-empty-box">No se pudo cargar la vista previa.</div>'); return; }
+                if (!res || !res.success) { previewFailed(); return; }
                 var w = res.data.winner, l = res.data.loser;
                 $backdrop.find('#tkt-merge-preview').html(
                     '<div class="tkt-note warn">Se fusionará <strong>' + escapeHtml(l.name || l.email) + '</strong> (' + l.total_conversations + ' conversaciones) dentro de <strong>' + escapeHtml(w.name || w.email) + '</strong>. Esta acción no se puede deshacer.</div>' +
                     '<label class="tkt-check"><input type="checkbox" id="tkt-merge-ack"> Entiendo que esta acción no se puede deshacer</label>'
                 );
                 $backdrop.find('#tkt-merge-execute-btn').prop('disabled', true);
-            });
+            }).fail(previewFailed);
         });
 
         $backdrop.on('change', '#tkt-merge-ack', function () {
@@ -6205,11 +6245,11 @@
                 data: { loser_id: selectedLoserId },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Contactos fusionados');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('contacts_merged', 'Contactos fusionados'));
                     closeModal();
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo fusionar');
+                    var msg = apiErrorMessage(xhr, TKA.t('merge_failed', 'No se pudo fusionar'));
                     tktNotify('error', msg);
                 },
             });
@@ -6312,7 +6352,7 @@
             }).join('\n');
 
             navigator.clipboard.writeText(texto).then(function () {
-                if (window.toastr) toastr.success('Datos del formulario copiados');
+                if (window.toastr) toastr.success(TKA.t('form_data_copied', 'Datos del formulario copiados'));
             }).catch(function () {
                 window.prompt('Copia los datos:', texto);
             });
@@ -6486,10 +6526,10 @@
                         method: 'DELETE',
                         headers: { Accept: 'application/json' },
                         success: function (resp) {
-                            if (window.toastr) toastr.success((resp && resp.message) || 'Secuencia cancelada');
+                            if (window.toastr) toastr.success((resp && resp.message) || TKA.t('sequence_cancelled', 'Secuencia cancelada'));
                             fetchDetailData(t);
                         },
-                        error: function () { if (window.toastr) toastr.error('No se pudo cancelar la secuencia'); },
+                        error: function () { if (window.toastr) toastr.error(TKA.t('sequence_cancel_failed', 'No se pudo cancelar la secuencia')); },
                     });
                 },
             });
@@ -6515,7 +6555,7 @@
 
             if (!composeDraft || composeDraft.ticketId !== t.id || !composeDraft.body) {
                 openComposeModal(t);
-                if (window.toastr) toastr.info('Escribe la respuesta y pulsa el icono de idioma para traducirla');
+                if (window.toastr) toastr.info(TKA.t('write_reply_to_translate', 'Escribe la respuesta y pulsa el icono de idioma para traducirla'));
                 return;
             }
 
@@ -6593,10 +6633,10 @@
                         w.notify_internal_notes = notes;
                     });
                     if (d) d.watchers = watchers;
-                    if (window.toastr) toastr.success('Preferencias de aviso guardadas');
+                    if (window.toastr) toastr.success(TKA.t('notification_prefs_saved', 'Preferencias de aviso guardadas'));
                 },
                 error: function () {
-                    if (window.toastr) toastr.error('No se pudieron guardar las preferencias');
+                    if (window.toastr) toastr.error(TKA.t('notification_prefs_save_failed', 'No se pudieron guardar las preferencias'));
                 },
             });
         });
@@ -6611,7 +6651,7 @@
                     if (d) d.watchers = watchers;
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo quitar el seguidor');
+                    var msg = apiErrorMessage(xhr, TKA.t('follower_remove_failed', 'No se pudo quitar el seguidor'));
                     tktNotify('error', msg);
                 },
             });
@@ -6632,7 +6672,7 @@
                     $('#tkt-follower-add').val('');
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo añadir el seguidor');
+                    var msg = apiErrorMessage(xhr, TKA.t('follower_add_failed', 'No se pudo añadir el seguidor'));
                     tktNotify('error', msg);
                 },
             });
@@ -6677,11 +6717,11 @@
                 method: mode === 'archive' ? 'POST' : 'DELETE',
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Hecho');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('done', 'Hecho'));
                     window.location = TKA.urls.index;
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo completar la acción');
+                    var msg = apiErrorMessage(xhr, TKA.t('action_failed', 'No se pudo completar la acción'));
                     tktNotify('error', msg);
                 },
             });
@@ -6758,8 +6798,8 @@
                 load();
             }).fail(function (xhr) {
                 var msg = apiErrorMessage(xhr, xhr.status === 403
-                    ? 'Hace falta permiso de ajustes del módulo para reencolar jobs.'
-                    : 'No se pudieron reencolar los jobs.');
+                    ? TKA.t('queue_retry_forbidden', 'Hace falta permiso de ajustes del módulo para reencolar jobs.')
+                    : TKA.t('queue_retry_failed', 'No se pudieron reencolar los jobs.'));
                 tktNotify('error', msg);
             });
         }
@@ -6782,12 +6822,12 @@
                         method: 'POST',
                         headers: { Accept: 'application/json' },
                     }).done(function (resp) {
-                        if (window.toastr) toastr.success((resp && resp.message) || 'Dead-letter purgada.');
+                        if (window.toastr) toastr.success((resp && resp.message) || TKA.t('dead_letter_purged', 'Dead-letter purgada.'));
                         openQueueModal();
                     }).fail(function (xhr) {
                         var msg = apiErrorMessage(xhr, xhr.status === 403
-                            ? 'Hace falta permiso de ajustes del módulo para purgar la cola.'
-                            : 'No se pudo purgar la cola de fallidos.');
+                            ? TKA.t('queue_flush_forbidden', 'Hace falta permiso de ajustes del módulo para purgar la cola.')
+                            : TKA.t('queue_flush_failed', 'No se pudo purgar la cola de fallidos.'));
                         tktNotify('error', msg);
                     });
                 },
@@ -7154,11 +7194,11 @@
                 },
                 success: function (resp) {
                     if (resp && resp.assignment) data.assignment = resp.assignment;
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Reparto automático guardado.');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('workload_distribution_saved', 'Reparto automático guardado.'));
                     render();
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo guardar el reparto.');
+                    var msg = apiErrorMessage(xhr, TKA.t('workload_distribution_save_failed', 'No se pudo guardar el reparto.'));
                     tktNotify('error', msg);
                     $btn.prop('disabled', false).text('Reintentar');
                 },
@@ -7191,11 +7231,11 @@
                 method: 'POST',
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Hecho');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('done', 'Hecho'));
                     load();
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo repartir');
+                    var msg = apiErrorMessage(xhr, TKA.t('workload_distribute_failed', 'No se pudo repartir'));
                     tktNotify('error', msg);
                     $btn.prop('disabled', false).text('Reintentar');
                 },
@@ -7311,7 +7351,7 @@
 
             if (format === 'csv') {
                 var elegidas = $modal.find('#tkt-export-cols input:checked').map(function () { return this.value; }).get();
-                if (!elegidas.length) { if (window.toastr) toastr.error('Elige al menos una columna'); return; }
+                if (!elegidas.length) { if (window.toastr) toastr.error(TKA.t('choose_at_least_one_column', 'Elige al menos una columna')); return; }
                 params.set('columns', elegidas.join(','));
             }
 
@@ -7418,7 +7458,7 @@
                 return { scheduled_at: $(this).data('step-at'), note: $('#tkt-followup-note').val() || null, canned_reply_id: plantilla };
             }).get();
 
-            if (!pasos.length) { if (window.toastr) toastr.error('Elige un ritmo'); return; }
+            if (!pasos.length) { if (window.toastr) toastr.error(TKA.t('choose_a_pace', 'Elige un ritmo')); return; }
 
             $.ajax({
                 url: t.url_followups_store,
@@ -7429,12 +7469,12 @@
                 },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Secuencia programada');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('sequence_scheduled', 'Secuencia programada'));
                     closeModal();
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo programar el seguimiento');
+                    var msg = apiErrorMessage(xhr, TKA.t('followup_schedule_failed', 'No se pudo programar el seguimiento'));
                     tktNotify('error', msg);
                 },
             });
@@ -7454,11 +7494,11 @@
                     method: 'DELETE',
                     headers: { Accept: 'application/json' },
                     success: function () {
-                        if (window.toastr) toastr.success('Seguimiento cancelado');
+                        if (window.toastr) toastr.success(TKA.t('followup_cancelled', 'Seguimiento cancelado'));
                         fetchDetailData(t);
                     },
                     error: function (xhr) {
-                        var msg = apiErrorMessage(xhr, 'No se pudo cancelar el seguimiento');
+                        var msg = apiErrorMessage(xhr, TKA.t('followup_cancel_request_failed', 'No se pudo cancelar el seguimiento'));
                         tktNotify('error', msg);
                     },
                 });
@@ -7520,7 +7560,7 @@
                 },
                 headers: { Accept: 'application/json' },
                 success: function () {
-                    if (window.toastr) toastr.success('Conversación paralela creada');
+                    if (window.toastr) toastr.success(TKA.t('side_conversation_created', 'Conversación paralela creada'));
                     closeModal();
                     fetchDetailData(t);
                 },
@@ -7545,7 +7585,7 @@
 
         $backdrop.on('click', '#tkt-side-msg-confirm', function () {
             var body = ($backdrop.find('#tkt-side-msg-body').val() || '').trim();
-            if (!body) { if (window.toastr) toastr.error('Escribe un mensaje'); return; }
+            if (!body) { if (window.toastr) toastr.error(TKA.t('enter_a_message', 'Escribe un mensaje')); return; }
             closeModal();
             $.ajax({
                 url: t.url_side_conversations_message_template.replace('__SIDE__', sideId),
@@ -7553,7 +7593,7 @@
                 data: { body: body },
                 headers: { Accept: 'application/json' },
                 success: function () {
-                    if (window.toastr) toastr.success('Mensaje enviado');
+                    if (window.toastr) toastr.success(TKA.t('message_sent', 'Mensaje enviado'));
                     fetchDetailData(t);
                 },
                 error: function (xhr) {
@@ -7891,10 +7931,10 @@
             method: 'POST',
             headers: { Accept: 'application/json' },
             success: function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Nota actualizada');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('note_updated', 'Nota actualizada'));
                 fetchDetailData(t);
             },
-            error: function () { if (window.toastr) toastr.error('No se pudo fijar la nota'); },
+            error: function () { if (window.toastr) toastr.error(TKA.t('note_pin_failed', 'No se pudo fijar la nota')); },
         });
     }
 
@@ -7905,7 +7945,7 @@
             data: { color: color },
             headers: { Accept: 'application/json' },
             success: function () { fetchDetailData(t); },
-            error: function () { if (window.toastr) toastr.error('No se pudo cambiar el color'); },
+            error: function () { if (window.toastr) toastr.error(TKA.t('note_color_change_failed', 'No se pudo cambiar el color')); },
         });
     }
 
@@ -7922,10 +7962,10 @@
                     method: 'DELETE',
                     headers: { Accept: 'application/json' },
                     success: function () {
-                        if (window.toastr) toastr.success('Nota eliminada');
+                        if (window.toastr) toastr.success(TKA.t('note_deleted', 'Nota eliminada'));
                         fetchDetailData(t);
                     },
-                    error: function () { if (window.toastr) toastr.error('No se pudo eliminar la nota'); },
+                    error: function () { if (window.toastr) toastr.error(TKA.t('note_delete_failed', 'No se pudo eliminar la nota')); },
                 });
             },
         });
@@ -8014,11 +8054,11 @@
             data: { field: field },
             headers: { Accept: 'application/json' },
             success: function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Sugerencia aplicada');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('suggestion_applied', 'Sugerencia aplicada'));
                 fetchDetailData(t);
             },
             error: function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo aplicar la sugerencia');
+                var msg = apiErrorMessage(xhr, TKA.t('suggestion_apply_failed', 'No se pudo aplicar la sugerencia'));
                 tktNotify('error', msg);
             },
         });
@@ -8124,10 +8164,10 @@
                         method: 'DELETE',
                         headers: { Accept: 'application/json' },
                         success: function () {
-                            if (window.toastr) toastr.success('Ticket desvinculado');
+                            if (window.toastr) toastr.success(TKA.t('ticket_unlinked', 'Ticket desvinculado'));
                             fetchDetailData(t);
                         },
-                        error: function () { if (window.toastr) toastr.error('No se pudo desvincular'); },
+                        error: function () { if (window.toastr) toastr.error(TKA.t('ticket_unlink_failed', 'No se pudo desvincular')); },
                     });
                 },
             });
@@ -8183,7 +8223,7 @@
 
         $backdrop.on('click', '#tkt-link-confirm', function () {
             var input = $('#tkt-link-target').val().trim();
-            if (!/^\d+$/.test(input)) { if (window.toastr) toastr.error('Escribe un ID numérico de ticket'); return; }
+            if (!/^\d+$/.test(input)) { if (window.toastr) toastr.error(TKA.t('enter_numeric_ticket_id', 'Escribe un ID numérico de ticket')); return; }
             var linkType = $backdrop.find('input[name="tkt-link-type"]:checked').val();
 
             $.ajax({
@@ -8192,7 +8232,7 @@
                 data: { linked_ticket_id: input, link_type: linkType },
                 headers: { Accept: 'application/json' },
                 success: function () {
-                    if (window.toastr) toastr.success('Ticket vinculado');
+                    if (window.toastr) toastr.success(TKA.t('ticket_linked', 'Ticket vinculado'));
                     closeModal();
                     fetchDetailData(t);
                 },
@@ -8556,7 +8596,7 @@
                     var eraMio = current.assignee && current.assignee.id === TKA.state.currentUserId;
                     var sigueSiendoMio = e.assignee.id === TKA.state.currentUserId;
                     if (eraMio && !sigueSiendoMio && window.toastr) {
-                        toastr.warning('Ahora lo tiene ' + e.assignee.name + '.', 'Te han quitado este ticket');
+                        toastr.warning(TKA.t('now_owned_by_prefix', 'Ahora lo tiene ') + e.assignee.name + '.', TKA.t('ticket_taken_from_you_title', 'Te han quitado este ticket'));
                     }
 
                     // El modal de asignar (#tkt-assign-list, abierto a mano o
@@ -8572,7 +8612,7 @@
                     if ($('#tkt-assign-list').length) {
                         closeModal();
                         if (window.toastr && !sigueSiendoMio) {
-                            toastr.info('Alguien se te adelantó: ahora lo tiene ' + e.assignee.name + '.', 'Ticket ya asignado');
+                            toastr.info(TKA.t('someone_beat_you_prefix', 'Alguien se te adelantó: ahora lo tiene ') + e.assignee.name + '.', TKA.t('ticket_already_assigned_title', 'Ticket ya asignado'));
                         }
                     }
 
@@ -8819,10 +8859,10 @@
                 t.tags = resp.tags;
                 renderRowTagsIfVisible(t);
                 renderTagsPane($('#tkt-side-content'), t, TKA.state.currentDetail ? TKA.state.currentDetail.ai_suggestion : null);
-                if (window.toastr) toastr.success('Etiquetas actualizadas');
+                if (window.toastr) toastr.success(TKA.t('tags_updated', 'Etiquetas actualizadas'));
             },
             error: function () {
-                if (window.toastr) toastr.error('No se pudo actualizar las etiquetas');
+                if (window.toastr) toastr.error(TKA.t('tags_update_failed', 'No se pudo actualizar las etiquetas'));
             },
         });
     }
@@ -8844,11 +8884,11 @@
             data: { ticket_id: t.id, body: body, is_pinned: isPinned ? 1 : 0 },
             headers: { Accept: 'application/json' },
             success: function () {
-                if (window.toastr) toastr.success('Nota guardada');
+                if (window.toastr) toastr.success(TKA.t('note_saved', 'Nota guardada'));
                 fetchDetailData(t);
             },
             error: function (xhr) {
-                var msg = apiErrorMessage(xhr, 'No se pudo guardar la nota');
+                var msg = apiErrorMessage(xhr, TKA.t('note_save_failed', 'No se pudo guardar la nota'));
                 tktNotify('error', msg);
             },
         });
@@ -8927,7 +8967,7 @@
             data: data,
             headers: { Accept: 'application/json' },
             success: function (resp) {
-                if (window.toastr) toastr.success('Ticket actualizado');
+                if (window.toastr) toastr.success(TKA.t('ticket_updated', 'Ticket actualizado'));
                 if (resp && resp.ticket) $.extend(t, resp.ticket);
                 applyLocalTicketField(t, field, value);
                 if (!TKA.state.suppressUndoOnce) {
@@ -8948,13 +8988,13 @@
             error: function (xhr) {
                 restoreTicketField(t, snapshot);
                 refreshOptimisticTicket(t);
-                var msg = apiErrorMessage(xhr, 'No se pudo actualizar el ticket');
+                var msg = apiErrorMessage(xhr, TKA.t('ticket_update_failed', 'No se pudo actualizar el ticket'));
                 TKA.state.suppressUndoOnce = false;
                 if (xhr.status === 409) {
                     if (xhr.responseJSON && xhr.responseJSON.ticket) $.extend(t, xhr.responseJSON.ticket);
                     showEditConflict(msg, true, xhr.responseJSON && xhr.responseJSON.conflict_fields);
                     fetchDetailData(t);
-                    if (window.toastr) toastr.warning(msg, 'Cambio simultáneo detectado');
+                    if (window.toastr) toastr.warning(msg, TKA.t('concurrent_change_detected_title', 'Cambio simultáneo detectado'));
                     return;
                 }
                 tktNotify('error', msg);
@@ -8980,7 +9020,7 @@
             headers: { Accept: 'application/json' },
             data: $.extend({}, extra || {}, t.updated_at ? { client_updated_at: t.updated_at } : {}),
             success: function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Ticket actualizado');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('ticket_updated', 'Ticket actualizado'));
                 if (resp && resp.ticket) $.extend(t, resp.ticket);
                 if (targetStatus) applyLocalTicketField(t, 'status_id', targetStatus.id);
                 var suppressUndo = TKA.state.suppressUndoOnce;
@@ -8999,12 +9039,12 @@
             error: function (xhr) {
                 restoreTicketField(t, snapshot);
                 refreshOptimisticTicket(t);
-                var msg = apiErrorMessage(xhr, 'No se pudo completar la acción');
+                var msg = apiErrorMessage(xhr, TKA.t('action_failed', 'No se pudo completar la acción'));
                 TKA.state.suppressUndoOnce = false;
                 if (xhr.status === 409) {
                     showEditConflict(msg, true, xhr.responseJSON && xhr.responseJSON.conflict_fields);
                     fetchDetailData(t);
-                    if (window.toastr) toastr.warning(msg, 'Cambio simultáneo detectado');
+                    if (window.toastr) toastr.warning(msg, TKA.t('concurrent_change_detected_title', 'Cambio simultáneo detectado'));
                     return;
                 }
                 tktNotify('error', msg);
@@ -9233,7 +9273,7 @@
             method: 'POST',
             data: $.extend({ ticket_ids: ids, action: action }, extra),
             success: function (resp) {
-                if (window.toastr) toastr.success((resp && resp.message) || 'Acción completada');
+                if (window.toastr) toastr.success((resp && resp.message) || TKA.t('action_completed', 'Acción completada'));
                 queueTicketListRefresh('bulk-' + action, TKA.state.currentTicket, {
                     freshCounts: true,
                     refreshDetail: true,
@@ -9466,19 +9506,19 @@
                 if (!title) return;
                 $.ajax({ url: t.url_tasks_store, method: 'POST', headers: { Accept: 'application/json' }, data: { title: title } })
                     .done(function (resp) { apply(function (list) { list.push(resp.task); }); $('#tkt-task-title').trigger('focus'); })
-                    .fail(function (xhr) { fail(xhr, 'No se pudo añadir la tarea'); });
+                    .fail(function (xhr) { fail(xhr, TKA.t('task_add_failed', 'No se pudo añadir la tarea')); });
             });
             $tasks.find('[data-task-toggle]').on('change', function () {
                 var id = $(this).data('task-toggle');
                 $.ajax({ url: taskUrl(id), method: 'PATCH', headers: { Accept: 'application/json' }, data: { is_done: this.checked ? 1 : 0 } })
                     .done(function (resp) { apply(function (list) { list.forEach(function (x, i) { if (String(x.id) === String(id)) list[i] = resp.task; }); }); })
-                    .fail(function (xhr) { fail(xhr, 'No se pudo actualizar la tarea'); });
+                    .fail(function (xhr) { fail(xhr, TKA.t('task_update_failed', 'No se pudo actualizar la tarea')); });
             });
             $tasks.find('[data-task-delete]').on('click', function () {
                 var id = $(this).data('task-delete');
                 $.ajax({ url: taskUrl(id), method: 'DELETE', headers: { Accept: 'application/json' } })
                     .done(function () { apply(function (list) { for (var i = list.length - 1; i >= 0; i--) if (String(list[i].id) === String(id)) list.splice(i, 1); }); })
-                    .fail(function (xhr) { fail(xhr, 'No se pudo eliminar la tarea'); });
+                    .fail(function (xhr) { fail(xhr, TKA.t('task_delete_failed', 'No se pudo eliminar la tarea')); });
             });
         }
 
@@ -9560,11 +9600,11 @@
                 success: function (resp) {
                     $btn.prop('disabled', false);
                     fields.forEach(function (f) { if (resp.values && f.key in resp.values) f.value = resp.values[f.key]; });
-                    if (window.toastr) toastr.success('Campos guardados');
+                    if (window.toastr) toastr.success(TKA.t('fields_saved', 'Campos guardados'));
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false);
-                    var msg = apiErrorMessage(xhr, 'No se pudieron guardar los campos');
+                    var msg = apiErrorMessage(xhr, TKA.t('fields_save_failed', 'No se pudieron guardar los campos'));
                     tktNotify('error', msg);
                 },
             });
@@ -9600,11 +9640,11 @@
                     review.disputed = true;
                     review.dispute_note = $card.find('#tkt-review-note').val();
                     renderQualityReviewCard(t, review);
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Revisión disputada');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('review_disputed', 'Revisión disputada'));
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false);
-                    var msg = apiErrorMessage(xhr, 'No se pudo disputar la revisión');
+                    var msg = apiErrorMessage(xhr, TKA.t('review_dispute_failed', 'No se pudo disputar la revisión'));
                     tktNotify('error', msg);
                 },
             });
@@ -9636,7 +9676,7 @@
                 data: { subject: subject, description: $('#tkt-sub-desc').val(), assignee_id: $('#tkt-sub-assignee').val() },
                 success: function (resp) {
                     closeModal();
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Subticket creado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('subticket_created', 'Subticket creado'));
                     var detail = TKA.state.currentDetail;
                     if (detail && detail.work && resp && resp.ticket_id) {
                         detail.work.subtickets = (detail.work.subtickets || []).concat([{
@@ -9649,7 +9689,7 @@
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false);
-                    var msg = apiErrorMessage(xhr, 'No se pudo crear el subticket');
+                    var msg = apiErrorMessage(xhr, TKA.t('subticket_create_failed', 'No se pudo crear el subticket'));
                     tktNotify('error', msg);
                 },
             });
@@ -9706,7 +9746,7 @@
                 data: { minutes: minutes, description: $card.find('#tkt-time-desc').val() },
                 success: function () { loadTimeCard(t, $card); },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo imputar el tiempo');
+                    var msg = apiErrorMessage(xhr, TKA.t('time_log_failed', 'No se pudo imputar el tiempo'));
                     tktNotify('error', msg);
                     $btn.prop('disabled', false);
                 },
@@ -9719,7 +9759,7 @@
                 url: url, method: 'DELETE', headers: { Accept: 'application/json' },
                 success: function () { loadTimeCard(t, $card); },
                 error: function (xhr) {
-                    var msg = apiErrorMessage(xhr, 'No se pudo eliminar');
+                    var msg = apiErrorMessage(xhr, TKA.t('delete_failed', 'No se pudo eliminar'));
                     tktNotify('error', msg);
                 },
             });
@@ -9818,7 +9858,7 @@
         $('#tkt-list-trash').on('click', function () {
             var ids = Object.keys(TKA.state.bulk);
             if (!ids.length) {
-                if (window.toastr) toastr.info('Selecciona antes los tickets que quieres enviar a la papelera');
+                if (window.toastr) toastr.info(TKA.t('select_tickets_to_trash', 'Selecciona antes los tickets que quieres enviar a la papelera'));
                 return;
             }
             runBulkAction('delete');
@@ -10354,7 +10394,7 @@
             }
         }).done(function (resp) {
             if (window.toastr) {
-                window.toastr.success((resp && resp.message) || 'Buscando el cliente en gestión…');
+                window.toastr.success((resp && resp.message) || TKA.t('customer_lookup_in_progress', 'Buscando el cliente en gestión…'));
             }
 
             // Asíncrono: el resultado llega cuando el trabajo sale de la cola
@@ -10368,7 +10408,7 @@
             } else if (xhr && xhr.status === 429) {
                 msg = 'Demasiados reintentos seguidos, espera un minuto.';
             } else {
-                msg = apiErrorMessage(xhr, 'No se pudo pedir la búsqueda.');
+                msg = apiErrorMessage(xhr, TKA.t('search_request_failed', 'No se pudo pedir la búsqueda.'));
             }
 
             if (window.toastr) { window.toastr.error(msg); }

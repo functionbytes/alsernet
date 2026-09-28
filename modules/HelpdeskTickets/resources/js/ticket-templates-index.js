@@ -3,9 +3,11 @@
  * — propiedad de HelpdeskTickets.
  *
  * Vivía como <script> suelto dentro del propio Blade. Depende de
- * window.BulkActions (core/js/bulk.js, no se toca), jQuery, select2, toastr
- * y window.hdtTicketTemplatesIndexConfig (que publica el propio Blade como
- * datos, no como lógica).
+ * window.BulkActions (core/js/bulk.js, no se toca), window.HdtBulkListActions
+ * (bulk-list-actions.js, valida acción/ids y envía el POST — mismo bloque
+ * antes duplicado en los 5 listados de este módulo, aquí una vez por
+ * pestaña), jQuery, select2, toastr y window.hdtTicketTemplatesIndexConfig
+ * (que publica el propio Blade como datos, no como lógica).
  *
  * Tras editar hay que copiarlo a public/modules/helpdesktickets/js/.
  */
@@ -14,9 +16,10 @@
 
     $(document).ready(function () {
         var cfg = window.hdtTicketTemplatesIndexConfig || {};
+        var i18n = cfg.i18n || {};
 
-        if (cfg.successMessage) { toastr.success(cfg.successMessage, 'Exito'); }
-        if (cfg.errorMessage) { toastr.error(cfg.errorMessage, 'Error'); }
+        if (cfg.successMessage) { toastr.success(cfg.successMessage, i18n.successTitle || 'Exito'); }
+        if (cfg.errorMessage) { toastr.error(cfg.errorMessage, i18n.errorTitle || 'Error'); }
 
         $(document).on('click', '.delete-btn', function () {
             $('#delete-modal .modal-title').text($(this).data('title'));
@@ -38,7 +41,7 @@
             $('#tt-modal-category, #tt-modal-priority, #tt-modal-status').val(null).trigger('change');
         });
 
-        // ── Bulk: un BulkActions.init() por pestaña (Generales / Mis plantillas) ──
+        // ── Bulk: un HdtBulkListActions.run() por pestaña (Generales / Mis plantillas) ──
         ['general', 'mine'].forEach(function (group) {
             $('#bulk-' + group + '-action-select').select2({ dropdownParent: $('#bulk-' + group + '-modal'), width: '100%' });
 
@@ -48,38 +51,20 @@
                 selectAll: '#select-all-' + group,
             });
 
-            $('#bulk-' + group + '-modal').on('hide.bs.modal', function () {
-                $('#bulk-' + group + '-action-select').val('').trigger('change');
-                $('#bulk-' + group + '-apply-btn').prop('disabled', false).text('Aplicar');
-                bulk.reset();
-            });
-
-            $('#bulk-' + group + '-apply-btn').on('click', function () {
-                var action = $('#bulk-' + group + '-action-select').val();
-                var ids = bulk.getIds();
-
-                if (! action) { toastr.warning('Selecciona una acción.'); return; }
-                if (! ids.length) { toastr.warning('Selecciona al menos una plantilla.'); return; }
-                if (action === 'delete' && ! confirm('¿Eliminar las ' + ids.length + ' plantilla(s) seleccionada(s)? No se puede deshacer.')) return;
-
-                $('#bulk-' + group + '-apply-btn').prop('disabled', true).text('Procesando...');
-
-                $.ajax({
-                    url: cfg.bulkActionUrl,
-                    method: 'POST',
-                    data: JSON.stringify({ action: action, ids: ids }),
-                    contentType: 'application/json',
-                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                    success: function (res) {
-                        $('#bulk-' + group + '-modal').modal('hide');
-                        toastr.success(res.message);
-                        setTimeout(function () { location.reload(); }, 800);
-                    },
-                    error: function (xhr) {
-                        toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                        $('#bulk-' + group + '-apply-btn').prop('disabled', false).text('Aplicar');
-                    },
-                });
+            window.HdtBulkListActions.run({
+                $modal: $('#bulk-' + group + '-modal'),
+                $select: $('#bulk-' + group + '-action-select'),
+                bulk: bulk,
+                $applyBtn: $('#bulk-' + group + '-apply-btn'),
+                url: cfg.bulkActionUrl,
+                applyLabel: i18n.applyLabel || 'Aplicar',
+                busyLabel: i18n.busyLabel || 'Procesando...',
+                emptyActionMessage: i18n.chooseAction || 'Selecciona una acción.',
+                emptyIdsMessage: i18n.chooseItems || 'Selecciona al menos una plantilla.',
+                errorMessage: i18n.genericError || 'Error al procesar.',
+                confirmDeleteMessage: function (count) {
+                    return (i18n.confirmDelete || '¿Eliminar las :count plantilla(s) seleccionada(s)? No se puede deshacer.').replace(':count', count);
+                },
             });
         });
     });

@@ -3,9 +3,11 @@
  * — propiedad de HelpdeskTickets.
  *
  * Vivía como <script> suelto dentro del propio Blade. Depende de
- * window.BulkActions / window.FilterShell (core, no se tocan), jQuery,
- * select2, toastr y window.hdtRecurringTicketsIndexConfig (que publica el
- * propio Blade como datos, no como lógica).
+ * window.BulkActions / window.FilterShell (core, no se tocan),
+ * window.HdtBulkListActions (bulk-list-actions.js, valida acción/ids y
+ * envía el POST — mismo bloque antes duplicado en los 5 listados de este
+ * módulo), jQuery, select2, toastr y window.hdtRecurringTicketsIndexConfig
+ * (que publica el propio Blade como datos, no como lógica).
  *
  * Tras editar hay que copiarlo a public/modules/helpdesktickets/js/.
  */
@@ -14,9 +16,10 @@
 
     $(document).ready(function () {
         var cfg = window.hdtRecurringTicketsIndexConfig || {};
+        var i18n = cfg.i18n || {};
 
-        if (cfg.successMessage) { toastr.success(cfg.successMessage, 'Exito'); }
-        if (cfg.errorMessage) { toastr.error(cfg.errorMessage, 'Error'); }
+        if (cfg.successMessage) { toastr.success(cfg.successMessage, i18n.successTitle || 'Exito'); }
+        if (cfg.errorMessage) { toastr.error(cfg.errorMessage, i18n.errorTitle || 'Error'); }
 
         $(document).on('click', '.delete-btn', function () {
             $('#delete-modal .modal-title').text($(this).data('title'));
@@ -47,38 +50,20 @@
 
             var bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-            $('#bulk-modal').on('hide.bs.modal', function () {
-                $('#bulk-action-select').val('').trigger('change');
-                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                bulk.reset();
-            });
-
-            $('#bulk-apply-btn').on('click', function () {
-                var action = $('#bulk-action-select').val();
-                var ids = bulk.getIds();
-
-                if (! action) { toastr.warning('Selecciona una accion.'); return; }
-                if (! ids.length) { toastr.warning('Selecciona al menos un ticket recurrente.'); return; }
-                if (action === 'delete' && ! confirm('¿Eliminar los ' + ids.length + ' ticket(s) recurrente(s) seleccionado(s)? No se puede deshacer.')) return;
-
-                $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
-
-                $.ajax({
-                    url: cfg.bulkActionUrl,
-                    method: 'POST',
-                    data: JSON.stringify({ action: action, ids: ids }),
-                    contentType: 'application/json',
-                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                    success: function (res) {
-                        $('#bulk-modal').modal('hide');
-                        toastr.success(res.message);
-                        setTimeout(function () { location.reload(); }, 800);
-                    },
-                    error: function (xhr) {
-                        toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al procesar.');
-                        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
-                    },
-                });
+            window.HdtBulkListActions.run({
+                $modal: $('#bulk-modal'),
+                $select: $('#bulk-action-select'),
+                bulk: bulk,
+                $applyBtn: $('#bulk-apply-btn'),
+                url: cfg.bulkActionUrl,
+                applyLabel: i18n.applyLabel || 'Aplicar',
+                busyLabel: i18n.busyLabel || 'Procesando...',
+                emptyActionMessage: i18n.chooseAction || 'Selecciona una accion.',
+                emptyIdsMessage: i18n.chooseItems || 'Selecciona al menos un ticket recurrente.',
+                errorMessage: i18n.genericError || 'Error al procesar.',
+                confirmDeleteMessage: function (count) {
+                    return (i18n.confirmDelete || '¿Eliminar los :count ticket(s) recurrente(s) seleccionado(s)? No se puede deshacer.').replace(':count', count);
+                },
             });
         }
     });

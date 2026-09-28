@@ -72,7 +72,7 @@
                 data: { ticket_id: chosen.id, move_thread: $('#tkt-link-thread').is(':checked') ? 1 : 0 },
                 headers: { Accept: 'application/json' },
                 success: function (resp) {
-                    if (window.toastr) toastr.success((resp && resp.message) || 'Correo vinculado');
+                    if (window.toastr) toastr.success((resp && resp.message) || TKA.t('email_linked', 'Correo vinculado'));
                     closeModal();
                     fetchDetailData(t);
                 },
