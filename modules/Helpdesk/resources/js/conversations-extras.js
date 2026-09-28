@@ -1959,7 +1959,7 @@
         var HD_TYPES = {
             helpdesk_conversation_assigned: { level: 'info',    refresh: true  },
             helpdesk_new_conversation:      { level: 'info',    refresh: true  },
-            helpdesk_message_received:      { level: 'info',    refresh: true  },
+            helpdesk_message_received:      { level: 'info',    refresh: true, quietWhenOpen: true },
             helpdesk_mention:               { level: 'warning', refresh: false },
             helpdesk_status_changed:        { level: 'info',    refresh: true  },
             helpdesk_escalation:            { level: 'error',   refresh: false },
@@ -1986,24 +1986,72 @@
             } catch (_e) { return raw; }
         }
 
+        // Máximo de toasts a la vez y agrupación por (tipo + conversación):
+        // una ráfaga de mensajes del mismo cliente (p. ej. 9 llegados en un
+        // mismo sondeo de /api/notifications) es UN toast con contador, no
+        // una pila que tapa el panel derecho.
+        var MAX_TOASTS = 3;
+        var activeToasts = {};   // key -> { $el, count }
+        var toastOrder = [];     // keys, del más antiguo al más nuevo
+
+        function dropToast(key) {
+            var entry = activeToasts[key];
+            delete activeToasts[key];
+            toastOrder = toastOrder.filter(function (k) { return k !== key; });
+            if (entry && entry.$el && window.toastr) { toastr.clear(entry.$el, { force: true }); }
+        }
+
+        // ¿El agente ya está mirando esta conversación (pestaña visible y
+        // con foco)? Entonces el mensaje ya está en su pantalla: avisar
+        // sería ruido puro.
+        function isViewingConversation(n) {
+            if (!n.entity_id) { return false; }
+            var open = parseInt($('.bv-composer').data('bv-conversation-id'), 10);
+            return !!open && open === parseInt(n.entity_id, 10)
+                && document.visibilityState === 'visible'
+                && (typeof document.hasFocus !== 'function' || document.hasFocus());
+        }
+
         function showNotification(n) {
             var meta  = HD_TYPES[n.type];
             var url   = normalizeUrl(n.action_url);
             var title = n.title   || 'Helpdesk';
             var msg   = n.message || '';
+            var key   = echoKey(n);
 
-            var opts = { closeButton: true, tapToDismiss: true, timeOut: 8000, extendedTimeOut: 2000 };
-            if (url) {
-                opts.onclick = function () { window.location.href = url; };
+            var quiet = meta.quietWhenOpen && isViewingConversation(n);
+
+            if (!quiet && window.toastr && toastr[meta.level]) {
+                var previous = activeToasts[key];
+                var count = previous ? previous.count + 1 : 1;
+                if (previous) { dropToast(key); }
+                while (toastOrder.length >= MAX_TOASTS) { dropToast(toastOrder[0]); }
+
+                var opts = { closeButton: true, tapToDismiss: true, timeOut: 8000, extendedTimeOut: 2000 };
+                if (url) {
+                    opts.onclick = function () { window.location.href = url; };
+                }
+                var entry = { $el: null, count: count };
+                opts.onHidden = function () {
+                    // Solo limpia si sigue siendo el toast vigente de esta clave
+                    // (dropToast() ya retiró el anterior al reemplazarlo).
+                    if (activeToasts[key] === entry) {
+                        delete activeToasts[key];
+                        toastOrder = toastOrder.filter(function (k) { return k !== key; });
+                    }
+                };
+
+                var text = count > 1 ? count + ' mensajes nuevos · último: ' + msg : msg;
+                entry.$el = toastr[meta.level](text, title, opts);
+                activeToasts[key] = entry;
+                toastOrder.push(key);
             }
 
-            if (window.toastr && toastr[meta.level]) {
-                toastr[meta.level](msg, title, opts);
-            }
-
-            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            if (!quiet && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                 try {
-                    var push = new window.Notification(title, { body: msg, icon: '/favicon.ico', tag: 'hd-' + (n.id || echoKey(n)) });
+                    // Misma etiqueta por conversación: el navegador reemplaza la
+                    // notificación anterior en vez de apilar una por mensaje.
+                    var push = new window.Notification(title, { body: msg, icon: '/favicon.ico', tag: 'hd-' + key });
                     if (url) {
                         push.onclick = function () { window.focus(); window.location.href = url; push.close(); };
                     }

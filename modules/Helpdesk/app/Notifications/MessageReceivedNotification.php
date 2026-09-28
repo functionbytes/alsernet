@@ -26,13 +26,26 @@ class MessageReceivedNotification extends Notification implements ShouldQueue
         return ['database', 'broadcast', WebPushChannel::class];
     }
 
+    /**
+     * "Ana López · #12493" si el cliente tiene nombre, "Conversación #12493"
+     * si no: el agente ve de quién es el mensaje sin abrir la conversación.
+     */
+    private function label(): string
+    {
+        $name = trim((string) $this->conversation->customer?->name);
+
+        return $name !== ''
+            ? "{$name} · #{$this->conversation->id}"
+            : "Conversación #{$this->conversation->id}";
+    }
+
     public function toWebPush(mixed $notifiable): array
     {
         $preview = mb_substr(strip_tags($this->message->body ?? ''), 0, 100);
 
         return [
             'title' => 'Nuevo mensaje del cliente',
-            'body' => "#{$this->conversation->id}: {$preview}",
+            'body' => "{$this->label()}: {$preview}",
             'url' => route('manager.helpdesk.conversations.show', $this->conversation),
             'tag' => 'helpdesk-conversation-'.$this->conversation->id,
         ];
@@ -45,7 +58,7 @@ class MessageReceivedNotification extends Notification implements ShouldQueue
         return [
             'type' => 'helpdesk_message_received',
             'title' => 'Nuevo mensaje del cliente',
-            'message' => "Mensaje en conversacion #{$this->conversation->id}: {$preview}",
+            'message' => "{$this->label()}: {$preview}",
             'entity_id' => $this->conversation->id,
             'action_url' => route('manager.helpdesk.conversations.show', $this->conversation),
         ];
