@@ -38,8 +38,11 @@ class ConversationItemObserver
             return;
         }
 
-        // Only inbound customer messages (user_id null = not from agent)
-        if ($item->user_id !== null) {
+        // Only inbound customer messages (user_id null = not from agent). Sin
+        // autor tampoco es del cliente: las respuestas automáticas (saludo,
+        // ausencia…) se procesaban como su respuesta y el bot se contestaba a
+        // sí mismo.
+        if ($item->user_id !== null || $item->author_id === null) {
             return;
         }
 

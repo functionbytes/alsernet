@@ -513,6 +513,10 @@ class ChatFlowAgentServiceTest extends TestCase
 
         $this->assertContains('product_variants', $result['used_tools']);
         $this->assertSame('60766', $result['products'][0]->id);
+        // La tarjeta sale con la talla con stock ya elegida: "Añadir" directo.
+        $this->assertSame(912, $result['products'][0]->idProductAttribute);
+        $this->assertFalse($result['products'][0]->hasCombinations);
+        $this->assertStringContainsString('Talla: 44', $result['products'][0]->title);
         Http::assertSent(function ($request) {
             $tool = collect($request->data()['messages'] ?? [])->firstWhere('role', 'tool');
 
@@ -546,5 +550,51 @@ class ChatFlowAgentServiceTest extends TestCase
         $agent->run('añade la 43', ['current_product_id' => '60766'], [], 'es', $this->fakeBootCatalog(), $cart);
 
         $this->assertSame([], $cart->added);
+    }
+
+    public function test_tools_without_parameters_are_sent_as_json_objects(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => 'Hola', 'tool_calls' => []]]]], 200)]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('hola', ['identity_verified' => true, 'customer_email' => 'a@b.com'], [], 'es', $this->fakeCatalog(), $this->fakeCart());
+
+        // OpenAI responde 400 a toda la petición si "properties" llega como [].
+        Http::assertSent(fn ($request) => ! str_contains($request->body(), '"properties":[]')
+            && str_contains($request->body(), '"name":"show_cart"')
+            && str_contains($request->body(), '"name":"list_my_orders"'));
+    }
+
+    public function test_guest_without_cart_gets_the_card_with_the_size_preselected(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('add_to_cart', ['option' => '44', 'customer_confirmed' => true]), 200)
+            ->push(['choices' => [['message' => ['content' => 'Pulsa Añadir en la tarjeta.', 'tool_calls' => []]]]], 200);
+
+        $cart = new class
+        {
+            public function show(): ?array
+            {
+                return null;
+            }
+
+            public function add(int $productId, int $attributeId, int $quantity): array
+            {
+                return ['ok' => false, 'error' => 'no_cart'];
+            }
+        };
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null, null, null, $this->fakeInsights());
+        $result = $agent->run('añádela en la 44', ['current_product_id' => '60766'], [], 'es', $this->fakeBootCatalog(), $cart);
+
+        $this->assertSame(912, $result['products'][0]->idProductAttribute);
+        $this->assertFalse($result['products'][0]->hasCombinations);
+        Http::assertSent(function ($request) {
+            $tool = collect($request->data()['messages'] ?? [])->firstWhere('role', 'tool');
+
+            return $tool && str_contains($tool['content'], 'aún no tiene cesta');
+        });
     }
 }

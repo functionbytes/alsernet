@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
+use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 
 /**
  * An autonomous AI agent (function/tool calling): given the customer message and
@@ -285,7 +286,9 @@ class ChatFlowAgentService
         $fn = fn (string $name, string $desc, array $props, array $required = []) => [
             'type' => 'function',
             'function' => ['name' => $name, 'description' => $desc, 'parameters' => [
-                'type' => 'object', 'properties' => $props, 'required' => $required,
+                // Sin parámetros: {} y no [] — OpenAI rechaza TODA la petición
+                // (400 invalid_function_parameters) si properties es una lista.
+                'type' => 'object', 'properties' => $props === [] ? new \stdClass : $props, 'required' => $required,
             ]],
         ];
 
@@ -408,12 +411,20 @@ class ChatFlowAgentService
                         return 'No añadido: la opción "'.$this->sanitize((string) ($option['label'] ?? $wanted)).'" no tiene stock.';
                     }
                     $idProductAttribute = (int) $option['id_product_attribute'];
+                    // La tarjeta sale ya con esa talla: "Añadir" directo, sin ficha.
+                    $shown[(string) $product->id] = $this->withChosenOption($product, $option);
                 }
 
                 $result = $cart->add((int) $product->id, $idProductAttribute, max(1, (int) ($args['quantity'] ?? 1)));
 
-                return ($result['ok'] ?? false)
-                    ? 'Añadido a la cesta del cliente.'
+                if ($result['ok'] ?? false) {
+                    return 'Añadido a la cesta del cliente.';
+                }
+
+                // Visitante sin cesta todavía (la crea la tienda en su primer
+                // "Añadir"): no es un error, la tarjeta ya lleva la opción elegida.
+                return ($result['error'] ?? '') === 'no_cart'
+                    ? 'No añadido todavía: el cliente aún no tiene cesta en la tienda. Dile que pulse "Añadir" en la tarjeta que le mostramos (ya lleva la opción elegida) y se añadirá al momento.'
                     : 'No se pudo añadir desde aquí; el cliente puede usar el botón Añadir de la tarjeta.';
             }
 
@@ -467,8 +478,12 @@ class ChatFlowAgentService
                     $shown[(string) $product->id] = $product;
                 }
                 if ($wanted !== '') {
-                    $variants['asked_option'] = $this->insights->optionFor($productId, $wanted, $context['_locale'] ?? null)
-                        ?? 'No existe esa opción para este producto.';
+                    $asked = $this->insights->optionFor($productId, $wanted, $context['_locale'] ?? null);
+                    $variants['asked_option'] = $asked ?? 'No existe esa opción para este producto.';
+                    // Con stock: la tarjeta que ve el cliente ya lleva esa talla.
+                    if ($asked !== null && ($asked['available'] ?? false) && isset($product)) {
+                        $shown[(string) $product->id] = $this->withChosenOption($product, $asked);
+                    }
                 }
 
                 return json_encode($this->sanitizeDeep($variants), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -558,6 +573,28 @@ class ChatFlowAgentService
         }
 
         return 'Herramienta desconocida.';
+    }
+
+    /**
+     * Copia del producto con la combinación elegida ("Talla: 42") para que la
+     * tarjeta del widget la añada directamente en vez de pedir "Elegir opciones".
+     * El precio lo sigue calculando la tienda al añadir.
+     *
+     * @param  array<string, mixed>  $option
+     */
+    private function withChosenOption(object $product, array $option): object
+    {
+        if (! $product instanceof CatalogProduct || empty($option['id_product_attribute'])) {
+            return $product;
+        }
+
+        $label = trim((string) ($option['label'] ?? ''));
+
+        return CatalogProduct::fromArray(array_merge($product->toArray(), [
+            'id_product_attribute' => (int) $option['id_product_attribute'],
+            'has_combinations' => false,
+            'title' => $label !== '' ? $product->title.' · '.$label : $product->title,
+        ]));
     }
 
     /**
