@@ -49,7 +49,7 @@
                     <div class="col-md-6">
                         <label for="language" class="form-label fw-semibold">Idioma <span class="text-brand">*</span></label>
                         <select id="language" name="language" class="form-select @error('language') is-invalid @enderror" required>
-                            @foreach(['es' => 'Español', 'en' => 'Inglés', 'en_US' => 'Inglés (EE. UU.)', 'en_GB' => 'Inglés (Reino Unido)', 'pt_BR' => 'Portugués (Brasil)', 'pt_PT' => 'Portugués (Portugal)', 'fr' => 'Francés', 'de' => 'Alemán', 'it' => 'Italiano'] as $code => $label)
+                            @foreach(['es' => 'Español', 'en' => 'Inglés', 'en_US' => 'Inglés (EE. UU.)', 'en_GB' => 'Inglés (Reino Unido)', 'pt_BR' => 'Portugués (Brasil)', 'pt_PT' => 'Portugués (Portugal)', 'fr' => 'Francés', 'de' => 'Alemán', 'it' => 'Italiano', 'ca' => 'Catalán'] as $code => $label)
                                 <option value="{{ $code }}" @selected(old('language', 'es') === $code)>{{ $label }} ({{ $code }})</option>
                             @endforeach
                         </select>

@@ -17,6 +17,21 @@ use Spatie\Permission\Models\Role;
 class TeamController extends Controller
 {
     /**
+     * Roles reales del equipo de helpdesk. Antes esta lista era
+     * ['admin', 'manager', 'support', 'callcenter'] — nombres que no
+     * existen como roles de Spatie en este sistema (los roles reales son
+     * los de abajo), así que la pantalla de "Miembros del equipo" no
+     * mostraba a ningún agente real de helpdesk.
+     */
+    private const TEAM_ROLES = [
+        'helpdesk-admin',
+        'helpdesk-manager',
+        'helpdesk-supervisor',
+        'helpdesk-agent',
+        'helpdesk-agent-restricted',
+    ];
+
+    /**
      * Display team members list.
      */
     public function membersIndex(Request $request)
@@ -26,7 +41,7 @@ class TeamController extends Controller
         $query = User::query()
             ->with(['roles', 'agentSettings', 'groups'])
             ->whereHas('roles', function ($q) {
-                $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+                $q->whereIn('name', self::TEAM_ROLES);
             });
 
         // filled() y no has(): al enviar el formulario los filtros sin elegir
@@ -67,11 +82,11 @@ class TeamController extends Controller
             ->appends($request->query());
 
         $groups = Group::orderBy('name')->limit(200)->get();
-        $roles = Role::whereIn('name', ['admin', 'manager', 'support', 'callcenter'])->limit(200)->get();
+        $roles = Role::whereIn('name', self::TEAM_ROLES)->limit(200)->get();
 
         // Calculate statistics via SQL (avoid loading all members into memory)
         $baseUserQuery = User::query()->whereHas('roles', function ($q) {
-            $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+            $q->whereIn('name', self::TEAM_ROLES);
         });
 
         $total = (int) (clone $baseUserQuery)->count();
@@ -83,7 +98,7 @@ class TeamController extends Controller
                     ->from('model_has_roles')
                     ->whereColumn('model_has_roles.model_id', 'users.id')
                     ->whereIn('model_has_roles.role_id', function ($sq) {
-                        $sq->select('id')->from('roles')->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+                        $sq->select('id')->from('roles')->whereIn('name', self::TEAM_ROLES);
                     });
             })
             ->selectRaw('
@@ -97,7 +112,7 @@ class TeamController extends Controller
 
         $roleCounts = Role::query()
             ->join('model_has_roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->whereIn('roles.name', ['admin', 'manager', 'support', 'callcenter'])
+            ->whereIn('roles.name', self::TEAM_ROLES)
             ->where('model_has_roles.model_type', User::class)
             ->selectRaw('roles.name, COUNT(*) as count')
             ->groupBy('roles.name')
@@ -109,10 +124,16 @@ class TeamController extends Controller
             'available' => (int) ($availability->available ?? 0),
             'working_hours' => (int) ($availability->working_hours ?? 0),
             'unavailable' => (int) ($availability->unavailable ?? 0),
-            'admin' => (int) ($roleCounts['admin'] ?? 0),
-            'manager' => (int) ($roleCounts['manager'] ?? 0),
-            'support' => (int) ($roleCounts['support'] ?? 0),
-            'callcenter' => (int) ($roleCounts['callcenter'] ?? 0),
+            // Las 4 tarjetas de la vista (Admins/Managers/Soporte/Call
+            // Center) son un resumen de 4 cubetas fijo heredado del diseño
+            // original; no hay 4 roles reales que mapeen 1:1, así que
+            // 'callcenter' pasa a representar a los agentes restringidos
+            // (ven solo lo suyo) en vez del rol departamental 'callcenter',
+            // que ya no forma parte de self::TEAM_ROLES.
+            'admin' => (int) ($roleCounts['helpdesk-admin'] ?? 0),
+            'manager' => (int) (($roleCounts['helpdesk-manager'] ?? 0) + ($roleCounts['helpdesk-supervisor'] ?? 0)),
+            'support' => (int) ($roleCounts['helpdesk-agent'] ?? 0),
+            'callcenter' => (int) ($roleCounts['helpdesk-agent-restricted'] ?? 0),
             'with_unlimited' => (int) ($availability->with_unlimited ?? 0),
             'with_limit' => (int) ($availability->with_limit ?? 0),
         ];
@@ -135,7 +156,7 @@ class TeamController extends Controller
         $this->authorize('update', $member);
 
         $groups = Group::orderBy('name')->limit(200)->get();
-        $roles = Role::whereIn('name', ['admin', 'manager', 'support', 'callcenter'])->limit(200)->get();
+        $roles = Role::whereIn('name', self::TEAM_ROLES)->limit(200)->get();
 
         // Ensure agent backups exist
         if (! $member->agentSettings) {
@@ -328,7 +349,7 @@ class TeamController extends Controller
         $this->authorize('create', User::class);
 
         $agents = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+            $q->whereIn('name', self::TEAM_ROLES);
         })->orderBy('firstname')->limit(200)->get();
 
         return view('helpdesk::settings.team.group-create', [
@@ -379,7 +400,7 @@ class TeamController extends Controller
         $group = Group::with('users')->findOrFail($id);
 
         $agents = User::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
+            $q->whereIn('name', self::TEAM_ROLES);
         })->orderBy('firstname')->limit(200)->get();
 
         return view('helpdesk::settings.team.group-edit', [

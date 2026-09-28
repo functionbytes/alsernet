@@ -68,6 +68,7 @@ window.HelpdeskTranslateI18n = {
                     <option value="pt">{{ __('helpdesktranslate::messages.languages.pt') }}</option>
                     <option value="de">{{ __('helpdesktranslate::messages.languages.de') }}</option>
                     <option value="it">{{ __('helpdesktranslate::messages.languages.it') }}</option>
+                    <option value="ca">{{ __('helpdesktranslate::messages.languages.ca') }}</option>
                 </select>
             </div>
             <i class="fas fa-arrow-right bv-tp-lang-arrow"></i>

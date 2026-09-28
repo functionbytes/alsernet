@@ -221,6 +221,7 @@
                             <option value="de" {{ $target === 'de' ? 'selected' : '' }}>{{ __('helpdesktranslate::messages.languages.de') }} (DE)</option>
                             <option value="pt" {{ $target === 'pt' ? 'selected' : '' }}>{{ __('helpdesktranslate::messages.languages.pt') }} (PT)</option>
                             <option value="it" {{ $target === 'it' ? 'selected' : '' }}>{{ __('helpdesktranslate::messages.languages.it') }} (IT)</option>
+                            <option value="ca" {{ $target === 'ca' ? 'selected' : '' }}>{{ __('helpdesktranslate::messages.languages.ca') }} (CA)</option>
                         </select>
                         <small class="text-muted">{{ __('helpdesktranslate::messages.settings.target_help') }}</small>
                     </div>

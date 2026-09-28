@@ -78,7 +78,7 @@ return [
      * Languages shown in the translation panel and accepted as `target` /
      * `default_target` across the UI. Keep ISO 639-1 codes (lowercase).
      */
-    'supported_languages' => ['es', 'en', 'fr', 'de', 'pt', 'it'],
+    'supported_languages' => ['es', 'en', 'fr', 'de', 'pt', 'it', 'ca'],
 
     /*
      * Languages accepted as `from` when the caller knows the source language
@@ -86,7 +86,7 @@ return [
      * the same subset so this list is safe for both providers.
      */
     'source_languages' => [
-        'ar', 'bg', 'cs', 'da', 'de', 'el', 'en', 'es', 'et', 'fi',
+        'ar', 'bg', 'ca', 'cs', 'da', 'de', 'el', 'en', 'es', 'et', 'fi',
         'fr', 'hu', 'id', 'it', 'ja', 'ko', 'lt', 'lv', 'nb', 'nl',
         'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sv', 'tr', 'uk', 'zh',
     ],

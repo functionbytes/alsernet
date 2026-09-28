@@ -150,7 +150,7 @@ class DocumentsServiceProvider extends ServiceProvider
         // Gate::before, pero se resuelve aquí directamente para no depender del bypass
         // global. 'supervisor' se resuelve aquí (no en el Gate::before de abajo) para no
         // convertirlo en un bypass de super-admin para el resto de la aplicación.
-        Gate::define('view-documents-panel', fn ($user) => $user->hasRole('supervisor') || $user->canDocument('view-documents'));
+        Gate::define('view-documents-panel', fn ($user) => $user->hasRole('super-admin') || $user->hasRole('supervisor') || $user->canDocument('view-documents'));
 
         // Register dynamic gates for document permissions
         // This allows using middleware('can:permission-name') with any permission from document_permissions table

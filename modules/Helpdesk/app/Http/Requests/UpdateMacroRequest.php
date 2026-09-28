@@ -17,7 +17,7 @@ class UpdateMacroRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'language' => ['nullable', 'string', 'in:es,en,fr,de,pt,it'],
+            'language' => ['nullable', 'string', 'in:es,en,fr,de,pt,it,ca'],
             'actions' => ['required', 'array', 'min:1'],
             'actions.*.type' => ['required', 'string', 'in:'.implode(',', array_keys(Macro::ACTION_TYPES))],
             'actions.*.value' => ['nullable', 'string', 'max:1000'],

@@ -228,6 +228,7 @@
                             @elseif($customer->language === 'pt') Portugues
                             @elseif($customer->language === 'de') Aleman
                             @elseif($customer->language === 'it') Italiano
+                            @elseif($customer->language === 'ca') Catalán
                             @else — @endif
                         </p>
                     </div>

@@ -12,12 +12,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
+use Modules\Erp\Models\Oracle\Cliente\Cliente as ErpCliente;
 use Modules\Helpdesk\Database\Factories\CustomerFactory;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Throwable;
 
 class Customer extends Model
 {
@@ -196,6 +199,50 @@ class Customer extends Model
     public function externalIdFor(string $platform): ?string
     {
         return $this->externalIds->firstWhere('platform', $platform)?->external_id;
+    }
+
+    /**
+     * IDIOMA.IDIDIOMA (Gestión/ERP) → código ISO 639-1. Catálogo pequeño y
+     * estable, así que un mapa fijo es más simple que sincronizar la tabla.
+     *
+     * @var array<int, string>
+     */
+    private const ERP_LANGUAGE_MAP = [
+        2 => 'es', // Castellano
+        6 => 'en', // Ingles
+        5 => 'fr', // Frances
+        1 => 'de', // Aleman
+        7 => 'pt', // Portugues
+        100000000 => 'it', // Italiano
+    ];
+
+    /**
+     * Idioma del cliente en Gestión (ERP), si el contacto está vinculado a
+     * uno (`externalIdFor('erp')` guarda el IDCLIENTE de Oracle). Es más
+     * fiable que detectarlo a partir de un texto corto. Un fallo de Oracle
+     * no debe romper quien lo llama (auto-respuestas, traducción): devuelve
+     * null y se cae a la detección por texto.
+     */
+    public function erpLanguage(): ?string
+    {
+        $erpClienteId = $this->externalIdFor('erp');
+        if (! $erpClienteId || ! is_numeric($erpClienteId)) {
+            return null;
+        }
+
+        try {
+            $ididioma = ErpCliente::query()->whereKey((int) $erpClienteId)->value('ididioma');
+        } catch (Throwable $e) {
+            Log::warning('Customer::erpLanguage: Oracle lookup failed', [
+                'customer_id' => $this->id,
+                'erp_cliente_id' => $erpClienteId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        return $ididioma !== null ? (self::ERP_LANGUAGE_MAP[(int) $ididioma] ?? null) : null;
     }
 
     /**

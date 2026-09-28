@@ -35,6 +35,7 @@
                         <option value="de">Deutsch</option>
                         <option value="pt">Português</option>
                         <option value="it">Italiano</option>
+                        <option value="ca">Català</option>
                     </select>
                 </div>
                 <div class="field">

@@ -265,7 +265,12 @@
                 const name = (typeof dataName === 'string' && dataName.trim() !== '')
                     ? dataName
                     : filenameFromUrl(src);
-                list.push({ src: src, name: name, author, time });
+                // renderLightbox() decide qué elemento mostrar según item.type;
+                // sin él todo caía en la rama "documento" y la imagen quedaba
+                // oculta. Las miniaturas .bv-attach-thumb son siempre imágenes.
+                const type = String($a.data('bv-preview-type') || 'image');
+                const ext = (String(name).split('.').pop() || '').toLowerCase();
+                list.push({ src: src, name: name, author, time, type, ext, size: 0 });
             });
             const startIdx = Math.max(0, list.findIndex(x => x.src === ($currentLink.attr('href') || $currentLink.data('bv-preview-src'))));
             return { list, startIdx };

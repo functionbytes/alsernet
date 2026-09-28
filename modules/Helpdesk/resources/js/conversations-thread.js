@@ -3779,7 +3779,7 @@
     // respondiendo en un idioma distinto al del cliente salvo que se
     // fijara él mismo. No depende de Echo/Reverb (no hay tiempo real
     // fiable en este entorno) — se revisa con lo que ya llegó en el pane.
-    var HD_LANG_LABELS = { es: 'Español', en: 'Inglés', fr: 'Francés', de: 'Alemán', pt: 'Portugués', it: 'Italiano' };
+    var HD_LANG_LABELS = { es: 'Español', en: 'Inglés', fr: 'Francés', de: 'Alemán', pt: 'Portugués', it: 'Italiano', ca: 'Catalán' };
 
     function maybeSuggestLanguageMismatch(convId) {
         var seenKey = 'bv_lang_prompt_seen_' + convId;
@@ -3829,19 +3829,13 @@
         });
     }
 
-    window.bvBindConversation = function (convId) {
-        convId = parseInt(convId, 10);
-        if (!convId) return;
-
-        maybeSuggestLanguageMismatch(convId);
-
-        window.bvUnbindConversation();
-        currentConvId = convId;
-
-        if (typeof window.Echo === 'undefined' || !window.Echo) return;
-
-        // Marcar como leída + limpiar el badge en la lista.
-        $.ajax({
+    // Marca la conversación abierta como leída y limpia su badge en la
+    // lista. Se usa al abrirla y también cuando llega un mensaje entrante
+    // mientras se está viendo: el "leído" es por conversación (read_at vs
+    // last_message_at), así que un mensaje nuevo lo deja obsoleto y la fila
+    // volvía a mostrar el número tras el siguiente refresco de la lista.
+    function markConversationRead(convId) {
+        return $.ajax({
             url: '/panel/helpdesk/conversations/' + convId + '/mark-read',
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': csrf() },
@@ -3858,6 +3852,35 @@
         }).fail(function (xhr) {
             console.warn('[Inbox] mark-read failed:', xhr.status);
         });
+    }
+
+    // Volver a la pestaña con una conversación abierta que recibió mensajes
+    // mientras estaba oculta: ahora sí los está viendo. Registrado una sola
+    // vez (ver el mismo patrón en el hook de reconexión de abajo).
+    if (!window.__bvThreadVisibilityHookRegistered) {
+        window.__bvThreadVisibilityHookRegistered = true;
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState !== 'visible' || !currentConvId) return;
+            var $item = $('.bv-conv[data-bv-conv-id="' + currentConvId + '"]');
+            if ($item.hasClass('unread') || $item.find('.bv-ucount').length) {
+                markConversationRead(currentConvId);
+            }
+        });
+    }
+
+    window.bvBindConversation = function (convId) {
+        convId = parseInt(convId, 10);
+        if (!convId) return;
+
+        maybeSuggestLanguageMismatch(convId);
+
+        window.bvUnbindConversation();
+        currentConvId = convId;
+
+        if (typeof window.Echo === 'undefined' || !window.Echo) return;
+
+        // Marcar como leída + limpiar el badge en la lista.
+        markConversationRead(convId);
 
         convChannel = window.Echo.private('helpdesk.conversation.' + convId);
 
@@ -3922,6 +3945,18 @@
                     }
                     $r.text(emoji);
                 }
+            }
+
+            // Mensaje del cliente en la conversación que el agente tiene
+            // abierta y a la vista: ya lo está leyendo, no debe quedar como
+            // "sin leer" en la lista. La promesa la espera el listener de
+            // 'inbox:incoming-message' (conversations-list.js) antes de
+            // refrescar la lista, para que el servidor ya vea el read_at
+            // nuevo. Con la pestaña oculta no se marca: sigue sin leer hasta
+            // que el agente vuelve (ver visibilitychange más abajo).
+            window.__bvPendingMarkRead = null;
+            if (isCustomerMessage && document.visibilityState === 'visible') {
+                window.__bvPendingMarkRead = markConversationRead(convId);
             }
 
             window.dispatchEvent(new CustomEvent('inbox:incoming-message', { detail: msg }));

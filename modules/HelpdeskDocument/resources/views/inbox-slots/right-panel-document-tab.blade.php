@@ -121,7 +121,17 @@
      llega por AJAX al cambiar de conversación y allí @push no desemboca en
      ningún @stack, así que el fichero no se cargaba y ni "Crear expediente" ni
      abrir un expediente respondían al clic. El guard evita cargarlo dos veces
-     (y con ello duplicar sus handlers) cuando se recarga el panel. --}}
+     (y con ello duplicar sus handlers) cuando se recarga el panel.
+
+     21-sep-2026: el guard se ponía en true al lanzar la carga, no al
+     terminarla, y nunca se revertía si la petición del <script> fallaba
+     (blip de red, 502, etc.) — un solo fallo dejaba "Crear expediente"
+     muerto el resto de la sesión, sin error visible, hasta recargar la
+     página entera. Ahora __docsPanelLoading solo cubre la carga en curso
+     (evita el doble <script> si el panel se re-renderiza mientras la
+     petición sigue en vuelo) y __docsPanelLoaded es el que de verdad evita
+     recargarlo — solo se marca en onload. onerror limpia __docsPanelLoading
+     para que el próximo render del panel reintente la carga. --}}
 @php
     $documentPanelSrcMtime = @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.js'));
     $documentPanelMinMtime = @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.min.js'));
@@ -132,11 +142,19 @@
 @endphp
 <script>
     (function () {
-        if (window.__docsPanelLoading) { return; }
+        if (window.__docsPanelLoaded || window.__docsPanelLoading) { return; }
         window.__docsPanelLoading = true;
         var s = document.createElement('script');
         s.src = @json($documentPanelSrc);
         s.defer = true;
+        s.onload = function () {
+            window.__docsPanelLoading = false;
+            window.__docsPanelLoaded = true;
+        };
+        s.onerror = function () {
+            window.__docsPanelLoading = false;
+            console.error('[HelpdeskDocument] No se pudo cargar document-panel.js — "Crear expediente" no funcionará hasta que se reintente.');
+        };
         document.head.appendChild(s);
     })();
 </script>

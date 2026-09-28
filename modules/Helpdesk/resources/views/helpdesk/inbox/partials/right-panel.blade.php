@@ -379,7 +379,7 @@
                 $rpLangCode = $rpCust?->language ? strtolower(substr($rpCust->language, 0, 2)) : null;
                 $rpLangNames = [
                     'es' => 'Español', 'en' => 'Inglés', 'fr' => 'Francés', 'de' => 'Alemán',
-                    'it' => 'Italiano', 'pt' => 'Portugués', 'nl' => 'Neerlandés', 'ja' => 'Japonés',
+                    'it' => 'Italiano', 'pt' => 'Portugués', 'ca' => 'Catalán', 'nl' => 'Neerlandés', 'ja' => 'Japonés',
                     'zh' => 'Chino', 'ru' => 'Ruso', 'ar' => 'Árabe', 'ko' => 'Coreano',
                 ];
                 $rpLangLabel = $rpLangCode ? ($rpLangNames[$rpLangCode] ?? strtoupper($rpCust->language)) : null;

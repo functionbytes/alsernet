@@ -430,6 +430,10 @@ class CachedTranslator
      */
     private function callProviderWithDetection(string $provider, string $text, string $target, string $feature): array
     {
+        if ($this->providerCannotHandle($provider, $target, null)) {
+            return ['translated' => null, 'detected_source_language' => null];
+        }
+
         if ($this->isCircuitOpen($provider)) {
             return ['translated' => null, 'detected_source_language' => null];
         }
@@ -494,7 +498,26 @@ class CachedTranslator
     public function detectLanguage(string $text, string $feature = 'other'): ?string
     {
         $text = trim($text);
+
+        // DeepL no conoce el catalán y lo devuelve como español/portugués/
+        // francés, así que se detecta primero por marcadores propios: sin
+        // llamada a red y sin cupo, y antes del mínimo de longitud porque un
+        // "Bon dia" o "Gràcies" ya es inequívoco aunque sea corto.
+        if (! preg_match('/^\[[a-z_ .-]{2,30}\]$/i', $text) && $this->looksCatalan($text)) {
+            return 'ca';
+        }
+
         if (mb_strlen($text) < self::MIN_DETECTABLE_LENGTH) {
+            return null;
+        }
+
+        // 28-sep-2026: los canales guardan "[unsupported]", "[image]"… como
+        // cuerpo cuando el mensaje no trae texto. Son etiquetas internas, no
+        // lenguaje natural — "[unsupported]" (13 caracteres, pasa el mínimo)
+        // se detectaba como inglés y dejaba al cliente con language='en': la
+        // bienvenida/fuera de horario le salía en inglés aunque su idioma
+        // en Gestión fuera el castellano.
+        if (preg_match('/^\[[a-z_ .-]{2,30}\]$/i', $text) === 1) {
             return null;
         }
 
@@ -531,6 +554,55 @@ class CachedTranslator
         $allowed = (array) config('helpdesktranslate.plausible_languages', self::PLAUSIBLE_LANGUAGES);
 
         return in_array($code, $allowed, true) ? $code : null;
+    }
+
+    /**
+     * Palabras solo catalanas (no existen en castellano ni en el resto de
+     * idiomas soportados). Una "fuerte" basta por sí sola; las demás
+     * necesitan al menos dos distintas para descartar coincidencias sueltas
+     * (un apellido, un nombre propio...). Se evitan a propósito las que
+     * coinciden con italiano/inglés/castellano ("però", "mai", "sempre",
+     * "sense", "fer", "hola", "com"...).
+     */
+    private const CATALAN_STRONG = [
+        'gràcies', 'això', 'perquè', 'sisplau', 'si us plau', 'bon dia', 'bona tarda', 'bona nit',
+        'també', 'què', 'vosaltres', 'nosaltres',
+    ];
+
+    private const CATALAN_COMMON = [
+        'amb', 'molt', 'molta', 'vull', 'tinc', 'necessito', 'puc', 'podeu', 'aquesta', 'aquests',
+        'aquestes', 'seva', 'meva', 'teva', 'gaire', 'ahir', 'avui', 'demà', 'estic', 'esteu', 'sóc',
+        'quin', 'quina', 'només', 'després', 'abans', 'mateix', 'mateixa', 'tots', 'totes', 'doncs',
+        'enviament', 'devolució', 'paquet',
+    ];
+
+    private function looksCatalan(string $text): bool
+    {
+        $lower = mb_strtolower($text);
+
+        if (str_contains($lower, 'l·l')) {
+            return true;
+        }
+
+        $has = static fn (string $word): bool => preg_match(
+            '/(?<!\p{L})'.preg_quote($word, '/').'(?!\p{L})/u',
+            $lower
+        ) === 1;
+
+        foreach (self::CATALAN_STRONG as $marker) {
+            if ($has($marker)) {
+                return true;
+            }
+        }
+
+        $hits = 0;
+        foreach (self::CATALAN_COMMON as $word) {
+            if ($has($word) && ++$hits >= 2) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function detectViaProvider(string $provider, string $text, string $feature = 'other'): ?string
@@ -611,8 +683,35 @@ class CachedTranslator
         return str_starts_with($feature, 'auto_') ? [4, 0] : [null, null];
     }
 
+    /**
+     * Idiomas que DeepL no ofrece (ni como origen ni como destino). Pedírselos
+     * devuelve 400: además de no traducir, cada intento contaba como fallo del
+     * proveedor y podía abrir el circuit breaker de DeepL para TODOS los
+     * idiomas. Con esto ni se le llama: se cae directo al fallback
+     * (LibreTranslate, que sí traduce catalán) o queda sin traducir.
+     *
+     * @var array<int, string>
+     */
+    private const DEEPL_UNSUPPORTED = ['ca'];
+
+    private function providerCannotHandle(string $provider, string $target, ?string $source): bool
+    {
+        if ($provider !== 'deepl') {
+            return false;
+        }
+
+        $source = strtolower((string) $source);
+
+        return in_array(strtolower($target), self::DEEPL_UNSUPPORTED, true)
+            || in_array($source, self::DEEPL_UNSUPPORTED, true);
+    }
+
     private function callProvider(string $provider, string $text, string $target, ?string $source, string $feature = 'other'): ?string
     {
+        if ($this->providerCannotHandle($provider, $target, $source)) {
+            return null;
+        }
+
         // Circuit breaker: si el proveedor viene fallando (caído / sin clave),
         // saltarlo al instante en vez de comerse su timeout (10-15s). Con ambos
         // proveedores abiertos, translate() devuelve null sin colgar el request.
