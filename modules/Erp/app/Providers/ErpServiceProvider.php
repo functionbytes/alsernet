@@ -2,8 +2,16 @@
 
 namespace Modules\Erp\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
+use Illuminate\Database\LostConnectionDetector;
+use Illuminate\Database\LostConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Setting;
@@ -15,24 +23,18 @@ use Modules\Erp\Console\Commands\ImportProductsFromPrestashop;
 use Modules\Erp\Console\Commands\IssueBridgeTokenCommand;
 use Modules\Erp\Console\Commands\ShowImportStatistics;
 use Modules\Erp\Console\Commands\Supplier\CircuitBreakerStatus;
-use Modules\Erp\Console\Commands\Supplier\RetrySyncFailures;
-use Modules\Erp\Console\Commands\Supplier\StartOracleMonitor;
-use Modules\Erp\Console\Commands\Supplier\SyncAll;
-use Modules\Erp\Console\Commands\Supplier\SyncCategories;
-use Modules\Erp\Console\Commands\Supplier\SyncPrices;
-use Modules\Erp\Console\Commands\Supplier\SyncProducts as SupplierSyncProducts;
-use Modules\Erp\Console\Commands\Supplier\SyncProviderProducts;
-use Modules\Erp\Console\Commands\Supplier\SyncProviders;
-use Modules\Erp\Console\Commands\Supplier\SyncStats;
 use Modules\Erp\Console\Commands\SyncErpEndpointsCommand;
 use Modules\Erp\Console\Commands\SyncProducts;
 use Modules\Erp\Console\Commands\SyncSpecificPrices;
 use Modules\Erp\Console\Commands\TestOracleConnection;
 use Modules\Erp\Console\Commands\TestPerformance;
 use Modules\Erp\Http\Middleware\ApiAuth;
+use Modules\Erp\Http\Middleware\DeprecatedRoute;
+use Modules\Erp\Http\Middleware\ServerTiming;
 use Modules\Erp\Http\Middleware\ValidateEndpointToken;
 use Modules\Erp\Services\CircuitBreaker;
 use Modules\Erp\Services\ErpService;
+use Modules\Erp\Services\OCI8Service;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -40,6 +42,8 @@ use RecursiveIteratorIterator;
 
 class ErpServiceProvider extends ServiceProvider
 {
+    private static bool $oracleResolverHardened = false;
+
     use PathNamespace;
 
     protected string $name = 'Erp';
@@ -71,6 +75,8 @@ class ErpServiceProvider extends ServiceProvider
         // Must use a string-based callable so the config can be cached (closures are not serializable).
         config(['database.connections.oracle.dynamic' => [self::class, 'applyDynamicOracleConfig']]);
 
+        $this->hardenOracleResolver();
+
         // Register commands
         $this->registerCommands();
     }
@@ -80,9 +86,23 @@ class ErpServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Cliente HTTP para las llamadas internas a /api/erp/* (Supplier...):
+        // adjunta el token interno si está configurado, de modo que la API
+        // pueda protegerse con ERP_API_AUTH_ENABLED sin romper esas llamadas.
+        Http::macro('erpApi', function (): PendingRequest {
+            $request = Http::acceptJson();
+            $token = (string) config('erp.api.internal_token', '');
+
+            return $token !== '' ? $request->withToken($token) : $request;
+        });
+
         $this->app->singleton(ErpService::class, function ($app) {
             return new ErpService;
         });
+
+        // Una sola instancia por petición/worker: la conexión OCI8 y su
+        // marca de último uso se reutilizan entre servicios y controladores.
+        $this->app->singleton(OCI8Service::class);
 
         // Circuit Breaker for Oracle connection resilience
         $this->app->singleton(CircuitBreaker::class, function ($app) {
@@ -99,6 +119,34 @@ class ErpServiceProvider extends ServiceProvider
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('erp.api-auth', ApiAuth::class);
         $router->aliasMiddleware('erp.validate-endpoint-token', ValidateEndpointToken::class);
+        $router->aliasMiddleware('erp.deprecated', DeprecatedRoute::class);
+        $router->aliasMiddleware('erp.server-timing', ServerTiming::class);
+    }
+
+    /**
+     * Limitador de /api/erp/*.
+     *
+     * Antes era `throttle:60,1` para todos: Supplier llama con UN solo token
+     * interno y su sincronización pide /products/{id}/detailed modelo a modelo,
+     * así que 6000 modelos eran ≥100 min o respuestas 429. El token interno
+     * (ERP_INTERNAL_API_TOKEN, llamadas de este mismo servidor) va sin límite;
+     * el resto mantiene el de config/erp.php (erp.api.throttle, "max,minutos"),
+     * por usuario autenticado o, si no lo hay, por IP.
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('erp-api', function (Request $request) {
+            $internal = (string) config('erp.api.internal_token', '');
+            $bearer = (string) $request->bearerToken();
+            if ($internal !== '' && $bearer !== '' && hash_equals($internal, $bearer)) {
+                return Limit::none();
+            }
+
+            [$max, $minutes] = array_map('intval', array_pad(explode(',', (string) config('erp.api.throttle', '60,1')), 2, 1));
+
+            return Limit::perMinutes(max(1, $minutes), max(1, $max))
+                ->by($request->user()?->getAuthIdentifier() ?? $request->ip());
+        });
     }
 
     /**
@@ -106,6 +154,8 @@ class ErpServiceProvider extends ServiceProvider
      */
     protected function registerRoutes(): void
     {
+        $this->registerRateLimiters();
+
         $webPath = module_path($this->name, 'routes/web.php');
 
         // ERP Settings and Management routes (web).
@@ -260,17 +310,47 @@ class ErpServiceProvider extends ServiceProvider
             IssueBridgeTokenCommand::class,
 
             // Supplier → ERP sync pipeline (Oracle source of truth)
-            SyncAll::class,
-            SyncCategories::class,
-            SyncProviders::class,
-            SupplierSyncProducts::class,
-            SyncProviderProducts::class,
-            SyncPrices::class,
-            SyncStats::class,
-            RetrySyncFailures::class,
-            StartOracleMonitor::class,
             CircuitBreakerStatus::class,
         ]);
+    }
+
+    /**
+     * Envuelve el resolver 'oracle' de yajra para sobrevivir a una conexión
+     * persistente muerta.
+     *
+     * yajra ejecuta ALTER SESSION (variables NLS) al CREAR la conexión, antes
+     * de que DatabaseManager le asigne el reconector. Si oci_pconnect devuelve
+     * un handle cortado (ORA-03113/03114, firewall), esa primera sentencia
+     * lanza "Lost connection and no reconnector available" y la petición da
+     * 500. Aquí se reintenta una vez con una conexión nueva no persistente.
+     */
+    protected function hardenOracleResolver(): void
+    {
+        $resolver = Connection::getResolver('oracle');
+        if (! $resolver || self::$oracleResolverHardened) {
+            return;
+        }
+        self::$oracleResolverHardened = true;
+
+        Connection::resolverFor('oracle', function ($connection, $database, $prefix, $config) use ($resolver) {
+            try {
+                return $resolver($connection, $database, $prefix, $config);
+            } catch (\Throwable $e) {
+                if (! app(LostConnectionDetector::class)->causedByLostConnection($e)
+                    && ! $e instanceof LostConnectionException) {
+                    throw $e;
+                }
+
+                \Log::warning('ERP: conexión Oracle persistente caída al abrir; reintentando con una nueva', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                $config['options'][\PDO::ATTR_PERSISTENT] = false;
+                $config['options']['cached'] = false;
+
+                return $resolver($connection, $database, $prefix, $config);
+            }
+        });
     }
 
     /**

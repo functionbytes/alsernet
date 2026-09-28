@@ -87,7 +87,7 @@ class ErpCategorySyncService
             $offset = 0;
 
             do {
-                $response = Http::timeout(30)->get("{$this->erpBaseUrl}/families", [
+                $response = Http::erpApi()->timeout(30)->get("{$this->erpBaseUrl}/families", [
                     'limit' => $this->pageSize,
                     'offset' => $offset,
                 ]);
@@ -152,7 +152,7 @@ class ErpCategorySyncService
             $categoryIdByErpId = Category::query()->pluck('id', 'erp_id');
 
             do {
-                $response = Http::timeout(30)->get("{$this->erpBaseUrl}/subfamilies", [
+                $response = Http::erpApi()->timeout(30)->get("{$this->erpBaseUrl}/subfamilies", [
                     'limit' => $this->pageSize,
                     'offset' => $offset,
                 ]);

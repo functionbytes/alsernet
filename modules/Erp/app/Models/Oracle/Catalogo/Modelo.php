@@ -23,6 +23,92 @@ class Modelo extends Model
     use SoftDeletes;
     use UsesOCI8Performance;
 
+    /**
+     * Columnas para fastPaginate(): las de siempre (mismo orden que t.*),
+     * pero DESCRIPCION (CLOB) se lee en línea — ver UsesOCI8Performance.
+     */
+    protected static function getCustomSelectColumns(): string
+    {
+        return 't.idmodelo, t.idusuariocre, t.idusuariomod, t.idusuariobaj, t.fcreacion, t.fmodificacion, '.
+            't.fbaja, t.estado, t.codigo, t.idgrupo_cl, t.nombre, t.estado_publicado_web, t.idmarca, '.
+            't.venta_telefono, t.precio_consultar_ficha, '.static::lobSelect('descripcion');
+    }
+
+    protected static function oci8LobColumns(): array
+    {
+        return ['descripcion'];
+    }
+
+    /**
+     * Caracteres de DESCRIPCION (CLOB) que se leen en línea como VARCHAR2.
+     * La BD usa WE8MSWIN1252 (1 byte por carácter): 4000 caben en un VARCHAR2.
+     */
+    public const DESCRIPCION_INLINE_CHARS = 4000;
+
+    /**
+     * Añade DESCRIPCION a una consulta Eloquent sin leerla como LOB (una ida
+     * y vuelta por fila: 2,8 s para 20 filas frente a 40 ms). Completar
+     * después con hydrateLongDescriptions().
+     */
+    public function scopeWithInlineDescripcion($query, string $qualifier = '')
+    {
+        $column = ($qualifier !== '' ? $qualifier.'.' : '').'descripcion';
+
+        return $query
+            ->selectRaw("DBMS_LOB.SUBSTR({$column}, ".self::DESCRIPCION_INLINE_CHARS.', 1) AS descripcion')
+            ->selectRaw("DBMS_LOB.GETLENGTH({$column}) AS descripcion_len");
+    }
+
+    /**
+     * Completa las DESCRIPCION que no cupieron en línea (una consulta solo
+     * para esas filas) y conserva '' para los EMPTY_CLOB.
+     *
+     * @param  iterable<int, self>  $modelos
+     */
+    public static function hydrateLongDescriptions(iterable $modelos): void
+    {
+        $long = [];
+        $maxLen = 0;
+        foreach ($modelos as $m) {
+            if ((int) $m->descripcion_len > self::DESCRIPCION_INLINE_CHARS) {
+                $long[] = $m->idmodelo;
+                $maxLen = max($maxLen, (int) $m->descripcion_len);
+            }
+        }
+
+        // El resto también en trozos VARCHAR2 de 4000 (sin leer el LOB, que
+        // es una ida y vuelta por fila: 2,7 s para ~60 descripciones largas).
+        $full = collect();
+        if ($long !== []) {
+            $step = self::DESCRIPCION_INLINE_CHARS;
+            $parts = [];
+            for ($offset = $step + 1, $i = 0; $offset <= $maxLen; $offset += $step, $i++) {
+                $parts[] = "DBMS_LOB.SUBSTR(descripcion, {$step}, {$offset}) AS p{$i}";
+            }
+            foreach (array_chunk($long, 1000) as $chunk) {
+                $rows = static::query()->toBase()
+                    ->select('idmodelo')->selectRaw(implode(', ', $parts))
+                    ->whereIn('idmodelo', $chunk)
+                    ->get();
+                foreach ($rows as $row) {
+                    $row = array_change_key_case((array) $row, CASE_LOWER);
+                    $full[$row['idmodelo']] = implode('', array_map(fn ($k) => (string) $row['p'.$k], array_keys($parts)));
+                }
+            }
+        }
+
+        foreach ($modelos as $m) {
+            if ($full->has($m->idmodelo)) {
+                $m->descripcion = $m->descripcion.$full->get($m->idmodelo);
+            } elseif ($m->descripcion === null && $m->descripcion_len !== null && (int) $m->descripcion_len === 0) {
+                // DBMS_LOB.SUBSTR devuelve NULL para un EMPTY_CLOB; leído como LOB era ''.
+                $m->descripcion = '';
+            }
+            unset($m->descripcion_len);
+            $m->syncOriginalAttributes(['descripcion']);
+        }
+    }
+
     protected $connection = 'oracle';
 
     protected $table = 'modelo';

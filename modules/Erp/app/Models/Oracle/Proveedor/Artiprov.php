@@ -3,11 +3,9 @@
 namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierProviderProduct;
 
 /**
  * Modelo para la tabla ARTIPROV
@@ -92,13 +90,5 @@ class Artiprov extends Model
     public function articulo()
     {
         return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
-    }
-
-    /**
-     * Relación inversa: SupplierProviderProducts (sincronización Supplier)
-     */
-    public function supplierProviderProducts(): HasMany
-    {
-        return $this->hasMany(SupplierProviderProduct::class, 'erp_artiprov_id', 'idartiprov');
     }
 }

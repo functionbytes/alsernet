@@ -11,6 +11,7 @@ use Modules\Erp\Models\Oracle\Web\WCaracteristicasOrden;
 use Modules\Erp\Models\Oracle\Web\WCaracteristicasProd;
 use Modules\Erp\Models\Oracle\Web\WPerfilesProd;
 use Modules\Erp\Models\Oracle\Web\WValoresProd;
+use Modules\Erp\Support\ErpErrorSanitizer;
 
 /**
  * GESTIÓN DE CARACTERÍSTICAS DE PRODUCTOS
@@ -73,11 +74,9 @@ class CaracteristicasController extends Controller
      */
     public function indexCaracteristicas(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 1000);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 1000));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['nombre', 'estado']);
             // withTrashed(): w_caracteristicas_prod.estado es el flag de activo/inactivo
@@ -90,9 +89,6 @@ class CaracteristicasController extends Controller
             // sincronizando como inactivas, no se “resucitan”.
             $result = $this->paginate(WCaracteristicasProd::withTrashed(), $filters, $limit, $offset);
 
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Caracteristicas: '.round($totalTime * 1000, 2).'ms ===');
-
             return response()->json($result);
 
         } catch (\Exception $e) {
@@ -100,7 +96,7 @@ class CaracteristicasController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -112,17 +108,12 @@ class CaracteristicasController extends Controller
      */
     public function indexValores(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 1000);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 1000));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['id_caracteristica', 'nombre', 'estado']);
             $result = $this->paginate(WValoresProd::query(), $filters, $limit, $offset);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Valores: '.round($totalTime * 1000, 2).'ms ===');
 
             return response()->json($result);
 
@@ -131,7 +122,7 @@ class CaracteristicasController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -143,17 +134,12 @@ class CaracteristicasController extends Controller
      */
     public function indexModeloCaracteristicas(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 1000);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 1000));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['idmodelo', 'id_caracteristica', 'estado']);
             $result = $this->paginate(WCaracteristicasOrden::query(), $filters, $limit, $offset);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO ModeloCaracteristicas: '.round($totalTime * 1000, 2).'ms ===');
 
             return response()->json($result);
 
@@ -162,7 +148,7 @@ class CaracteristicasController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -174,17 +160,12 @@ class CaracteristicasController extends Controller
      */
     public function indexVarianteCaracteristicas(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 1000);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 1000));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['idarticulo', 'idmodelo', 'id_valor', 'estado']);
             $result = $this->paginate(WPerfilesProd::query(), $filters, $limit, $offset);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO VarianteCaracteristicas: '.round($totalTime * 1000, 2).'ms ===');
 
             return response()->json($result);
 
@@ -193,7 +174,7 @@ class CaracteristicasController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }

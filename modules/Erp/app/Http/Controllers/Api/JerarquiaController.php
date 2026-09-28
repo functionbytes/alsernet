@@ -13,6 +13,7 @@ use Modules\Erp\Http\Resources\SubfamiliaClResource;
 use Modules\Erp\Models\Oracle\Configuracion\FamiliaCl;
 use Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl;
 use Modules\Erp\Models\Oracle\Otros\GrupoCl;
+use Modules\Erp\Support\ErpErrorSanitizer;
 
 /**
  * VERSIÓN ELOQUENT - GESTIÓN DE JERARQUÍA DE PRODUCTOS
@@ -38,17 +39,12 @@ class JerarquiaController extends Controller
      */
     public function indexFamilias(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 100);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 100));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['descripcion', 'estado', 'categoria_id']);
-            $result = FamiliaCl::fastPaginate($filters, $limit, $offset);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Familias: '.round($totalTime * 1000, 2).'ms ===');
+            $result = FamiliaCl::fastPaginate($filters, $limit, $offset, null, $request->integer('after_id') ?: null);
 
             return response()->json($result);
 
@@ -57,7 +53,7 @@ class JerarquiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -69,8 +65,6 @@ class JerarquiaController extends Controller
      */
     public function showFamilia(int $id): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
             $familia = FamiliaCl::with([
                 'categoriaCl',
@@ -81,9 +75,6 @@ class JerarquiaController extends Controller
             ])
                 ->whereNull('fbaja')
                 ->findOrFail($id);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Familia Detalle: '.round($totalTime * 1000, 2).'ms ===');
 
             $data = $this->cleanUtf8Array((new FamiliaClResource($familia))->resolve());
 
@@ -106,7 +97,7 @@ class JerarquiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -122,17 +113,12 @@ class JerarquiaController extends Controller
      */
     public function indexSubfamilias(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 100);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 100));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['descripcion', 'estado', 'familia_id']);
-            $result = SubfamiliaCl::fastPaginate($filters, $limit, $offset);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Subfamilias: '.round($totalTime * 1000, 2).'ms ===');
+            $result = SubfamiliaCl::fastPaginate($filters, $limit, $offset, null, $request->integer('after_id') ?: null);
 
             return response()->json($result);
 
@@ -141,7 +127,7 @@ class JerarquiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -153,8 +139,6 @@ class JerarquiaController extends Controller
      */
     public function showSubfamilia(int $id): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
             $subfamilia = SubfamiliaCl::with([
                 'familiaCl',
@@ -165,9 +149,6 @@ class JerarquiaController extends Controller
             ])
                 ->whereNull('fbaja')
                 ->findOrFail($id);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Subfamilia Detalle: '.round($totalTime * 1000, 2).'ms ===');
 
             $data = $this->cleanUtf8Array((new SubfamiliaClResource($subfamilia))->resolve());
 
@@ -190,7 +171,7 @@ class JerarquiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -206,17 +187,12 @@ class JerarquiaController extends Controller
      */
     public function indexGrupos(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 100);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 100));
+            $offset = max(0, (int) $request->get('offset', 0));
 
             $filters = $request->only(['descripcion', 'estado', 'subfamilia_id']);
-            $result = GrupoCl::fastPaginate($filters, $limit, $offset);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Grupos: '.round($totalTime * 1000, 2).'ms ===');
+            $result = GrupoCl::fastPaginate($filters, $limit, $offset, null, $request->integer('after_id') ?: null);
 
             return response()->json($result);
 
@@ -225,7 +201,7 @@ class JerarquiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }
@@ -237,8 +213,6 @@ class JerarquiaController extends Controller
      */
     public function showGrupo(int $id): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
             $grupo = GrupoCl::with([
                 'subfamiliaCl',
@@ -250,9 +224,6 @@ class JerarquiaController extends Controller
             ])
                 ->whereNull('fbaja')
                 ->findOrFail($id);
-
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Grupo Detalle: '.round($totalTime * 1000, 2).'ms ===');
 
             $data = $this->cleanUtf8Array((new GrupoClResource($grupo))->resolve());
 
@@ -275,7 +246,7 @@ class JerarquiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }

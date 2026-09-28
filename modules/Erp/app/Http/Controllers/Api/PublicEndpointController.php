@@ -10,9 +10,19 @@ use Modules\Erp\Models\ErpEndpoint;
 use Modules\Erp\Models\ErpEndpointLog;
 use Modules\Erp\Models\ErpEndpointToken;
 use Modules\Erp\Support\ErpEndpointUrlGuard;
+use Modules\Erp\Support\ErpErrorSanitizer;
 
 class PublicEndpointController extends Controller
 {
+    /**
+     * Cabeceras entrantes que nunca se reenvían al endpoint remoto.
+     */
+    private const STRIPPED_HEADERS = [
+        'host', 'connection', 'keep-alive', 'upgrade', 'transfer-encoding', 'content-length',
+        'authorization', 'x-erp-token', 'cookie', 'x-csrf-token', 'x-xsrf-token',
+        'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip',
+    ];
+
     /**
      * Call a public endpoint using a token
      */
@@ -38,18 +48,19 @@ class PublicEndpointController extends Controller
         $startTime = microtime(true);
 
         try {
-            // Merge endpoint headers with request headers
-            $headers = array_merge(
-                $endpoint->headers ?? [],
-                $request->headers->all()
+            // Cabeceras del cliente sin las de hop-by-hop ni las de sesión/auth:
+            // las credenciales del llamante (su token ERP, cookies) no deben
+            // llegar al upstream. Las del endpoint van después para que el
+            // cliente no pueda sobrescribir la auth configurada.
+            // Symfony entrega las cabeceras del cliente en minúsculas: se
+            // comparan igual las del endpoint para que no viajen duplicadas.
+            $endpointHeaders = $endpoint->headers ?? [];
+            $clientHeaders = array_diff_key(
+                $request->headers->all(),
+                array_flip(self::STRIPPED_HEADERS),
+                array_change_key_case($endpointHeaders, CASE_LOWER)
             );
-
-            // Remove hop-by-hop headers
-            unset($headers['host']);
-            unset($headers['connection']);
-            unset($headers['keep-alive']);
-            unset($headers['upgrade']);
-            unset($headers['transfer-encoding']);
+            $headers = array_merge($clientHeaders, $endpointHeaders);
 
             // Build HTTP request
             $http = Http::timeout($endpoint->timeout ?? 30)
@@ -112,7 +123,7 @@ class PublicEndpointController extends Controller
                 'token_id' => $endpointToken->id,
                 'method' => $endpoint->method,
                 'url' => $endpoint->url,
-                'request_headers' => $request->headers->all(),
+                'request_headers' => $headers ?? [],
                 'execution_time' => $executionTime,
                 'success' => false,
                 'error_message' => $e->getMessage(),
@@ -121,7 +132,7 @@ class PublicEndpointController extends Controller
 
             return response()->json([
                 'message' => 'Error al procesar la solicitud',
-                'error' => $e->getMessage(),
+                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
     }

@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Erp\Models\ErpCredential;
 use Modules\Erp\Models\ErpEndpoint;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class ErpCredentialsApiTest extends TestCase
@@ -25,6 +27,11 @@ class ErpCredentialsApiTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
+
+        // Las rutas de gestión exigen 'erp.endpoints.manage' (ver routes/api.php).
+        Permission::firstOrCreate(['name' => 'erp.endpoints.manage', 'guard_name' => 'web']);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->user->givePermissionTo('erp.endpoints.manage');
         $this->endpoint = ErpEndpoint::factory()->create();
     }
 

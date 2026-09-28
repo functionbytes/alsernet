@@ -11,6 +11,8 @@ use Modules\Erp\Models\Oracle\Catalogo\Modelo;
 use Modules\Erp\Models\Oracle\Proveedor\Artiprov;
 use Modules\Erp\Models\Oracle\Web\WCaracteristicasOrden;
 use Modules\Erp\Models\Oracle\Web\WPerfilesProd;
+use Modules\Erp\Services\CatalogHierarchyService;
+use Modules\Erp\Support\ErpErrorSanitizer;
 
 /**
  * VERSIÓN ELOQUENT - GESTIÓN DE MODELOS/PRODUCTOS
@@ -25,6 +27,25 @@ use Modules\Erp\Models\Oracle\Web\WPerfilesProd;
 class ProductsController extends ApiController
 {
     /**
+     * Columnas de ARTICULO que usan las respuestas (la tabla tiene ~70).
+     */
+    private const ARTICULO_COLUMNS = [
+        'idarticulo', 'idmodelo', 'codigo', 'codbar', 'referencia', 'descripcion',
+        'estado', 'estado_publicado_web', 'idgrupo_cl', 'fcreacion', 'fmodificacion',
+    ];
+
+    /**
+     * Columnas de ARTIPROV que usan las respuestas. codigo2/ean13/upc se
+     * devuelven al cliente: antes no se seleccionaban y salían siempre null.
+     */
+    private const ARTIPROV_COLUMNS = [
+        'idartiprov', 'idproveedor', 'idarticulo', 'codigo', 'codigo2', 'ean13', 'upc',
+        'descripcion', 'pcosto', 'pordefecto', 'estado',
+    ];
+
+    public function __construct(private readonly CatalogHierarchyService $hierarchy) {}
+
+    /**
      * Listar modelos con paginación y filtros.
      *
      * GET /api/erp/products
@@ -35,36 +56,35 @@ class ProductsController extends ApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
-            $limit = min((int) $request->get('limit', 10), 100);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 100));
+            $offset = max(0, (int) $request->get('offset', 0));
             $idproveedor = $request->get('idproveedor');
 
             if ($idproveedor) {
-                // Obtener idmodelo de artículos suministrados por este proveedor
-                $modeloIds = Artiprov::select('articulo.idmodelo')
-                    ->join('articulo', 'artiprov.idarticulo', '=', 'articulo.idarticulo')
+                // Modelos del proveedor con un JOIN desde ARTIPROV, en vez de
+                // sacar sus ids con pluck() y pasarlos en un `IN (...)`: para un
+                // proveedor de 14k artículos eran ~6000 ids y 3,8 s.
+                $query = Modelo::query()
+                    ->join('articulo', 'articulo.idmodelo', '=', 'modelo.idmodelo')
+                    ->join('artiprov', 'artiprov.idarticulo', '=', 'articulo.idarticulo')
                     ->where('artiprov.idproveedor', $idproveedor)
                     ->whereNull('artiprov.fbaja')
                     ->whereNull('articulo.fbaja')
-                    ->distinct()
-                    ->pluck('articulo.idmodelo')
-                    ->all();
-
-                $query = Modelo::whereIn('idmodelo', $modeloIds)->whereNull('fbaja');
+                    ->whereNull('modelo.fbaja')
+                    ->distinct();
 
                 foreach (['nombre', 'codigo', 'estado', 'idmarca', 'idgrupo_cl'] as $field) {
                     if ($request->filled($field)) {
                         $val = $request->get($field);
-                        $query->where($field, str_contains($val, '%') ? 'LIKE' : '=', $val);
+                        // Calificado: ARTICULO también tiene codigo/estado/idmarca/idgrupo_cl.
+                        $query->where('modelo.'.$field, str_contains($val, '%') ? 'LIKE' : '=', $val);
                     }
                 }
 
                 $modelos = $query->offset($offset)->limit($limit + 1)->get([
-                    'idmodelo', 'codigo', 'nombre', 'estado', 'estado_publicado_web',
-                    'idmarca', 'idgrupo_cl', 'fcreacion', 'fmodificacion',
+                    'modelo.idmodelo', 'modelo.codigo', 'modelo.nombre', 'modelo.estado', 'modelo.estado_publicado_web',
+                    'modelo.idmarca', 'modelo.idgrupo_cl', 'modelo.fcreacion', 'modelo.fmodificacion',
                 ]);
 
                 $hasMore = $modelos->count() > $limit;
@@ -92,22 +112,19 @@ class ProductsController extends ApiController
                 ];
             } else {
                 $filters = $request->only(['nombre', 'codigo', 'estado', 'idmarca', 'idgrupo_cl']);
-                $result = Modelo::fastPaginate($filters, $limit, $offset);
+                $result = Modelo::fastPaginate($filters, $limit, $offset, null, $request->integer('after_id') ?: null);
 
                 if (isset($result['data']) && is_array($result['data'])) {
                     $result['data'] = array_map([$this, 'cleanUtf8Array'], $result['data']);
                 }
             }
 
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Products Index: '.round($totalTime * 1000, 2).'ms ===');
-
             return response()->json($result, 200, [], JSON_UNESCAPED_UNICODE);
 
         } catch (\Exception $e) {
             Log::error('Error ProductsController@index', ['error' => $e->getMessage()]);
 
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => ErpErrorSanitizer::forClient($e)], 500);
         }
     }
 
@@ -118,14 +135,13 @@ class ProductsController extends ApiController
      */
     public function show(int $id): JsonResponse
     {
-        $startTime = microtime(true);
-
         try {
             $modelo = Modelo::select([
-                'idmodelo', 'codigo', 'nombre', 'descripcion',
+                'idmodelo', 'codigo', 'nombre',
                 'estado', 'estado_publicado_web', 'idmarca', 'idgrupo_cl',
                 'fcreacion', 'fmodificacion',
             ])
+                ->withInlineDescripcion()
                 ->with([
                     'marca:idmarca,descripcion',
                     'grupoCl:idgrupo_cl,idsubfamilia_cl',
@@ -135,8 +151,7 @@ class ProductsController extends ApiController
                 ->whereNull('fbaja')
                 ->findOrFail($id);
 
-            $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Product Show: '.round($totalTime * 1000, 2).'ms ===');
+            Modelo::hydrateLongDescriptions([$modelo]);
 
             $data = $this->cleanUtf8Array([
                 'id' => $modelo->idmodelo,
@@ -160,7 +175,7 @@ class ProductsController extends ApiController
         } catch (\Exception $e) {
             Log::error('Error ProductsController@show', ['error' => $e->getMessage(), 'id' => $id]);
 
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => ErpErrorSanitizer::forClient($e)], 500);
         }
     }
 
@@ -176,10 +191,11 @@ class ProductsController extends ApiController
         try {
             ['data' => $data, 'cached' => $fromCache] = $this->cachedResult("product:detailed:{$id}", function () use ($id) {
                 $modelo = Modelo::select([
-                    'idmodelo', 'codigo', 'nombre', 'descripcion',
+                    'idmodelo', 'codigo', 'nombre',
                     'estado', 'estado_publicado_web', 'idmarca', 'idgrupo_cl',
                     'fcreacion', 'fmodificacion',
                 ])
+                    ->withInlineDescripcion()
                     ->with([
                         'marca:idmarca,descripcion',
                         'grupoCl:idgrupo_cl,idsubfamilia_cl',
@@ -188,9 +204,18 @@ class ProductsController extends ApiController
                         'grupoCl.subfamiliaCl.familiaCl.categoriaCl:idcategoria_cl,iddeporte_cl,descripcion',
                         'grupoCl.subfamiliaCl.familiaCl.categoriaCl.deporteCl:iddeporte_cl,descripcion,desc_corta,estado',
                         'articulos' => fn ($q) => $q->whereNull('fbaja')->orderBy('codigo'),
+                        // Jerarquía de cada artículo precargada (IN de los grupos
+                        // distintos). Sin esto se resolvía en diferido: 4 consultas
+                        // POR artículo (775 consultas / 23 s en un modelo grande).
+                        'articulos.grupoCl:idgrupo_cl,idsubfamilia_cl',
+                        'articulos.grupoCl.subfamiliaCl:idsubfamilia_cl,idfamilia_cl',
+                        'articulos.grupoCl.subfamiliaCl.familiaCl:idfamilia_cl,idcategoria_cl',
+                        'articulos.grupoCl.subfamiliaCl.familiaCl.categoriaCl:idcategoria_cl,iddeporte_cl',
                     ])
                     ->whereNull('fbaja')
                     ->findOrFail($id);
+
+                Modelo::hydrateLongDescriptions([$modelo]);
 
                 // Cargar artiprovs y proveedores para los artículos de este modelo
                 $articuloIds = $modelo->articulos->pluck('idarticulo')->all();
@@ -208,7 +233,7 @@ class ProductsController extends ApiController
 
                 // Características (modelo + por artículo), en batch, sin llamadas HTTP extra
                 $modelCharacteristics = $this->modelCharacteristicsByModelo([$id]);
-                $variantCharacteristicsByArticulo = $this->variantCharacteristicsByArticulo($articuloIds);
+                $variantCharacteristicsByArticulo = $this->variantCharacteristicsByModelos([$id]);
 
                 // Proveedores únicos del modelo
                 $proveedores = $artiprovs
@@ -222,8 +247,12 @@ class ProductsController extends ApiController
                 $deporteCl = $categoriaCl?->deporteCl;
 
                 // Artículos mapeados con sus artiprovs
-                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovs, $variantCharacteristicsByArticulo) {
-                    $aps = $artiprovs->where('idarticulo', $a->idarticulo)->values();
+                // Agrupados una vez: el ->where() por artículo recorría todos los
+                // artiprovs en cada iteración (O(n²) en modelos con muchas tallas).
+                $artiprovsByArticulo = $artiprovs->groupBy('idarticulo');
+
+                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovsByArticulo, $variantCharacteristicsByArticulo) {
+                    $aps = $artiprovsByArticulo->get($a->idarticulo, collect())->values();
 
                     $apDefault = $aps->firstWhere('pordefecto', true) ?? $aps->first();
 
@@ -299,7 +328,6 @@ class ProductsController extends ApiController
             });
 
             $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Product Detailed: '.round($totalTime * 1000, 2).'ms (Cache: '.($fromCache ? 'HIT' : 'MISS').') ===');
 
             return response()->json([
                 'success' => true,
@@ -313,7 +341,7 @@ class ProductsController extends ApiController
         } catch (\Exception $e) {
             Log::error('Error ProductsController@showDetailed', ['error' => $e->getMessage(), 'id' => $id]);
 
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => ErpErrorSanitizer::forClient($e)], 500);
         }
     }
 
@@ -364,7 +392,6 @@ class ProductsController extends ApiController
             });
 
             $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Product Supplier: '.round($totalTime * 1000, 2).'ms (Cache: '.($fromCache ? 'HIT' : 'MISS').') ===');
 
             return response()->json([
                 'success' => true,
@@ -378,7 +405,7 @@ class ProductsController extends ApiController
         } catch (\Exception $e) {
             Log::error('Error ProductsController@showSupplier', ['error' => $e->getMessage(), 'id' => $id]);
 
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => ErpErrorSanitizer::forClient($e)], 500);
         }
     }
 
@@ -441,14 +468,19 @@ class ProductsController extends ApiController
         $startTime = microtime(true);
 
         try {
-            $limit = min((int) $request->get('limit', 10), 100);
-            $offset = (int) $request->get('offset', 0);
+            $limit = max(1, min((int) $request->get('limit', 10), 100));
+            $offset = max(0, (int) $request->get('offset', 0));
 
+            // DESCRIPCION es CLOB: leerla como LOB cuesta una ida y vuelta por
+            // fila (2,8 s para 20 filas frente a 40 ms). Se trae como VARCHAR2
+            // (BD en WE8MSWIN1252: 1 byte/carácter, 4000 caracteres seguros) y
+            // solo las más largas se completan después en una consulta aparte.
             $query = Modelo::select([
-                'idmodelo', 'codigo', 'nombre', 'descripcion',
+                'idmodelo', 'codigo', 'nombre',
                 'estado', 'estado_publicado_web', 'idmarca', 'idgrupo_cl',
                 'fcreacion', 'fmodificacion',
             ])
+                ->withInlineDescripcion()
                 ->whereNull('fbaja')
                 ->whereNotNull('nombre')
                 ->whereRaw('LENGTH("NOMBRE") > 0');
@@ -534,13 +566,11 @@ class ProductsController extends ApiController
                 : 'fcreacion';
 
             $modelos = $query
+                // La jerarquía de catálogo (modelo y artículos) sale de
+                // CatalogHierarchyService: antes eran 5 consultas por modelo
+                // más 4 por CADA artículo (N+1, ~70 de 83 consultas).
                 ->with([
-                    'grupoCl:idgrupo_cl,idsubfamilia_cl',
-                    'grupoCl.subfamiliaCl:idsubfamilia_cl,idfamilia_cl',
-                    'grupoCl.subfamiliaCl.familiaCl:idfamilia_cl,idcategoria_cl,descripcion,desc_corta,estado',
-                    'grupoCl.subfamiliaCl.familiaCl.categoriaCl:idcategoria_cl,iddeporte_cl,descripcion',
-                    'grupoCl.subfamiliaCl.familiaCl.categoriaCl.deporteCl:iddeporte_cl,descripcion,desc_corta,estado',
-                    'articulos' => fn ($q) => $q->whereNull('fbaja')->orderBy('codigo'),
+                    'articulos' => fn ($q) => $q->select(self::ARTICULO_COLUMNS)->whereNull('fbaja')->orderBy('codigo'),
                 ])
                 ->orderBy($orderByCol, 'desc')
                 ->offset($offset)
@@ -550,13 +580,18 @@ class ProductsController extends ApiController
             $hasMore = $modelos->count() > $limit;
             $modelos = $modelos->take($limit);
 
+            Modelo::hydrateLongDescriptions($modelos);
+
+            $hierarchy = $this->hierarchy->forGroups(
+                $modelos->pluck('idgrupo_cl')
+                    ->merge($modelos->flatMap(fn ($m) => $m->articulos->pluck('idgrupo_cl')))
+                    ->all()
+            );
+
             // Load artiprovs for all articulos in a single query
             $articuloIds = $modelos->flatMap(fn ($m) => $m->articulos->pluck('idarticulo'))->unique()->all();
 
-            $artiprovsByArticulo = Artiprov::select([
-                'idartiprov', 'idproveedor', 'idarticulo', 'codigo',
-                'descripcion', 'pcosto', 'pordefecto', 'estado',
-            ])
+            $artiprovsByArticulo = Artiprov::select(self::ARTIPROV_COLUMNS)
                 ->with(['proveedor:idproveedor,nombre,cif,email,estado'])
                 ->whereIn('idarticulo', $articuloIds)
                 ->whereNull('fbaja')
@@ -566,14 +601,15 @@ class ProductsController extends ApiController
             // Características (modelo + por artículo) para todos los modelos de la página, en batch
             $modeloIds = $modelos->pluck('idmodelo')->all();
             $modelCharacteristicsByModelo = $this->modelCharacteristicsByModelo($modeloIds);
-            $variantCharacteristicsByArticulo = $this->variantCharacteristicsByArticulo($articuloIds);
+            $variantCharacteristicsByArticulo = $this->variantCharacteristicsByModelos($modeloIds);
 
-            $data = $modelos->map(function ($modelo) use ($artiprovsByArticulo, $modelCharacteristicsByModelo, $variantCharacteristicsByArticulo) {
-                $familiaCl = $modelo->grupoCl?->subfamiliaCl?->familiaCl;
-                $categoriaCl = $familiaCl?->categoriaCl;
-                $deporteCl = $categoriaCl?->deporteCl;
+            $data = $modelos->map(function ($modelo) use ($artiprovsByArticulo, $modelCharacteristicsByModelo, $variantCharacteristicsByArticulo, $hierarchy) {
+                $modeloHierarchy = $hierarchy[(int) $modelo->idgrupo_cl] ?? null;
+                $familia = $modeloHierarchy['familia'] ?? null;
+                $deporte = $modeloHierarchy['deporte'] ?? null;
 
-                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovsByArticulo, $variantCharacteristicsByArticulo) {
+                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovsByArticulo, $variantCharacteristicsByArticulo, $hierarchy) {
+                    $h = $hierarchy[(int) $a->idgrupo_cl] ?? null;
                     $aps = $artiprovsByArticulo->get($a->idarticulo, collect());
                     $apDefault = $aps->firstWhere('pordefecto', true) ?? $aps->first();
 
@@ -588,10 +624,10 @@ class ProductsController extends ApiController
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
                         'web_status' => (int) $a->getRawOriginal('estado_publicado_web'),
-                        'categorie' => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
+                        'categorie' => $h['idfamilia_cl'] ?? $a->idgrupo_cl,
                         'grupo' => $a->idgrupo_cl,
-                        'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
-                        'sport_id' => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
+                        'subfamily_id' => $h['idsubfamilia_cl'] ?? null,
+                        'sport_id' => $h['iddeporte_cl'] ?? null,
                         'supplier' => $aps->map(fn ($ap) => [
                             'id' => $ap->idartiprov,
                             'supplier_id' => $ap->idproveedor,
@@ -626,18 +662,7 @@ class ProductsController extends ApiController
                     'web_status' => (int) $modelo->getRawOriginal('estado_publicado_web'),
                     'marca' => $modelo->idmarca,
                     'characteristics' => $this->mapModelCharacteristics($modelCharacteristicsByModelo->get($modelo->idmodelo, collect())),
-                    'categorie' => $familiaCl ? [
-                        'id' => $familiaCl->idfamilia_cl,
-                        'description' => $familiaCl->descripcion,
-                        'description_short' => $familiaCl->desc_corta,
-                        'available' => $familiaCl->estado,
-                        'sport' => $deporteCl ? [
-                            'id' => $deporteCl->iddeporte_cl,
-                            'description' => $deporteCl->descripcion,
-                            'description_short' => $deporteCl->desc_corta,
-                            'available' => $deporteCl->estado,
-                        ] : null,
-                    ] : null,
+                    'categorie' => $familia ? $familia + ['sport' => $deporte] : null,
                     'supplier' => $defaultProveedor ? [
                         'id' => $defaultProveedor->idproveedor,
                         'name' => $defaultProveedor->nombre,
@@ -656,7 +681,6 @@ class ProductsController extends ApiController
             })->values();
 
             $totalTime = microtime(true) - $startTime;
-            Log::debug('=== TIEMPO Products Filter: '.round($totalTime * 1000, 2).'ms ===');
 
             return response()->json([
                 'success' => true,
@@ -686,7 +710,7 @@ class ProductsController extends ApiController
         } catch (\Exception $e) {
             Log::error('Error ProductsController@filter', ['error' => $e->getMessage()]);
 
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => ErpErrorSanitizer::forClient($e)], 500);
         }
     }
 
@@ -721,11 +745,25 @@ class ProductsController extends ApiController
      * Características asignadas a nivel artículo/variante (w_perfiles_prod + w_valores_prod +
      * w_caracteristicas_prod), agrupadas por idarticulo. Batched para N artículos en una sola query.
      */
-    private function variantCharacteristicsByArticulo(array $articuloIds): Collection
+    /**
+     * Características de variante (W_PERFILES_PROD) de los artículos de unos
+     * modelos. Filtra con una subconsulta sobre ARTICULO y no con la lista de
+     * idarticulo: W_PERFILES_PROD no tiene índice por IDARTICULO y con una
+     * lista IN de 191 ids tardaba 6,6 s frente a 0,2 s con la subconsulta.
+     *
+     * @param  array<int, int|string>  $modeloIds
+     */
+    private function variantCharacteristicsByModelos(array $modeloIds): Collection
     {
+        if ($modeloIds === []) {
+            return collect();
+        }
+
         return WPerfilesProd::select(['id', 'id_valor', 'idarticulo', 'estado', 'orden'])
             ->with(['valor:id,id_caracteristica,nombre', 'valor.caracteristica:id,nombre'])
-            ->whereIn('idarticulo', $articuloIds)
+            ->whereIn('idarticulo', fn ($q) => $q->select('idarticulo')->from('articulo')
+                ->whereIn('idmodelo', $modeloIds)
+                ->whereNull('fbaja'))
             ->whereNull('fbaja')
             ->get()
             ->groupBy('idarticulo');

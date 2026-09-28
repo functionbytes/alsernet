@@ -254,7 +254,7 @@ class SupplierWebSourceImportSeeder extends Seeder
                     // se queda por debajo del límite y evita ráfagas de 429.
                     usleep(1_100_000);
 
-                    $response = Http::timeout(15)->get("{$internalBaseUrl}/suppliers/{$erpId}");
+                    $response = Http::erpApi()->timeout(15)->get("{$internalBaseUrl}/suppliers/{$erpId}");
 
                     if (! $response->successful()) {
                         throw new Exception("ERP API error {$response->status()}");

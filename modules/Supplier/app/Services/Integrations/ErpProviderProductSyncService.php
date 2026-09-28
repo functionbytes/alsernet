@@ -35,6 +35,56 @@ class ErpProviderProductSyncService
     }
 
     /**
+     * Productos de un proveedor desde /api/erp/suppliers/{id}/products,
+     * paginado de 500 en 500 modelos y juntado en una sola respuesta.
+     *
+     * Sin paginar, un proveedor de 14k artículos eran ~7 MB y ~20 s en una
+     * sola petición (con riesgo de timeout); por páginas, <1 s cada una. Los
+     * productos se concatenan y sports/categories/subfamilies se unen por id,
+     * así que el resultado es el mismo que la respuesta completa. Si el ERP no
+     * pagina (no devuelve `pagination`), la primera respuesta ya es completa.
+     *
+     * @return array{products: array<int, array>, sports: array<int, array>, categories: array<int, array>, subfamilies: array<int, array>}
+     */
+    private function fetchSupplierProducts(int $erpProviderId): array
+    {
+        $pageSize = 500;
+        $offset = 0;
+        $products = [];
+        $taxonomy = ['sports' => [], 'categories' => [], 'subfamilies' => []];
+
+        do {
+            $response = Http::erpApi()->timeout(60)->get("{$this->erpBaseUrl}/suppliers/{$erpProviderId}/products", [
+                'limit' => $pageSize,
+                'offset' => $offset,
+            ]);
+
+            if (! $response->successful()) {
+                throw new Exception("ERP API error: {$response->status()} - {$response->body()}");
+            }
+
+            $data = $response->json();
+
+            if (! ($data['success'] ?? false)) {
+                throw new Exception($data['error'] ?? 'Unknown API error');
+            }
+
+            $page = $data['data'] ?? $data;
+            array_push($products, ...($page['products'] ?? $data['products'] ?? []));
+            foreach ($taxonomy as $key => $items) {
+                foreach ($page[$key] ?? [] as $item) {
+                    $taxonomy[$key][$item['id'] ?? count($taxonomy[$key])] = $item;
+                }
+            }
+
+            $hasMore = (bool) ($page['pagination']['hasMore'] ?? false);
+            $offset += $pageSize;
+        } while ($hasMore);
+
+        return ['products' => $products] + array_map('array_values', $taxonomy);
+    }
+
+    /**
      * Sincronizar productos de un proveedor específico
      *
      * @return array{success: bool, products: int, attributes: int, errors: array}
@@ -51,20 +101,8 @@ class ErpProviderProductSyncService
                 throw new Exception("Supplier not found: {$erpProviderId}. Sync suppliers first.");
             }
 
-            $response = Http::timeout(60)->get("{$this->erpBaseUrl}/suppliers/{$erpProviderId}/products");
-
-            if (! $response->successful()) {
-                throw new Exception("ERP API error: {$response->status()} - {$response->body()}");
-            }
-
-            $data = $response->json();
-
-            if (! ($data['success'] ?? false)) {
-                throw new Exception($data['error'] ?? 'Unknown API error');
-            }
-
-            $responseData = $data['data'] ?? $data;
-            $products = $responseData['products'] ?? $data['products'] ?? [];
+            $responseData = $this->fetchSupplierProducts($erpProviderId);
+            $products = $responseData['products'];
 
             // Apply filters
             $products = $this->applyProductFilters($products, $filterCriteria);

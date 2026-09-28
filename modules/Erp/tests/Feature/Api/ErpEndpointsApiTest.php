@@ -5,6 +5,9 @@ namespace Modules\Erp\Tests\Feature\Api;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Erp\Models\ErpEndpoint;
+use Modules\Erp\Models\ErpEndpointLog;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class ErpEndpointsApiTest extends TestCase
@@ -22,6 +25,11 @@ class ErpEndpointsApiTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
+
+        // Las rutas de gestión exigen 'erp.endpoints.manage' (ver routes/api.php).
+        Permission::firstOrCreate(['name' => 'erp.endpoints.manage', 'guard_name' => 'web']);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->user->givePermissionTo('erp.endpoints.manage');
     }
 
     public function test_can_list_endpoints(): void
@@ -43,7 +51,7 @@ class ErpEndpointsApiTest extends TestCase
     {
         $data = [
             'name' => 'Test Endpoint',
-            'url' => 'https://api.example.com/users',
+            'url' => 'https://example.com/users',
             'method' => 'GET',
             'description' => 'Test endpoint for users',
             'timeout' => 30,
@@ -100,7 +108,7 @@ class ErpEndpointsApiTest extends TestCase
 
         $data = [
             'name' => 'Updated Endpoint',
-            'url' => 'https://api.updated.com/endpoint',
+            'url' => 'https://example.org/endpoint',
             'method' => 'POST',
             'is_active' => false,
         ];
@@ -158,7 +166,7 @@ class ErpEndpointsApiTest extends TestCase
     public function test_can_get_endpoint_logs(): void
     {
         $endpoint = ErpEndpoint::factory()->create();
-        $endpoint->logs()->factory(5)->create();
+        ErpEndpointLog::factory(5)->create(['endpoint_id' => $endpoint->id]);
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/erp/v2/endpoints/{$endpoint->id}/logs");
@@ -175,7 +183,7 @@ class ErpEndpointsApiTest extends TestCase
     public function test_can_clear_endpoint_logs(): void
     {
         $endpoint = ErpEndpoint::factory()->create();
-        $endpoint->logs()->factory(3)->create();
+        ErpEndpointLog::factory(3)->create(['endpoint_id' => $endpoint->id]);
 
         $response = $this->actingAs($this->user)
             ->deleteJson("/api/erp/v2/endpoints/{$endpoint->id}/logs");
@@ -187,8 +195,8 @@ class ErpEndpointsApiTest extends TestCase
     public function test_can_get_endpoint_statistics(): void
     {
         $endpoint = ErpEndpoint::factory()->create();
-        $endpoint->logs()->factory(5)->create(['success' => true]);
-        $endpoint->logs()->factory(2)->create(['success' => false]);
+        ErpEndpointLog::factory(5)->create(['endpoint_id' => $endpoint->id, 'success' => true]);
+        ErpEndpointLog::factory(2)->create(['endpoint_id' => $endpoint->id, 'success' => false]);
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/erp/v2/endpoints/{$endpoint->id}/statistics");
@@ -213,5 +221,19 @@ class ErpEndpointsApiTest extends TestCase
         $response = $this->getJson("/api/erp/v2/endpoints/{$endpoint->id}");
 
         $response->assertUnauthorized();
+    }
+
+    public function test_unversioned_prefix_is_marked_deprecated(): void
+    {
+        $this->actingAs($this->user)
+            ->getJson('/api/erp/endpoints')
+            ->assertOk()
+            ->assertHeader('Deprecation', 'true')
+            ->assertHeader('Link', '</api/erp/v2/endpoints>; rel="successor-version"');
+
+        $this->actingAs($this->user)
+            ->getJson('/api/erp/v2/endpoints')
+            ->assertOk()
+            ->assertHeaderMissing('Deprecation');
     }
 }

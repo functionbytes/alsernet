@@ -15,6 +15,11 @@ use Modules\Core\Models\Setting;
 abstract class ApiController extends Controller
 {
     /**
+     * Segundos que dura la marca de "calculando" de cachedResult().
+     */
+    private const SENTINEL_TTL = 30;
+
+    /**
      * Ejecuta un callback con o sin caché según oracle_enable_cache.
      *
      * @return array{data: mixed, cached: bool}
@@ -36,9 +41,19 @@ abstract class ApiController extends Controller
         // trips and (2) let N concurrent misses each fire the (heavy Oracle)
         // callback in parallel — classic cache stampede.
         $sentinel = '__cache_miss_sentinel__';
-        if ($cache->add($key, $sentinel, $ttl)) {
+        // El centinela vive poco: si el worker que lo puso muere sin poder
+        // borrarlo (timeout, OOM), no bloquea la clave durante todo el TTL.
+        if ($cache->add($key, $sentinel, self::SENTINEL_TTL)) {
             // We claimed the miss — populate the real value
-            $data = $callback();
+            try {
+                $data = $callback();
+            } catch (\Throwable $e) {
+                // Sin esto el centinela se quedaba el TTL entero (1 h): cada
+                // petición esperaba 150 ms y consultaba Oracle SIN cachear.
+                $cache->forget($key);
+
+                throw $e;
+            }
             $cache->put($key, $data, $ttl);
 
             return ['data' => $data, 'cached' => false];

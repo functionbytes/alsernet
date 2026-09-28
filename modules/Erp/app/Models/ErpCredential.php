@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
+use Modules\Erp\Database\Factories\ErpCredentialFactory;
 
 class ErpCredential extends Model
 {
@@ -13,6 +14,7 @@ class ErpCredential extends Model
 
     protected $fillable = [
         'account_id',
+        'endpoint_id',
         'name',
         'description',
         'auth_type',
@@ -39,6 +41,17 @@ class ErpCredential extends Model
         'token',
         'api_key',
     ];
+
+    protected static function booted(): void
+    {
+        // `name` es NOT NULL en BD pero opcional en los FormRequest: sin esto,
+        // crear una credencial sin nombre desde la API reventaba con un 500.
+        static::creating(function (self $credential): void {
+            if (blank($credential->name)) {
+                $credential->name = ucfirst((string) $credential->auth_type).' #'.now()->format('YmdHis');
+            }
+        });
+    }
 
     /**
      * Get the endpoint this credential belongs to
@@ -222,5 +235,10 @@ class ErpCredential extends Model
                 $q->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             });
+    }
+
+    protected static function newFactory(): ErpCredentialFactory
+    {
+        return ErpCredentialFactory::new();
     }
 }

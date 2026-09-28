@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Erp\Database\Factories\ErpEndpointLogFactory;
 
 class ErpEndpointLog extends Model
 {
@@ -16,6 +17,7 @@ class ErpEndpointLog extends Model
     protected $fillable = [
         'endpoint_id',
         'user_id',
+        'token_id',
         'method',
         'url',
         'request_headers',
@@ -52,7 +54,35 @@ class ErpEndpointLog extends Model
             if (! $log->created_at) {
                 $log->created_at = now();
             }
+
+            $log->request_headers = self::redactHeaders($log->request_headers);
+            $log->response_headers = self::redactHeaders($log->response_headers);
         });
+    }
+
+    /**
+     * Cabeceras cuyo valor no se persiste en el log (credenciales y sesión).
+     */
+    private const REDACTED_HEADERS = [
+        'authorization', 'proxy-authorization', 'x-erp-token', 'x-api-key',
+        'cookie', 'set-cookie', 'x-csrf-token', 'x-xsrf-token',
+    ];
+
+    public static function redactHeaders(?array $headers): ?array
+    {
+        if ($headers === null) {
+            return null;
+        }
+
+        foreach ($headers as $name => $value) {
+            if (in_array(strtolower((string) $name), self::REDACTED_HEADERS, true)
+                || str_contains(strtolower((string) $name), 'token')
+                || str_contains(strtolower((string) $name), 'secret')) {
+                $headers[$name] = '[REDACTED]';
+            }
+        }
+
+        return $headers;
     }
 
     /**
@@ -161,5 +191,10 @@ class ErpEndpointLog extends Model
             $this->status_code >= 500 => 'danger',
             default => 'secondary',
         };
+    }
+
+    protected static function newFactory(): ErpEndpointLogFactory
+    {
+        return ErpEndpointLogFactory::new();
     }
 }

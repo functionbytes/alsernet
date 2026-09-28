@@ -42,7 +42,7 @@ class ErpProviderSyncService
             $hasMore = true;
 
             while ($hasMore) {
-                $response = Http::timeout(30)->get("{$this->internalBaseUrl}/suppliers", [
+                $response = Http::erpApi()->timeout(30)->get("{$this->internalBaseUrl}/suppliers", [
                     'limit' => $this->pageSize,
                     'offset' => $offset,
                 ]);
@@ -98,7 +98,7 @@ class ErpProviderSyncService
      */
     public function syncProviderById(int $erpId): array
     {
-        $response = Http::timeout(30)->get("{$this->internalBaseUrl}/suppliers/{$erpId}/detailed");
+        $response = Http::erpApi()->timeout(30)->get("{$this->internalBaseUrl}/suppliers/{$erpId}/detailed");
 
         if (! $response->successful()) {
             throw new Exception("ERP API error {$response->status()} para proveedor {$erpId}");

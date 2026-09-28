@@ -3,12 +3,10 @@
 namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Erp\Models\Oracle\Otros\GrupoCl;
 use Modules\Erp\Models\Oracle\Promocion\Lpromocionsubfamiliaincluida;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierSubfamily;
 
 /**
  * Modelo para la tabla SUBFAMILIA_CL
@@ -78,14 +76,6 @@ class SubfamiliaCl extends Model
     public function familiaCl()
     {
         return $this->belongsTo(FamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
-    }
-
-    /**
-     * Relación inversa: SupplierSubfamilies (sincronización Supplier)
-     */
-    public function supplierSubfamilies(): HasMany
-    {
-        return $this->hasMany(SupplierSubfamily::class, 'erp_subfamily_id', 'idsubfamilia_cl');
     }
 
     /**

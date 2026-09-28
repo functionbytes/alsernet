@@ -3,11 +3,9 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Erp\Models\Oracle\Configuracion\FamiliaCl;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierErpCategory;
 
 /**
  * Modelo para la tabla CATEGORIA_CL
@@ -65,14 +63,6 @@ class CategoriaCl extends Model
     public function deporteCl()
     {
         return $this->belongsTo(DeporteCl::class, 'iddeporte_cl', 'iddeporte_cl');
-    }
-
-    /**
-     * Relación inversa: SupplierErpCategories (sincronización Supplier)
-     */
-    public function supplierErpCategories(): HasMany
-    {
-        return $this->hasMany(SupplierErpCategory::class, 'erp_category_id', 'idcategoria_cl');
     }
 
     /**

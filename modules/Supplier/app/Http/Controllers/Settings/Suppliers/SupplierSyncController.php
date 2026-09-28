@@ -845,7 +845,7 @@ class SupplierSyncController extends Controller
                 $params['date_field'] = 'creation';
             }
 
-            $response = Http::timeout(15)->get("{$erpBaseUrl}/products/filter", $params);
+            $response = Http::erpApi()->timeout(15)->get("{$erpBaseUrl}/products/filter", $params);
 
             if (! $response->successful()) {
                 return response()->json(['success' => false, 'total' => null]);

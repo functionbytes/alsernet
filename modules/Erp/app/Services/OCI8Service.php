@@ -22,25 +22,68 @@ class OCI8Service
 
     private static $statementCache = [];
 
+    /**
+     * Segundos sin uso a partir de los cuales se hace ping antes de reutilizar
+     * la conexión (relevante en workers de cola, no en peticiones HTTP).
+     */
+    private const PING_AFTER_IDLE_SECONDS = 30;
+
+    private int $lastUsedAt = 0;
+
+    private static ?bool $callTimeoutSupported = null;
+
+    private static function callTimeoutSupported(): bool
+    {
+        return self::$callTimeoutSupported ??= function_exists('oci_set_call_timeout')
+            && function_exists('oci_client_version')
+            && version_compare((string) oci_client_version(), '18', '>=');
+    }
+
     public function __construct()
     {
-        $this->host = config('database.connections.oracle.host');
-        $this->port = config('database.connections.oracle.port');
+        $this->loadConfig();
+    }
+
+    /**
+     * Misma fuente de credenciales que DB::connection('oracle'): la config
+     * base pasada por el hook 'dynamic' de yajra (Settings del panel). Antes
+     * se leía config() sin procesar y, con credenciales definidas solo en el
+     * panel, OCI8 conectaba con usuario vacío (ORA-24415).
+     */
+    private function loadConfig(): void
+    {
+        $config = (array) config('database.connections.oracle', []);
+
+        if (! empty($config['dynamic']) && is_callable($config['dynamic'])) {
+            call_user_func_array($config['dynamic'], [&$config]);
+        }
+
+        $this->host = $config['host'] ?? null;
+        $this->port = $config['port'] ?? null;
         // El TNS connect string usa SERVICE_NAME (no SID). Fallback al campo
         // 'database' por compatibilidad con instalaciones donde sólo se definió ese.
-        $this->database = config('database.connections.oracle.service_name')
-            ?: config('database.connections.oracle.database');
-        $this->username = config('database.connections.oracle.username');
-        $this->password = config('database.connections.oracle.password');
+        $this->database = ($config['service_name'] ?? null) ?: ($config['database'] ?? null);
+        $this->username = $config['username'] ?? null;
+        $this->password = $config['password'] ?? null;
     }
 
     public function connect()
     {
-        if ($this->connection && $this->isAlive()) {
-            return $this->connection;
+        // query() llama a connect() en cada consulta: antes eso hacía un
+        // SELECT 1 FROM DUAL previo SIEMPRE (una ida y vuelta extra por
+        // consulta). Ahora solo se comprueba si la conexión lleva un rato
+        // parada, que es cuando Oracle/firewall pueden haberla cortado.
+        if ($this->connection) {
+            if (time() - $this->lastUsedAt < self::PING_AFTER_IDLE_SECONDS || $this->isAlive()) {
+                $this->lastUsedAt = time();
+
+                return $this->connection;
+            }
         }
 
         $this->connection = null;
+        // Recargar por si los ajustes cambiaron desde que se construyó (workers).
+        $this->loadConfig();
 
         if (empty($this->host) || empty($this->database)) {
             throw new \Exception(sprintf(
@@ -61,6 +104,8 @@ class OCI8Service
             $error = oci_error();
             throw new \Exception('OCI8 Connection failed: '.$error['message']);
         }
+
+        $this->lastUsedAt = time();
 
         return $this->connection;
     }
@@ -93,12 +138,14 @@ class OCI8Service
         // Set prefetch to reduce round trips
         oci_set_prefetch($stm, 100);
 
-        // Per-statement timeout (PHP 8.0+ with Oracle Client 18c+)
-        if ($timeoutMs !== null && function_exists('oci_set_call_timeout')) {
+        // Timeout por llamada: requiere Oracle Client 18c+ y se aplica a la
+        // CONEXIÓN (antes se pasaba el statement). Con un cliente antiguo
+        // emitía un NOTICE en cada consulta; ahora ni se intenta.
+        if ($timeoutMs !== null && self::callTimeoutSupported()) {
             try {
-                oci_set_call_timeout($stm, $timeoutMs);
+                oci_set_call_timeout($conn, $timeoutMs);
             } catch (\Throwable) {
-                // Oracle Client too old — proceed without timeout
+                self::$callTimeoutSupported = false;
             }
         }
 

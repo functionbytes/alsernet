@@ -21,7 +21,6 @@ use Modules\Erp\Models\Oracle\Otros\TarifaCabecera;
 use Modules\Erp\Models\Oracle\Pedido\LpedidocliCentral;
 use Modules\Erp\Models\Oracle\Web\WPerfilesProd;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierProduct;
 
 /**
  * Modelo para la tabla ARTICULO (Productos/Artículos)
@@ -299,14 +298,6 @@ class Articulo extends Model
     public function periodoCuota()
     {
         return $this->belongsTo(PeriodoCuota::class, 'idperiodo_cuota', 'idperiodo_cuota');
-    }
-
-    /**
-     * Relación inversa: SupplierProducts (sincronización Supplier)
-     */
-    public function supplierProducts(): HasMany
-    {
-        return $this->hasMany(SupplierProduct::class, 'erp_product_id', 'idarticulo');
     }
 
     /**

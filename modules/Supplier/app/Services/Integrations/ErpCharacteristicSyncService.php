@@ -268,7 +268,7 @@ class ErpCharacteristicSyncService
 
         do {
             try {
-                $response = Http::timeout(60)->get("{$this->erpBaseUrl}/{$endpoint}", $query);
+                $response = Http::erpApi()->timeout(60)->get("{$this->erpBaseUrl}/{$endpoint}", $query);
             } catch (ConnectionException $e) {
                 $attempt++;
                 Log::warning("ERP API connection error on {$endpoint}, retrying", [

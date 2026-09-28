@@ -17,6 +17,12 @@ return [
         'guard' => env('ERP_API_AUTH_GUARD', 'sanctum'),
         'throttle' => env('ERP_API_THROTTLE', '60,1'),
         'public_token_throttle' => env('ERP_PUBLIC_TOKEN_THROTTLE', '60,1'),
+
+        // Token con el que los módulos de este mismo servidor (Supplier) llaman
+        // a /api/erp/* vía Http::erpApi(). Sanctum (php artisan
+        // erp:issue-bridge-token --label=supplier-internal) o un ErpEndpointToken,
+        // según el guard. Sin él, activar la auth corta la sincronización.
+        'internal_token' => env('ERP_INTERNAL_API_TOKEN', ''),
     ],
 
     /*
@@ -39,6 +45,13 @@ return [
         // aparece en la documentación 1.28, pero es lo que usa el script de
         // cumpleaños que Álvarez tiene en producción.
         'lineas_generacion_bono' => env('ERP_ENDPOINT_LGENERACION_BONO', '/api-gestion/lgeneracion-bono/{id}/'),
+    ],
+
+    // Pedidos del cliente (/api/erp/customer/{id}/orders): true = consulta
+    // síncrona (~1 s); false = respuesta vacía con `loading` y carga en
+    // segundo plano (el modo antiguo, para cuando la consulta es muy lenta).
+    'orders' => [
+        'sync' => env('ERP_ORDERS_SYNC', true),
     ],
 
     'url_erp' => env('ERP_URL'),

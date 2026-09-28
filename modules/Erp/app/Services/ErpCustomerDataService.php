@@ -155,7 +155,7 @@ class ErpCustomerDataService
 
     /**
      * Devuelve el detalle completo de un pedido: cabecera, líneas, forma de pago y dirección.
-     * Retorna null si el pedido no existe o el usuario DB no tiene acceso.
+     * Retorna null si el pedido no existe, no es de ese cliente o el usuario DB no tiene acceso.
      *
      * @return array{id: int, number: string|null, status: int|null, date: string|null, phone: string|null,
      *               payment_method: string|null, address: string|null,
@@ -172,8 +172,12 @@ class ErpCustomerDataService
             "TO_CHAR(FSERVIDO, 'YYYY-MM-DD') AS FSERVIDO, ".
             'IDALMACEN, TIPOPEDIDO, OBSERVACIONES '.
             'FROM DEVELOPER.PEDIDOCLI_CENTRAL '.
-            'WHERE IDPEDIDOCLI_CENTRAL = :id AND ROWNUM <= 1',
-            ['id' => $orderId],
+            // IDCLIENTE en el WHERE: sin él, cualquier $orderId devolvía el
+            // pedido (y sus líneas) aunque fuese de otro cliente. Si la
+            // cabecera no pertenece al cliente se devuelve null y no se
+            // consultan líneas, forma de pago ni dirección.
+            'WHERE IDPEDIDOCLI_CENTRAL = :id AND IDCLIENTE = :cid AND ROWNUM <= 1',
+            ['id' => $orderId, 'cid' => $idcliente],
             10000
         );
 

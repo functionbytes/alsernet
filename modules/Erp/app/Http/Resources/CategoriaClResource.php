@@ -28,7 +28,7 @@ class CategoriaClResource extends JsonResource
             // Familias de esta categoría
             'familias' => $this->when(
                 $this->relationLoaded('familias'),
-                $this->familias->map(fn ($familia) => [
+                fn () => $this->familias->map(fn ($familia) => [
                     'id' => $familia->idfamilia_cl,
                     'descripcion' => $this->utf8Clean($familia->descripcion),
                     'descripcionCorta' => $this->utf8Clean($familia->desc_corta),
@@ -39,7 +39,7 @@ class CategoriaClResource extends JsonResource
             // Estadísticas
             'estadisticas' => $this->when(
                 $this->relationLoaded('familias'),
-                [
+                fn () => [
                     'totalFamilias' => $this->familias->count(),
                     'familiasActivas' => $this->familias->where('estado', 1)->count(),
                 ]

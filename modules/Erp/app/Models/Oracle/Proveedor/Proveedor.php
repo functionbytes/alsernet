@@ -3,7 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Models\Oracle\Configuracion\Banco;
@@ -13,7 +12,6 @@ use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
 use Modules\Erp\Models\Oracle\Configuracion\Tipoprov;
 use Modules\Erp\Models\Oracle\Otros\Subcuenta;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierErpProvider;
 
 /**
  * Modelo para la tabla PROVEEDOR
@@ -125,14 +123,6 @@ class Proveedor extends Model
     public function moneda()
     {
         return $this->belongsTo(Moneda::class, 'idmoneda', 'idmoneda');
-    }
-
-    /**
-     * Relación inversa: SupplierErpProviders (sincronización Supplier)
-     */
-    public function supplierErpProviders(): HasMany
-    {
-        return $this->hasMany(SupplierErpProvider::class, 'erp_provider_id', 'idproveedor');
     }
 
     /**
