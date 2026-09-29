@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -133,6 +134,44 @@ class WidgetConversationFlowTest extends TestCase
             'conversation_id' => $conversation->id,
             'type' => 'message',
         ], 'helpdesk');
+    }
+
+    /**
+     * Regresión: sendMessage() disparaba MessageReceived explícitamente Y el
+     * ConversationItemLinkPreviewObserver (canal 'web') lo volvía a disparar
+     * para el mismo item — el agente recibía DOS notificaciones "Nuevo
+     * mensaje del cliente" por cada mensaje real, doblando la ráfaga de
+     * toasts. Debe dispararse una sola vez.
+     */
+    public function test_widget_message_dispatches_message_received_only_once(): void
+    {
+        Event::fake([MessageReceived::class]);
+
+        $customer = Customer::factory()->create(['email' => 'once@example.com']);
+
+        $inbox = Inbox::firstOrCreate(
+            ['channel_type' => 'web', 'channel_id' => $this->web->id],
+            ['uid' => (string) Str::uuid(), 'name' => 'Widget Test', 'is_active' => true]
+        );
+
+        $conversation = Conversation::factory()->create([
+            'customer_id' => $customer->id,
+            'inbox_id' => $inbox->id,
+            'channel' => 'web',
+            'metadata' => ['widget_pubsub_token' => 'pubsub_flow_once_token'],
+        ]);
+
+        $response = $this->withHeaders(['X-Conversation-Token' => 'pubsub_flow_once_token'])->postJson(
+            route('helpdesk-livechat.widget.conversation.messages.send', $conversation->id),
+            [
+                'content' => 'Hola, necesito ayuda',
+                'customer_email' => $customer->email,
+            ]
+        );
+
+        $response->assertOk();
+
+        Event::assertDispatchedTimes(MessageReceived::class, 1);
     }
 
     public function test_get_messages_eager_loads_relations(): void

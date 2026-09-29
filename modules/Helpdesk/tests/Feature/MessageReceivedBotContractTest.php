@@ -84,5 +84,21 @@ class MessageReceivedBotContractTest extends HelpdeskTestCase
         $this->assertSame('incoming', $payload['message_type']);
         $this->assertSame([], $payload['options']);
         $this->assertNull($payload['prompt']);
+        $this->assertFalse($payload['ai']);
+        $this->assertNull($payload['ai_feedback']);
+    }
+
+    public function test_ai_agent_message_exposes_ai_flag_and_feedback(): void
+    {
+        $conversation = Conversation::factory()->create();
+        $item = $this->botItem($conversation, [
+            'ai_agent' => true,
+            'ai_feedback' => 1,
+        ]);
+
+        $payload = (new MessageReceived($conversation, $item))->broadcastWith();
+
+        $this->assertTrue($payload['ai']);
+        $this->assertSame(1, $payload['ai_feedback']);
     }
 }

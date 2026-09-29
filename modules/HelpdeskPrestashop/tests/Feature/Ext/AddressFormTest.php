@@ -214,4 +214,118 @@ class AddressFormTest extends TestCase
         $keys = Http::recorded()->map(fn ($pair) => $pair[0]->header('X-Alsernet-Idempotency-Key')[0] ?? null)->filter()->unique();
         $this->assertCount(2, $keys);
     }
+
+    // ─── update (PATCH) ───────────────────────────────────────────────────────
+
+    public function test_update_forwards_changed_fields_and_address_id_to_the_bridge(): void
+    {
+        Http::fake([$this->apiUrl => Http::response(['ok' => true, 'data' => ['id' => 991, 'updated' => true, 'default' => true]])]);
+
+        $this->actingAs($this->agent('helpdeskprestashop.addresses.manage'))
+            ->patchJson(
+                route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 991]),
+                ['postcode' => '28002', 'id_state' => 353, 'default' => 1],
+            )
+            ->assertOk()
+            ->assertJsonPath('data.id', 991)
+            ->assertJsonPath('data.updated', true);
+
+        Http::assertSent(function (Request $request) {
+            $data = $request->data();
+
+            return ($data['action'] ?? null) === 'customer.address.update'
+                && (int) ($data['address_id'] ?? 0) === 991
+                && ($data['postcode'] ?? null) === '28002'
+                && (int) ($data['id_state'] ?? 0) === 353
+                && ($data['default'] ?? null) === true
+                && isset($data['lookup'])
+                && $request->hasHeader('X-Alsernet-Idempotency-Key');
+        });
+    }
+
+    public function test_update_bridge_validation_error_is_returned_as_422_with_its_message(): void
+    {
+        Http::fake([$this->apiUrl => Http::response(['ok' => true, 'data' => [
+            'updated' => false, 'error' => 'invalid_postcode', 'message' => 'El código postal no tiene el formato de España (NNNNN).',
+        ]])]);
+
+        $this->actingAs($this->agent('helpdeskprestashop.addresses.manage'))
+            ->patchJson(route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 991]), ['postcode' => '2800'])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error', 'invalid_postcode')
+            ->assertJsonPath('message', 'El código postal no tiene el formato de España (NNNNN).');
+    }
+
+    public function test_update_reports_generic_error_when_bridge_returns_null(): void
+    {
+        // El bridge responde null cuando la dirección no pertenece al cliente.
+        Http::fake([$this->apiUrl => Http::response(['ok' => false])]);
+
+        $this->actingAs($this->agent('helpdeskprestashop.addresses.manage'))
+            ->patchJson(route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 991]), ['city' => 'Sevilla'])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'No se pudo actualizar la dirección.');
+    }
+
+    public function test_legacy_carts_manage_permission_still_updates_addresses(): void
+    {
+        Http::fake([$this->apiUrl => Http::response(['ok' => true, 'data' => ['id' => 7, 'updated' => true, 'default' => false]])]);
+
+        $this->actingAs($this->agent('helpdeskprestashop.carts.manage'))
+            ->patchJson(route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 7]), ['city' => 'Bilbao'])
+            ->assertOk();
+    }
+
+    public function test_update_without_address_permission_is_forbidden(): void
+    {
+        Http::fake();
+
+        $this->actingAs($this->agent())
+            ->patchJson(route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 991]), ['city' => 'Sevilla'])
+            ->assertForbidden();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_update_without_access_to_the_customer_is_forbidden(): void
+    {
+        Http::fake();
+
+        $user = User::factory()->create();
+        $user->givePermissionTo(['helpdeskprestashop.addresses.manage', 'helpdesk.customers.update']);
+
+        $this->actingAs($user)
+            ->patchJson(route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 991]), ['city' => 'Sevilla'])
+            ->assertForbidden();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_update_country_must_be_a_positive_integer(): void
+    {
+        Http::fake();
+
+        $this->actingAs($this->agent('helpdeskprestashop.addresses.manage'))
+            ->patchJson(route('manager.helpdesk.customers.ps.addresses.update', [$this->customer(), 991]), ['id_country' => 'ES'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('id_country');
+
+        Http::assertNothingSent();
+    }
+
+    public function test_update_rejects_customer_without_email(): void
+    {
+        Http::fake();
+
+        $this->actingAs($this->agent('helpdeskprestashop.addresses.manage'))
+            ->patchJson(
+                route('manager.helpdesk.customers.ps.addresses.update', [Customer::factory()->create(['email' => '']), 991]),
+                ['city' => 'Sevilla'],
+            )
+            ->assertStatus(422);
+
+        Http::assertNothingSent();
+    }
 }

@@ -5,6 +5,7 @@ use Modules\HelpdeskPrestashop\Http\Controllers\Managers\AssistedCartController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\ProductSearchController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsAddressActionsController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsCartActionsController;
+use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsCustomerDataController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsOrderActionsController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsOrderDetailController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsRecommendationController;
@@ -113,7 +114,7 @@ Route::delete('/customers/{customer}/ps/cart/{cart}/voucher', [PsCartActionsCont
 //     ->name('manager.helpdesk.customers.carts.show');
 
 // Direcciones PS del cliente
-Route::get('/customers/{customer}/ps/addresses', [ProductSearchController::class, 'addresses'])
+Route::get('/customers/{customer}/ps/addresses', [PsCustomerDataController::class, 'addresses'])
     ->name('manager.helpdesk.customers.ps.addresses');
 
 // Crear/editar direcciones — requiere helpdeskprestashop.carts.manage (mismo
@@ -128,11 +129,11 @@ Route::patch('/customers/{customer}/ps/addresses/{address}', [PsAddressActionsCo
     ->name('manager.helpdesk.customers.ps.addresses.update');
 
 // Provincias/estados de un país (desplegable del formulario de dirección)
-Route::get('/ps/country-states', [ProductSearchController::class, 'countryStates'])
+Route::get('/ps/country-states', [PsCustomerDataController::class, 'countryStates'])
     ->name('manager.helpdesk.ps.country-states');
 
 // Pedidos PS del cliente — carga diferida desde los tabs "Tienda"/"Carritos" del inbox
-Route::get('/customers/{customer}/ps/orders', [ProductSearchController::class, 'orders'])
+Route::get('/customers/{customer}/ps/orders', [PsCustomerDataController::class, 'orders'])
     ->name('manager.helpdesk.customers.ps.orders');
 
 // Vale de compensación desde el chat (límite por permiso, ver config vouchers)
@@ -141,23 +142,23 @@ Route::post('/customers/{customer}/ps/vouchers', [PsVoucherActionsController::cl
     ->name('manager.helpdesk.customers.ps.vouchers.store');
 
 // Devoluciones PS del cliente
-Route::get('/customers/{customer}/ps/returns', [ProductSearchController::class, 'returns'])
+Route::get('/customers/{customer}/ps/returns', [PsCustomerDataController::class, 'returns'])
     ->name('manager.helpdesk.customers.ps.returns');
 
 // Vales/cupones propios del cliente
-Route::get('/customers/{customer}/ps/vouchers', [ProductSearchController::class, 'vouchers'])
+Route::get('/customers/{customer}/ps/vouchers', [PsCustomerDataController::class, 'vouchers'])
     ->name('manager.helpdesk.customers.ps.vouchers');
 
 // Hilos de mensajes nativos de PrestaShop (contacto/atención al cliente)
-Route::get('/customers/{customer}/ps/messages', [ProductSearchController::class, 'messages'])
+Route::get('/customers/{customer}/ps/messages', [PsCustomerDataController::class, 'messages'])
     ->name('manager.helpdesk.customers.ps.messages');
 
 // Lista de deseos del cliente
-Route::get('/customers/{customer}/ps/wishlist', [ProductSearchController::class, 'wishlist'])
+Route::get('/customers/{customer}/ps/wishlist', [PsCustomerDataController::class, 'wishlist'])
     ->name('manager.helpdesk.customers.ps.wishlist');
 
 // Reembolsos reales del cliente (order_slip) — distinto de /returns (RMA)
-Route::get('/customers/{customer}/ps/refunds', [ProductSearchController::class, 'refunds'])
+Route::get('/customers/{customer}/ps/refunds', [PsCustomerDataController::class, 'refunds'])
     ->name('manager.helpdesk.customers.ps.refunds');
 
 // Categorías PS para el filtro de búsqueda
