@@ -82,13 +82,21 @@ class ConversationsController extends Controller
      * nothing) — never null — so the listing does not leak conversations from
      * other inboxes.
      *
-     * @return int[]|null null = no restriction (helpdesk.manage); array = allowed inbox IDs
+     * 22-sep-2026: helpdesk.conversations.view-all también da acceso sin
+     * restricción de inbox. El rol helpdesk-supervisor tiene view-all pero
+     * NO helpdesk.manage a propósito (ese permiso además abre Settings/
+     * Webhooks/Automatizaciones, que un supervisor no debe tocar — ver
+     * HelpdeskRolesSeeder::createSupervisorRole()), así que sin esto un
+     * supervisor sin fila en helpdesk_agent_inbox_capacity para cada inbox
+     * no veía "todas las bandejas" pese a que el rol lo promete.
+     *
+     * @return int[]|null null = no restriction (helpdesk.manage o conversations.view-all); array = allowed inbox IDs
      */
     private function getUserInboxIds(): ?array
     {
         $user = auth()->user();
 
-        if ($user->can('helpdesk.manage')) {
+        if ($user->can('helpdesk.manage') || $user->can('helpdesk.conversations.view-all')) {
             return null;
         }
 
@@ -387,6 +395,27 @@ class ConversationsController extends Controller
             ])
             ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])
             ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+            // 22-sep-2026: helpdesk.conversations.view-assigned-only (rol
+            // helpdesk-agent-restricted) existía como permiso desde que se
+            // creó ese rol, pero nada lo consultaba — un agente restringido
+            // veía exactamente el mismo listado que uno completo dentro de
+            // su inbox, incluidas las conversaciones de otros agentes.
+            //
+            // El "! hasFullAccess" es necesario porque este permiso puede
+            // colarse en un rol admin/supervisor vía un wildcard LIKE
+            // 'helpdesk.%' (pasó con helpdesk-admin, y también aparece en
+            // super-admin/super-settings) — sin este check, un "supervisor
+            // con acceso a todo" veía la bandeja completamente vacía pese a
+            // que el contador de "Sin leer"/"Cerradas" sí contaba todo
+            // (ese contador no pasa por esta query). Mismo criterio que
+            // ConversationPolicy::hasFullConversationAccess().
+            ->when(
+                auth()->user()->can('helpdesk.conversations.view-assigned-only')
+                    && ! auth()->user()->can('helpdesk.manage')
+                    && ! auth()->user()->can('helpdesk.conversations.view-all')
+                    && ! auth()->user()->can('helpdesk.conversations.manage'),
+                fn ($q) => $q->where('assignee_id', $userId)
+            )
             ->when($request->input('view') === 'deleted', fn ($q) => $q->onlyTrashed());
 
         // Conversations the chatbot is handling stay out of the inbox until it
@@ -499,8 +528,19 @@ class ConversationsController extends Controller
             'helpdesk:inbox:list-counters:'.($userId ?? 'guest'),
             30,
             function () use ($userInboxIds, $userId): array {
+                // 22-sep-2026: mismo fix que ConversationInboxMetricsService::
+                // sidebarCounters() — sin esto, un agente restringido
+                // (view-assigned-only) veía "Sin leer" con el total del inbox
+                // en vez de solo lo suyo. Ver comentario allí.
+                $restrictToOwn = auth()->user()
+                    && auth()->user()->can('helpdesk.conversations.view-assigned-only')
+                    && ! auth()->user()->can('helpdesk.manage')
+                    && ! auth()->user()->can('helpdesk.conversations.view-all')
+                    && ! auth()->user()->can('helpdesk.conversations.manage');
+
                 $baseCount = Conversation::query()
                     ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+                    ->when($restrictToOwn, fn ($q) => $q->where('assignee_id', $userId))
                     ->withoutActiveBot();
 
                 // Conversation::scopeDefaultViewVisible()/scopeUnreadFor() — única

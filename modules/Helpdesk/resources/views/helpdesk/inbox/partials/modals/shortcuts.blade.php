@@ -18,6 +18,7 @@
             ['Ir al hilo', ['Tab']],
             ['Ir al panel derecho', ['⇧', 'Tab']],
             ['Mostrar atajos', ['?']],
+            ['Salir de la conversación', ['Esc']],
         ]],
         ['Conversación', [
             ['Responder', ['R']],

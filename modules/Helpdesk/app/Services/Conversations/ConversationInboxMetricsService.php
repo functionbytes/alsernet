@@ -80,8 +80,28 @@ class ConversationInboxMetricsService
             'helpdesk:inbox:counters:'.($userId ?? 'guest'),
             [45, 120],
             function () use ($userId, $userInboxIds) {
+                // 22-sep-2026: ningún contador de aquí aplicaba la restricción
+                // de helpdesk.conversations.view-assigned-only (rol
+                // helpdesk-agent-restricted) — todos salían calculados sobre
+                // el inbox completo mientras que buildFilteredConversationsQuery()
+                // (ConversationsController) sí restringía el LISTADO a
+                // assignee_id = el propio agente. Resultado: un agente
+                // restringido veía, p. ej., "Cerradas: 8" en el badge pero la
+                // lista con sus 2 propias. Mismo criterio "no aplica si ya
+                // tiene acceso amplio" que ConversationPolicy::hasFullConversationAccess().
+                $restrictToOwn = false;
+                if ($userId) {
+                    $user = User::find($userId);
+                    $restrictToOwn = $user
+                        && $user->can('helpdesk.conversations.view-assigned-only')
+                        && ! $user->can('helpdesk.manage')
+                        && ! $user->can('helpdesk.conversations.view-all')
+                        && ! $user->can('helpdesk.conversations.manage');
+                }
+
                 $base = Conversation::query()
-                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds));
+                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+                    ->when($restrictToOwn, fn ($q) => $q->where('assignee_id', $userId));
 
                 // Inbox counters exclude conversations the bot is still handling.
                 $inbox = (clone $base)->withoutActiveBot();
@@ -322,6 +342,13 @@ class ConversationInboxMetricsService
         // inbox era una lista casi infinita en vez de los agentes reales del
         // equipo. Mismo rol que ya usa HelpdeskTickets\Services\
         // AssignmentService::getAvailableAgents()/CatalogCacheService::agents().
+        //
+        // 24-sep-2026: ese filtro se quedó en el único rol 'helpdesk-agent',
+        // así que un agente con perfil restringido (helpdesk-agent-
+        // restricted) o un supervisor/admin sin TAMBIÉN tener 'helpdesk-
+        // agent' nunca aparecía como opción para asignar — pese a ser
+        // agentes reales que sí pueden llevar conversaciones. Se amplía a
+        // los 4 roles "de agente" del módulo (ver HelpdeskRolesSeeder).
         return User::query()
             ->leftJoin('helpdesk_agent_settings', 'helpdesk_agent_settings.user_id', '=', 'users.id')
             ->select([
@@ -339,7 +366,12 @@ class ConversationInboxMetricsService
             // adopta, Eloquent aplicara el scope global por su cuenta — un
             // whereNull manual solo volveria a romperse cuando el esquema y el
             // codigo se separen.
-            ->whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', [
+                'helpdesk-agent',
+                'helpdesk-agent-restricted',
+                'helpdesk-supervisor',
+                'helpdesk-admin',
+            ]))
             ->get()
             ->each(fn (User $agent) => $agent->setAttribute('open_count', (int) ($openCounts[$agent->id] ?? 0)))
             ->sortBy([['open_count', 'asc'], ['firstname', 'asc']])
