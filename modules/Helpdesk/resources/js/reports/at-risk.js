@@ -19,7 +19,7 @@ $(function () {
     var riskLabels = { high: 'Alto (< 40)', medium: 'Medio (40 - 69)', good: 'Bueno (≥ 70)' };
 
     function esc(value) {
-        return $('<span>').text(value == null ? '' : value).html();
+        return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function healthBadge(score) {

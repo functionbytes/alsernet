@@ -199,6 +199,21 @@ return [
     'webhook_events_retention_days' => env('EMAIL_LOG_WEBHOOK_EVENTS_RETENTION_DAYS', 30),
 
     /*
+    | SES/SNS: TopicArn aceptados (lista separada por comas). La firma SNS
+    | solo prueba que el mensaje viene de AWS, no que el topic sea nuestro:
+    | cualquier cuenta AWS firma mensajes válidos de su propio topic. Vacío =
+    | se rechaza todo mensaje SES (fail-closed). 29-sep-2026.
+    */
+    'ses_allowed_topic_arns' => array_values(array_filter(array_map('trim', explode(',', (string) env('EMAIL_LOG_SES_ALLOWED_TOPIC_ARNS', ''))))),
+
+    /*
+    | Mailrelay: aceptar también el token por query (?token=). Desactivado
+    | por defecto: el token en la URL acaba en los access logs. Solo activar
+    | si Mailrelay no permite enviar la cabecera X-Mailrelay-Token. 29-sep-2026.
+    */
+    'mailrelay_allow_query_token' => (bool) env('EMAIL_LOG_MAILRELAY_ALLOW_QUERY_TOKEN', false),
+
+    /*
     |--------------------------------------------------------------------------
     | Reputación de dominio (SPF/DKIM/DMARC) y tasas de rebote/queja
     |--------------------------------------------------------------------------

@@ -78,6 +78,15 @@ return [
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
         ],
 
+        // 29-sep-2026: store de RateLimiter en su propia BD Redis (conexión
+        // "limiter" de config/database.php). `cache:clear` solo vacía el store
+        // por defecto, así que los bloqueos por intentos sobreviven a un despliegue.
+        'limiter' => [
+            'driver' => 'redis',
+            'connection' => 'limiter',
+            'lock_connection' => 'limiter',
+        ],
+
         'dynamodb' => [
             'driver' => 'dynamodb',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -113,5 +122,17 @@ return [
     */
 
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rate Limiter Store
+    |--------------------------------------------------------------------------
+    |
+    | 29-sep-2026: RateLimiter (throttle:*, bloqueos de login/2FA) usa el store
+    | "limiter" (Redis BD REDIS_LIMITER_DB, por defecto 3) en vez de la caché.
+    |
+    */
+
+    'limiter' => env('CACHE_LIMITER_STORE', 'limiter'),
 
 ];

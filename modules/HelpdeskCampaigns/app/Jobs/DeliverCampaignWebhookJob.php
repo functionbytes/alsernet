@@ -52,7 +52,9 @@ class DeliverCampaignWebhookJob implements ShouldQueue
             $headers['X-Helpdesk-Signature'] = "sha256={$signature}";
         }
 
+        // 29-sep-2026: sin seguir redirecciones (un 302 a una IP interna esquivaría el guard).
         Http::timeout(8)
+            ->withoutRedirecting()
             ->withHeaders($headers)
             ->post($this->url, $this->payload)
             ->throw();

@@ -4,9 +4,25 @@ namespace Modules\HelpdeskLivechat\Http\Requests\Widget;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Core\Rules\ValidMimeMagicBytes;
 
 class SendWidgetMessageRequest extends FormRequest
 {
+    /** Extensiones permitidas (nombre y contenido). Nunca html/svg/xml/js/php. */
+    public const ALLOWED_EXTENSIONS = 'jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,mp3,mp4,wav,ogg,webm';
+
+    /** Tipos MIME reales (finfo) admitidos para los adjuntos del widget. */
+    public const ALLOWED_MIME_TYPES = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/msword', 'application/vnd.ms-excel', 'application/CDFV2',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain', 'text/csv', 'application/csv',
+        'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/wave',
+        'audio/ogg', 'video/ogg', 'application/ogg', 'audio/webm', 'video/webm', 'video/mp4', 'audio/mp4',
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -29,7 +45,12 @@ class SendWidgetMessageRequest extends FormRequest
                 'max:10240',
                 // Allow common safe types. Dangerous formats (exe, html, js, php, svg)
                 // are excluded because svg can embed JS and server-executed files pose RCE risk.
-                'mimes:jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,mp3,mp4,wav,ogg,webm',
+                'mimes:'.self::ALLOWED_EXTENSIONS,
+                // 29-sep-2026: `mimes` solo mira el contenido; `extensions` impide
+                // un nombre .html/.svg con contenido de texto, y el tipo real se
+                // comprueba con finfo. El nombre en disco lo genera el servidor.
+                'extensions:'.self::ALLOWED_EXTENSIONS,
+                new ValidMimeMagicBytes(self::ALLOWED_MIME_TYPES),
             ],
         ];
     }
@@ -70,6 +91,7 @@ class SendWidgetMessageRequest extends FormRequest
             'attachments.*.file' => 'Cada adjunto debe ser un archivo válido.',
             'attachments.*.max' => 'Cada archivo no puede superar 10 MB.',
             'attachments.*.mimes' => 'Tipo de archivo no permitido. Se aceptan: imágenes, PDF, documentos Office, audio y video.',
+            'attachments.*.extensions' => 'Tipo de archivo no permitido. Se aceptan: imágenes, PDF, documentos Office, audio y video.',
         ];
     }
 }

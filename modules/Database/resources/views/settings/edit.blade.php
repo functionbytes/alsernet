@@ -97,12 +97,12 @@
                                 <label class="form-label fw-semibold">Contraseña</label>
                                 <input type="password" class="form-control @error('db_password') is-invalid @enderror"
                                        id="dbPassword" name="db_password"
-                                       value="{{ old('db_password', $settings['db_password']) }}"
-                                       placeholder="Dejar en blanco si no hay contraseña" maxlength="255">
+                                       value="" autocomplete="new-password"
+                                       placeholder="{{ ! empty($settings['db_password']) ? '•••••••• (sin cambios)' : '' }}" maxlength="255">
                                 @error('db_password')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                 @else
-                                    <small class="form-text text-muted">Opcional</small>
+                                    <small class="form-text text-muted">Déjala en blanco para no cambiarla</small>
                                 @enderror
                             </div>
 

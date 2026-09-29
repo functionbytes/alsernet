@@ -5,6 +5,7 @@ namespace Modules\Health\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Spatie\Health\Facades\Health;
@@ -145,39 +146,36 @@ class HealthController extends Controller
      */
     public function health()
     {
-        try {
-            $checkResults = Health::registeredChecks();
+        // 29-sep-2026: público y sin login, así que respuesta mínima (sin
+        // short_summary) y cacheada 60 s: antes cada petición ejecutaba todos
+        // los checks (BD, disco, redis, cola…).
+        $payload = Cache::remember('health:public:summary', 60, function () {
+            try {
+                $results = collect(Health::registeredChecks())->map(function ($check) {
+                    return [
+                        'name' => $check->getName(),
+                        'status' => $check->run()->status->value,
+                    ];
+                });
 
-            $results = collect($checkResults)->map(function ($check) {
-                $result = $check->run();
+                $overallStatus = 'ok';
+                if ($results->contains(fn ($result) => $result['status'] === 'failed')) {
+                    $overallStatus = 'failed';
+                } elseif ($results->contains(fn ($result) => $result['status'] === 'warning')) {
+                    $overallStatus = 'warning';
+                }
 
-                return [
-                    'name' => $check->getName(),
-                    'label' => $check->getLabel(),
-                    'status' => $result->status->value,
-                    'short_summary' => $result->shortSummary,
-                ];
-            });
-
-            $overallStatus = 'ok';
-            if ($results->contains(fn ($result) => $result['status'] === 'failed')) {
-                $overallStatus = 'failed';
-            } elseif ($results->contains(fn ($result) => $result['status'] === 'warning')) {
-                $overallStatus = 'warning';
+                return ['status' => $overallStatus, 'checks' => $results->values()->all(), 'code' => 200];
+            } catch (\Throwable $e) {
+                return ['status' => 'failed', 'checks' => [], 'code' => 503];
             }
+        });
 
-            return response()->json([
-                'status' => $overallStatus,
-                'timestamp' => now()->toIso8601String(),
-                'checks' => $results,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'failed',
-                'message' => 'Health check error',
-                'timestamp' => now()->toIso8601String(),
-            ], 503);
-        }
+        return response()->json([
+            'status' => $payload['status'],
+            'timestamp' => now()->toIso8601String(),
+            'checks' => $payload['checks'],
+        ], $payload['code']);
     }
 
     /**
@@ -185,6 +183,20 @@ class HealthController extends Controller
      * Validates document system integrity
      */
     public function documentsHealth()
+    {
+        // 29-sep-2026: cacheado 30 s (la tienda lo consulta en cada formulario).
+        $payload = Cache::remember('health:public:documents', 30, fn () => $this->buildDocumentsHealth());
+
+        return response()->json(
+            array_merge($payload['body'], ['timestamp' => now()->toIso8601String()]),
+            $payload['code']
+        );
+    }
+
+    /**
+     * @return array{body: array<string, mixed>, code: int}
+     */
+    private function buildDocumentsHealth(): array
     {
         try {
             $checks = [
@@ -218,19 +230,17 @@ class HealthController extends Controller
 
             $overallStatus = collect($checks)->every(fn ($check) => $check['status'] === 'ok') ? 'ok' : 'failed';
 
-            return response()->json([
+            return ['body' => [
                 'status' => $overallStatus,
                 'module' => 'documents',
-                'timestamp' => now()->toIso8601String(),
                 'checks' => $checks,
-            ]);
+            ], 'code' => 200];
         } catch (\Exception $e) {
-            return response()->json([
+            return ['body' => [
                 'status' => 'failed',
                 'module' => 'documents',
-                'message' => $e->getMessage(),
-                'timestamp' => now()->toIso8601String(),
-            ], 503);
+                'message' => 'Health check error',
+            ], 'code' => 503];
         }
     }
 
@@ -493,10 +503,18 @@ class HealthController extends Controller
      */
     public function generateSupervisorConfig(Request $request)
     {
+        // 29-sep-2026: se validan como enteros (antes iban tal cual a la
+        // plantilla .conf y un salto de línea añadía un [program:] nuevo).
+        $validated = $request->validate([
+            'workers' => 'nullable|integer|min:1|max:16',
+            'tries' => 'nullable|integer|min:1|max:10',
+            'timeout' => 'nullable|integer|min:30|max:3600',
+        ]);
+
         try {
-            $workers = $request->input('workers', 3);
-            $tries = $request->input('tries', 3);
-            $timeout = $request->input('timeout', 300);
+            $workers = (int) ($validated['workers'] ?? 3);
+            $tries = (int) ($validated['tries'] ?? 3);
+            $timeout = (int) ($validated['timeout'] ?? 300);
 
             // Run the artisan command
             Artisan::call('health:supervisor-config', [

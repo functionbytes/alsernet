@@ -15,6 +15,7 @@ use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Services\DocumentActionService;
 use Modules\Document\Services\DocumentEmailService;
 use Modules\Document\Services\DocumentTypeService;
+use Modules\Document\Support\DocumentMediaFiles;
 use Modules\Document\Traits\SendsDocumentEmails;
 use Modules\Mailer\Models\MailerTemplate;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -696,10 +697,24 @@ class DocumentValidationController extends Controller
                 ], 404);
             }
 
-            // Validar que venga al menos un archivo
+            // 29-sep-2026: lista blanca por contenido; antes solo 'file|max' y
+            // se guardaba con el nombre del cliente (.htaccess incluido).
             $request->validate([
-                'documents.*' => 'nullable|file|max:10240', // Máximo 10MB por archivo
+                'documents' => 'nullable|array',
+                'documents.*' => 'nullable|file|max:10240|mimes:'.implode(',', DocumentMediaFiles::ALLOWED_EXTENSIONS),
             ]);
+
+            // El tipo de documento (clave del array) tiene que ser uno de los
+            // requeridos por el expediente: acaba en custom_properties y en el HTML.
+            $requiredTypes = $document->getRequiredDocuments();
+            foreach (array_keys((array) $request->file('documents', [])) as $requestedType) {
+                if (! in_array((string) $requestedType, $requiredTypes, true)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tipo de documento no válido.',
+                    ], 422);
+                }
+            }
 
             $uploadedCount = 0;
             $uploadedFiles = [];
@@ -731,31 +746,30 @@ class DocumentValidationController extends Controller
                             $existingMedia->delete();
                         }
 
-                        // Agregar nueva media con propiedad custom para identificar el tipo
+                        $extension = DocumentMediaFiles::safeExtension($file);
+                        if ($extension === null) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Tipo de archivo no permitido.',
+                            ], 422);
+                        }
+
+                        // Agregar nueva media con propiedad custom para identificar el tipo.
+                        // Nombre en disco generado; el original solo como metadato.
                         $media = $document->addMedia($file)
-                            ->withCustomProperties(['document_type' => $docType])
+                            ->usingFileName(DocumentMediaFiles::storedName($extension))
+                            ->withCustomProperties([
+                                'document_type' => $docType,
+                                'original_name' => DocumentMediaFiles::originalName($file->getClientOriginalName()),
+                            ])
                             ->toMediaCollection($type);
-
-                        // Verificar que el custom property se guardó correctamente
-                        $savedProperty = $media->getCustomProperty('document_type');
-
-                        // Asegurar que el archivo es accesible al servidor web
-                        $mediaPath = $media->getPath();
-                        if (file_exists($mediaPath)) {
-                            @chmod($mediaPath, 0644);
-                        }
-                        // También cambiar permisos del directorio si es necesario
-                        $mediaDir = dirname($mediaPath);
-                        if (is_dir($mediaDir)) {
-                            @chmod($mediaDir, 0755);
-                        }
 
                         $uploadedFiles[] = [
                             'id' => $media->id,
                             'uuid' => $media->uuid,
                             'file' => $media->file_name,
                             'size' => $media->size,
-                            'path' => $media->getUrl(),
+                            'path' => DocumentMediaFiles::signedUrl($media),
                             'type' => $docType,
                         ];
 
@@ -860,7 +874,6 @@ class DocumentValidationController extends Controller
                         'id' => $media->id,
                         'file_name' => $media->file_name,
                         'size' => $media->size,
-                        'url' => $media->getUrl(),
                         'created_at' => $media->created_at->format('Y-m-d H:i:s'),
                     ];
                 }
@@ -915,14 +928,22 @@ class DocumentValidationController extends Controller
             $notes = $request->input('notes');
             $uploadedBy = auth()->check() ? auth()->user()->full_name : 'Admin';
 
-            // Sanitizar nombre de archivo para prevenir ataques XSS y path traversal
-            $originalName = $file->getClientOriginalName();
-            $sanitizedName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalName);
+            // 29-sep-2026: el nombre del cliente ya no llega al disco (un
+            // ".htaccess" con "%PDF-" pasaba mimes:pdf). Nombre generado +
+            // extensión según el contenido; el original solo como metadato.
+            $originalName = DocumentMediaFiles::originalName($file->getClientOriginalName());
+            $extension = DocumentMediaFiles::safeExtension($file, ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx']);
+            if ($extension === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipo de archivo no permitido.',
+                ], 422);
+            }
             $sanitizedNotes = $notes ? htmlspecialchars($notes, ENT_QUOTES, 'UTF-8') : null;
 
             // Guardar archivo en colección de adjuntos adicionales
             $media = $document->addMedia($file)
-                ->usingFileName($sanitizedName)
+                ->usingFileName(DocumentMediaFiles::storedName($extension))
                 ->withCustomProperties([
                     'original_name' => $originalName,
                     'uploaded_by' => $uploadedBy,
@@ -930,16 +951,6 @@ class DocumentValidationController extends Controller
                     'uploaded_at' => now()->toDateTimeString(),
                 ])
                 ->toMediaCollection('additional_attachments');
-
-            // Asegurar permisos
-            $mediaPath = $media->getPath();
-            if (file_exists($mediaPath)) {
-                @chmod($mediaPath, 0644);
-            }
-            $mediaDir = dirname($mediaPath);
-            if (is_dir($mediaDir)) {
-                @chmod($mediaDir, 0755);
-            }
 
             // Sincronizar JSON
             $document->syncAdditionalAttachmentsJson();
@@ -952,7 +963,7 @@ class DocumentValidationController extends Controller
                     'name' => $media->getCustomProperty('original_name'),
                     'file_name' => $media->file_name,
                     'size' => $media->size,
-                    'url' => $media->getUrl(),
+                    'url' => DocumentMediaFiles::signedUrl($media),
                     'uploaded_at' => $media->created_at->format('d/m/Y H:i'),
                     'uploaded_by' => $uploadedBy,
                     'notes' => $notes,

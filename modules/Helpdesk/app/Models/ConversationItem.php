@@ -407,7 +407,8 @@ class ConversationItem extends Model
             if (preg_match('#^https?://[^/]+(/.*)$#', $url, $m)) {
                 $path = $m[1];
                 // Solo reescribimos si el path empieza con /storage/ (nuestro disk public)
-                if (str_starts_with($path, '/storage/')) {
+                // …o con la ruta firmada del disco privado (A9; firma relativa, host indiferente).
+                if (str_starts_with($path, '/storage/') || str_starts_with($path, '/helpdesk/attachments/file/') || str_starts_with($path, '/hd/attachments/')) {
                     return $appUrl.$path;
                 }
             }

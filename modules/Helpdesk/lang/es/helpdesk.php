@@ -150,6 +150,8 @@ return [
             'retry_send_error' => 'No se pudo reintentar el envío.',
             'wa_window_closed' => 'Fuera de la ventana de 24h de WhatsApp: solo puedes enviar una plantilla (HSM), no texto libre.',
             'wa_window_closed_banner' => 'Han pasado más de 24h desde el último mensaje del cliente. WhatsApp solo permite responder con una plantilla aprobada.',
+            'unverified_email_banner' => 'Email no verificado: el visitante dijo ser :email, pero no se ha comprobado. No des datos personales ni cambies pedidos sin confirmar su identidad.',
+            'unverified_email_banner_generic' => 'Email no verificado: no des datos personales ni cambies pedidos sin confirmar la identidad del cliente.',
             'close_banner' => 'Cerrar aviso',
             'view_original' => 'Ver original',
             'video_not_supported' => 'Tu navegador no soporta video.',

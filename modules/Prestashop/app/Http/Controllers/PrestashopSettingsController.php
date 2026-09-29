@@ -13,6 +13,17 @@ use Modules\Prestashop\Entities\ProductBlockade;
 
 class PrestashopSettingsController extends Controller
 {
+    /** Campos secretos: nunca se pintan en el formulario ni se vacían al guardar. */
+    private const SECRET_KEYS = ['prestashop_db_password', 'prestashop_api_key'];
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Doble control (29-sep-2026): el grupo de rutas ya lo exige.
+        $this->middleware('can:prestashop.settings.manage');
+    }
+
     /**
      * Mostrar dashboard de configuración PrestaShop
      */
@@ -39,16 +50,33 @@ class PrestashopSettingsController extends Controller
      */
     public function update(Request $request)
     {
-        $rules = Setting::getPrestashopRules();
-        $validator = Validator::make($request->all(), $rules);
+        // 29-sep-2026: lista blanca de claves (antes se guardaba $request->all(),
+        // es decir, cualquier prestashop_*) y los secretos solo se sobrescriben
+        // si llegan con valor: el formulario ya no los rellena.
+        $rules = Setting::getPrestashopRules() + [
+            'prestashop_enabled' => 'nullable|in:yes,no',
+            'prestashop_sync_enabled' => 'nullable|in:yes,no',
+            'prestashop_sync_products' => 'nullable|in:yes,no',
+            'prestashop_sync_orders' => 'nullable|in:yes,no',
+            'prestashop_sync_customers' => 'nullable|in:yes,no',
+        ];
+        $validator = Validator::make($request->only(array_keys($rules)), $rules);
 
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
-                ->withInput();
+                ->withInput($request->except(self::SECRET_KEYS));
         }
 
-        Setting::setPrestashopSettings($request->all());
+        $data = $validator->validated();
+
+        foreach (self::SECRET_KEYS as $secret) {
+            if (! isset($data[$secret]) || $data[$secret] === '') {
+                unset($data[$secret]);
+            }
+        }
+
+        Setting::setPrestashopSettings($data);
 
         return redirect()->route('settings.prestashop.index')
             ->with('success', 'Configuración de PrestaShop actualizada correctamente');
@@ -69,7 +97,7 @@ class PrestashopSettingsController extends Controller
                     'port' => (int) $settings['prestashop_db_port'],
                     'database' => $settings['prestashop_db_database'],
                     'username' => $settings['prestashop_db_username'],
-                    'password' => $settings['prestashop_db_password'],
+                    'password' => $this->dbPassword($settings),
                     'charset' => 'utf8mb4',
                     'collation' => 'utf8mb4_unicode_ci',
                     'prefix' => '',
@@ -95,7 +123,7 @@ class PrestashopSettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 'offline',
-                'message' => 'No se pudo conectar a la base de datos de PrestaShop: '.$e->getMessage(),
+                'message' => 'No se pudo conectar a la base de datos de PrestaShop. Revisa el log para más detalle.',
             ], 500);
         }
     }
@@ -181,7 +209,7 @@ class PrestashopSettingsController extends Controller
                     'port' => (int) $settings['prestashop_db_port'],
                     'database' => $settings['prestashop_db_database'],
                     'username' => $settings['prestashop_db_username'],
-                    'password' => $settings['prestashop_db_password'],
+                    'password' => $this->dbPassword($settings),
                     'charset' => 'utf8mb4',
                     'collation' => 'utf8mb4_unicode_ci',
                     'prefix' => '',
@@ -205,9 +233,11 @@ class PrestashopSettingsController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Error en test de sincronización PrestaShop: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error en sincronización: '.$e->getMessage(),
+                'message' => 'Error en sincronización. Revisa el log para más detalle.',
             ], 500);
         }
     }
@@ -394,5 +424,20 @@ class PrestashopSettingsController extends Controller
                 'message' => 'Error al eliminar el bloqueo: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Contraseña de la BD de la tienda en claro. Tolera que Setting la guarde
+     * cifrada ('enc:' via setEncrypted) o en claro (filas antiguas).
+     */
+    private function dbPassword(array $settings): string
+    {
+        $password = (string) ($settings['prestashop_db_password'] ?? '');
+
+        if (str_starts_with($password, 'enc:')) {
+            $password = (string) Setting::getDecrypted('prestashop_db_password', $password);
+        }
+
+        return $password;
     }
 }

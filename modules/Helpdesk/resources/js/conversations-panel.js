@@ -609,7 +609,7 @@
             if (!url) return url;
             try {
                 const u = new URL(url);
-                if (u.origin !== window.location.origin && u.pathname.startsWith('/storage/')) {
+                if (u.origin !== window.location.origin && (u.pathname.startsWith('/storage/') || u.pathname.startsWith('/helpdesk/attachments/file/') || u.pathname.startsWith('/hd/attachments/'))) {
                     return window.location.origin + u.pathname + u.search;
                 }
             } catch (e) {}

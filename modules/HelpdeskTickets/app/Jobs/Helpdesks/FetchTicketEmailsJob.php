@@ -11,6 +11,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -480,6 +482,14 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
             'html_body' => EmailReplyQuoteStripper::stripHtml($parsed['body_html']),
             'is_internal' => false,
             'attachment_urls' => array_column($parsed['attachments'], 'path'),
+            // Nombre original de cada adjunto (mismo índice que attachment_urls):
+            // en disco van con nombre aleatorio. Solo para mostrar/descargar.
+            'metadata' => $parsed['attachments'] !== []
+                ? ['attachment_names' => array_map(
+                    static fn ($name): string => mb_substr(str_replace(['/', '\\', "\0"], '_', (string) $name), 0, 200),
+                    array_column($parsed['attachments'], 'filename'),
+                )]
+                : null,
         ]);
 
         // Sin esto, ningún listener de MessageAdded corría para un correo
@@ -496,7 +506,7 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
                 'type' => 'system',
                 'is_internal' => true,
                 'body' => (count($skippedAttachments) === 1 ? 'No se guardó un adjunto' : 'No se guardaron '.count($skippedAttachments).' adjuntos')
-                    .' de este correo por tener una extensión no permitida: '.implode(', ', $skippedAttachments).'.',
+                    .' de este correo por tener una extensión o un tipo no permitido: '.implode(', ', $skippedAttachments).'.',
             ]);
         }
 

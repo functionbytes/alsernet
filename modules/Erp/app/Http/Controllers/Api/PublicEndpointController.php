@@ -38,18 +38,12 @@ class PublicEndpointController extends Controller
         $startTime = microtime(true);
 
         try {
-            // Merge endpoint headers with request headers
+            // 29-sep-2026: solo se reenvían al destino las cabeceras de una lista
+            // blanca (antes iban todas: Cookie, Authorization, X-Forwarded-For…).
             $headers = array_merge(
                 $endpoint->headers ?? [],
-                $request->headers->all()
+                $this->forwardableHeaders($request)
             );
-
-            // Remove hop-by-hop headers
-            unset($headers['host']);
-            unset($headers['connection']);
-            unset($headers['keep-alive']);
-            unset($headers['upgrade']);
-            unset($headers['transfer-encoding']);
 
             // Build HTTP request
             $http = Http::timeout($endpoint->timeout ?? 30)
@@ -79,7 +73,7 @@ class PublicEndpointController extends Controller
                 'token_id' => $endpointToken->id,
                 'method' => $endpoint->method,
                 'url' => $url,
-                'request_headers' => $headers,
+                'request_headers' => $this->redactHeaders($headers),
                 'request_payload' => $request->json()->all() ?? [],
                 'response_headers' => $response->headers(),
                 'response_payload' => $response->json(),
@@ -112,7 +106,7 @@ class PublicEndpointController extends Controller
                 'token_id' => $endpointToken->id,
                 'method' => $endpoint->method,
                 'url' => $endpoint->url,
-                'request_headers' => $request->headers->all(),
+                'request_headers' => $this->redactHeaders($this->forwardableHeaders($request)),
                 'execution_time' => $executionTime,
                 'success' => false,
                 'error_message' => $e->getMessage(),
@@ -121,8 +115,45 @@ class PublicEndpointController extends Controller
 
             return response()->json([
                 'message' => 'Error al procesar la solicitud',
-                'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Cabeceras del llamante que se pueden reenviar al endpoint de destino.
+     *
+     * @return array<string, string>
+     */
+    private function forwardableHeaders(Request $request): array
+    {
+        $allowed = ['accept', 'accept-language', 'content-type'];
+        $out = [];
+        foreach ($allowed as $name) {
+            $value = $request->headers->get($name);
+            if ($value !== null && $value !== '') {
+                $out[$name] = $value;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Quita credenciales antes de guardar las cabeceras en erp_endpoint_logs
+     * (las de $endpoint->headers pueden llevar Authorization/API keys).
+     *
+     * @param  array<string, mixed>  $headers
+     * @return array<string, mixed>
+     */
+    private function redactHeaders(array $headers): array
+    {
+        $sensitive = ['authorization', 'proxy-authorization', 'cookie', 'set-cookie', 'x-api-key', 'api-key', 'x-auth-token', 'x-erp-token'];
+        foreach ($headers as $name => $value) {
+            if (in_array(strtolower((string) $name), $sensitive, true)) {
+                $headers[$name] = '[redacted]';
+            }
+        }
+
+        return $headers;
     }
 }

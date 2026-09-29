@@ -31,13 +31,15 @@ class AuditController extends Controller
             ->when($request->filled('email'), fn ($q) => $q->where('email', 'like', '%'.$request->input('email').'%'))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('ip'), fn ($q) => $q->where('ip_address', $request->input('ip')))
+            // Filtro por IP del personal (29-sep-2026): revisar solo accesos de usuarios identificados.
+            ->when($request->boolean('only_users'), fn ($q) => $q->whereNotNull('user_id'))
             ->orderByDesc('attempted_at')
             ->paginate((int) $request->input('per_page', 25))
             ->withQueryString();
 
         return view('auth::admin.audit.login-attempts', [
             'attempts' => $attempts,
-            'filters' => $request->only(['email', 'status', 'ip']),
+            'filters' => $request->only(['email', 'status', 'ip', 'only_users']),
         ]);
     }
 

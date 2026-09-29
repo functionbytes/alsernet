@@ -5,6 +5,8 @@ namespace Modules\Document\Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Modules\Document\Entities\DocumentValidatorGroup;
 
 class DocumentValidatorGroupUserSeeder extends Seeder
@@ -16,6 +18,13 @@ class DocumentValidatorGroupUserSeeder extends Seeder
      */
     public function run(): void
     {
+        // 29-sep-2026: crea usuarios de prueba @alsernet.test. Nunca en producción.
+        if (app()->isProduction()) {
+            $this->command?->warn('DocumentValidatorGroupUserSeeder: omitido en producción (crea usuarios de prueba).');
+
+            return;
+        }
+
         // Get groups
         $documentationTeam = DocumentValidatorGroup::firstWhere('key', 'documentation_team');
         $licensesTeam = DocumentValidatorGroup::firstWhere('key', 'licenses_team');
@@ -42,10 +51,14 @@ class DocumentValidatorGroupUserSeeder extends Seeder
                 [
                     'firstname' => $firstname,
                     'lastname' => 'User',
-                    'password' => bcrypt('secret'),
+                    'password' => Hash::make(Str::random(32)),
                     'available' => true,
                 ]
             );
+
+            if ($user->wasRecentlyCreated) {
+                $user->forceFill(['must_change_password' => true])->save();
+            }
             $usersByEmail[$email] = $user;
         }
 

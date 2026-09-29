@@ -26,11 +26,18 @@ class MediaHealthController extends Controller
 
         $healthy = collect($checks)->every(fn ($c) => $c['status'] === 'ok');
 
-        return response()->json([
+        // 29-sep-2026: la ruta es pública; el detalle (mensajes de excepción de
+        // BD/Redis, discos, migraciones) solo se devuelve a un usuario con media.manage.
+        $user = auth('sanctum')->user();
+        $payload = [
             'healthy' => $healthy,
-            'checks' => $checks,
             'timestamp' => now()->toIso8601String(),
-        ], $healthy ? 200 : 503);
+        ];
+        if ($user && $user->can('media.manage')) {
+            $payload['checks'] = $checks;
+        }
+
+        return response()->json($payload, $healthy ? 200 : 503);
     }
 
     private function checkDisks(): array

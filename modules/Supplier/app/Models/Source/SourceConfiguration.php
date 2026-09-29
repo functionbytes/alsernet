@@ -39,7 +39,8 @@ class SourceConfiguration extends Model
     protected function casts(): array
     {
         return [
-            'config_data' => 'array',
+            // 29-sep-2026: contiene contraseñas FTP/SFTP y tokens de API.
+            'config_data' => 'encrypted:array',
             'validation_errors' => 'array',
             'is_valid' => 'boolean',
             'is_enabled' => 'boolean',

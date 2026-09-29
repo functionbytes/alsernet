@@ -565,6 +565,40 @@
             window.location.href = url.toString();
         }
 
+        // Escape sale de la conversación abierta y queda como si no se
+        // hubiera seleccionado ninguna. Selección/hilo/panel derecho se
+        // arman con varios `data-*` derivados del cliente y de una llamada
+        // AJAX que solo existe para "hay conversación" (no para "ninguna
+        // seleccionada"), así que en vez de reconstruir ese estado vacío a
+        // mano en el cliente (con riesgo real de quedar desincronizado),
+        // se navega de verdad a la misma URL sin `selected` — conserva el
+        // resto de filtros (vista, bandeja, etc.) y el servidor renderiza el
+        // estado vacío real.
+        function deselectConversation() {
+            const url = new URL(window.location.href);
+            if (!url.searchParams.has('selected')) return;
+            url.searchParams.delete('selected');
+            window.location.href = url.toString();
+        }
+
+        // Otros manejadores de Escape ya existentes (modal genérico, menú
+        // contextual de mensaje, el modal de live view/pantalla del
+        // visitante, el modal de respuestas predefinidas) cierran su propia
+        // capa — si alguno está abierto, Escape debe quedarse en eso y no
+        // además deseleccionar la conversación de fondo.
+        function hasOpenOverlayForEscape() {
+            return $('.bv-modal.on').length > 0
+                || $('#bv-bubble-menu').length > 0
+                || $('#hdCannedOverlay').hasClass('open')
+                || document.querySelector('[id^="hd-liveview-modal-"].is-open') !== null
+                // Popups del composer: cada uno ya tiene su propio handler de
+                // Escape ligado directamente al input (ver más arriba en este
+                // fichero), que debe ganar mientras están abiertos.
+                || !$('#bv-th-search').hasClass('bv-hidden')
+                || $('#bv-slash-menu').is(':visible')
+                || ($('#bv-mention-menu').length > 0 && !$('#bv-mention-menu').hasClass('bv-hidden'));
+        }
+
         function archiveCurrentConversation() {
             const $btn = $('[data-bv-action="archive"][data-bv-url]').first();
             if ($btn.length) {
@@ -603,8 +637,16 @@
         let gTimer = null;
 
         $(document).on('keydown', function (e) {
-            // No interferir si el usuario está escribiendo
-            if ($(e.target).is('input, textarea, [contenteditable]')) return;
+            // No interferir si el usuario está escribiendo — Escape es la
+            // excepción: "R" activa el tab de responder y deja el foco en
+            // el composer, así que si Escape también se ignorara ahí, salir
+            // de la conversación requeriría primero sacar el foco a mano
+            // (con un solo Escape no pasaba nada; se necesitaban varios
+            // hasta que el navegador soltaba el foco por su cuenta). Los
+            // popups propios del composer (menú @mención, /respuestas
+            // rápidas, buscador del hilo) siguen ganando: ver
+            // hasOpenOverlayForEscape() en el case 'Escape' de más abajo.
+            if (e.key !== 'Escape' && $(e.target).is('input, textarea, [contenteditable]')) return;
 
             // ⌘/ o Ctrl+/ — toggle shortcuts modal
             if ((e.metaKey || e.ctrlKey) && e.key === '/') {
@@ -685,6 +727,10 @@
                 case '#':
                     e.preventDefault();
                     openModal('close-conv');
+                    break;
+                case 'Escape':
+                    if (hasOpenOverlayForEscape()) break;
+                    deselectConversation();
                     break;
                 case 'ArrowDown':
                 case 'j':
@@ -959,8 +1005,14 @@
             });
         });
 
+        // Seguridad 29-sep-2026: escapa también comillas (se usa en atributos).
         const escape = function (s) {
-            return $('<div>').text(s ?? '').html();
+            return String(s ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         };
 
         function fileExtFromUrl(url) {
@@ -1066,7 +1118,7 @@
 
             let quotedHtml = '';
             if (item.reply_to) {
-                quotedHtml = '<div class="bv-quoted-msg" data-bv-jump-to="' + (item.reply_to.id || '') + '">' +
+                quotedHtml = '<div class="bv-quoted-msg" data-bv-jump-to="' + escape(item.reply_to.id || '') + '">' +
                     '<div class="bv-quoted-author">' + escape(item.reply_to.author || '') + '</div>' +
                     '<div class="bv-quoted-body">' + escape(item.reply_to.body || '') + '</div>' +
                 '</div>';
@@ -1139,7 +1191,8 @@
                 ? escape(item.body)
                     .replace(/\n/g, '<br>')
                     // Auto-linkify URLs so visitor messages with raw URLs become clickable.
-                    .replace(/(https?:\/\/[^\s<>"']+)/gi, (full) => {
+                    // El cuerpo ya viene escapado: no incluir &quot;/&#39; en la URL.
+                    .replace(/(https?:\/\/(?:(?!&quot;|&#39;)[^\s<>"'])+)/gi, (full) => {
                         let url = full;
                         let trail = '';
                         while (/[.,;:!?)\]]$/.test(url)) {
@@ -2858,7 +2911,7 @@
         }
 
         function renderMentionItemHtml(item, idx, selected) {
-            const esc = (s) => $('<i>').text(s == null ? '' : String(s)).html();
+            const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const cls = 'bv-mention-row' + (selected ? ' on' : '');
 
             if (item.type === 'special') {
@@ -3014,7 +3067,7 @@
         }
 
         function buildMentionPopoverHtml(handle, data) {
-            const esc = (s) => $('<i>').text(s == null ? '' : String(s)).html();
+            const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const lower = handle.toLowerCase();
 
             // Especiales
@@ -3122,7 +3175,7 @@
         let mentionActiveTab = 'agents';
 
         function renderMentionAgentRow(a, i) {
-            const esc = (s) => $('<i>').text(s == null ? '' : String(s)).html();
+            const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const colorIdx = ((a.id || 0) % 6) + 1;
             const cur = parseInt(a.workload_current || 0, 10);
             const max = parseInt(a.workload_max || 15, 10);
@@ -3154,7 +3207,7 @@
         }
 
         function renderMentionTeamRow(t, i) {
-            const esc = (s) => $('<i>').text(s == null ? '' : String(s)).html();
+            const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const colorIdx = ((t.id || 0) % 6) + 1;
             const cur = parseInt(t.workload_current || 0, 10);
             const max = parseInt(t.workload_max || 10, 10);
@@ -3562,7 +3615,7 @@
         function renderQuotePreview() {
             $('#bv-quote-preview').remove();
             if (!activeReply) return;
-            const escapeHtml = s => $('<div>').text(s == null ? '' : s).html();
+            const escapeHtml = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const $q = $(
                 '<div class="bv-quote-preview" id="bv-quote-preview">' +
                     '<div class="bv-quote-line"></div>' +
@@ -3764,7 +3817,7 @@
                     const $modal = $('[data-bv-modal-name="file-preview"]');
                     if ($modal.length) {
                         $modal.find('.bv-file-preview-content, #bv-file-preview-content')
-                            .html('<img src="' + url + '" alt="" style="max-width:100%;max-height:80vh">');
+                            .html('<img src="' + window.escapeHtml(url) + '" alt="" style="max-width:100%;max-height:80vh">');
                         $modal.addClass('on');
                         $('body').css('overflow', 'hidden');
                     } else {
@@ -3821,7 +3874,7 @@
                 });
                 const convs = (resp && resp.conversations) || [];
                 const $list = $('#bv-forward-targets').empty();
-                const escapeHtml = s => $('<div>').text(s == null ? '' : s).html();
+                const escapeHtml = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 if (!convs.length) {
                     $list.html('<div class="bv-tab-empty"><div class="bv-tab-empty-title">Sin conversaciones</div></div>');
                 } else {
@@ -4446,7 +4499,7 @@ $(document).on('click', '.bv-retry-send', function () {
     }
 
     function hdEscape(str) {
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
     hdCannedOverlayEl.addEventListener('click', function(e) {

@@ -29,7 +29,9 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a href="#" class="dropdown-item" id="runAllBtn">Ejecutar todos los workflows</a></li>
                             <li><a href="#" class="dropdown-item" id="refreshStatsBtn">Actualizar estadisticas</a></li>
-                            <li><a href="{{ route('settings.suppliers.automation.logs') }}" class="dropdown-item">Ver logs del sistema</a></li>
+                            @can('suppliers.automation.manage')
+                            <li><a href="{{ route('settings.suppliers.automation.logs') }}" class="dropdown-item">Ver logs de automatización</a></li>
+                            @endcan
                             <li><hr class="dropdown-divider"></li>
                             <li><a href="#" class="dropdown-item " id="clearFailedBtn">Limpiar ejecuciones fallidas</a></li>
                         </ul>

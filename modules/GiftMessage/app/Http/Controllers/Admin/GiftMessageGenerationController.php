@@ -142,8 +142,9 @@ class GiftMessageGenerationController extends Controller
     {
         $this->authorize('view', $generation);
 
-        return Storage::disk('public')->response($generation->file_path, $generation->file_name, [
+        return Storage::disk(GiftMessageGenerationService::DISK)->response($generation->file_path, $generation->file_name, [
             'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -151,7 +152,9 @@ class GiftMessageGenerationController extends Controller
     {
         $this->authorize('view', $generation);
 
-        return Storage::disk('public')->download($generation->file_path, $generation->file_name);
+        return Storage::disk(GiftMessageGenerationService::DISK)->download($generation->file_path, $generation->file_name, [
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function destroy(Request $request, GiftMessageGeneration $generation): RedirectResponse|JsonResponse

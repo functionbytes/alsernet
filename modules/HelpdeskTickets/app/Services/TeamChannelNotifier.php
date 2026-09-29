@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 use Throwable;
 
 /**
@@ -65,8 +66,18 @@ class TeamChannelNotifier
             return null;
         }
 
+        // 29-sep-2026: se revalida al usar (no solo al guardar) y sin seguir
+        // redirecciones, para que una URL guardada no acabe en un host interno.
+        if (! OutboundUrlGuard::isSafe($url)) {
+            Log::warning('TeamChannelNotifier: URL de webhook bloqueada (no es un host público)', [
+                'setting' => $settingKey,
+            ]);
+
+            return false;
+        }
+
         try {
-            $response = Http::timeout(5)->post($url, $payload);
+            $response = Http::timeout(5)->withoutRedirecting()->post($url, $payload);
 
             if (! $response->successful()) {
                 Log::warning('TeamChannelNotifier: webhook respondió con error', [

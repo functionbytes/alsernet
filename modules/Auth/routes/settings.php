@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\Admin\AuditController;
+use Modules\Auth\Http\Controllers\Admin\StaffIpFilterController;
 use Modules\Auth\Http\Controllers\Settings\AccountDeletionController;
 use Modules\Auth\Http\Controllers\Settings\ActivityController;
 use Modules\Auth\Http\Controllers\Settings\ApiTokenController;
@@ -25,7 +26,8 @@ use Modules\Auth\Http\Controllers\Settings\TwoFactorAuthenticationController;
 
 // Profile routes
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
-Route::put('/profile/info', [ProfileController::class, 'updateInfo'])->name('profile.update-info');
+// deny-impersonating (29-sep-2026): un impersonador no altera datos ni credenciales persistentes del usuario.
+Route::put('/profile/info', [ProfileController::class, 'updateInfo'])->name('profile.update-info')->middleware('auth.deny-impersonating');
 Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update-avatar');
 Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.delete-avatar');
 
@@ -64,8 +66,8 @@ Route::get('/activity/list', [ActivityController::class, 'index'])->name('activi
 
 // Personal access tokens (AJAX)
 Route::get('/api-tokens/list', [ApiTokenController::class, 'index'])->name('api-tokens.list');
-Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store');
-Route::delete('/api-tokens/{id}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+Route::post('/api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store')->middleware('auth.deny-impersonating');
+Route::delete('/api-tokens/{id}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy')->middleware('auth.deny-impersonating');
 
 // Tab page (reuses ProfileController pattern)
 Route::get('/api-tokens', [ProfileController::class, 'apiTokens'])->name('api-tokens');
@@ -76,6 +78,14 @@ Route::get('/audit/impersonations', [AuditController::class, 'impersonations'])-
 Route::post('/audit/users/{user}/force-logout', [AuditController::class, 'forceLogout'])->name('audit.force-logout');
 Route::post('/audit/users/{user}/unlock', [AuditController::class, 'unlockAccount'])->name('audit.unlock');
 Route::post('/audit/users/{userId}/restore', [AuditController::class, 'restoreAccount'])->name('audit.restore');
+
+// Redes permitidas: filtro por IP del login/panel y excepciones remotas (29-sep-2026, solo super-admin)
+Route::get('/ip-filter', [StaffIpFilterController::class, 'index'])->name('ip-filter');
+Route::middleware('auth.deny-impersonating')->group(function () {
+    Route::post('/ip-filter/mode', [StaffIpFilterController::class, 'updateMode'])->name('ip-filter.mode');
+    Route::post('/ip-filter/allowlist', [StaffIpFilterController::class, 'updateAllowlist'])->name('ip-filter.allowlist');
+    Route::post('/ip-filter/remote-access', [StaffIpFilterController::class, 'updateRemoteAccess'])->name('ip-filter.remote-access');
+});
 
 // Email change request (confirmation comes via public route)
 Route::post('/email/change', [EmailChangeController::class, 'request'])->name('email.change.request')->middleware('auth.deny-impersonating');

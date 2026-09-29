@@ -82,7 +82,13 @@ return [
                     'scheme' => env('REVERB_SCHEME', 'https'),
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
-                'allowed_origins' => ['*'],
+                // Seguridad 29-sep-2026: antes ['*']. Hosts (admite comodín Str::is) desde los que
+                // se acepta la conexión WebSocket: el panel y la tienda (widget de livechat).
+                // Requiere reiniciar reverb:start para aplicarse.
+                'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+                    'REVERB_ALLOWED_ORIGINS',
+                    'webadmin.a-alvarez.com,www.a-alvarez.com,a-alvarez.com'
+                ))))),
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),

@@ -34,7 +34,9 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapManagerRoutes(): void
     {
-        Route::middleware(['web', 'auth', 'settings'])
+        // 29-sep-2026: 'settings' (CheckSettings) no comprueba nada; el permiso
+        // real es prestashop.settings.manage (contraseña de la BD de la tienda).
+        Route::middleware(['web', 'auth', 'settings', 'can:prestashop.settings.manage'])
             ->prefix('panel/settings/prestashop')
             ->name('settings.prestashop.')
             ->group(module_path('Prestashop', 'routes/web.php'));

@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
@@ -13,7 +14,16 @@ class HealthController extends Controller
 {
     public function check(): JsonResponse
     {
-        return $this->jsonSnapshot($this->snapshot(false));
+        // 29-sep-2026: endpoint público → snapshot cacheado 30 s para que cada
+        // petición no dispare una llamada HTTP saliente (checkTunnel) ni consultas.
+        try {
+            $snapshot = Cache::remember('helpdesk.health.public_snapshot', 30, fn (): array => $this->snapshot(false));
+        } catch (\Throwable) {
+            // Sin caché (p. ej. Redis caído): se calcula en vivo.
+            $snapshot = $this->snapshot(false);
+        }
+
+        return $this->jsonSnapshot($snapshot);
     }
 
     /**

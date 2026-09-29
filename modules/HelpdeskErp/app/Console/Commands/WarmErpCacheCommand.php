@@ -4,6 +4,7 @@ namespace Modules\HelpdeskErp\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Modules\HelpdeskErp\Jobs\WarmErpCacheJob;
 
@@ -38,6 +39,16 @@ class WarmErpCacheCommand extends Command
             return self::SUCCESS;
         }
 
+        // 29-sep-2026: si la tanda anterior aún no ha terminado (Oracle lento),
+        // no se encola otra encima — se amontonaban y competían por el mismo
+        // worker de helpdesk-erp. La siguiente ejecución (30 min) lo intenta.
+        $pending = $this->pendingWarmingJobs();
+        if ($pending > 0) {
+            $this->info("Quedan {$pending} jobs de la tanda anterior en helpdesk-erp-warming; no se encola otra.");
+
+            return self::SUCCESS;
+        }
+
         foreach (array_chunk($emails, self::CHUNK_SIZE) as $chunk) {
             WarmErpCacheJob::dispatch($chunk);
         }
@@ -45,6 +56,21 @@ class WarmErpCacheCommand extends Command
         $this->info('Jobs encolados en queue helpdesk-erp-warming.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Jobs pendientes (en espera, retrasados o reservados) en la cola de warming.
+     * Si no se puede consultar, 0: mejor encolar que dejar de calentar.
+     */
+    private function pendingWarmingJobs(): int
+    {
+        try {
+            $job = new WarmErpCacheJob([]);
+
+            return (int) Queue::connection($job->connection)->size($job->queue);
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 
     /**

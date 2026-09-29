@@ -90,7 +90,8 @@ class MagicLinkController extends Controller
 
         $user = $record->user;
 
-        if (! $user || ! $user->available) {
+        // isLocked (29-sep-2026): una cuenta bloqueada por fallos no entra por magic link.
+        if (! $user || ! $user->available || $user->isLocked()) {
             return redirect()->route('auth.login')
                 ->withErrors(['email' => 'La cuenta no está disponible.']);
         }

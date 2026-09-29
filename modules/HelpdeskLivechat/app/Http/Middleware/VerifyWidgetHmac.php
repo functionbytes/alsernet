@@ -42,8 +42,11 @@ class VerifyWidgetHmac
             return $next($request);
         }
 
+        // 29-sep-2026: se incluye `email` (el campo que usa POST /conversation);
+        // antes un email sin hash pasaba sin verificar aunque el modo estuviera activo.
         $identifier = $request->input('identifier')
             ?? $request->input('customer_email')
+            ?? $request->input('email')
             ?? $request->input('customer_id');
 
         $hash = $request->header('X-Identifier-Hash')
@@ -53,15 +56,19 @@ class VerifyWidgetHmac
             return $next($request);
         }
 
-        if (! $hash) {
+        if (! $hash || (string) $web->hmac_token === '') {
             return response()->json(['error' => 'Missing identifier hash'], 403);
         }
 
-        $expected = hash_hmac('sha256', (string) $identifier, $web->hmac_token);
+        $expected = hash_hmac('sha256', (string) $identifier, (string) $web->hmac_token);
 
         if (! hash_equals($expected, (string) $hash)) {
             return response()->json(['error' => 'Invalid identifier hash'], 403);
         }
+
+        // Identificador verificado por HMAC: el servicio de conversaciones solo
+        // vincula un email a un cliente existente si coincide con este valor.
+        $request->attributes->set('widget_verified_identifier', (string) $identifier);
 
         return $next($request);
     }

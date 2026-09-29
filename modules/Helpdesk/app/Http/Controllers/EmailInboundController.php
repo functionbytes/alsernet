@@ -55,9 +55,16 @@ class EmailInboundController extends Controller
         $token = $request->input('signature.token', $request->input('token', ''));
         $signature = $request->input('signature.signature', $request->input('signature', ''));
 
+        // 29-sep-2026: solo strings (un array daba 500) y ventana de ±300 s
+        // contra el reenvío (replay) de un POST capturado.
+        if (! is_scalar($timestamp) || ! is_scalar($token) || ! is_scalar($signature)
+            || ! ctype_digit((string) $timestamp) || abs(time() - (int) $timestamp) > 300) {
+            return false;
+        }
+
         return hash_equals(
-            hash_hmac('sha256', $timestamp.$token, $signingKey),
-            $signature,
+            hash_hmac('sha256', (string) $timestamp.(string) $token, (string) $signingKey),
+            (string) $signature,
         );
     }
 
@@ -71,7 +78,7 @@ class EmailInboundController extends Controller
 
         $signature = $request->header('X-Sendgrid-Signature', $request->input('signature', ''));
 
-        return hash_equals($secret, $signature);
+        return is_scalar($signature) && hash_equals((string) $secret, (string) $signature);
     }
 
     private function verifyPostmark(Request $request): bool

@@ -22,6 +22,20 @@ class Document extends Model implements HasMedia
 
     protected $table = 'documents';
 
+    /**
+     * 29-sep-2026: los ficheros de expedientes (DNI, licencias, adjuntos) van
+     * al disco privado, nunca a /storage, y solo con nombre generado por el
+     * servidor (ver DocumentMediaFiles).
+     */
+    public function registerMediaCollections(): void
+    {
+        foreach (\Modules\Document\Support\DocumentMediaFiles::COLLECTIONS as $collection) {
+            $this->addMediaCollection($collection)
+                ->useDisk(\Modules\Document\Support\DocumentMediaFiles::DISK)
+                ->acceptsFile(fn ($file) => \Modules\Document\Support\DocumentMediaFiles::isSafeStoredName((string) $file->name));
+        }
+    }
+
     protected $casts = [
         'confirmed_at' => 'datetime',
         'uploaded_confirmation_sent_at' => 'datetime',
@@ -876,7 +890,7 @@ class Document extends Model implements HasMedia
      *
      * @return array Documentos con detalles: ["doc_1" => ["id", "url", "size", ...]]
      */
-    public function getUploadedDocumentsWithDetails(): array
+    public function getUploadedDocumentsWithDetails(bool $includeUrls = false): array
     {
         $uploadedWithDetails = [];
 
@@ -885,11 +899,16 @@ class Document extends Model implements HasMedia
             if ($docType) {
                 $uploadedWithDetails[$docType] = [
                     'id' => $media->id,
-                    'file_name' => $media->file_name,
                     'size' => $media->size,
-                    'url' => $media->getUrl(),
                     'created_at' => $media->created_at->format('Y-m-d H:i:s'),
                 ];
+
+                // 29-sep-2026: la API pública (tienda / cliente) solo recibe
+                // tipo, tamaño y fecha. Nombre y URL, solo para el panel.
+                if ($includeUrls) {
+                    $uploadedWithDetails[$docType]['file_name'] = $media->file_name;
+                    $uploadedWithDetails[$docType]['url'] = $media->getUrl();
+                }
             }
         }
 

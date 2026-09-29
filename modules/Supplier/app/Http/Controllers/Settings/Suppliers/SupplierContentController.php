@@ -1231,9 +1231,25 @@ class SupplierContentController extends Controller
                     (int) auth()->id(),
                     $request->input('reason') ?: 'Manual rejection'
                 ),
+                // 22-sep-2026: regenerateContent() reutiliza $content->prompt
+                // cuando no se le pasa uno explícito — correcto para "Regenerar
+                // con los datos actuales", pero con full_update=1 el objetivo es
+                // justo lo contrario: si la categoría/subfamilia cambió en el
+                // refresh de arriba, hay que re-seleccionar el prompt para esa
+                // clasificación nueva, no seguir con el de cuando se creó el
+                // contenido (caso real: contenido creado con categoría "T.CASCOS"
+                // seguía usando el prompt de cascos después de que el refresh
+                // corrigiera la categoría a "T.MÁSCARAS" — la IA recibía la
+                // categoría correcta como dato pero la tarea del prompt seguía
+                // diciendo "redacta una descripción de casco de esquí").
                 'regenerate' => $content = $this->contentService->regenerateContent(
                     $content,
-                    $this->resolvePrompt($request->input('prompt_id')),
+                    $this->resolvePrompt($request->input('prompt_id'))
+                        ?? ($request->boolean('full_update') ? $this->promptSelectionService->selectPrompt(
+                            supplierId: $content->supplier_id,
+                            categoryId: $content->supplierProduct?->category_id,
+                            subfamilyId: $content->supplierProduct?->subfamily_id,
+                        ) : null),
                     (int) auth()->id()
                 ),
             };
@@ -1293,6 +1309,11 @@ class SupplierContentController extends Controller
 
         if (! $erpId || ! $erpUrl) {
             return ['success' => false, 'message' => 'ERP URL o ID de modelo no configurado'];
+        }
+
+        // 29-sep-2026: solo hosts del ERP (lista blanca).
+        if (! \Modules\Supplier\Support\ErpEndpointGuard::isAllowed($erpUrl)) {
+            return ['success' => false, 'message' => 'El host del endpoint ERP no está permitido'];
         }
 
         $nombre = $nombreOverride ?? ($content->supplierProduct?->name ?? $content->generated_name ?? '');

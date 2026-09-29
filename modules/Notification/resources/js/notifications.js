@@ -133,6 +133,22 @@ function handleDocumentStageAdvanced(event) {
     handleNotification(notification);
 }
 
+// Seguridad 29-sep-2026: title/message pueden venir de datos de clientes;
+// se escapan antes de meterlos en innerHTML.
+function escapeHtml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function safeIconClass(value) {
+    const cls = String(value || '').replace(/[^A-Za-z0-9 _-]/g, '').trim();
+    return cls || 'fas fa-bell';
+}
+
 /**
  * Show in-app notification
  * @param {Object} notification
@@ -145,14 +161,14 @@ function showInAppNotification(notification) {
     notifElement.innerHTML = `
         <div class="flex items-start">
             <div class="flex-shrink-0">
-                <i class="${notification.icon || 'fas fa-bell'} text-blue-500 text-xl"></i>
+                <i class="${escapeHtml(safeIconClass(notification.icon))} text-blue-500 text-xl"></i>
             </div>
             <div class="ml-3 flex-1">
                 <h3 class="text-sm font-medium text-gray-900">
-                    ${notification.title}
+                    ${escapeHtml(notification.title)}
                 </h3>
                 <div class="mt-1 text-sm text-gray-600">
-                    ${notification.message}
+                    ${escapeHtml(notification.message)}
                 </div>
             </div>
             <button

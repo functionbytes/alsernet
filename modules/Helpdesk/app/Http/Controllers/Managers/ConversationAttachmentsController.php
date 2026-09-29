@@ -20,6 +20,7 @@ use Modules\Helpdesk\Http\Requests\UploadAttachmentRequest;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\AttachmentSecurityService;
+use Modules\Helpdesk\Services\ConversationAttachmentStorage;
 use Modules\Helpdesk\Services\HelpdeskSettings;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -34,6 +35,7 @@ class ConversationAttachmentsController extends Controller
     public function __construct(
         private readonly AttachmentSecurityService $attachmentSecurity,
         private readonly HelpdeskSettings $settings,
+        private readonly ConversationAttachmentStorage $storage,
     ) {
         $this->middleware('can:helpdesk.conversations.update')->only(['uploadAttachments', 'storeContact', 'storeLocation']);
     }
@@ -60,7 +62,8 @@ class ConversationAttachmentsController extends Controller
 
             $mime = $file->getMimeType() ?? 'application/octet-stream';
             $folder = "helpdesk/customers/{$customerId}/conversations/{$conversation->id}/{$dateFolder}";
-            $disk = Storage::disk('public');
+            // Disco según helpdesk.attachments.disk (29-sep-2026, A9).
+            $disk = $this->storage->disk();
 
             if ($this->shouldCompressImage($mime, $file->getSize())) {
                 [$filename, $storedMime, $storedSize] = $this->compressAndStoreImage($file, $folder, $disk);
@@ -72,7 +75,7 @@ class ConversationAttachmentsController extends Controller
             }
 
             $attachments[] = [
-                'url' => $disk->url("{$folder}/{$filename}"),
+                'url' => $this->storage->url("{$folder}/{$filename}"),
                 'name' => $file->getClientOriginalName(),
                 'size' => $storedSize,
                 'mime' => $storedMime,
@@ -156,16 +159,13 @@ class ConversationAttachmentsController extends Controller
             abort(400, 'URL requerida');
         }
 
-        $path = parse_url($url, PHP_URL_PATH);
-        if (! is_string($path)) {
-            abort(400, 'URL inválida');
-        }
-
-        // Solo permitimos paths bajo /storage/helpdesk/ por seguridad
-        if (! preg_match('#^/storage/(helpdesk/.+)$#', $path, $m)) {
+        // Solo adjuntos nuestros: /storage/helpdesk/… (disco public, formato
+        // antiguo) o la ruta firmada del disco privado (29-sep-2026, A9).
+        $resolved = $this->storage->resolve($url);
+        if (! $resolved) {
             abort(403, 'Path no permitido');
         }
-        $relPath = $m[1];
+        [$diskName, $relPath] = $resolved;
 
         // El adjunto debe pertenecer a una conversación a la que el agente
         // tenga acceso (evita IDOR: descargar adjuntos de inboxes ajenos).
@@ -187,17 +187,11 @@ class ConversationAttachmentsController extends Controller
 
         $this->authorize('view', $item->conversation);
 
-        $disk = Storage::disk('public');
-        if (! $disk->exists($relPath)) {
+        if (! Storage::disk($diskName)->exists($relPath)) {
             abort(404, 'Archivo no encontrado');
         }
 
-        $filename = basename($relPath);
-
-        return $disk->download($relPath, $filename, [
-            'Content-Type' => $disk->mimeType($relPath) ?: 'application/octet-stream',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return $this->storage->response($diskName, $relPath, basename($relPath), true);
     }
 
     /**
@@ -211,22 +205,10 @@ class ConversationAttachmentsController extends Controller
 
         // Extract path from source URL — only allow our own storage
         $url = $validated['source_url'];
-        $storageBase = config('app.url').'/storage/';
-        $altBase = url('/storage/').'/';
-        $path = null;
+        // /storage/helpdesk/… (disco public) o ruta firmada del disco privado (A9).
+        [$sourceDisk, $path] = $this->storage->resolve($url) ?? [null, null];
 
-        foreach ([$storageBase, $altBase] as $base) {
-            if (str_starts_with($url, $base)) {
-                $path = substr($url, strlen($base));
-                break;
-            }
-        }
-        // Also accept raw path within helpdesk/customers/...
-        if (! $path && preg_match('#/storage/(helpdesk/customers/.+)$#', $url, $m)) {
-            $path = $m[1];
-        }
-
-        if (! $path || ! Storage::disk('public')->exists($path)) {
+        if (! $path || ! Storage::disk($sourceDisk)->exists($path)) {
             return response()->json(['success' => false, 'message' => 'Archivo no encontrado en almacenamiento.'], 404);
         }
 
@@ -251,14 +233,18 @@ class ConversationAttachmentsController extends Controller
 
         // Legacy files may predate ClamAV being enabled. Re-scan on copy so a
         // forward cannot become a bypass of the current security policy.
-        $this->attachmentSecurity->assertSafeStored('public', $path, basename($path));
+        $this->attachmentSecurity->assertSafeStored($sourceDisk, $path, basename($path));
 
         $customerId = $conversation->customer_id ?: 0;
         $convId = $conversation->id;
         $newPath = "helpdesk/customers/{$customerId}/conversations/{$convId}/".now()->format('Y-m-d').'/'.basename($path);
 
-        Storage::disk('public')->copy($path, $newPath);
-        $newUrl = Storage::disk('public')->url($newPath);
+        if ($sourceDisk === $this->storage->diskName()) {
+            Storage::disk($sourceDisk)->copy($path, $newPath);
+        } else {
+            $this->storage->disk()->writeStream($newPath, Storage::disk($sourceDisk)->readStream($path));
+        }
+        $newUrl = $this->storage->url($newPath);
 
         $item = ConversationItem::create([
             'conversation_id' => $conversation->id,

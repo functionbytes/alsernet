@@ -84,12 +84,14 @@ class DocumentsController extends Controller
         // Delegar a los nuevos métodos RESTful
         switch ($action) {
             case 'verification':
+                // verify() comprueba la firma.
                 return $this->verify($request);
             case 'validate':
                 $uid = $request->input('uid') ?? $data['uid'] ?? null;
 
                 return $this->validation($uid);
             case 'request':
+                // store() comprueba la firma (si está activada).
                 return $this->store($request);
             case 'upload':
                 $uid = $request->input('uid') ?? $data['uid'] ?? null;
@@ -118,6 +120,13 @@ class DocumentsController extends Controller
      */
     public function verify(Request $request)
     {
+        // 29-sep-2026: devolvía el uid de cualquier pedido (ids secuenciales) y
+        // con él se descargaban DNI/licencias. La tienda no usa este endpoint
+        // (access logs): se exige siempre la firma HMAC de PrestaShop.
+        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.prestashop_secret', ''))) {
+            return $response;
+        }
+
         $request->validate([
             'order_id' => 'required|integer',
         ]);
@@ -153,7 +162,7 @@ class DocumentsController extends Controller
      *
      * Endpoint RESTful: GET /api/documents/order/{orderId}
      *
-     * Devuelve estado, tipo, documentos requeridos/subidos (con URL)/faltantes
+     * Devuelve estado, tipo, documentos requeridos/subidos (sin URL)/faltantes
      * a partir del order_id de PrestaShop, sin necesidad de conocer el uid.
      *
      * @param  int|string  $orderId  ID de la orden en Prestashop
@@ -161,6 +170,11 @@ class DocumentsController extends Controller
      */
     public function orderInfo(Request $request, $orderId)
     {
+        // 29-sep-2026: mismo caso que verify(): firma HMAC obligatoria.
+        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.prestashop_secret', ''))) {
+            return $response;
+        }
+
         $document = Document::where('order_id', $orderId)->first();
 
         if (! $document) {
@@ -274,6 +288,13 @@ class DocumentsController extends Controller
      */
     public function store(Request $request)
     {
+        // 29-sep-2026: la tienda llama sin firmar; con
+        // documents.require_signed_server_requests=true se exige la misma
+        // firma que el webhook order-paid.
+        if (config('documents.require_signed_server_requests')
+            && ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.prestashop_secret', '')))) {
+            return $response;
+        }
 
         // Delegar al método existente documentRequests (mantiene lógica existente)
         return $this->documentRequests($request->all());
@@ -292,6 +313,40 @@ class DocumentsController extends Controller
                     'status' => 'failed',
                     'message' => 'Missing order_id parameter',
                 ], 400);
+            }
+
+            // 28-sep-2026: este endpoint es público y aceptaba cualquier order_id.
+            // El 26-sep se crearon 358 documentos con pedidos inventados
+            // (912094, 913000, 914000…) — 352 de ellos no existen en PrestaShop,
+            // mientras que el 100% de los documentos legítimos sí. El pedido
+            // tiene que existir en la tienda antes de crear nada (ni siquiera
+            // se devuelve el uid de un documento existente para un pedido falso).
+            if (! ctype_digit((string) $orderId) || (int) $orderId <= 0) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Invalid order_id parameter',
+                ], 422);
+            }
+
+            try {
+                $orderExists = \DB::connection('prestashop')->table('aalv_orders')->where('id_order', (int) $orderId)->exists();
+            } catch (\Throwable $e) {
+                \Log::warning('documentRequests: no se pudo verificar el pedido en PrestaShop', [
+                    'order_id' => $orderId,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Order verification unavailable, retry later',
+                ], 503);
+            }
+
+            if (! $orderExists) {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Order not found',
+                ], 404);
             }
 
             // Validar que no existe un documento duplicado
@@ -337,6 +392,33 @@ class DocumentsController extends Controller
             $document->load_id = DocumentLoad::where('key', 'system')->first()?->id;
             $document->sync_id = DocumentSync::where('key', 'none')->first()?->id;
             $document->upload_id = DocumentUploadType::where('key', 'automatic')->first()?->id;
+
+            // 29-sep-2026: cliente, referencia y productos salen del pedido
+            // real de PrestaShop (bridge), no del cuerpo de la petición: el
+            // endpoint es público y permitía fijar el email al que se envía
+            // el correo con el enlace de subida. El cuerpo solo se usa si el
+            // bridge no responde (para no perder la solicitud).
+            $order = $this->prestashopOrders->find((int) $orderId);
+            if ($order !== null) {
+                $data['customer'] = [
+                    'id_customer' => $order['customer_id'],
+                    'firstname' => $order['customer_firstname'],
+                    'lastname' => $order['customer_lastname'],
+                    'email' => $order['customer_email'],
+                    'siret' => $order['customer_dni'],
+                    'company' => $order['customer_company'],
+                    'phone_mobile' => $order['customer_cellphone'],
+                ];
+                $data['cart_id'] = $order['cart_id'] ?: null;
+                $data['reference'] = $order['reference'];
+                $data['date_add'] = $order['date_add'];
+                $data['products'] = $order['products'];
+                unset($data['inventaries'], $data['cart']);
+            } else {
+                Log::warning('documentRequests: pedido no disponible en el bridge; se usan los datos de la petición', [
+                    'order_id' => $orderId,
+                ]);
+            }
 
             if (isset($data['customer']) && is_array($data['customer'])) {
                 $document->customer_id = $data['customer']['id_customer'] ?? $data['customer']['id'] ?? null;
@@ -432,85 +514,91 @@ class DocumentsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            Log::error('documentRequests: error creando la solicitud', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'status' => 'failed',
-                'message' => 'Error creating document request: '.$e->getMessage(),
+                'message' => 'Error creating document request',
             ], 500);
         }
     }
 
-    public function documentVerification($data)
+    /**
+     * Extensiones que aceptan las subidas públicas de documentos (las que
+     * existen realmente en storage/app/public) y el tipo de contenido que
+     * debe tener cada una.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const PUBLIC_UPLOAD_TYPES = [
+        'jpg' => ['image/jpeg'],
+        'jpeg' => ['image/jpeg'],
+        'png' => ['image/png'],
+        'webp' => ['image/webp'],
+        'pdf' => ['application/pdf'],
+        'heic' => ['image/heic', 'image/heif', 'application/octet-stream'],
+        'heif' => ['image/heic', 'image/heif', 'application/octet-stream'],
+    ];
+
+    /**
+     * Motivo por el que el archivo no es un documento admisible, o null si
+     * lo es. Se valida el CONTENIDO (finfo), no solo el nombre: la extensión
+     * declarada tiene que coincidir con el tipo real, y ningún archivo puede
+     * llevar etiquetas PHP (polyglots tipo GIF89a + <?php).
+     */
+    private function unsafeUploadReason(\Illuminate\Http\UploadedFile $file): ?string
     {
+        $name = (string) $file->getClientOriginalName();
+        $ext = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
 
-        $document = Document::orders($data['order']);
+        // Sin extensión, con punto inicial (.htaccess, .user.ini), con byte nulo
+        // o con separadores de ruta: nunca es un documento de cliente.
+        if ($ext === '' || str_starts_with($name, '.') || preg_match('/[\x00-\x1f\/\\\\%]/', $name)) {
+            return 'File type not allowed.';
+        }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'You have document from general emails.',
-            'data' => [
-                'uid' => $document->uid,
-                'reference' => $document->label,
-                'type' => $document->type,
-            ],
+        if (! isset(self::PUBLIC_UPLOAD_TYPES[$ext])) {
+            return 'File type not allowed. Allowed: '.implode(', ', array_keys(self::PUBLIC_UPLOAD_TYPES)).'.';
+        }
 
-        ], 200);
+        $realMime = (string) $file->getMimeType();
+        if (! in_array($realMime, self::PUBLIC_UPLOAD_TYPES[$ext], true)) {
+            return 'File content does not match its extension.';
+        }
 
+        $path = $file->getRealPath();
+        if (! $path || ! is_readable($path)) {
+            return 'File cannot be read.';
+        }
+
+        $head = (string) file_get_contents($path, false, null, 0, 16);
+        if (in_array($ext, ['heic', 'heif'], true) && substr($head, 4, 4) !== 'ftyp') {
+            return 'File content does not match its extension.';
+        }
+
+        // "<?php" (5 bytes) no aparece por azar en un archivo binario: se busca
+        // en todo el archivo (tope 10 MB ya validado). "<?=" y "<script" son
+        // cortos y sí saldrían por azar en fotos grandes, así que solo se
+        // miran al principio, donde van los polyglots (cabecera/EXIF).
+        $body = (string) file_get_contents($path);
+        if (stripos($body, '<?php') !== false
+            || preg_match('/<\?=|<script\b/i', substr($body, 0, 65536)) === 1) {
+            return 'File contains disallowed content.';
+        }
+
+        return null;
     }
 
-    public function documentValidates($data)
+    /**
+     * slug-del-nombre-original + sufijo aleatorio + extensión ya validada.
+     */
+    private function safeUploadFileName(\Illuminate\Http\UploadedFile $file): string
     {
-        $uid = $data['uid'] ?? null;
+        $ext = strtolower((string) pathinfo((string) $file->getClientOriginalName(), PATHINFO_EXTENSION));
+        $base = \Illuminate\Support\Str::slug((string) pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME));
+        $base = $base !== '' ? \Illuminate\Support\Str::limit($base, 60, '') : 'documento';
 
-        if (! $uid) {
-            return response()->json([
-                'status' => 'failed',
-                'message' => 'Missing uid parameter',
-            ], 400);
-        }
-
-        $document = Document::uid($uid)->first();
-
-        if (! $document) {
-            return response()->json([
-                'status' => 'failed',
-                'message' => 'Document not found',
-            ], 404);
-        }
-
-        // Validar que el documento está en un estado que permite carga de archivos
-        $allowedStatusKeys = ['incomplete', 'rejected', 'pending'];
-        $currentStatusKey = $document->status?->key;
-
-        if ($currentStatusKey && ! in_array($currentStatusKey, $allowedStatusKeys)) {
-            return response()->json([
-                'status' => 'failed',
-                'message' => "Document cannot accept file uploads in '{$currentStatusKey}' status. Allowed statuses: ".implode(', ', $allowedStatusKeys),
-                'data' => [
-                    'uid' => $document->uid,
-                    'current_status' => $currentStatusKey,
-                    'allowed_statuses' => $allowedStatusKeys,
-                ],
-            ], 409);
-        }
-
-        if (empty($document->required_documents)) {
-            $document->updateRequiredDocumentsJson();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Document validation successful',
-            'data' => [
-                'uid' => $document->uid,
-                'type' => $document->type ?? 'general',
-                'label' => $document->order_reference ?? $document->order_id,
-                'current_status' => $currentStatusKey,
-                'can_upload' => is_null($document->confirmed_at) && in_array($currentStatusKey, $allowedStatusKeys),
-                'required_documents' => $document->getRequiredDocumentsWithLabels(),
-                'uploaded_documents' => $document->getUploadedDocumentsWithDetails(),
-                'missing_documents' => $document->getMissingDocuments(),
-            ],
-        ], 200);
+        return $base.'-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(8)).'.'.$ext;
     }
 
     /**
@@ -583,24 +671,26 @@ class DocumentsController extends Controller
                 ], 400);
             }
 
+            // 29-sep-2026: el tipo tiene que ser uno de los documentos que pide
+            // el expediente. Antes aceptaba cualquier cadena, que acababa en
+            // custom_properties y en el HTML del panel.
+            $requiredTypes = $document->getRequiredDocuments();
+            foreach ($documentTypes as $requestedType) {
+                if (! is_string($requestedType) || ! in_array($requestedType, $requiredTypes, true)) {
+                    return response()->json([
+                        'status' => 'failed',
+                        'message' => 'Invalid document type',
+                    ], 422);
+                }
+            }
+
             // Procesar cada archivo con su tipo
             foreach ($files as $index => $file) {
                 // Validar que el archivo es válido
                 if (! $file || ! $file->isValid()) {
-                    $errorMessage = 'Invalid file provided at index '.$index;
-
-                    // Agregar detalles del error para debugging
-                    if ($file) {
-                        $errorMessage .= ' - Error: '.$file->getError();
-                        $errorMessage .= ' - Name: '.$file->getClientOriginalName();
-                        $errorMessage .= ' - Size: '.$file->getSize();
-                    } else {
-                        $errorMessage .= ' - File is null';
-                    }
-
                     return response()->json([
                         'status' => 'failed',
-                        'message' => $errorMessage,
+                        'message' => 'Invalid file provided at index '.$index,
                     ], 400);
                 }
 
@@ -615,6 +705,18 @@ class DocumentsController extends Controller
                     ], 400);
                 }
 
+                // 28-sep-2026: esta ruta es pública (solo throttle) y guardaba el
+                // archivo con el nombre y extensión que mandara el cliente. El
+                // 26-sep subieron .htaccess/.user.ini/.gif con código PHP y
+                // ejecutaron comandos desde /storage. Ahora solo pasan
+                // documentos reales, verificados por contenido.
+                if ($unsafe = $this->unsafeUploadReason($file)) {
+                    return response()->json([
+                        'status' => 'failed',
+                        'message' => $unsafe,
+                    ], 422);
+                }
+
                 // Eliminar archivo previo del mismo tipo si existe
                 $existingMedia = $document->getMedia('documents')
                     ->filter(fn ($media) => $media->getCustomProperty('document_type') === $docType)
@@ -624,8 +726,10 @@ class DocumentsController extends Controller
                     $existingMedia->delete();
                 }
 
-                // Subir nuevo archivo con tipo identificado
+                // Nombre de archivo generado en el servidor: nada del nombre
+                // original llega al disco salvo un slug legible.
                 $document->addMedia($file)
+                    ->usingFileName($this->safeUploadFileName($file))
                     ->withCustomProperties(['document_type' => $docType])
                     ->toMediaCollection('documents');
             }
@@ -712,9 +816,11 @@ class DocumentsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            Log::error('uploadFiles: error subiendo documentos', ['uid' => $uid, 'error' => $e->getMessage()]);
+
             return response()->json([
                 'status' => 'failed',
-                'message' => 'Error uploading documents: '.$e->getMessage(),
+                'message' => 'Error uploading documents',
             ], 500);
         }
     }
@@ -781,9 +887,11 @@ class DocumentsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            Log::error('deleteFile: error eliminando documento', ['uid' => $uid, 'error' => $e->getMessage()]);
+
             return response()->json([
                 'status' => 'failed',
-                'message' => 'Error deleting document: '.$e->getMessage(),
+                'message' => 'Error deleting document',
             ], 500);
         }
     }
@@ -1395,7 +1503,6 @@ class DocumentsController extends Controller
                         'id' => $media->id,
                         'file_name' => $media->file_name,
                         'size' => $media->size,
-                        'url' => $media->getUrl(),
                         'created_at' => $media->created_at->format('Y-m-d H:i:s'),
                     ];
                 }
@@ -1444,7 +1551,7 @@ class DocumentsController extends Controller
             $requiredDocuments = $document->getRequiredDocuments();
             $missingDocuments = $document->getMissingDocuments();
             $uploadedDocuments = $document->uploaded_documents ?? [];
-            $uploadedDocumentsDetails = $document->getUploadedDocumentsWithDetails();
+            $uploadedDocumentsDetails = $document->getUploadedDocumentsWithDetails(true);
 
             return response()->json([
                 'success' => true,
@@ -1523,63 +1630,6 @@ class DocumentsController extends Controller
                 'message' => 'Error al eliminar documento: '.$e->getMessage(),
             ], 500);
         }
-    }
-
-    /**
-     * Sube un archivo al documento
-     */
-    public function storeFiles(Request $request, $uid)
-    {
-        // Validación de archivo
-        $request->validate([
-            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
-        ]);
-
-        $document = Document::findByUid($uid);
-
-        if (! $document) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Documento no encontrado.',
-            ], 404);
-        }
-
-        $type = 'documents';
-
-        $document->clearMediaCollection($type);
-
-        // Sanitizar nombre de archivo
-        $file = $request->file('file');
-        $sanitizedName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
-
-        $media = $document->addMediaFromRequest('file')
-            ->usingFileName($sanitizedName)
-            ->toMediaCollection($type);
-
-        // Asegurar que el archivo es accesible al servidor web
-        $mediaPath = $media->getPath();
-        if (file_exists($mediaPath)) {
-            @chmod($mediaPath, 0644);
-        }
-        $mediaDir = dirname($mediaPath);
-        if (is_dir($mediaDir)) {
-            @chmod($mediaDir, 0755);
-        }
-
-        // Procesar upload: enviar confirmación
-        app(DocumentEmailService::class)->processDocumentUpload($document);
-
-        return response()->json([
-            'status' => 'success',
-            'statement_id' => $document->id,
-            'media' => [
-                'id' => $media->id,
-                'uuid' => $media->uuid,
-                'file' => $media->file_name,
-                'size' => $media->size,
-                'path' => $media->getUrl(),
-            ],
-        ]);
     }
 
     /**
@@ -1894,122 +1944,6 @@ class DocumentsController extends Controller
     }
 
     /**
-     * Upload de archivo de admin
-     */
-    public function adminUploadDocument(Request $request, $uid)
-    {
-        $document = Document::where('uid', $uid)->firstOrFail();
-
-        $validated = $request->validate([
-            'file' => 'required|file|max:10240',
-            'type' => 'nullable|string',
-        ]);
-
-        try {
-            if ($request->hasFile('file')) {
-                $media = $document->addMediaFromRequest('file')
-                    ->toMediaCollection('documents');
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Archivo cargado exitosamente',
-                    'media' => $media,
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'No file provided',
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
-        }
-    }
-
-    /**
-     * Obtener adjuntos adicionales
-     */
-    public function getAdditionalAttachments($uid)
-    {
-        $document = Document::where('uid', $uid)->firstOrFail();
-
-        $attachments = $document->getMedia('attachments');
-
-        return response()->json([
-            'success' => true,
-            'attachments' => $attachments,
-        ]);
-    }
-
-    /**
-     * Subir adjunto adicional
-     */
-    public function uploadAdditionalAttachment(Request $request, $uid)
-    {
-        $document = Document::where('uid', $uid)->firstOrFail();
-
-        $validated = $request->validate([
-            'attachment' => 'required|file|max:10240',
-        ]);
-
-        try {
-            if ($request->hasFile('attachment')) {
-                $media = $document->addMediaFromRequest('attachment')
-                    ->toMediaCollection('attachments');
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Adjunto subido exitosamente',
-                    'media' => $media,
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'No file provided',
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
-        }
-    }
-
-    /**
-     * Eliminar adjunto adicional
-     */
-    public function deleteAdditionalAttachment($uid, $attachmentId)
-    {
-        $document = Document::where('uid', $uid)->firstOrFail();
-
-        try {
-            $media = $document->getMedia('attachments')->find($attachmentId);
-            if (! $media) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Attachment not found',
-                ], 404);
-            }
-
-            $media->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Adjunto eliminado',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
-        }
-    }
-
-    /**
      * Refrescar sección de documentos
      */
     public function refreshDocumentsSection($uid)
@@ -2231,9 +2165,11 @@ class DocumentsController extends Controller
                 'message' => 'Documento eliminado',
             ]);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'No se pudo eliminar el documento.',
             ], 422);
         }
     }

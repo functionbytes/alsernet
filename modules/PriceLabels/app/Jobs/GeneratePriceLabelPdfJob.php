@@ -46,7 +46,7 @@ class GeneratePriceLabelPdfJob implements ShouldQueue
         $rows = $excelImportService->read(
             $this->generation->source_excel_path,
             $templateService->columnMap($template),
-            'public'
+            PriceLabelGenerationService::DISK
         );
 
         if (empty($rows)) {

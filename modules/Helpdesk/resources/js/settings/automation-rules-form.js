@@ -76,7 +76,7 @@
                     <div class="col-md-3">${operatorSel}</div>
                     <div class="col-md-4">
                         <input type="text" data-role="value" class="form-control form-control-sm"
-                            placeholder="Valor" value="${$('<div>').text(value).html()}">
+                            placeholder="Valor" value="${String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
                     </div>
                     <div class="col-md-1">
                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove">
@@ -103,7 +103,7 @@
                     <div class="col-md-5">${typeSel}</div>
                     <div class="col-md-6">
                         <input type="text" data-role="value" class="form-control form-control-sm"
-                            placeholder="Valor (agente, etiqueta, estado...)" value="${$('<div>').text(value).html()}">
+                            placeholder="Valor (agente, etiqueta, estado...)" value="${String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
                     </div>
                     <div class="col-md-1">
                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove">

@@ -312,7 +312,7 @@
                 const active = i === lightbox.idx ? ' on' : '';
                 let inner;
                 if (item.type === 'image') {
-                    inner = '<img src="' + item.src + '" alt="">';
+                    inner = '<img src="' + window.escapeHtml(item.src) + '" alt="">';
                 } else if (item.type === 'video') {
                     inner = '<i class="fas fa-video"></i>';
                 } else if (item.type === 'audio') {

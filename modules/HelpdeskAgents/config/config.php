@@ -19,10 +19,10 @@ return [
     | Local LLM allowed hosts (SSRF allowlist)
     |--------------------------------------------------------------------------
     | Hosts (hostname o IP, separados por coma en el env) a los que puede
-    | apuntar la base_url del proveedor "local" (Ollama). Vacío = cualquier
-    | host privado/loopback (comportamiento histórico); link-local/metadata
-    | queda bloqueado siempre. Defínelo en producción para impedir que un
-    | admin escanee la red interna vía el test de conexión.
+    | apuntar la base_url del proveedor "local" (Ollama). Vacío = el
+    | proveedor local queda DESACTIVADO (fail-closed, 29-sep-2026; antes
+    | aceptaba cualquier host privado/loopback). link-local/metadata queda
+    | bloqueado siempre. Ej.: HELPDESKAGENTS_LOCAL_LLM_ALLOWED_HOSTS=localhost
     */
     'local_llm_allowed_hosts' => array_values(array_filter(array_map(
         'trim',
@@ -329,7 +329,10 @@ return [
     | publicarse fuera de la red interna: sirve datos de clientes reales.
     */
     'mcp' => [
-        'server_enabled' => env('HELPDESKAGENTS_MCP_SERVER', true),
+        // 29-sep-2026: el transporte HTTP queda apagado por defecto en
+        // producción (el vhost es público). Para encenderlo:
+        // HELPDESKAGENTS_MCP_SERVER=true en el .env (mejor con restricción por IP).
+        'server_enabled' => (bool) env('HELPDESKAGENTS_MCP_SERVER', env('APP_ENV', 'production') !== 'production'),
         'server_route' => env('HELPDESKAGENTS_MCP_ROUTE', 'mcp/helpdesk'),
 
         // Techo de iteraciones del bucle de tool-calling. Sin el, un modelo

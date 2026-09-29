@@ -2,77 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Library\File;
-use App\Library\StringHelper;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File as FileSystem;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
+/**
+ * Seguridad 29-sep-2026: se retiraron las rutas públicas /clear (limpiaba
+ * cachés y los contadores de throttle sin login), /files, /thumbs y
+ * /p/assets (lectura arbitraria de ficheros latente, sin uso). Solo queda
+ * /assets/{dirname}/{basename} porque PathHelper::generatePublicPath() la
+ * referencia por nombre; ahora está confinada a storage/app/public.
+ */
 class FileServeController extends Controller
 {
-    public function userFile(string $uid, string $name = ''): Response
+    public function publicAsset(string $dirname, string $basename): BinaryFileResponse
     {
-        $path = storage_path('app/users/'.$uid.'/home/files/'.$name);
-        $mime = File::getFileType($path);
+        $decoded = base64_decode(strtr($dirname, '-_', '+/'), true);
+        abort_if($decoded === false, 404);
 
-        if (FileSystem::exists($path)) {
-            return response()->file($path, ['Content-Type' => $mime]);
-        }
+        $base = realpath(storage_path('app/public'));
+        abort_unless($base !== false, 404);
 
-        abort(404);
-    }
+        // PathHelper genera el dirname relativo a storage/ ("app/public/...").
+        $relative = ltrim(preg_replace('#^app/public(/|$)#', '', $decoded), '/');
+        $abs = realpath($base.'/'.($relative !== '' ? $relative.'/' : '').rawurldecode($basename));
 
-    public function userThumb(string $uid, string $name = ''): Response
-    {
-        $path = storage_path('app/users/'.$uid.'/home/thumbs/'.$name);
+        abort_unless(
+            $abs !== false && str_starts_with($abs, $base.DIRECTORY_SEPARATOR) && is_file($abs) && is_readable($abs),
+            404
+        );
 
-        if (FileSystem::exists($path)) {
-            $mime = File::getFileType($path);
-
-            return response()->file($path, ['Content-Type' => $mime]);
-        }
-
-        abort(404);
-    }
-
-    public function publicAssetDeprecated(string $token): Response
-    {
-        $decodedPath = StringHelper::base64UrlDecode($token);
-        $absPath = storage_path($decodedPath);
-
-        if (FileSystem::exists($absPath)) {
-            return response()->file($absPath, [
-                'Content-Type' => File::getFileType($absPath),
-                'Content-Length' => filesize($absPath),
-            ]);
-        }
-
-        abort(404);
-    }
-
-    public function publicAsset(string $dirname, string $basename): Response
-    {
-        $dirname = StringHelper::base64UrlDecode($dirname);
-        $absPath = storage_path(join_paths($dirname, $basename));
-
-        if (FileSystem::exists($absPath)) {
-            return response()->file($absPath, [
-                'Content-Type' => File::getFileType($absPath),
-                'Content-Length' => filesize($absPath),
-            ]);
-        }
-
-        abort(404);
-    }
-
-    public function clearCache(): string
-    {
-        Artisan::call('cache:clear');
-        Artisan::call('route:clear');
-        Artisan::call('view:clear');
-        Artisan::call('config:clear');
-        Artisan::call('config:cache');
-
-        return '<h1>Cache Borrado</h1>';
+        return response()->file($abs, [
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Disposition' => 'attachment; filename="'.addcslashes(basename($abs), '"\\').'"',
+        ]);
     }
 }

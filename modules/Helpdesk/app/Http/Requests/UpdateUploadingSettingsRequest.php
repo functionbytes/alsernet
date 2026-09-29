@@ -3,6 +3,8 @@
 namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Helpdesk\Services\HelpdeskSettings;
 
 class UpdateUploadingSettingsRequest extends FormRequest
 {
@@ -16,7 +18,8 @@ class UpdateUploadingSettingsRequest extends FormRequest
         return [
             'max_file_size_mb' => ['required', 'integer', 'min:1', 'max:1000'],
             'allowed_extensions' => ['required', 'array', 'min:1'],
-            'allowed_extensions.*' => ['string', 'alpha_dash', 'max:10'],
+            // Lista negra fija (29-sep-2026): ver HelpdeskSettings::BLOCKED_EXTENSIONS.
+            'allowed_extensions.*' => ['string', 'alpha_dash', 'max:10', Rule::notIn(HelpdeskSettings::BLOCKED_EXTENSIONS)],
             'enable_image_compression' => ['nullable', 'boolean'],
             'image_max_width' => ['required', 'integer', 'min:100', 'max:4000'],
             'image_max_height' => ['required', 'integer', 'min:100', 'max:4000'],
@@ -34,6 +37,7 @@ class UpdateUploadingSettingsRequest extends FormRequest
             'max_file_size_mb.max' => 'El tamaño máximo permitido es 1000 MB.',
             'allowed_extensions.required' => 'Las extensiones permitidas son obligatorias.',
             'allowed_extensions.min' => 'Debes seleccionar al menos una extensión.',
+            'allowed_extensions.*.not_in' => 'La extensión :input no está permitida por seguridad.',
             'image_max_width.required' => 'El ancho máximo de imagen es obligatorio.',
             'image_max_height.required' => 'El alto máximo de imagen es obligatorio.',
             'image_quality.required' => 'La calidad de imagen es obligatoria.',

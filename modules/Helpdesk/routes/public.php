@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\CsatController;
 use Modules\Helpdesk\Http\Controllers\HealthController;
+use Modules\Helpdesk\Http\Controllers\Public\AttachmentFileController;
 use Modules\Helpdesk\Http\Controllers\Public\ContinueController;
 use Modules\Helpdesk\Http\Controllers\Public\PublicSimulatorController;
 use Modules\Helpdesk\Http\Controllers\StatusPageController;
@@ -23,6 +24,14 @@ Route::get('helpdesk/health', [HealthController::class, 'check'])
     ->withoutMiddleware(['web'])
     ->middleware('throttle:60,1')
     ->name('helpdesk.health');
+
+// Adjuntos de conversación en disco privado (29-sep-2026, A9): URL firmada y
+// permanente generada por ConversationAttachmentStorage::url(). Sin sesión.
+Route::get('helpdesk/attachments/file/{path}', AttachmentFileController::class)
+    ->where('path', 'helpdesk/.+')
+    ->withoutMiddleware(['web'])
+    ->middleware(['signed:relative', 'throttle:600,1,helpdesk-attachment-file'])
+    ->name('helpdesk.attachments.file');
 
 // Surveys (public magic-link)
 Route::middleware(['web', 'throttle:30,1'])
@@ -76,8 +85,9 @@ Route::middleware(['web', 'throttle:60,1,helpdesk-sim'])
             ->middleware('throttle:30,1,helpdesk-sim-inject')->name('inject');
         Route::get('/{conversation}/messages', [PublicSimulatorController::class, 'messages'])
             ->middleware('throttle:120,1,helpdesk-sim-messages')->name('messages');
+        // Seguridad 29-sep-2026: devuelve PII de clientes de PrestaShop → solo agentes.
         Route::get('/lookup', [PublicSimulatorController::class, 'lookup'])
-            ->middleware('throttle:30,1,helpdesk-sim-lookup')->name('lookup');
+            ->middleware(['auth', 'can:helpdesk.view', 'throttle:30,1,helpdesk-sim-lookup'])->name('lookup');
         Route::post('/{conversation}/attachment', [PublicSimulatorController::class, 'attachment'])
             ->middleware('throttle:20,1,helpdesk-sim-attachment')->name('attachment');
         Route::get('/{conversation}/csat', [PublicSimulatorController::class, 'csat'])

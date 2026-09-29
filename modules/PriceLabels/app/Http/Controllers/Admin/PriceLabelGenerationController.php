@@ -38,7 +38,9 @@ class PriceLabelGenerationController extends Controller
     {
         $this->authorize('view', $generation);
 
-        return Storage::disk('public')->download($generation->file_path, $generation->file_name);
+        return Storage::disk(PriceLabelGenerationService::DISK)->download($generation->file_path, $generation->file_name, [
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function status(PriceLabelGeneration $generation): JsonResponse

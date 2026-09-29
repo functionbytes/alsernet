@@ -25,7 +25,7 @@ class UpdateHelpCenterArticleRequest extends FormRequest
             'hide_from_structure' => ['boolean'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
-            'featured_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'featured_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'extensions:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
     }
 
@@ -44,6 +44,7 @@ class UpdateHelpCenterArticleRequest extends FormRequest
             'tags.*.max' => 'Cada etiqueta no puede superar los 50 caracteres.',
             'featured_image.image' => 'El archivo debe ser una imagen.',
             'featured_image.mimes' => 'La imagen debe ser de tipo: jpeg, png, jpg, gif o webp.',
+            'featured_image.extensions' => 'La imagen debe ser de tipo: jpeg, png, jpg, gif o webp.',
             'featured_image.max' => 'La imagen no puede superar los 2 MB.',
         ];
     }

@@ -124,7 +124,7 @@ class ToolExecutionService
      * - Must use HTTPS scheme
      * - Must not resolve to a private/loopback/link-local IP (ALL A/AAAA
      *   records, not just the first — OutboundUrlGuard::publicIps())
-     * - If allowed_hosts is configured, host must be in the allowlist
+     * - Host must be in allowed_hosts (empty list = everything blocked)
      *
      * @return array<int, string> the validated public IPs, for pinning the
      *                            real request via CURLOPT_RESOLVE (ver
@@ -150,8 +150,9 @@ class ToolExecutionService
             throw new \RuntimeException('API tool URL has no host');
         }
 
-        $allowedHosts = config('helpdeskagents.tools.allowed_hosts', []);
-        if (! empty($allowedHosts) && ! in_array($host, $allowedHosts, true)) {
+        // 29-sep-2026: allowlist vacía = todo bloqueado (como documenta config.php).
+        $allowedHosts = (array) config('helpdeskagents.tools.allowed_hosts', []);
+        if ($allowedHosts === [] || ! in_array($host, $allowedHosts, true)) {
             throw new \RuntimeException("Host '{$host}' is not in the allowed hosts list");
         }
 

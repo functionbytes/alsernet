@@ -21,6 +21,7 @@ class HelpdeskContactsPermissionsSeeder extends Seeder
             'contacts.commerce' => 'Ver datos comerciales del contacto (pedidos, carrito)',
             'contacts.insights' => 'Ver estadísticas del contacto',
             'contacts.merge' => 'Fusionar contactos duplicados',
+            'contacts.export' => 'Exportar contactos (CSV)',
         ];
 
         foreach ($permissions as $name => $description) {

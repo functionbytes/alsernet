@@ -10,9 +10,11 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use Modules\Core\Models\Setting;
+use Modules\System\Providers\SystemServiceProvider;
 use Modules\System\Traits\FormatsBytes;
 
 class SystemSettingsController extends Controller
@@ -66,38 +68,41 @@ class SystemSettingsController extends Controller
             'connections' => config('broadcasting.connections'),
 
             // Reverb backups
-            'reverb_host' => Setting::get('reverb_host', config('reverb.servers.reverb.host', '0.0.0.0')),
-            'reverb_port' => Setting::get('reverb_port', config('reverb.servers.reverb.port', 8080)),
-            'reverb_scheme' => Setting::get('reverb_scheme', config('reverb.servers.reverb.scheme', 'http')),
+            // Conexión cliente (REVERB_HOST/PORT/SCHEME), que es lo que se aplica en runtime.
+            'reverb_host' => Setting::get('reverb_host', config('broadcasting.connections.reverb.options.host', '')),
+            'reverb_port' => Setting::get('reverb_port', config('broadcasting.connections.reverb.options.port', 443)),
+            'reverb_scheme' => Setting::get('reverb_scheme', config('broadcasting.connections.reverb.options.scheme', 'https')),
 
             // Pusher backups
             'pusher_app_id' => Setting::get('pusher_app_id', config('broadcasting.connections.pusher.app_id', '')),
             'pusher_key' => Setting::get('pusher_key', config('broadcasting.connections.pusher.key', '')),
-            'pusher_secret' => Setting::get('pusher_secret', config('broadcasting.connections.pusher.secret', '')),
+            // Nunca se envía el secreto a la vista: solo si hay uno guardado.
+            'pusher_secret_set' => (string) Setting::get('pusher_secret', config('broadcasting.connections.pusher.secret', '')) !== '',
             'pusher_cluster' => Setting::get('pusher_cluster', config('broadcasting.connections.pusher.options.cluster', 'mt1')),
 
             // Redis backups
             'redis_host' => Setting::get('redis_host', config('database.redis.default.host', '127.0.0.1')),
             'redis_port' => Setting::get('redis_port', config('database.redis.default.port', 6379)),
-            'redis_password' => Setting::get('redis_password', config('database.redis.default.password', '')),
+            'redis_password_set' => (string) Setting::get('redis_password', config('database.redis.default.password', '')) !== '',
             'redis_database' => Setting::get('redis_database', config('database.redis.default.database', 0)),
         ];
     }
 
     /**
      * Update queue backups
+     *
+     * 29-sep-2026: ya no se reescribe el .env (write_env). Se guarda en settings
+     * y SystemServiceProvider::applyRuntimeSettings() lo aplica en cada petición.
      */
     public function updateQueue(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'default_connection' => 'required|string',
+            'default_connection' => ['required', 'string', Rule::in(array_keys((array) config('queue.connections', [])))],
         ]);
 
         try {
             Setting::set('queue_connection', $validated['default_connection']);
-
-            // Update environment variable
-            write_env('QUEUE_CONNECTION', $validated['default_connection']);
+            SystemServiceProvider::clearRuntimeSettingsCache();
 
             return response()->json([
                 'success' => true,
@@ -115,90 +120,52 @@ class SystemSettingsController extends Controller
 
     /**
      * Update websockets backups
+     *
+     * 29-sep-2026: sin write_env; se guarda en settings y se aplica en runtime
+     * (broadcast/pusher/reverb). Las contraseñas vacías = sin cambios (el
+     * formulario ya no las rellena) y se guardan cifradas (Setting::SECRET_KEYS).
+     * Redis NO se aplica en runtime: los propios settings se leen de la caché
+     * Redis, así que cambiar su conexión desde ellos es circular.
      */
     public function updateWebsockets(Request $request): JsonResponse
     {
+        $plain = ['nullable', 'string', 'max:255', 'regex:/^[^\r\n\0]*$/'];
+
         $validated = $request->validate([
-            'broadcast_driver' => 'required|string',
+            'broadcast_driver' => ['required', 'string', Rule::in(array_keys((array) config('broadcasting.connections', [])))],
 
             // Reverb
-            'reverb_host' => 'nullable|string',
-            'reverb_port' => 'nullable|integer',
-            'reverb_scheme' => 'nullable|string',
+            'reverb_host' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-]+$/'],
+            'reverb_port' => 'nullable|integer|min:1|max:65535',
+            'reverb_scheme' => 'nullable|in:http,https',
 
             // Pusher
-            'pusher_app_id' => 'nullable|string',
-            'pusher_key' => 'nullable|string',
-            'pusher_secret' => 'nullable|string',
-            'pusher_cluster' => 'nullable|string',
+            'pusher_app_id' => $plain,
+            'pusher_key' => $plain,
+            'pusher_secret' => $plain,
+            'pusher_cluster' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9\-]+$/'],
 
             // Redis
-            'redis_host' => 'nullable|string',
-            'redis_port' => 'nullable|integer',
-            'redis_password' => 'nullable|string',
-            'redis_database' => 'nullable|integer',
+            'redis_host' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.\-:]+$/'],
+            'redis_port' => 'nullable|integer|min:1|max:65535',
+            'redis_password' => $plain,
+            'redis_database' => 'nullable|integer|min:0|max:64',
         ]);
 
         try {
             Setting::set('broadcast_driver', $validated['broadcast_driver']);
-            write_env('BROADCAST_DRIVER', $validated['broadcast_driver']);
 
-            // Reverb backups
-            if (isset($validated['reverb_host'])) {
-                Setting::set('reverb_host', $validated['reverb_host']);
-                write_env('REVERB_HOST', $validated['reverb_host']);
+            foreach ([
+                'reverb_host', 'reverb_port', 'reverb_scheme',
+                'pusher_app_id', 'pusher_key', 'pusher_secret', 'pusher_cluster',
+                'redis_host', 'redis_port', 'redis_password', 'redis_database',
+            ] as $key) {
+                if (isset($validated[$key]) && $validated[$key] !== '') {
+                    Setting::set($key, (string) $validated[$key]);
+                }
             }
 
-            if (isset($validated['reverb_port'])) {
-                Setting::set('reverb_port', $validated['reverb_port']);
-                write_env('REVERB_PORT', $validated['reverb_port']);
-            }
-
-            if (isset($validated['reverb_scheme'])) {
-                Setting::set('reverb_scheme', $validated['reverb_scheme']);
-                write_env('REVERB_SCHEME', $validated['reverb_scheme']);
-            }
-
-            // Pusher backups
-            if (isset($validated['pusher_app_id'])) {
-                Setting::set('pusher_app_id', $validated['pusher_app_id']);
-                write_env('PUSHER_APP_ID', $validated['pusher_app_id']);
-            }
-
-            if (isset($validated['pusher_key'])) {
-                Setting::set('pusher_key', $validated['pusher_key']);
-                write_env('PUSHER_APP_KEY', $validated['pusher_key']);
-            }
-
-            if (isset($validated['pusher_secret'])) {
-                Setting::set('pusher_secret', $validated['pusher_secret']);
-                write_env('PUSHER_APP_SECRET', $validated['pusher_secret']);
-            }
-
-            if (isset($validated['pusher_cluster'])) {
-                Setting::set('pusher_cluster', $validated['pusher_cluster']);
-                write_env('PUSHER_APP_CLUSTER', $validated['pusher_cluster']);
-            }
-
-            // Redis backups
-            if (isset($validated['redis_host'])) {
-                Setting::set('redis_host', $validated['redis_host']);
-                write_env('REDIS_HOST', $validated['redis_host']);
-            }
-
-            if (isset($validated['redis_port'])) {
-                Setting::set('redis_port', $validated['redis_port']);
-                write_env('REDIS_PORT', $validated['redis_port']);
-            }
-
-            if (isset($validated['redis_password'])) {
-                Setting::set('redis_password', $validated['redis_password']);
-                write_env('REDIS_PASSWORD', $validated['redis_password']);
-            }
-
-            if (isset($validated['redis_database'])) {
-                Setting::set('redis_database', $validated['redis_database']);
-            }
+            SystemServiceProvider::clearRuntimeSettingsCache();
 
             return response()->json([
                 'success' => true,

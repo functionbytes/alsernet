@@ -12,10 +12,22 @@ use Modules\Erp\Http\Controllers\Api\SuppliersController;
 
 Route::middleware(['api'])->group(function () {
 
-    // Authenticated ERP API surface (customer, products, suppliers, families, ...).
-    // The `erp.api-auth` middleware is a no-op when config('erp.api.enabled') is false,
-    // so the routes stay open behind the firewall by default. Flip ERP_API_AUTH_ENABLED=true
-    // and pick the guard via ERP_API_AUTH_GUARD (sanctum|erp_token|both) when ready.
+    // ERP API surface (customer, products, suppliers, families, ...).
+    // 29-sep-2026: `erp.api-auth` es fail-closed. Con settings.erp_api_auth_enabled='no'
+    // solo acepta las IPs de config('erp.api.allowed_ips'); con 'yes' exige el guard
+    // de settings.erp_api_auth_guard (sanctum|erp_token|both). Ver ApiAuth.
+
+    // Escritura: token de escritura obligatorio siempre (separado de la lectura).
+    Route::middleware(['erp.api-auth:write', 'throttle:'.config('erp.api.throttle', '60,1')])
+        ->prefix('erp')
+        ->group(function () {
+            Route::post('/customer', [CustomerController::class, 'create']);
+            Route::patch('/customer/lopd', [CustomerController::class, 'updateLopd']);
+            Route::delete('/customer/{id}/cache', [CustomerController::class, 'clearCache'])->whereNumber('id');
+            Route::delete('/suppliers/{id}/cache', [SuppliersController::class, 'clearCache']);
+            Route::delete('/products/{id}/cache', [ProductsController::class, 'clearCache']);
+        });
+
     Route::middleware(['erp.api-auth', 'throttle:'.config('erp.api.throttle', '60,1')])
         ->prefix('erp')
         ->group(function () {
@@ -23,8 +35,6 @@ Route::middleware(['api'])->group(function () {
             Route::prefix('customer')->group(function () {
                 // Collection
                 Route::get('/', [CustomerController::class, 'list']);
-                Route::post('/', [CustomerController::class, 'create']);
-                Route::patch('/lopd', [CustomerController::class, 'updateLopd']);
                 Route::get('/search', [CustomerController::class, 'search']);
 
                 // Desglose de la audiencia de cumpleaños (?day=MM-DD): cuántos
@@ -69,9 +79,6 @@ Route::middleware(['api'])->group(function () {
                 Route::get('/{id}/vouchers', [CustomerController::class, 'vouchers'])->whereNumber('id');
                 Route::get('/{id}/bonuses', [CustomerController::class, 'bonuses'])->whereNumber('id');
                 Route::get('/{id}/loyalty-points', [CustomerController::class, 'loyaltyPoints'])->whereNumber('id');
-
-                // Cache
-                Route::delete('/{id}/cache', [CustomerController::class, 'clearCache'])->whereNumber('id');
             });
 
             Route::prefix('families')->group(function () {
@@ -104,7 +111,6 @@ Route::middleware(['api'])->group(function () {
                 Route::get('/', [SuppliersController::class, 'index']);
                 Route::get('/{id}', [SuppliersController::class, 'show']);
                 Route::get('/{id}/detailed', [SuppliersController::class, 'showDetailed']);
-                Route::delete('/{id}/cache', [SuppliersController::class, 'clearCache']);
                 Route::get('/{id}/products', [SuppliersController::class, 'showProducts']);
                 Route::get('/{id}/categories', [SuppliersController::class, 'showCategories']);
                 Route::get('/{id}/supplier', [SuppliersController::class, 'showSupplier']);
@@ -115,7 +121,6 @@ Route::middleware(['api'])->group(function () {
                 Route::get('/filter', [ProductsController::class, 'filter']);
                 Route::get('/{id}', [ProductsController::class, 'show']);
                 Route::get('/{id}/detailed', [ProductsController::class, 'showDetailed']);
-                Route::delete('/{id}/cache', [ProductsController::class, 'clearCache']);
                 Route::get('/{id}/supplier', [ProductsController::class, 'showSupplier']);
             });
 

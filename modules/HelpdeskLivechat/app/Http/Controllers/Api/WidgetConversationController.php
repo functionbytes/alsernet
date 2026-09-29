@@ -42,7 +42,8 @@ class WidgetConversationController extends Controller
         try {
             $data = $this->service->createConversation(
                 $request->validated('website_token'),
-                $request->validated()
+                $request->validated(),
+                $request->attributes->get('widget_verified_identifier')
             );
 
             // Bot de producto sobre la PRIMERA pregunta: el widget envía el primer
@@ -70,10 +71,13 @@ class WidgetConversationController extends Controller
                 'data' => $data,
             ]);
         } catch (\Throwable $e) {
+            // Token de widget inexistente: error del cliente, no 500.
+            $invalidToken = $e instanceof \RuntimeException && $e->getMessage() === 'Invalid widget token';
+
             return response()->json([
                 'error' => 'Failed to create conversation',
-                'message' => config('app.debug') ? $e->getMessage() : 'Server error',
-            ], 500);
+                'message' => $invalidToken ? 'Invalid widget token' : (config('app.debug') ? $e->getMessage() : 'Server error'),
+            ], $invalidToken ? 422 : 500);
         }
     }
 

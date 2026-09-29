@@ -41,7 +41,12 @@ class MailrelayWebhookAdapter implements EmailProviderWebhookAdapter
             return false;
         }
 
-        $token = $request->header('X-Mailrelay-Token') ?? $request->query('token');
+        // 29-sep-2026: el token por query solo si se habilita en config (queda en access logs).
+        $token = $request->header('X-Mailrelay-Token');
+
+        if ($token === null && config('helpdeskemailactivity.mailrelay_allow_query_token', false)) {
+            $token = $request->query('token');
+        }
 
         return is_string($token) && hash_equals($secret, $token);
     }

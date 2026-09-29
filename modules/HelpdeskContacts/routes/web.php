@@ -23,8 +23,9 @@ Route::name('contacts.')
         Route::get('/', [ContactsController::class, 'index'])->name('index');
 
         // Exportar contactos a CSV (aplica los mismos filtros que index)
+        // 29-sep-2026: permiso propio, throttle y auditoría (PII masiva).
         Route::get('/export', [ContactsController::class, 'export'])
-            ->middleware('audit.access:contacts,export')
+            ->middleware(['can:contacts.export', 'throttle:5,1', 'audit.access:contacts,export'])
             ->name('export');
 
         // Exportación grande enviada por email (enlace firmado de 24 h)

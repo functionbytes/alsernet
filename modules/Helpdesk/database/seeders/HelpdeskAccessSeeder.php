@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Inbox;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -118,6 +119,10 @@ class HelpdeskAccessSeeder extends Seeder
         foreach (self::USERS as $data) {
             $user = $this->userWithRole($data, $agentRole);
 
+            if (! $user) {
+                continue;
+            }
+
             // Sin helpdesk.manage, ConversationsController::getUserInboxIds()
             // solo muestra las bandejas listadas acá — sin esto el sidebar de
             // "Inboxes" queda vacío pese a tener el rol/permisos correctos.
@@ -135,16 +140,34 @@ class HelpdeskAccessSeeder extends Seeder
      * (callcenter, license, accounting, incluso super-admin) que no hay que
      * tocar — solo se suma el acceso a Helpdesk.
      */
-    private function userWithRole(array $data, Role $role): User
+    private function userWithRole(array $data, Role $role): ?User
     {
-        $user = User::query()->firstOrCreate(
-            ['email' => $data['email']],
-            [
-                'firstname' => $data['firstname'],
-                'lastname' => $data['lastname'],
-                'password' => Hash::make('Alv.2026'),
-            ]
-        );
+        // 29-sep-2026: sin contraseña fija (antes había una contraseña fija escrita aquí y
+        // usada por 22 cuentas reales). En producción NO se crean usuarios:
+        // solo se da el rol a los que ya existen. Fuera de producción se crean
+        // con contraseña aleatoria y deben entrar con "¿Olvidaste tu contraseña?".
+        if (app()->isProduction()) {
+            $user = User::query()->where('email', $data['email'])->first();
+
+            if (! $user) {
+                $this->command?->warn("  (producción) {$data['email']} no existe: no se crea.");
+
+                return null;
+            }
+        } else {
+            $user = User::query()->firstOrCreate(
+                ['email' => $data['email']],
+                [
+                    'firstname' => $data['firstname'],
+                    'lastname' => $data['lastname'],
+                    'password' => Hash::make(Str::random(32)),
+                ]
+            );
+
+            if ($user->wasRecentlyCreated) {
+                $user->forceFill(['must_change_password' => true])->save();
+            }
+        }
 
         if (! $user->hasRole($role->name)) {
             $user->assignRole($role);

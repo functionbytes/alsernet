@@ -36,7 +36,9 @@
             </div>
             <div class="modal-footer ct-modal-footer-inline">
                 <button type="button" class="psc-btn psc-btn--primary d-none" id="contact-reports-campaign-btn">Enviar plantilla</button>
+@can('contacts.export')
                 <a href="{{ route('contacts.export', ['view' => 'risk', 'columns' => ['health']]) }}" class="psc-btn psc-btn--outline">Exportar informe</a>
+@endcan
             </div>
         </div>
     </div>

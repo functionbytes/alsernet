@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskAgents\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateAiAgentSettingsRequest extends FormRequest
 {
@@ -29,6 +30,32 @@ class UpdateAiAgentSettingsRequest extends FormRequest
             'organization_id' => ['nullable', 'string', 'max:255'],
             'version' => ['nullable', 'string', 'max:255'],
             'base_url' => ['nullable', 'url'],
+        ];
+    }
+
+    /**
+     * 29-sep-2026: con proveedor "local", el host de base_url debe estar en
+     * helpdeskagents.local_llm_allowed_hosts (vacía = no se permite ninguno).
+     *
+     * @return array<int, \Closure>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($this->input('provider') !== 'local' || $validator->errors()->has('base_url')) {
+                    return;
+                }
+
+                $host = strtolower(trim((string) parse_url((string) ($this->input('base_url') ?: 'http://localhost:11434'), PHP_URL_HOST), '[]'));
+                $allowed = array_map('strtolower', (array) config('helpdeskagents.local_llm_allowed_hosts', []));
+
+                if ($host === '' || ! in_array($host, $allowed, true)) {
+                    $validator->errors()->add('base_url', $allowed === []
+                        ? 'El proveedor local está desactivado: falta HELPDESKAGENTS_LOCAL_LLM_ALLOWED_HOSTS en la configuración.'
+                        : 'El host de la URL base no está en la lista de hosts permitidos.');
+                }
+            },
         ];
     }
 

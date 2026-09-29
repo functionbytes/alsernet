@@ -20,6 +20,7 @@ class SendAbandonReminderCommand extends Command
             ->with('form')
             ->needsReminder($hours)
             ->whereNotNull('email')
+            ->where('session_token', '!=', '') // 29-sep-2026: tokens vaciados (eran IDs de sesión)
             ->get();
 
         foreach ($abandoned as $track) {

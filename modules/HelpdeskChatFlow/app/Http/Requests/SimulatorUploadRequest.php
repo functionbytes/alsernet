@@ -16,7 +16,10 @@ class SimulatorUploadRequest extends FormRequest
         return [
             'session_key' => ['required', 'string', 'max:191', 'regex:/^[A-Za-z0-9_-]+$/'],
             'doc_key' => ['required', 'string', 'max:191', 'regex:/^[A-Za-z0-9_-]+$/'],
-            'file' => ['required', 'file', 'max:20480'],
+            // 29-sep-2026: lista blanca por contenido (mimes) y por nombre (extensions).
+            'file' => ['required', 'file', 'max:20480',
+                'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt',
+                'extensions:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt'],
         ];
     }
 
@@ -29,6 +32,8 @@ class SimulatorUploadRequest extends FormRequest
             'doc_key.regex' => 'El identificador del documento no es válido.',
             'file.required' => 'Adjunta un archivo.',
             'file.max' => 'El archivo no puede superar los 20 MB.',
+            'file.mimes' => 'Tipo de archivo no permitido (imágenes, PDF, Office o texto).',
+            'file.extensions' => 'Tipo de archivo no permitido (imágenes, PDF, Office o texto).',
         ];
     }
 

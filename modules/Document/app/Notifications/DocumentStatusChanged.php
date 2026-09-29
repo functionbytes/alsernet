@@ -2,7 +2,7 @@
 
 namespace Modules\Document\Notifications;
 
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -81,7 +81,8 @@ class DocumentStatusChanged extends Notification implements ShouldBroadcast, Sho
             return [];
         }
 
-        return [new Channel('public-notifications.'.$this->recipientUserId)];
+        // Seguridad 29-sep-2026: canal privado (autorizado en routes/channels.php) en vez del público public-notifications.{id}.
+        return [new PrivateChannel('user.'.$this->recipientUserId)];
     }
 
     public function broadcastType(): string

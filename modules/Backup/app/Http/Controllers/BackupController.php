@@ -108,7 +108,11 @@ class BackupController extends Controller
 
     public function __construct()
     {
-        $this->middleware('can:Backup.backups.index')->only('index', 'create', 'store', 'getStatus', 'setup', 'guide', 'prerequisites', 'schedulerConfigureInstructions', 'supervisorStatus', 'supervisorInstallInstructions', 'supervisorApplyInstructions', 'supervisorRestartInstructions');
+        // 29-sep-2026: lanzar un backup (varios GB) exige permiso propio y throttle;
+        // antes bastaba con poder verlos.
+        $this->middleware('can:Backup.backups.create')->only('store');
+        $this->middleware('throttle:2,60')->only('store');
+        $this->middleware('can:Backup.backups.index')->only('index', 'create', 'getStatus', 'setup', 'guide', 'prerequisites', 'schedulerConfigureInstructions', 'supervisorStatus', 'supervisorInstallInstructions', 'supervisorApplyInstructions', 'supervisorRestartInstructions');
         $this->middleware('can:Backup.backups.download')->only('download');
         $this->middleware('can:Backup.backups.delete')->only('destroy');
     }

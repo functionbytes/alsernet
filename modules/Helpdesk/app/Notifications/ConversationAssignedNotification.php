@@ -44,7 +44,9 @@ class ConversationAssignedNotification extends Notification implements ShouldQue
         return [
             'type' => 'helpdesk_conversation_assigned',
             'title' => 'Conversacion asignada',
-            'message' => "Se te ha asignado la conversacion #{$this->conversation->id}: {$this->conversation->subject}",
+            // strip_tags (29-sep-2026): el asunto lo elige el cliente y el desplegable
+            // de notificaciones lo pinta como HTML.
+            'message' => "Se te ha asignado la conversacion #{$this->conversation->id}: ".strip_tags((string) $this->conversation->subject),
             'entity_id' => $this->conversation->id,
             'action_url' => route('manager.helpdesk.conversations.show', $this->conversation),
         ];

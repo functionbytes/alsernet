@@ -11,6 +11,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskContacts\Database\Seeders\HelpdeskContactsPermissionsSeeder;
 use Tests\Concerns\SeedsCorePermissions;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 /**
@@ -258,6 +259,9 @@ class ContactsControllerTest extends TestCase
     public function test_export_neutralizes_csv_formula_injection(): void
     {
         Customer::factory()->create(['name' => '=cmd|calc', 'email' => 'evil@example.test']);
+
+        Permission::findOrCreate('contacts.export', 'web');
+        $this->user->givePermissionTo('contacts.export');
 
         $response = $this->actingAs($this->user)->get(route('contacts.export'));
 

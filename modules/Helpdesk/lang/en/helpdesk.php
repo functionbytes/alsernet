@@ -187,6 +187,8 @@ return [
             'retry_send_error' => 'Could not retry the send.',
             'wa_window_closed' => 'Outside the WhatsApp 24h window: you can only send an approved template (HSM), not free text.',
             'wa_window_closed_banner' => 'More than 24h have passed since the customer\'s last message. WhatsApp only allows replying with an approved template.',
+            'unverified_email_banner' => 'Unverified email: the visitor claimed to be :email, but it has not been checked. Do not share personal data or change orders without confirming their identity.',
+            'unverified_email_banner_generic' => 'Unverified email: do not share personal data or change orders without confirming the customer\'s identity.',
             'close_banner' => 'Dismiss notice',
             'view_original' => 'View original',
             'video_not_supported' => 'Your browser does not support video.',

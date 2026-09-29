@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
@@ -37,12 +38,50 @@ use Symfony\Component\HttpFoundation\File\File;
 class MediaFileService
 {
     /**
+     * MIME real (finfo) => extensión en disco para "subir desde URL".
+     *
+     * @var array<string, string>
+     */
+    private const URL_UPLOAD_EXTENSIONS = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+        'application/pdf' => 'pdf',
+        'application/msword' => 'doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        'application/vnd.ms-excel' => 'xls',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+        'application/zip' => 'zip',
+        'application/x-zip-compressed' => 'zip',
+        'video/mp4' => 'mp4',
+        'audio/mpeg' => 'mp3',
+        'text/csv' => 'csv',
+    ];
+
+    /**
+     * Extensiones que nunca se guardan en public/media, aunque estén en
+     * media.allowed_mime_types (que es configurable por .env).
+     *
+     * @var array<int, string>
+     */
+    private const BLOCKED_EXTENSIONS = [
+        'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'pht', 'phar', 'phps', 'inc',
+        'htaccess', 'ini', 'cgi', 'pl', 'py', 'sh', 'shtml', 'html', 'htm', 'xhtml', 'xml',
+        'svg', 'svgz', 'js', 'mjs',
+    ];
+    /**
      * Upload a file, deduplicating by hash.
      *
      * @return array{duplicate: bool, file: MediaFile}
      */
     public function upload(UploadedFile $file, ?int $folderId, string $disk, int $userId): array
     {
+        // 29-sep-2026: misma lista blanca para todas las vías (normal, API y por
+        // trozos, que no pasaba por UploadMediaFileRequest). store() usa
+        // hashName(), cuya extensión es esta misma guessExtension().
+        $this->assertAllowedUpload($file);
+
         if (! $this->hasQuotaFor($userId, $file->getSize())) {
             abort(413, 'Cuota de almacenamiento excedida');
         }
@@ -274,6 +313,20 @@ class MediaFileService
         }
     }
 
+    /**
+     * Rechaza (422) el archivo si la extensión deducida de su contenido no está
+     * en media.allowed_mime_types o está en la lista negra fija.
+     */
+    public function assertAllowedUpload(UploadedFile $file): void
+    {
+        $ext = strtolower((string) $file->guessExtension());
+        $allowed = array_map('trim', explode(',', strtolower((string) config('media.allowed_mime_types', ''))));
+
+        if ($ext === '' || in_array($ext, self::BLOCKED_EXTENSIONS, true) || ! in_array($ext, $allowed, true)) {
+            abort(422, 'El tipo de archivo no está permitido.');
+        }
+    }
+
     private function formatFileArray(MediaFile $file): array
     {
         return [
@@ -341,29 +394,20 @@ class MediaFileService
             abort(503, 'Servicio de descarga externa temporalmente deshabilitado.');
         }
 
-        $this->validateExternalUrl($url);
-
-        $filename = $filename ?: basename(parse_url($url, PHP_URL_PATH)) ?: 'descargado-'.time();
-        if (! str_contains($filename, '.')) {
-            $filename .= '.bin';
+        // 29-sep-2026: el nombre en disco lo genera el servidor (Str::random(40) +
+        // extensión según el MIME real). Antes se usaba el `filename` de la
+        // petición o el de la URL, lo que permitía dejar un "shell.php" en
+        // public/media. El nombre recibido solo se guarda como nombre visible.
+        $displayName = Str::limit(basename((string) ($filename ?: parse_url($url, PHP_URL_PATH))), 200, '');
+        if ($displayName === '' || str_starts_with($displayName, '.')) {
+            $displayName = 'descargado-'.time();
         }
 
         $maxBytes = (int) config('media.max_upload_size', 104857600);
         $tempPath = tempnam(sys_get_temp_dir(), 'mdl');
 
         try {
-            $response = Http::timeout(30)
-                ->connectTimeout(5)
-                ->withOptions([
-                    'sink' => $tempPath,
-                    'allow_redirects' => ['max' => 3, 'strict' => true],
-                    'progress' => function ($dlTotal, $dlNow) use ($maxBytes): void {
-                        if ($dlNow > $maxBytes) {
-                            throw new \RuntimeException('Archivo excede el límite');
-                        }
-                    },
-                ])
-                ->get($url);
+            $response = $this->downloadExternal($url, $tempPath, $maxBytes);
 
             if (! $response->successful()) {
                 throw new \RuntimeException('No se pudo descargar el archivo desde la URL');
@@ -378,27 +422,24 @@ class MediaFileService
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
             $mimeType = $finfo->file($tempPath) ?: 'application/octet-stream';
 
-            $allowedMimes = [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/zip', 'application/x-zip-compressed',
-                'video/mp4', 'audio/mpeg',
-                'text/plain', 'text/csv',
-            ];
+            // Sin image/svg+xml ni text/plain (29-sep-2026): se sirven desde
+            // public/media en el mismo origen que el panel.
+            $ext = self::URL_UPLOAD_EXTENSIONS[$mimeType] ?? null;
 
-            if (! in_array($mimeType, $allowedMimes, true)) {
+            if ($ext === null) {
                 throw new \RuntimeException('Tipo de archivo no permitido: '.$mimeType);
             }
 
             $storedPath = Storage::disk($disk)->putFileAs(
                 (string) ($folderId ?? 0),
                 new File($tempPath),
-                $filename
+                Str::random(40).'.'.$ext
             );
+
+            if (strtolower(pathinfo($displayName, PATHINFO_EXTENSION)) !== $ext) {
+                $displayName .= '.'.$ext;
+            }
+            $filename = $displayName;
 
             $fileName = $filename;
             $fileSize = $size;
@@ -501,14 +542,66 @@ class MediaFileService
     }
 
     /**
+     * Descarga una URL externa sin seguir redirecciones automáticamente: cada
+     * salto (máx. 3) se revalida con validateExternalUrl() y la conexión se
+     * fija a la IP validada (CURLOPT_RESOLVE) para evitar DNS rebinding.
+     * 29-sep-2026: antes Guzzle seguía redirecciones a IPs internas sin revalidar.
+     */
+    private function downloadExternal(string $url, string $tempPath, int $maxBytes): \Illuminate\Http\Client\Response
+    {
+        $current = $url;
+
+        for ($hop = 0; $hop <= 3; $hop++) {
+            $ip = $this->validateExternalUrl($current);
+            $parts = parse_url($current);
+            $host = (string) ($parts['host'] ?? '');
+            $port = (int) ($parts['port'] ?? (($parts['scheme'] ?? 'http') === 'https' ? 443 : 80));
+
+            $options = [
+                'sink' => $tempPath,
+                'allow_redirects' => false,
+                'progress' => function ($dlTotal, $dlNow) use ($maxBytes): void {
+                    if ($dlNow > $maxBytes) {
+                        throw new \RuntimeException('Archivo excede el límite');
+                    }
+                },
+            ];
+
+            if ($ip !== null && filter_var($host, FILTER_VALIDATE_IP) === false) {
+                $options['curl'] = [CURLOPT_RESOLVE => ["{$host}:{$port}:{$ip}"]];
+            }
+
+            $response = Http::timeout(30)->connectTimeout(5)->withOptions($options)->get($current);
+
+            if (! $response->redirect()) {
+                return $response;
+            }
+
+            $location = (string) $response->header('Location');
+            if ($location === '') {
+                return $response;
+            }
+
+            $current = (string) \GuzzleHttp\Psr7\UriResolver::resolve(
+                new \GuzzleHttp\Psr7\Uri($current),
+                new \GuzzleHttp\Psr7\Uri($location)
+            );
+        }
+
+        throw new \RuntimeException('Demasiadas redirecciones');
+    }
+
+    /**
      * Copy a file within the same disk (with path traversal protection).
      */
     public function copy(MediaFile $file, int $userId): MediaFile
     {
         $disk = $file->disk ?? 'media';
-        $ext = strtolower(pathinfo($file->name, PATHINFO_EXTENSION));
+        // 29-sep-2026: la extensión sale del fichero en disco, no de $file->name
+        // (editable con rename: permitía crear copias .html/.svg/.shtml).
+        $ext = strtolower(pathinfo((string) $file->url, PATHINFO_EXTENSION));
 
-        if (in_array($ext, ['php', 'phtml', 'phar', 'htaccess'], true)) {
+        if ($ext === '' || in_array($ext, self::BLOCKED_EXTENSIONS, true)) {
             throw new \RuntimeException('Tipo de archivo no permitido para copiar');
         }
 
@@ -524,9 +617,10 @@ class MediaFileService
         }
 
         $base = pathinfo($file->name, PATHINFO_FILENAME);
-        $newName = $base.'-(copia).'.$ext;
+        $nameExt = pathinfo($file->name, PATHINFO_EXTENSION);
+        $newName = $base.'-(copia)'.($nameExt !== '' ? '.'.$nameExt : '');
         $dir = dirname($file->url);
-        $newPath = $dir.'/'.pathinfo($base, PATHINFO_FILENAME).'-copia-'.uniqid().'.'.$ext;
+        $newPath = $dir.'/'.Str::random(40).'.'.$ext;
 
         Storage::disk($disk)->copy($file->url, $newPath);
 
@@ -670,7 +764,7 @@ class MediaFileService
     /**
      * @throws \RuntimeException|HttpResponseException
      */
-    public function validateExternalUrl(string $url): void
+    public function validateExternalUrl(string $url): ?string
     {
         $parsed = parse_url($url);
 
@@ -680,14 +774,10 @@ class MediaFileService
 
         $host = $parsed['host'] ?? '';
 
-        // Double DNS resolution to mitigate DNS rebinding attacks
+        // 29-sep-2026: el DNS rebinding se evita fijando esta IP en la descarga
+        // (CURLOPT_RESOLVE en downloadExternal); la doble resolución rechazaba
+        // cualquier host con DNS round-robin.
         $ip1 = gethostbyname($host);
-        usleep(50000);
-        $ip2 = gethostbyname($host);
-
-        if ($ip1 !== $ip2) {
-            abort(422, 'Resolución DNS inestable');
-        }
 
         $isPrivate = ! filter_var(
             $ip1,
@@ -707,6 +797,8 @@ class MediaFileService
                 abort(422, 'No se permiten URLs a IPv6 de redes privadas/local');
             }
         }
+
+        return $ip1;
     }
 
     public function extractImageMetadata(UploadedFile $file): array

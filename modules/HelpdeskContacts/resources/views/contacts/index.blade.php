@@ -108,7 +108,7 @@
                 @can('contacts.create')
                     <button type="button" class="ctl-btn" data-bs-toggle="modal" data-bs-target="#contact-import-modal">Importar</button>
                 @endcan
-                <button type="button" class="ctl-btn" data-bs-toggle="modal" data-bs-target="#contact-export-modal">Exportar</button>
+                @can('contacts.export')<button type="button" class="ctl-btn" data-bs-toggle="modal" data-bs-target="#contact-export-modal">Exportar</button>@endcan
                 <button type="button" class="ctl-btn" data-bs-toggle="modal" data-bs-target="#contact-reports-modal">Informes</button>
                 @can('contacts.update')
                     @if(helpdesk_integration_enabled())
@@ -168,7 +168,7 @@
                     <button type="button" data-bulk-action="send-hsm">Enviar plantilla</button>
                     <button type="button" data-bs-toggle="modal" data-bs-target="#bulk-modal">Etiquetar o asignar</button>
                 @endif
-                <button type="button" data-bs-toggle="modal" data-bs-target="#contact-export-modal" data-export-selection>Exportar selección</button>
+                @can('contacts.export')<button type="button" data-bs-toggle="modal" data-bs-target="#contact-export-modal" data-export-selection>Exportar selección</button>@endcan
                 <button type="button" class="ctl-bulk-clear" id="bulk-clear-btn">Quitar</button>
             </span>
         </div>
@@ -362,7 +362,7 @@
         @include('contacts::contacts.partials._external-search-modal')
     @endif
     @include('contacts::contacts.partials._import-modal')
-    @include('contacts::contacts.partials._export-modal')
+    @can('contacts.export')@include('contacts::contacts.partials._export-modal')@endcan
     @include('contacts::contacts.partials._reports-modal')
     @include('core::components.delete')
 

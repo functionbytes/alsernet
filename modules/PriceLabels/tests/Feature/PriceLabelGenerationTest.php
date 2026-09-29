@@ -38,6 +38,7 @@ class PriceLabelGenerationTest extends TestCase
     public function test_generating_a_pdf_records_it_in_history(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $template = PriceLabelTemplate::factory()->create([
             'image_vertical' => 'pricelabels/backgrounds/fake.jpg',
@@ -62,14 +63,15 @@ class PriceLabelGenerationTest extends TestCase
         ]);
 
         $generation = PriceLabelGeneration::query()->latest('id')->first();
-        Storage::disk('public')->assertExists($generation->file_path);
-        Storage::disk('public')->assertExists($generation->source_excel_path);
+        Storage::disk('local')->assertExists($generation->file_path);
+        Storage::disk('local')->assertExists($generation->source_excel_path);
         $this->assertSame('REF-1', $generation->sample_row['referencia']);
     }
 
     public function test_generating_both_formats_creates_one_generation_per_type(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $template = PriceLabelTemplate::factory()->create([
             'image_vertical' => 'pricelabels/backgrounds/fake.jpg',
@@ -96,6 +98,7 @@ class PriceLabelGenerationTest extends TestCase
     public function test_generating_requires_at_least_one_format(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $template = PriceLabelTemplate::factory()->create([
             'image_vertical' => 'pricelabels/backgrounds/fake.jpg',
@@ -135,7 +138,8 @@ class PriceLabelGenerationTest extends TestCase
     public function test_download_serves_the_stored_pdf(): void
     {
         Storage::fake('public');
-        Storage::disk('public')->put('pricelabels/generated/test.pdf', '%PDF-1.7 fake content');
+        Storage::fake('local');
+        Storage::disk('local')->put('pricelabels/generated/test.pdf', '%PDF-1.7 fake content');
 
         $generation = PriceLabelGeneration::factory()->create([
             'file_path' => 'pricelabels/generated/test.pdf',
@@ -176,6 +180,7 @@ class PriceLabelGenerationTest extends TestCase
     public function test_regenerate_creates_a_new_completed_generation_from_the_stored_excel(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $template = PriceLabelTemplate::factory()->create([
             'image_vertical' => 'pricelabels/backgrounds/fake.jpg',
@@ -208,7 +213,8 @@ class PriceLabelGenerationTest extends TestCase
     public function test_destroy_removes_row_and_file(): void
     {
         Storage::fake('public');
-        Storage::disk('public')->put('pricelabels/generated/test.pdf', 'fake content');
+        Storage::fake('local');
+        Storage::disk('local')->put('pricelabels/generated/test.pdf', 'fake content');
 
         $generation = PriceLabelGeneration::factory()->create([
             'file_path' => 'pricelabels/generated/test.pdf',
@@ -219,16 +225,17 @@ class PriceLabelGenerationTest extends TestCase
             ->assertRedirect(route('pricelabels.history.index'));
 
         $this->assertDatabaseMissing('price_label_generations', ['id' => $generation->id]);
-        Storage::disk('public')->assertMissing('pricelabels/generated/test.pdf');
+        Storage::disk('local')->assertMissing('pricelabels/generated/test.pdf');
     }
 
     public function test_bulk_delete_removes_multiple_generations(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $generations = PriceLabelGeneration::factory()->count(2)->create();
         foreach ($generations as $generation) {
-            Storage::disk('public')->put($generation->file_path, 'fake content');
+            Storage::disk('local')->put($generation->file_path, 'fake content');
         }
 
         $this->actingAs($this->admin)
@@ -256,21 +263,22 @@ class PriceLabelGenerationTest extends TestCase
     public function test_prune_command_deletes_only_old_generations(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $old = PriceLabelGeneration::factory()->create(['file_path' => 'pricelabels/generated/old.pdf']);
         $old->created_at = now()->subDays(100);
         $old->save();
-        Storage::disk('public')->put($old->file_path, 'old content');
+        Storage::disk('local')->put($old->file_path, 'old content');
 
         $recent = PriceLabelGeneration::factory()->create(['file_path' => 'pricelabels/generated/recent.pdf']);
-        Storage::disk('public')->put($recent->file_path, 'recent content');
+        Storage::disk('local')->put($recent->file_path, 'recent content');
 
         $this->artisan('pricelabels:prune-generations')->assertSuccessful();
 
         $this->assertDatabaseMissing('price_label_generations', ['id' => $old->id]);
         $this->assertDatabaseHas('price_label_generations', ['id' => $recent->id]);
-        Storage::disk('public')->assertMissing($old->file_path);
-        Storage::disk('public')->assertExists($recent->file_path);
+        Storage::disk('local')->assertMissing($old->file_path);
+        Storage::disk('local')->assertExists($recent->file_path);
     }
 
     public function test_history_index_shows_stats(): void

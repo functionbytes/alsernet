@@ -52,7 +52,9 @@ class MediaFileApiController extends Controller
 
     public function store(UploadMediaFileRequest $request): JsonResponse
     {
-        $disk = $request->input('disk', config('media.default_disk', 'media'));
+        $disk = (string) $request->input('disk', config('media.default_disk', 'media'));
+        // 29-sep-2026: el disco venía de la petición sin validar (local, documents...).
+        abort_unless(in_array($disk, ['media', 'public', 's3'], true), 422, 'Disco no válido.');
 
         $result = DB::transaction(fn () => $this->service->upload(
             $request->file('file'),
@@ -208,7 +210,9 @@ class MediaFileApiController extends Controller
 
     public function uploadFromUrl(UploadFromUrlRequest $request): JsonResponse
     {
-        $disk = $request->input('disk', config('media.default_disk', 'media'));
+        $disk = (string) $request->input('disk', config('media.default_disk', 'media'));
+        // 29-sep-2026: el disco venía de la petición sin validar (local, documents...).
+        abort_unless(in_array($disk, ['media', 'public', 's3'], true), 422, 'Disco no válido.');
 
         $file = DB::transaction(fn () => $this->service->uploadFromUrl(
             $request->validated('url'),

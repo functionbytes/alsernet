@@ -34,10 +34,12 @@ Route::middleware(['web', 'auth', 'role:super-admin'])
         Route::get('/supervisor/download', [HealthController::class, 'downloadSupervisorConfig'])->name('supervisor.download');
     });
 
-// Health Check API Routes (no authentication, no rate limiting - for external monitoring)
+// Health Check API Routes (sin autenticación, para monitorización externa).
+// 29-sep-2026: con throttle por IP y respuestas cacheadas/mínimas. La tienda
+// (213.134.40.100) consulta /documents a menudo: por eso su límite es más alto.
 Route::prefix('api/health')->group(function () {
-    Route::get('ping', [HealthController::class, 'ping']);           // Ping simple
-    Route::get('/', [HealthController::class, 'health']);            // Health check completo
-    Route::get('documents', [HealthController::class, 'documentsHealth']); // Health específico documentos
-    Route::get('detailed', [HealthController::class, 'detailed']);   // Detallado (solo debug)
+    Route::get('ping', [HealthController::class, 'ping'])->middleware('throttle:120,1');            // Ping simple
+    Route::get('/', [HealthController::class, 'health'])->middleware('throttle:30,1');              // Estado global (mínimo)
+    Route::get('documents', [HealthController::class, 'documentsHealth'])->middleware('throttle:120,1'); // Health específico documentos
+    Route::get('detailed', [HealthController::class, 'detailed'])->middleware('throttle:30,1');     // Detallado (token)
 });

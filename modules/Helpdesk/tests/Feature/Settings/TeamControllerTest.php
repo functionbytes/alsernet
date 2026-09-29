@@ -220,11 +220,11 @@ class TeamControllerTest extends TestCase
     }
 
     /**
-     * A valid team role (e.g. 'manager') IS accepted and persisted.
+     * A valid team role (e.g. 'helpdesk-agent') IS accepted and persisted.
      */
     public function test_assigning_valid_team_role_is_accepted(): void
     {
-        Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'helpdesk-agent', 'guard_name' => 'web']);
 
         $this->actingAs($this->admin)
             ->put(route('settings.helpdesk.team.member.update', $this->member->id), [
@@ -232,11 +232,11 @@ class TeamControllerTest extends TestCase
                 'lastname' => $this->member->lastname,
                 'email' => $this->member->email,
                 'accepts_conversations' => 'yes',
-                'role' => 'manager',
+                'role' => 'helpdesk-agent',
             ])
             ->assertRedirect(route('settings.helpdesk.team.members'));
 
-        $this->assertTrue($this->member->fresh()->hasRole('manager'));
+        $this->assertTrue($this->member->fresh()->hasRole('helpdesk-agent'));
     }
 
     // ── ASSIGNABLE_ROLES constant ──────────────────────────────────────────────
@@ -247,7 +247,7 @@ class TeamControllerTest extends TestCase
      */
     public function test_assignable_roles_constant_contains_only_team_roles(): void
     {
-        $expected = ['admin', 'manager', 'support', 'callcenter'];
+        $expected = ['helpdesk-admin', 'helpdesk-manager', 'helpdesk-supervisor', 'helpdesk-agent', 'helpdesk-agent-restricted'];
         $actual = UpdateTeamMemberRequest::ASSIGNABLE_ROLES;
 
         sort($expected);
@@ -256,7 +256,7 @@ class TeamControllerTest extends TestCase
         $this->assertSame($expected, $actual);
 
         // Privileged roles must not be present
-        foreach (['super-admin', 'root', 'owner', 'god'] as $privileged) {
+        foreach (['super-admin', 'super-settings', 'settings', 'manager', 'root', 'owner', 'god'] as $privileged) {
             $this->assertNotContains(
                 $privileged,
                 $actual,

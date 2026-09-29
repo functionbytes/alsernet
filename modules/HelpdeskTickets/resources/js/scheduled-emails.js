@@ -28,7 +28,8 @@
         var $listView = $('#sched-list-view');
         var $kanbanView = $('#sched-kanban-view');
 
-        function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+        // 29-sep-2026: .text().html() no escapa comillas; se añade para usos en atributos.
+        function esc(s) { return $('<div>').text(s == null ? '' : s).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
         function ticketUrl(m) {
             // La ficha completa (/full) se eliminó el 8-sep-2026: el listado con

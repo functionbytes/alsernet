@@ -9,6 +9,7 @@ use Modules\Supplier\Models\Extraction\ExtractionBatch;
 use Modules\Supplier\Models\Source\Source;
 use Modules\Supplier\Services\DocumentExtractionService;
 use Modules\Supplier\Services\Extraction\Contracts\SourceDriverInterface;
+use Modules\Supplier\Traits\ValidatesPublicUrl;
 
 /**
  * API REST Driver
@@ -30,6 +31,8 @@ use Modules\Supplier\Services\Extraction\Contracts\SourceDriverInterface;
  */
 class ApiDriver implements SourceDriverInterface
 {
+    use ValidatesPublicUrl;
+
     private const USER_AGENT = 'Mozilla/5.0 (compatible; SupplierBot/1.0; +https://alsernet.es/bot)';
 
     private const DEFAULT_ENDPOINT = '/collections/all/products.json';
@@ -77,6 +80,14 @@ class ApiDriver implements SourceDriverInterface
         $products = [];
         $page = 1;
         $lastCount = $limit;
+
+        // 29-sep-2026 (SSRF): la URL final se valida al usarla (y cada
+        // redirección en buildClient()).
+        if (! $this->urlIsPublic($baseUrl.$endpoint)) {
+            Log::warning('ApiDriver: URL no pública bloqueada', ['source_id' => $source->id]);
+
+            return [];
+        }
 
         while ($lastCount >= $limit) {
             $url = $baseUrl.$endpoint;
@@ -307,6 +318,13 @@ class ApiDriver implements SourceDriverInterface
             'timeout' => (int) ($config['timeout'] ?? 30),
             'verify' => (bool) ($config['verify_ssl'] ?? true),
             'headers' => $headers,
+            'allow_redirects' => [
+                'max' => 5,
+                'protocols' => ['http', 'https'],
+                'on_redirect' => function ($request, $response, $uri): void {
+                    $this->assertUrlIsPublic((string) $uri);
+                },
+            ],
             'auth' => $authType === 'basic' && ! empty($config['auth_user'])
                 ? [$config['auth_user'], $config['auth_token'] ?? '']
                 : null,

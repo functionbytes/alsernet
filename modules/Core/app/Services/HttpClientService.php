@@ -13,8 +13,7 @@ class HttpClientService
     /**
      * Fetch content from a URL with SSL-safe handling
      *
-     * Uses cURL to fetch content from a URL, allowing SSL verification to be disabled.
-     * This is useful for development environments or when dealing with self-signed certificates.
+     * Uses cURL to fetch content from a URL with TLS verification enabled.
      *
      * @param  string  $url  The URL to fetch from
      * @return string The response content
@@ -38,7 +37,14 @@ class HttpClientService
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => false,
-            CURLOPT_SSL_VERIFYPEER => false,
+            // 29-sep-2026: sin uso conocido, pero se deja seguro por si alguien lo
+            // reutiliza: verificación TLS activa, solo http/https, sin redirecciones.
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 30,
         ]);
 
         $result = curl_exec($client);

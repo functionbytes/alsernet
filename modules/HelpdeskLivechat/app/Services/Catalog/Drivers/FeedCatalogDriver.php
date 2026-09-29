@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 
@@ -194,7 +195,21 @@ final class FeedCatalogDriver implements CatalogDriver
     private function fetchRawFeed(): array
     {
         try {
-            $response = Http::timeout(5)->acceptJson()->get($this->feedUrl);
+            // 29-sep-2026: guard SSRF. Solo http(s) con IPs públicas, conexión
+            // fijada a las IPs validadas (CURLOPT_RESOLVE, contra DNS rebinding)
+            // y sin seguir redirecciones (mismo esquema que GuardsAgainstSsrf).
+            $curl = $this->ssrfSafeCurlOptions($this->feedUrl);
+            if ($curl === null) {
+                Log::warning('HelpdeskLivechat catalog feed URL blocked (not a public http(s) URL)');
+
+                return [];
+            }
+
+            $response = Http::timeout(5)
+                ->withoutRedirecting()
+                ->withOptions(['curl' => $curl])
+                ->acceptJson()
+                ->get($this->feedUrl);
 
             if (! $response->successful()) {
                 return [];
@@ -211,6 +226,34 @@ final class FeedCatalogDriver implements CatalogDriver
 
             return [];
         }
+    }
+
+    /**
+     * Opciones curl que fijan la petición a las IPs públicas validadas, o null
+     * si la URL no es http(s) o resuelve a alguna IP privada/reservada.
+     *
+     * @return array<int, array<int, string>>|null
+     */
+    private function ssrfSafeCurlOptions(string $url): ?array
+    {
+        $parts = parse_url($url);
+        if (! $parts || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true) || empty($parts['host'])) {
+            return null;
+        }
+
+        $ips = OutboundUrlGuard::publicIps($url);
+        if ($ips === []) {
+            return null;
+        }
+
+        $host = $parts['host'];
+        $port = $parts['port'] ?? (strtolower($parts['scheme']) === 'https' ? 443 : 80);
+        $pinned = implode(',', array_map(
+            fn (string $ip): string => str_contains($ip, ':') ? '['.$ip.']' : $ip,
+            $ips
+        ));
+
+        return [CURLOPT_RESOLVE => ["{$host}:{$port}:{$pinned}"]];
     }
 
     /**

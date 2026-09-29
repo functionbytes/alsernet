@@ -155,6 +155,29 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // 29-sep-2026: vigilancia de seguridad (php artisan security:watch) y
+        // denegaciones de la API ERP. Nivel fijo "info": LOG_LEVEL=warning en
+        // producción ocultaría las pasadas normales. 0666 porque lo escriben
+        // tanto www-data (scheduler/FPM) como los usuarios de despliegue.
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'days' => 90,
+            'permission' => 0666,
+            'replace_placeholders' => true,
+        ],
+
+        // 29-sep-2026: informes de Content-Security-Policy (POST /csp-report).
+        'csp' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/csp.log'),
+            'level' => 'info',
+            'days' => 30,
+            'permission' => 0666,
+            'replace_placeholders' => false,
+        ],
+
     ],
 
 ];

@@ -54,6 +54,13 @@ class SyncContentToErpJob implements ShouldQueue
             return;
         }
 
+        // 29-sep-2026: no enviar contenido a un host que no sea del ERP.
+        if (! \Modules\Supplier\Support\ErpEndpointGuard::isAllowed($erpUrl)) {
+            Log::error('SyncContentToErpJob: host del endpoint ERP no permitido', ['uid' => $this->contentUid]);
+
+            return;
+        }
+
         // El servidor de escritura del ERP usa name-based virtual hosting: sin forzar
         // el header Host exacto (sin puerto), Apache enruta a un vhost por defecto que
         // responde 200/404 falsos según la ruta en vez del vhost real de api-gestion.

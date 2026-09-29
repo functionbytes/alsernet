@@ -46,7 +46,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapHealthRoutes(): void
     {
-        Route::middleware('throttle:60,1')
+        Route::middleware('throttle:30,1')
             ->prefix('api/health')
             ->name('api.health.')
             ->group(function () {

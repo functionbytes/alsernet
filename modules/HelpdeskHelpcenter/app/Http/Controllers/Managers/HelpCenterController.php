@@ -461,7 +461,10 @@ class HelpCenterController extends Controller
             ]);
 
             if ($request->hasFile('featured_image')) {
+                // 29-sep-2026: nombre generado (uuid + extensión según el contenido);
+                // media-library conservaba el del cliente (.html/.svg en disco público).
                 $article->addMediaFromRequest('featured_image')
+                    ->usingFileName(Str::uuid().'.'.($request->file('featured_image')->guessExtension() ?: 'jpg'))
                     ->toMediaCollection('featured_image');
             }
 
@@ -529,7 +532,10 @@ class HelpCenterController extends Controller
 
             if ($request->hasFile('featured_image')) {
                 $article->clearMediaCollection('featured_image');
+                // 29-sep-2026: nombre generado (uuid + extensión según el contenido);
+                // media-library conservaba el del cliente (.html/.svg en disco público).
                 $article->addMediaFromRequest('featured_image')
+                    ->usingFileName(Str::uuid().'.'.($request->file('featured_image')->guessExtension() ?: 'jpg'))
                     ->toMediaCollection('featured_image');
             }
 

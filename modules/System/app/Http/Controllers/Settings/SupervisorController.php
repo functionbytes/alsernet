@@ -37,9 +37,20 @@ class SupervisorController extends Controller
         'horizon:continue',
     ];
 
+    /**
+     * Roles que pueden leer/escribir los .conf de supervisor, restaurar
+     * backups y descargarlos (contienen las líneas environment=). 29-sep-2026.
+     */
+    private const CONFIG_ROLES = ['super-admin', 'super-settings'];
+
     public function __construct(
         private readonly SupervisorService $supervisor
     ) {}
+
+    private function authorizeConfigAccess(): void
+    {
+        abort_unless(auth()->user()?->hasAnyRole(self::CONFIG_ROLES), 403);
+    }
 
     /**
      * Display the Supervisor dashboard with all processes.
@@ -564,6 +575,8 @@ class SupervisorController extends Controller
      */
     public function restoreBackup(Request $request, int|string $backupId): JsonResponse|RedirectResponse
     {
+        $this->authorizeConfigAccess();
+
         try {
             $result = $this->supervisor->restoreBackup($backupId, auth()->id());
 
@@ -616,6 +629,8 @@ class SupervisorController extends Controller
      */
     public function downloadBackup(int|string $backupId): JsonResponse
     {
+        $this->authorizeConfigAccess();
+
         try {
             $backup = SupervisorBackup::findOrFail($backupId);
             $filename = 'supervisor-backup-'.$backup->environment.'-'.$backup->backed_up_at->format('Y-m-d-His').'.json';
@@ -635,6 +650,8 @@ class SupervisorController extends Controller
      */
     public function listConfigFiles(): JsonResponse
     {
+        $this->authorizeConfigAccess();
+
         try {
             $files = $this->supervisor->listConfDirFiles();
 
@@ -651,6 +668,8 @@ class SupervisorController extends Controller
      */
     public function getConfigFile(Request $request): JsonResponse
     {
+        $this->authorizeConfigAccess();
+
         $filePath = $request->input('file');
 
         if (! $filePath) {
@@ -671,9 +690,11 @@ class SupervisorController extends Controller
      */
     public function updateConfigFile(Request $request): JsonResponse|RedirectResponse
     {
+        $this->authorizeConfigAccess();
+
         $validated = $request->validate([
-            'file' => 'required|string',
-            'content' => 'required|string',
+            'file' => 'required|string|max:512',
+            'content' => 'required|string|max:65536',
         ]);
 
         try {
