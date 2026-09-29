@@ -653,6 +653,21 @@
     left: 80px;
 }
 
+/* ── Menu expandido (`full`, abierto a mano con .app-toggler) ────────────────
+   Mismo criterio que `mini-hover` justo arriba: sin esto, `full` empujaba
+   `.app-wrapper`/`.app-header`/`.footer-wrapper` los 320px completos de
+   `--app-menubar-tabs` (regla generica de mas arriba). El panel
+   (`.app-tab-content`) ya es `position:fixed` con z-index 9, así que solo
+   hace falta frenar el empuje del contenido a los 80px del riel para que
+   quede flotando encima en vez de correr la maquetacion. */
+[data-app-sidebar=full] :has(.app-menubar-tabs) .app-wrapper,
+[data-app-sidebar=full] :has(.app-menubar-tabs) .footer-wrapper {
+    margin-left: 80px;
+}
+[data-app-sidebar=full] :has(.app-menubar-tabs) .app-header {
+    left: 80px;
+}
+
 @media (max-width: 1480px) {
     :root {
         --app-menubar-tabs: 80px;

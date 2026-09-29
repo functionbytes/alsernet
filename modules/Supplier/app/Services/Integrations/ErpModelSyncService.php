@@ -583,8 +583,11 @@ class ErpModelSyncService
         $subfamily = $this->resolveSubfamilyFromFilter($data);
 
         // Resolver sport directamente del dato ERP (más fiable que via $category->sport_id,
-        // porque la categoría puede existir en local sin sport_id si fue importada antes)
-        $erpSportId = $data['categorie']['sport']['id'] ?? null;
+        // porque la categoría puede existir en local sin sport_id si fue importada antes).
+        // 22-sep-2026: preferir el sport_id del PRIMER ARTÍCULO — igual criterio
+        // que resolveCategoryFromFilter(), ver comentario ahí.
+        $firstAttrForSport = ($data['product_attributes'] ?? [])[0] ?? [];
+        $erpSportId = $firstAttrForSport['sport_id'] ?? ($data['categorie']['sport']['id'] ?? null);
         $sport = $erpSportId ? Sport::where('erp_id', $erpSportId)->first() : null;
         $attributes = $data['product_attributes'] ?? [];
 
@@ -681,13 +684,37 @@ class ErpModelSyncService
     }
 
     /**
-     * Resuelve la categoría a partir de categorie del filter endpoint.
-     * Si no existe crea también el sport si viene en los datos.
+     * Resuelve la categoría (familia) a partir del PRIMER ARTÍCULO del
+     * modelo, no del propio modelo.
+     *
+     * 22-sep-2026: en Oracle, MODELO.idgrupo_cl y ARTICULO.idgrupo_cl son dos
+     * FKs independientes a la jerarquía de clasificación — nada obliga a que
+     * el modelo y sus artículos apunten al mismo grupo, y en la práctica
+     * pueden desincronizarse (caso real: modelo 400002473 "MASCARA ATOMIC
+     * SAVOR" — el modelo seguía en T.CASCOS desde el 03-sep mientras su
+     * artículo, ya reclasificado en Gestión, tenía T.MÁSCARAS desde el
+     * 09-sep). resolveSubfamilyFromFilter() ya lee del artículo por este
+     * mismo motivo; esto alinea categoría/deporte con el mismo criterio, así
+     * que "Regenerar con datos actualizados" deja de traer siempre la
+     * clasificación vieja del modelo.
+     *
+     * `$data['categorie']` (snapshot del modelo, con descripción completa)
+     * se conserva solo como fuente de datos para CREAR una categoría local
+     * nueva cuando coincide con la del artículo — si no coincide y la
+     * categoría del artículo no existe aún localmente, se crea con nombre
+     * provisional (mismo patrón que resolveSubfamilyFromFilter), a
+     * corregir en la próxima sync de jerarquía de categorías.
      */
     protected function resolveCategoryFromFilter(array $data): ?Category
     {
         $categorieData = $data['categorie'] ?? null;
-        $erpCategoryId = $categorieData['id'] ?? null;
+        $modelCategoryId = $categorieData['id'] ?? null;
+
+        $firstAttr = ($data['product_attributes'] ?? [])[0] ?? [];
+        $articleCategoryId = $firstAttr['categorie'] ?? null;
+        $articleSportId = $firstAttr['sport_id'] ?? null;
+
+        $erpCategoryId = $articleCategoryId ?? $modelCategoryId;
 
         if (! $erpCategoryId) {
             return null;
@@ -695,13 +722,14 @@ class ErpModelSyncService
 
         // Resolver sport siempre, independientemente de si la categoría ya existe
         $sportData = $categorieData['sport'] ?? null;
+        $erpSportId = $articleSportId ?? ($sportData['id'] ?? null);
         $sport = null;
 
-        if ($sportData && isset($sportData['id'])) {
+        if ($erpSportId) {
             $sport = Sport::firstOrCreate(
-                ['erp_id' => $sportData['id']],
+                ['erp_id' => $erpSportId],
                 [
-                    'name' => $this->stripPrefix($sportData['description'] ?? null),
+                    'name' => $this->stripPrefix($sportData['description'] ?? null) ?: "Deporte {$erpSportId}",
                     'short_name' => $this->stripPrefix($sportData['description_short'] ?? null),
                     'available' => $sportData['available'] ?? true,
                     'last_sync_at' => now(),
@@ -723,13 +751,17 @@ class ErpModelSyncService
             return $category;
         }
 
+        // Solo hay descripción rica cuando la categoría del artículo coincide
+        // con el snapshot del modelo — si no, nombre provisional.
+        $hasRichData = $categorieData && $modelCategoryId === $erpCategoryId;
+
         return Category::create([
             'erp_id' => $erpCategoryId,
-            'name' => $this->stripPrefix($categorieData['description'] ?? null),
-            'short_name' => $this->stripPrefix($categorieData['description_short'] ?? null),
-            'available' => $categorieData['available'] ?? true,
+            'name' => $hasRichData ? $this->stripPrefix($categorieData['description'] ?? null) : "Familia {$erpCategoryId}",
+            'short_name' => $hasRichData ? $this->stripPrefix($categorieData['description_short'] ?? null) : null,
+            'available' => $hasRichData ? ($categorieData['available'] ?? true) : true,
             'sport_id' => $sport?->id,
-            'erp_sport_id' => $sportData['id'] ?? null,
+            'erp_sport_id' => $erpSportId,
             'last_sync_at' => now(),
         ]);
     }
@@ -776,6 +808,7 @@ class ErpModelSyncService
     protected function syncCharacteristicsInline(Product $product, array $data): int
     {
         $count = 0;
+        $incomingModelCharacteristicIds = [];
 
         foreach ($data['characteristics'] ?? [] as $row) {
             $erpCharacteristicId = $row['characteristic_id'] ?? null;
@@ -797,10 +830,28 @@ class ErpModelSyncService
                 ]
             );
             $count++;
+            $incomingModelCharacteristicIds[] = $characteristic->id;
+        }
+
+        // 23-sep-2026: sin esto, una característica de MODELO quitada en
+        // Gestión (p. ej. se elimina "Talla" del modelo) se quedaba huérfana
+        // localmente para siempre — el loop de arriba solo crea/actualiza,
+        // nunca borra. Mismo criterio que syncAttributesInline() más arriba
+        // en este fichero (solo se poda cuando SÍ llegaron características,
+        // igual que allí protege contra un payload de ERP vacío por error
+        // borrando todo de golpe). Sin soft-delete acá (ModelCharacteristic
+        // no tiene deleted_at) y solo se tocan filas 'synced': una 'pending'
+        // es trabajo local todavía sin enviar al ERP, no se borra.
+        if ($incomingModelCharacteristicIds) {
+            ModelCharacteristic::where('product_id', $product->id)
+                ->where('sync_status', 'synced')
+                ->whereNotIn('characteristic_id', $incomingModelCharacteristicIds)
+                ->delete();
         }
 
         if (! empty($data['product_attributes'])) {
             $attributesByErpId = ProductAttribute::where('product_id', $product->id)->pluck('id', 'erp_id');
+            $incomingVariantKeys = [];
 
             foreach ($data['product_attributes'] as $articuloData) {
                 $erpArticuloId = $articuloData['id'] ?? null;
@@ -839,7 +890,32 @@ class ErpModelSyncService
                         ]
                     );
                     $count++;
+                    $incomingVariantKeys[] = ($productAttributeId ?? 'p'.$product->id).':'.$characteristic->id;
                 }
+            }
+
+            // Mismo criterio que arriba, a nivel de VARIANTE (talla/color por
+            // artículo): poda solo lo 'synced' que ya no vino en el payload
+            // fresco, y solo dentro de las variantes de ESTE producto — nunca
+            // toca artículos de otro modelo. Caso real que motivó este fix:
+            // "Largo" (id 931) se reemplazó por "Largo caña (aprox)" en
+            // Gestión y el resync seguía dejando ambos.
+            if ($incomingVariantKeys) {
+                $variantAttributeIds = $attributesByErpId->values()->all();
+
+                VariantCharacteristic::query()
+                    ->where('sync_status', 'synced')
+                    ->where(function ($q) use ($variantAttributeIds, $product) {
+                        $q->whereIn('product_attribute_id', $variantAttributeIds)
+                            ->orWhere(fn ($q2) => $q2->whereNull('product_attribute_id')->where('product_id', $product->id));
+                    })
+                    ->get()
+                    ->each(function (VariantCharacteristic $vc) use ($incomingVariantKeys, $product) {
+                        $key = ($vc->product_attribute_id ?? 'p'.$product->id).':'.$vc->characteristic_id;
+                        if (! in_array($key, $incomingVariantKeys, true)) {
+                            $vc->delete();
+                        }
+                    });
             }
         }
 
@@ -932,10 +1008,12 @@ class ErpModelSyncService
             'erp_id' => $erpModelId,
             'supplier_id' => $supplier?->id,
             'category_id' => $category?->id,
-            // El endpoint manda el grupo como objeto anidado ('categorie' => ['id' => ...]),
-            // no como escalar 'idgrupo_cl'/'grupo' (eso solo existe a nivel de artículo) —
-            // con la clave vieja esto quedaba siempre en null tras cada regenerado.
-            'erp_category_id' => $data['categorie']['id'] ?? null,
+            // 22-sep-2026: usar $category?->erp_id (lo que resolveCategoryFromFilter()
+            // resolvió de verdad, prefiriendo el artículo) en vez de releer
+            // $data['categorie']['id'] (snapshot del MODELO) directamente — si no,
+            // category_id y erp_category_id podían quedar apuntando a dos
+            // clasificaciones distintas cuando modelo y artículo divergen.
+            'erp_category_id' => $category?->erp_id,
             'subfamily_id' => $subfamily?->id,
             'erp_subfamily_id' => $erpSubfamilyId,
             'sport_id' => $sport?->id,
