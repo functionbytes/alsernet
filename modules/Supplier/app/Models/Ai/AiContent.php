@@ -5,6 +5,7 @@ namespace Modules\Supplier\Models\Ai;
 use App\Models\User;
 use App\Traits\HasUid;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Modules\Supplier\Database\Factories\Ai\AiContentFactory;
+use Modules\Supplier\Helpers\HtmlSanitizer;
 use Modules\Supplier\Models\Content\ContentLog;
 use Modules\Supplier\Models\Content\ContentValidation;
 use Modules\Supplier\Models\Product\Product;
@@ -129,6 +131,17 @@ class AiContent extends Model
             'validated_by' => 'integer',
             'assigned_to' => 'integer',
         ];
+    }
+
+    /**
+     * 29-sep-2026: long_description se pinta con {!! !!} y se envía al ERP.
+     * Se sanea al guardar venga de donde venga (edición manual, chat, IA).
+     */
+    protected function longDescription(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => $value === null ? null : HtmlSanitizer::clean($value),
+        );
     }
 
     protected static function booted(): void

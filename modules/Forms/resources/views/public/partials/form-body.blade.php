@@ -10,7 +10,9 @@
 --}}
 @php $artifactMode = $artifactMode ?? false; @endphp
 @if(!empty($form->custom_css) && ! $artifactMode)
-<style>{!! $form->custom_css !!}</style>
+{{-- 29-sep-2026: sin "<" crudo (un "</style><script>" daba XSS en la página pública);
+     "\3c " es el escape CSS equivalente, válido dentro de cadenas. --}}
+<style>{!! str_replace('<', '\3c ', $form->custom_css) !!}</style>
 @endif
 <div class="forms-wrapper forms-theme-{{ $theme }}" id="{{ $formId }}-wrapper">
     @if($showTitle)

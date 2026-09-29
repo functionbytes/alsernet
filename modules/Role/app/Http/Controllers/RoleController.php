@@ -17,6 +17,7 @@ use Modules\Role\Events\UserRoleChanged;
 use Modules\Role\Helpers\PermissionHelper;
 use Modules\Role\Http\Requests\Systems\RoleRequest;
 use Modules\Role\Services\ActivePermissionService;
+use Modules\Role\Services\PrivilegeGuard;
 use Nwidart\Modules\Facades\Module;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
@@ -26,6 +27,7 @@ class RoleController extends Controller
 {
     public function __construct(
         private readonly ActivePermissionService $activePermissionService,
+        private readonly PrivilegeGuard $guard,
     ) {
         $this->middleware('can:roles.view')->only(['index', 'show', 'showPermissions', 'showModules', 'showUsers', 'compare', 'export', 'showPermissionMatrix']);
         $this->middleware('can:roles.create')->only(['create', 'store', 'duplicate', 'clone']);
@@ -75,14 +77,21 @@ class RoleController extends Controller
     {
         $data = $request->validated();
 
+        $this->denyUnless(! $this->guard->isPrivilegedRole((string) ($data['name'] ?? '')) || $this->guard->isSuperAdmin(auth()->user()));
+
+        $permissions = null;
+        if ($request->has('permissions') && is_array($request->input('permissions'))) {
+            $permissions = Permission::whereIn('id', $request->input('permissions'))
+                ->where('guard_name', $data['guard_name'] ?? 'web')
+                ->get();
+
+            $this->denyUnless($this->guard->canGrantPermissions(auth()->user(), $permissions));
+        }
+
         $role = Role::create($data);
 
         // Assign permissions if provided
-        if ($request->has('permissions') && is_array($request->input('permissions'))) {
-            $permissions = Permission::whereIn('id', $request->input('permissions'))
-                ->where('guard_name', $role->guard_name)
-                ->get();
-
+        if ($permissions !== null) {
             $role->syncPermissions($permissions);
         }
 
@@ -149,14 +158,22 @@ class RoleController extends Controller
             return $this->error('Cannot modify system roles');
         }
 
-        $role->update($data);
+        $this->assertCanManageRole($role);
+        $this->denyUnless(! $this->guard->isPrivilegedRole((string) ($data['name'] ?? $role->name)) || $this->guard->isSuperAdmin(auth()->user()));
 
-        // Update permissions if provided
+        $permissions = null;
         if ($request->has('permissions') && is_array($request->input('permissions'))) {
             $permissions = Permission::whereIn('id', $request->input('permissions'))
                 ->where('guard_name', $role->guard_name)
                 ->get();
 
+            $this->assertCanGrantAdded($role, $permissions);
+        }
+
+        $role->update($data);
+
+        // Update permissions if provided
+        if ($permissions !== null) {
             $role->syncPermissions($permissions);
         }
 
@@ -192,6 +209,8 @@ class RoleController extends Controller
             return back()->with('error', 'No se pueden eliminar roles del sistema.');
         }
 
+        $this->assertCanManageRole($role);
+
         // Check if role has users assigned
         if ($role->users()->count() > 0) {
             if (request()->expectsJson()) {
@@ -223,6 +242,8 @@ class RoleController extends Controller
      */
     public function duplicate(Role $role): JsonResponse
     {
+        $this->assertCanCopyRole($role);
+
         $newRole = $role->replicate();
         $newRole->name = $role->name.' (Copy)';
         $newRole->save();
@@ -239,6 +260,8 @@ class RoleController extends Controller
      */
     public function clone(Role $role): RedirectResponse
     {
+        $this->assertCanCopyRole($role);
+
         $newRole = $role->replicate();
         $newRole->name = $role->name.'_copia_'.now()->format('His');
         $newRole->save();
@@ -258,6 +281,8 @@ class RoleController extends Controller
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
         ]);
+
+        $this->denyUnless($this->guard->canAssignRole(auth()->user(), $role));
 
         $userIds = $request->input('user_ids', []);
 
@@ -283,6 +308,9 @@ class RoleController extends Controller
      */
     public function removeUser(Role $role, User $user): JsonResponse
     {
+        $this->assertCanManageRole($role);
+        $this->denyUnless($this->guard->canManageUser(auth()->user(), $user));
+
         $user->roles()->detach($role->id);
 
         event(new UserRoleChanged($user, $role, 'removed', auth()->user()));
@@ -327,6 +355,11 @@ class RoleController extends Controller
 
             $permission = Permission::findById($permissionId);
 
+            $this->assertCanManageRole($role);
+            if ($action === 'attach') {
+                $this->denyUnless($this->guard->canGrantPermissions(auth()->user(), [$permission]));
+            }
+
             if ($action === 'attach') {
                 $role->givePermissionTo($permission);
             } elseif ($action === 'detach') {
@@ -355,6 +388,9 @@ class RoleController extends Controller
         $permissions = Permission::whereIn('id', $request->input('permissions'))
             ->where('guard_name', $role->guard_name)
             ->get();
+
+        $this->assertCanManageRole($role);
+        $this->assertCanGrantAdded($role, $permissions);
 
         $role->syncPermissions($permissions);
 
@@ -423,6 +459,8 @@ class RoleController extends Controller
             'modules' => 'array',
             'modules.*' => 'string',
         ]);
+
+        $this->assertCanManageRole($role);
 
         $modules = $request->input('modules', []);
 
@@ -502,6 +540,10 @@ class RoleController extends Controller
             'user_ids.*' => ['integer', 'exists:users,id'],
         ]);
 
+        $this->assertCanManageRole($role);
+        $this->denyUnless(User::whereIn('id', $request->user_ids)->get()
+            ->every(fn (User $u) => $this->guard->canManageUser(auth()->user(), $u)));
+
         $role->users()->detach($request->user_ids);
 
         $count = count($request->user_ids);
@@ -525,7 +567,8 @@ class RoleController extends Controller
 
         $roles = Role::whereIn('id', $request->ids)
             ->whereNotIn('name', $systemRoles)
-            ->get();
+            ->get()
+            ->filter(fn (Role $role) => $this->guard->canManageRole(auth()->user(), $role));
 
         $skipped = count($request->ids) - $roles->count();
 
@@ -571,6 +614,9 @@ class RoleController extends Controller
         $sourceRole = Role::findById($request->integer('source_role_id'));
         $newPermissions = $sourceRole->permissions;
 
+        $this->assertCanManageRole($role);
+        $this->denyUnless($this->guard->canGrantPermissions(auth()->user(), $newPermissions));
+
         $role->givePermissionTo($newPermissions);
 
         $count = $newPermissions->count();
@@ -613,5 +659,37 @@ class RoleController extends Controller
         }
 
         return view('role::roles.compare', compact('roles', 'roleA', 'roleB', 'onlyInA', 'onlyInB', 'inBoth'));
+    }
+
+    /*
+    | Anti-escalada (29-sep-2026) — ver Modules\Role\Services\PrivilegeGuard.
+    */
+    private function denyUnless(bool $allowed): void
+    {
+        abort_unless($allowed, 403, 'No tienes privilegios suficientes para esta acción sobre roles o permisos.');
+    }
+
+    private function assertCanManageRole(Role $role): void
+    {
+        $this->denyUnless($this->guard->canManageRole(auth()->user(), $role));
+    }
+
+    /**
+     * Solo se comprueban los permisos que se AÑADEN: quitar permisos que el
+     * actor no tiene sigue permitido en roles no privilegiados.
+     */
+    private function assertCanGrantAdded(Role $role, $permissions): void
+    {
+        $current = $role->permissions()->pluck('name')->all();
+        $added = collect($permissions)->reject(fn (Permission $p) => in_array($p->name, $current, true));
+
+        $this->denyUnless($this->guard->canGrantPermissions(auth()->user(), $added));
+    }
+
+    /** Clonar un rol equivale a conceder todos sus permisos a un rol nuevo. */
+    private function assertCanCopyRole(Role $role): void
+    {
+        $this->denyUnless($this->guard->isSuperAdmin(auth()->user())
+            || (! $this->guard->isPrivilegedRole($role) && $this->guard->canGrantPermissions(auth()->user(), $role->permissions)));
     }
 }

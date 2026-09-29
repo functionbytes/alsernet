@@ -39,7 +39,14 @@ class PublicSimulatorController extends Controller
         private readonly PublicSimulatorService $simulator,
         private readonly AttachmentSecurityService $attachmentSecurity,
     ) {
-        abort_unless((bool) config('helpdesk.simulator_public_enabled'), 404);
+        // Doble barrera (29-sep-2026): además del flag de config, nunca en producción.
+        // Como middleware (no abort directo) para no romper route:list/route:cache,
+        // que instancian el controlador.
+        $this->middleware(function ($request, $next) {
+            abort_unless((bool) config('helpdesk.simulator_public_enabled') && ! app()->environment('production'), 404);
+
+            return $next($request);
+        });
     }
 
     public function sessions(Request $request): JsonResponse
@@ -103,12 +110,10 @@ class PublicSimulatorController extends Controller
                 $data['name'] ?? null,
                 $data['identifier'] ?? null,
                 $data['message'],
-                [
-                    'phone' => $data['phone'] ?? null,
-                    'email' => $data['email'] ?? null,
-                    'prestashop_id' => $data['prestashop_id'] ?? null,
-                    'gestion_id' => $data['gestion_id'] ?? null,
-                ],
+                // Seguridad 29-sep-2026: la versión pública no vincula datos de
+                // cliente (email/teléfono/PrestaShop/ERP): permitían ver pedidos de
+                // terceros. Para eso está el simulador autenticado del panel.
+                [],
                 $data['simulated_datetime'] ?? null,
                 $this->simulatorOwner($request),
             );
@@ -195,9 +200,8 @@ class PublicSimulatorController extends Controller
 
         $file = $request->file('file');
         $this->attachmentSecurity->assertSafe($file);
-        $path = $file->store('helpdesk/attachments', 'public');
+        [$path, $url] = app(\Modules\Helpdesk\Services\ConversationAttachmentStorage::class)->storeUploaded($file, 'helpdesk/attachments');
         $mime = $file->getMimeType() ?? 'application/octet-stream';
-        $url = asset('storage/'.$path);
 
         $attachmentUrls = [[
             'name' => $file->getClientOriginalName(),

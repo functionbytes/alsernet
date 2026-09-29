@@ -261,7 +261,7 @@
                             @enderror
                             <span class="evx-form-hint">
                                 Mailrelay/Postmark: token compartido que el proveedor debe enviar en cabecera. Mailgun: clave
-                                de firma HMAC de la cuenta. SES/SNS: no se usa (la firma la valida SNS con su propio certificado).
+                                de firma HMAC de la cuenta. SES/SNS: no se usa (la firma la valida SNS con su propio certificado); el TopicArn debe estar en EMAIL_LOG_SES_ALLOWED_TOPIC_ARNS del .env. Mailrelay: cabecera X-Mailrelay-Token (el ?token= solo con EMAIL_LOG_MAILRELAY_ALLOW_QUERY_TOKEN=true).
                             </span>
                         </div>
                     </div>

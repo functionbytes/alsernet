@@ -3,6 +3,14 @@
 return [
     'erp_internal_url' => env('ERP_INTERNAL_URL', 'http://nginx'),
 
+    // Hosts permitidos para los endpoints del ERP configurables en el panel
+    // (Settings -> Endpoints). 29-sep-2026: evita SSRF / desviar las escrituras
+    // del ERP a un host ajeno. El host de ERP_INTERNAL_URL se añade solo.
+    'erp_allowed_hosts' => array_filter(array_map('trim', explode(',', (string) env(
+        'SUPPLIER_ERP_ALLOWED_HOSTS',
+        'interges,223.1.1.8,nginx,webadmin.a-alvarez.com'
+    )))),
+
     'erp_sync' => [
         // Lower bound for the ERP "products/filter" sync (idmodelo import).
         'filter_date_from' => env('SUPPLIER_ERP_FILTER_DATE_FROM', '2026-01-01'),

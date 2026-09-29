@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Auth\Events\Password\ResetPasswordCreated;
@@ -14,80 +16,66 @@ use Modules\Auth\Events\PasswordChanged;
 use Modules\Auth\Rules\PasswordNotReused;
 use Modules\Auth\Rules\StrongPassword;
 
+/**
+ * 29-sep-2026: usa el broker nativo (tabla password_reset_tokens). Mensaje de
+ * error genérico (antes "No se encontró una cuenta con ese correo" permitía
+ * enumerar) y la ruta POST lleva throttle.
+ */
 class ResetPasswordController extends Controller
 {
+    private const INVALID_LINK = 'El enlace de restablecimiento no es válido o ha caducado. Solicita uno nuevo.';
+
     public function showResetForm(Request $request, string $token): View
     {
         return view('auth::auth.passwords.reset', [
             'token' => $token,
-            'email' => $request->query('email', ''),
+            'email' => (string) $request->query('email', ''),
         ]);
     }
 
     public function reset(Request $request): View|RedirectResponse
     {
-        $user = User::where('email', $request->input('email'))->first();
-
         $request->validate([
             'token' => ['required', 'string'],
             'email' => ['required', 'email'],
-            'password' => array_filter([
-                'required',
-                'string',
-                'confirmed',
-                new StrongPassword,
-                $user ? new PasswordNotReused($user) : null,
-            ]),
+            'password' => ['required', 'string', 'confirmed', new StrongPassword],
         ], [
             'password.confirmed' => 'Las contraseñas no coinciden.',
         ]);
 
-        if (! $user) {
-            return back()->withErrors(['password' => 'No se encontró una cuenta con ese correo electrónico.']);
+        $broker = Password::broker();
+
+        /** @var User|null $user */
+        $user = $broker->getUser(['email' => (string) $request->input('email')]);
+
+        if (! $user || ! $broker->tokenExists($user, (string) $request->input('token'))) {
+            return back()->withErrors(['password' => self::INVALID_LINK]);
         }
 
-        if (! $user->password_reset_token || ! Hash::check($request->token, $user->password_reset_token)) {
-            return back()->withErrors(['password' => 'El enlace de restablecimiento es inválido o ha expirado.']);
-        }
+        // El historial solo se comprueba con el token ya validado (no filtra si la cuenta existe).
+        $history = Validator::make($request->only('password'), [
+            'password' => [new PasswordNotReused($user)],
+        ]);
 
-        if ($this->isTokenExpired($user)) {
-            $user->forceFill([
-                'password_reset_token' => null,
-                'password_reset_max_tries' => null,
-                'password_reset_last_tried_on' => null,
-            ])->save();
-
-            return back()->withErrors(['password' => 'El enlace de restablecimiento ha expirado. Solicita uno nuevo.']);
+        if ($history->fails()) {
+            return back()->withErrors($history);
         }
 
         $user->forceFill([
-            'password' => Hash::make($request->password),
+            'password' => Hash::make((string) $request->input('password')),
             'password_changed_at' => now(),
             'must_change_password' => false,
             'remember_token' => Str::random(60),
-            'password_reset_token' => null,
-            'password_reset_max_tries' => null,
-            'password_reset_last_tried_on' => null,
+            'failed_login_count' => 0,
+            'locked_until' => null,
         ])->save();
 
+        $broker->deleteToken($user);
         $user->sessions()->delete();
 
         PasswordChanged::dispatch($user, $request->ip(), 'reset');
         ResetPasswordCreated::dispatch($user);
 
         return view('auth::auth.passwords.confirm', ['email' => $user->email]);
-    }
-
-    private function isTokenExpired(User $user): bool
-    {
-        if (empty($user->password_reset_last_tried_on)) {
-            return true;
-        }
-
-        $hours = (int) config('auth.auth-policy.reset_token.expiry_hours', 48);
-        $issuedAt = strtotime($user->password_reset_last_tried_on);
-        $expiresAt = $issuedAt + ($hours * 3600);
-
-        return time() > $expiresAt;
     }
 }

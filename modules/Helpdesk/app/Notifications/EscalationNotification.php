@@ -29,7 +29,7 @@ class EscalationNotification extends Notification implements ShouldQueue
         return [
             'type' => 'helpdesk_escalation',
             'title' => 'Conversacion escalada',
-            'message' => "La conversacion #{$this->conversation->id} fue escalada: {$this->reason}",
+            'message' => "La conversacion #{$this->conversation->id} fue escalada: ".strip_tags((string) $this->reason),
             'entity_id' => $this->conversation->id,
             'action_url' => route('manager.helpdesk.conversations.show', $this->conversation),
         ];

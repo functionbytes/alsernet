@@ -58,6 +58,13 @@ class DocumentsServiceProvider extends ServiceProvider
             'documents'
         );
 
+        // 29-sep-2026: disco privado de los ficheros de expedientes (ver
+        // documents.private_disk). Se registra aquí para no depender de
+        // config/filesystems.php.
+        if (! config('filesystems.disks.documents_private')) {
+            config(['filesystems.disks.documents_private' => config('documents.private_disk')]);
+        }
+
         $this->app->singleton(
             PermissionService::class,
             fn ($app) => new PermissionService

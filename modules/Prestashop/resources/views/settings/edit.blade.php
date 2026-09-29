@@ -75,9 +75,10 @@
 
                         <div class="col-md-6 mb-3">
                           <label class="form-label">Contraseña</label>
+                          {{-- 29-sep-2026: la contraseña nunca se devuelve al navegador; vacío = sin cambios. --}}
                           <input type="password" name="prestashop_db_password" class="form-control @error('prestashop_db_password') is-invalid @enderror"
-                                 value="{{ old('prestashop_db_password', $settings['prestashop_db_password']) }}" autocomplete="new-password">
-                          <small class="form-text text-muted">Contraseña MySQL (opcional si está vacía)</small>
+                                 value="" placeholder="{{ ! empty($settings['prestashop_db_password']) ? '•••••••• (sin cambios)' : '' }}" autocomplete="new-password">
+                          <small class="form-text text-muted">Contraseña MySQL. Déjala vacía para mantener la actual.</small>
                           @error('prestashop_db_password')
                             <div class="invalid-feedback">{{ $message }}</div>
                           @enderror
@@ -125,9 +126,9 @@
 
                         <div class="col-md-4 mb-3">
                           <label class="form-label">API Key</label>
-                          <input type="text" name="prestashop_api_key" class="form-control @error('prestashop_api_key') is-invalid @enderror"
-                                 value="{{ old('prestashop_api_key', $settings['prestashop_api_key']) }}">
-                          <small class="form-text text-muted">Clave API (opcional)</small>
+                          <input type="password" name="prestashop_api_key" class="form-control @error('prestashop_api_key') is-invalid @enderror"
+                                 value="" placeholder="{{ ! empty($settings['prestashop_api_key']) ? '•••••••• (sin cambios)' : '' }}" autocomplete="new-password">
+                          <small class="form-text text-muted">Clave API (opcional). Déjala vacía para mantener la actual.</small>
                           @error('prestashop_api_key')
                             <div class="invalid-feedback">{{ $message }}</div>
                           @enderror

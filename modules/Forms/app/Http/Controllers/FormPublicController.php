@@ -221,9 +221,14 @@ class FormPublicController extends Controller
             ->active()
             ->firstOrFail();
 
+        $token = (string) $request->input('token', '');
+        if (strlen($token) < 32) {
+            return response()->json(['success' => false, 'data' => null]);
+        }
+
         $tracking = FormAbandonTracking::query()
             ->where('form_id', $form->id)
-            ->where('session_token', $request->input('token'))
+            ->where('session_token', $token)
             ->where('is_completed', false)
             ->first();
 

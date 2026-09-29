@@ -3,6 +3,7 @@
 namespace Modules\Supplier\Http\Requests\Source;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Supplier\Rules\PublicUrl;
 
 class UpdateSourceRequest extends FormRequest
 {
@@ -26,9 +27,13 @@ class UpdateSourceRequest extends FormRequest
             'extraction_mode' => ['nullable', 'string', 'in:manual,ai'],
             'configuration' => ['nullable', 'array'],
             'configuration.urls' => ['nullable', 'array'],
-            'configuration.urls.*.url' => ['nullable', 'url', 'max:2048'],
+            // 29-sep-2026 (SSRF): solo URLs http(s) que resuelvan a IPs públicas;
+            // los drivers vuelven a comprobarlo al usarlas y en cada redirección.
+            'configuration.urls.*.url' => ['nullable', 'url:http,https', 'max:2048', new PublicUrl],
+            'configuration.url' => ['nullable', 'string', 'url:http,https', 'max:2048', new PublicUrl],
+            'configuration.base_url' => ['nullable', 'string', 'url:http,https', 'max:2048', new PublicUrl],
             'content_urls' => ['nullable', 'array'],
-            'content_urls.*.url' => ['nullable', 'url', 'max:2048'],
+            'content_urls.*.url' => ['nullable', 'url:http,https', 'max:2048', new PublicUrl],
             'content_urls.*.note' => ['nullable', 'string', 'max:255'],
         ];
     }

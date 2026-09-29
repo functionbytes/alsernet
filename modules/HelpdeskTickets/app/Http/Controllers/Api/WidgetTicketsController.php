@@ -119,6 +119,11 @@ class WidgetTicketsController extends Controller
             'source' => 'widget',
         ]);
 
+        // El cliente ya existía: el email no está verificado (no hay login).
+        if (! $customer->wasRecentlyCreated) {
+            $this->ticketService->flagUnverifiedCustomerEmail($ticket, (string) $customer->email);
+        }
+
         if ($request->hasFile('attachments')) {
             $this->ticketService->storeAttachments($request->file('attachments'), $ticket->id);
         }

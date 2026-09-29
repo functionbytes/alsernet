@@ -75,6 +75,33 @@ class TicketService
     }
 
     /**
+     * Ticket público (widget / formulario) a nombre de un cliente que YA existía:
+     * el email lo escribió quien rellenó el formulario y nadie lo ha verificado.
+     * Se marca con la etiqueta "email-no-verificado" (visible en el listado y
+     * la ficha) y una nota interna en el hilo (29-sep-2026).
+     */
+    public function flagUnverifiedCustomerEmail(Ticket $ticket, string $email): void
+    {
+        try {
+            $tags = is_array($ticket->tags) ? $ticket->tags : [];
+            if (! in_array('email-no-verificado', $tags, true)) {
+                $tags[] = 'email-no-verificado';
+            }
+            $ticket->update(['tags' => $tags]);
+
+            $ticket->items()->create([
+                'type' => 'system',
+                'is_internal' => true,
+                'body' => 'Aviso: este ticket se creó desde un formulario público con el email '.$email
+                    .', que ya pertenecía a un cliente, sin verificar que quien escribe sea su titular. '
+                    .'No facilites datos del cliente ni cambies sus pedidos sin confirmarlo por otra vía.',
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
      * Update an existing ticket
      */
     public function updateTicket(Ticket $ticket, array $data): Ticket

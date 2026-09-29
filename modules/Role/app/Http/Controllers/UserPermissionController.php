@@ -8,12 +8,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Role\Services\ActivePermissionService;
+use Modules\Role\Services\PrivilegeGuard;
 use Spatie\Permission\Models\Permission;
 
 class UserPermissionController extends Controller
 {
     public function __construct(
         private readonly ActivePermissionService $activePermissionService,
+        private readonly PrivilegeGuard $guard,
     ) {
         $this->middleware('can:users.permissions.assign')->only(['index', 'show', 'update', 'sync']);
     }
@@ -68,6 +70,9 @@ class UserPermissionController extends Controller
         $permission = Permission::findById($request->integer('permission_id'));
         $isAttach = $request->input('action') === 'attach';
 
+        // 29-sep-2026: anti-escalada (usuarios privilegiados y permisos que el actor no tiene).
+        $this->assertAllowed($user, $isAttach ? [$permission] : []);
+
         if ($isAttach) {
             $user->givePermissionTo($permission);
         } else {
@@ -94,6 +99,9 @@ class UserPermissionController extends Controller
 
         $permissions = Permission::whereIn('id', $request->input('permissions', []))->get();
 
+        $current = $user->permissions()->pluck('name')->all();
+        $this->assertAllowed($user, $permissions->reject(fn (Permission $p) => in_array($p->name, $current, true)));
+
         $user->syncPermissions($permissions);
 
         activity()
@@ -103,5 +111,16 @@ class UserPermissionController extends Controller
             ->log("Permisos directos sincronizados para el usuario {$user->email}");
 
         return $this->success('Permisos sincronizados correctamente.');
+    }
+
+    private function assertAllowed(User $target, iterable $grantedPermissions): void
+    {
+        $actor = auth()->user();
+
+        abort_unless(
+            $this->guard->canManageUser($actor, $target) && $this->guard->canGrantPermissions($actor, $grantedPermissions),
+            403,
+            'No tienes privilegios suficientes para asignar estos permisos.'
+        );
     }
 }

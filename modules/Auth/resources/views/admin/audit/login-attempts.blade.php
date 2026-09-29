@@ -18,6 +18,11 @@
             <a href="{{ route('settings.auth.audit.impersonations') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-user-secret me-1"></i> Ver impersonaciones
             </a>
+            @if (auth()->user()?->hasRole('super-admin'))
+                <a href="{{ route('settings.auth.ip-filter') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-network-wired me-1"></i> Redes permitidas
+                </a>
+            @endif
         </div>
     </div>
 
@@ -34,7 +39,7 @@
                     <label class="form-label small">Estado</label>
                     <select name="status" class="form-select form-select-sm">
                         <option value="">Todos</option>
-                        @foreach (['success' => 'Éxito', 'failed' => 'Fallido', 'lockout' => 'Bloqueado', '2fa_success' => '2FA éxito', '2fa_failed' => '2FA fallido'] as $val => $label)
+                        @foreach (['success' => 'Éxito', 'failed' => 'Fallido', 'lockout' => 'Bloqueado', '2fa_success' => '2FA éxito', '2fa_failed' => '2FA fallido', 'ip_not_allowed' => 'IP fuera de la lista', 'ip_remote_access' => 'Acceso remoto (excepción)'] as $val => $label)
                             <option value="{{ $val }}" {{ ($filters['status'] ?? '') === $val ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
@@ -43,6 +48,10 @@
                     <label class="form-label small">IP</label>
                     <input type="text" name="ip" value="{{ $filters['ip'] ?? '' }}"
                            class="form-control form-control-sm" placeholder="Filtrar por IP...">
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="only_users" value="1" id="only_users" {{ ! empty($filters['only_users']) ? 'checked' : '' }}>
+                        <label class="form-check-label small" for="only_users">Solo usuarios identificados</label>
+                    </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
@@ -81,6 +90,8 @@
                                         'lockout' => 'bg-warning',
                                         '2fa_success' => 'bg-success',
                                         '2fa_failed' => 'bg-danger',
+                                        'ip_not_allowed' => 'bg-warning',
+                                        'ip_remote_access' => 'bg-info',
                                     ];
                                 @endphp
                                 <span class="badge {{ $badges[$a->status] ?? 'bg-secondary' }}">{{ $a->status }}</span>

@@ -3,15 +3,22 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Modules\Auth\Events\Password\ForgotPasswordCreated;
+use Modules\Auth\Notifications\ResetPasswordNotification;
 use Modules\Auth\Services\AuthRateLimiter;
 
+/**
+ * 29-sep-2026: sustituido el flujo casero (escribía columnas que no existen en
+ * `users`, daba 500 si la cuenta existía y 200 si no → enumeración, y nunca
+ * enviaba el correo) por el broker nativo (tabla password_reset_tokens, token
+ * con caducidad y throttle). La respuesta es idéntica exista o no la cuenta y
+ * ya no se busca por `identification` ni se muestra el email de la cuenta.
+ */
 class ForgotPasswordController extends Controller
 {
     public function __construct(
@@ -26,11 +33,14 @@ class ForgotPasswordController extends Controller
     public function sendResetLinkEmail(Request $request): View|RedirectResponse
     {
         $request->validate([
-            'email' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+        ], [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Introduce un correo electrónico válido.',
         ]);
 
-        $identifier = (string) $request->input('email');
-        $check = $this->limiter->check('password_reset', $identifier, $request);
+        $email = (string) $request->input('email');
+        $check = $this->limiter->check('password_reset', $email, $request);
 
         if (! $check['allowed']) {
             return back()
@@ -38,29 +48,21 @@ class ForgotPasswordController extends Controller
                 ->withErrors(['email' => "Demasiados intentos. Inténtalo de nuevo en {$check['seconds']} segundos."]);
         }
 
-        $user = User::query()
-            ->where('email', $identifier)
-            ->orWhere('identification', $identifier)
-            ->first();
+        $this->limiter->hit('password_reset', $email, $request);
 
-        $this->limiter->hit('password_reset', $identifier, $request);
+        // El estado (enviado, usuario inexistente, throttled) se ignora a propósito.
+        $status = Password::broker()->sendResetLink(['email' => $email], function ($user, string $token) {
+            if ($user->available) {
+                $user->notify(new ResetPasswordNotification($token));
+            }
+        });
 
-        if (! $user) {
-            // Return neutral success view to avoid email enumeration.
-            return view('auth::auth.passwords.success', ['email' => $identifier]);
+        // Igualar el coste del bcrypt del token para no delatar la cuenta por tiempo.
+        if ($status === Password::INVALID_USER) {
+            Hash::make(Str::random(40));
         }
 
-        $passwordToken = Str::random(50);
-
-        $user->forceFill([
-            'password_reset_token' => Hash::make($passwordToken),
-            'password_reset_max_tries' => 1,
-            'password_reset_last_tried_on' => now(),
-        ])->save();
-
-        ForgotPasswordCreated::dispatch($user, $passwordToken);
-
-        return view('auth::auth.passwords.success', ['email' => $user->email]);
+        return view('auth::auth.passwords.success', ['email' => $email]);
     }
 
     public function username(): string

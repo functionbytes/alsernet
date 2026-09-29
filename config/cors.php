@@ -19,9 +19,17 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // Seguridad 29-sep-2026: antes ['*']. Las llamadas servidor a servidor (tienda,
+    // ERP) no envían Origin y no les afecta; esto solo limita a los navegadores.
+    'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+        'CORS_ALLOWED_ORIGINS',
+        'https://webadmin.a-alvarez.com,https://www.a-alvarez.com,https://a-alvarez.com'
+    ))))),
 
-    'allowed_origins_patterns' => [],
+    // Subdominios https de a-alvarez.com (tiendas por país, etc.).
+    'allowed_origins_patterns' => array_values(array_filter([
+        env('CORS_ALLOWED_ORIGINS_PATTERN', '#^https://([a-z0-9-]+\.)*a-alvarez\.com$#'),
+    ])),
 
     'allowed_headers' => ['*'],
 

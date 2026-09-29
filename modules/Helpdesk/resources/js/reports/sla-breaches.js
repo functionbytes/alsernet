@@ -41,7 +41,7 @@
     var bulkUpcoming = null;
 
     function esc(value) {
-        return $('<span>').text(value == null ? '' : value).html();
+        return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function formatDateTime(iso) {

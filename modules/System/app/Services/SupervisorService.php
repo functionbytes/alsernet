@@ -465,10 +465,21 @@ class SupervisorService
         try {
             $backup = SupervisorBackup::findOrFail($backupId);
 
+            $skipped = [];
             if ($backup->config_files) {
                 foreach ($backup->config_files as $filePath => $content) {
-                    $this->writeConfigFile($filePath, $content);
+                    // Solo se restauran ficheros .conf existentes del directorio de
+                    // supervisor; cualquier otra ruta guardada en el backup se ignora.
+                    if ($this->resolveAllowedConfigFile((string) $filePath) === null) {
+                        $skipped[] = (string) $filePath;
+
+                        continue;
+                    }
+                    $this->writeConfigFile((string) $filePath, (string) $content);
                 }
+            }
+            if ($skipped !== []) {
+                Log::warning('Supervisor restore: rutas no permitidas ignoradas', ['backup_id' => $backupId, 'files' => $skipped]);
             }
 
             $backup->update([
@@ -581,38 +592,74 @@ class SupervisorService
     }
 
     /**
-     * Write a config file to an allowed path.
+     * Ficheros de configuración que se pueden leer/editar desde la web:
+     * los *.conf / *.ini que existen directamente en conf.d (o en
+     * config/supervisor del proyecto), resueltos con realpath.
+     *
+     * @return array<int, string>
+     */
+    private function allowedConfigFiles(): array
+    {
+        $files = [];
+
+        foreach ([$this->confDir(), base_path('config/supervisor')] as $dir) {
+            $realDir = realpath($dir);
+            if ($realDir === false || ! is_dir($realDir)) {
+                continue;
+            }
+
+            foreach (['*.conf', '*.ini'] as $pattern) {
+                foreach (glob($realDir.'/'.$pattern) ?: [] as $file) {
+                    $real = realpath($file);
+                    if ($real !== false && is_file($real) && dirname($real) === $realDir) {
+                        $files[] = $real;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($files));
+    }
+
+    /**
+     * 29-sep-2026 (auditoría C4/C5): antes se validaba con strpos() sobre la
+     * ruta sin normalizar, y '/etc/supervisor/conf.d/../../..' permitía leer el
+     * .env o escribir PHP en la aplicación. Ahora la ruta pedida, tras realpath,
+     * tiene que ser exactamente uno de los ficheros de allowedConfigFiles().
+     */
+    private function resolveAllowedConfigFile(string $filePath): ?string
+    {
+        if ($filePath === '' || str_contains($filePath, "\0")) {
+            return null;
+        }
+
+        $real = realpath($filePath);
+        if ($real === false) {
+            return null;
+        }
+
+        return in_array($real, $this->allowedConfigFiles(), true) ? $real : null;
+    }
+
+    /**
+     * Write an existing, allowed config file.
      *
      * @throws Exception
      */
     private function writeConfigFile(string $filePath, string $content): bool
     {
-        $allowedPaths = [
-            '/etc/supervisor/conf.d',
-            '/opt/homebrew/etc/supervisor.d',
-            '/usr/local/etc/supervisor.d',
-            base_path('config/supervisor'),
-        ];
+        $real = $this->resolveAllowedConfigFile($filePath);
 
-        $isAllowed = false;
-        foreach ($allowedPaths as $allowed) {
-            if (strpos($filePath, $allowed) === 0) {
-                $isAllowed = true;
-                break;
-            }
+        if ($real === null) {
+            throw new Exception('Path not allowed');
         }
 
-        if (! $isAllowed) {
-            throw new Exception('Path not allowed: '.$filePath);
+        if (strlen($content) > 65536) {
+            throw new Exception('Content too large');
         }
 
-        $dir = dirname($filePath);
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        file_put_contents($filePath, $content);
-        Log::info('Config file written', ['file' => $filePath]);
+        file_put_contents($real, $content);
+        Log::info('Config file written', ['file' => $real]);
 
         return true;
     }
@@ -656,32 +703,19 @@ class SupervisorService
     public function getConfigFile(string $filePath): array
     {
         try {
-            $allowedPaths = [
-                '/etc/supervisor/conf.d',
-                '/opt/homebrew/etc/supervisor.d',
-                '/usr/local/etc/supervisor.d',
-                base_path('config/supervisor'),
-            ];
+            $real = $this->resolveAllowedConfigFile($filePath);
 
-            $isAllowed = false;
-            foreach ($allowedPaths as $allowed) {
-                if (strpos($filePath, $allowed) === 0) {
-                    $isAllowed = true;
-                    break;
-                }
-            }
-
-            if (! $isAllowed || ! file_exists($filePath)) {
+            if ($real === null) {
                 return ['error' => 'File not found or not allowed'];
             }
 
             return [
                 'success' => true,
-                'content' => file_get_contents($filePath),
-                'file' => $filePath,
+                'content' => file_get_contents($real),
+                'file' => $real,
             ];
         } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
+            return ['error' => 'Error reading file'];
         }
     }
 
@@ -693,21 +727,23 @@ class SupervisorService
     public function updateConfigFile(string $filePath, string $content): array
     {
         try {
-            $backup = null;
+            $real = $this->resolveAllowedConfigFile($filePath);
 
-            if (file_exists($filePath)) {
-                $backup = SupervisorBackup::create([
-                    'name' => 'Auto backup before edit: '.basename($filePath),
-                    'environment' => app()->environment() === 'production' ? 'prod' : 'dev',
-                    'config_files' => [$filePath => file_get_contents($filePath)],
-                    'is_auto' => true,
-                    'backed_up_at' => now(),
-                ]);
+            if ($real === null) {
+                return ['error' => 'File not found or not allowed'];
             }
 
-            $this->writeConfigFile($filePath, $content);
+            $backup = SupervisorBackup::create([
+                'name' => 'Auto backup before edit: '.basename($real),
+                'environment' => app()->environment() === 'production' ? 'prod' : 'dev',
+                'config_files' => [$real => file_get_contents($real)],
+                'is_auto' => true,
+                'backed_up_at' => now(),
+            ]);
 
-            Log::info('Config file updated', ['file' => $filePath]);
+            $this->writeConfigFile($real, $content);
+
+            Log::info('Config file updated', ['file' => $real]);
 
             return [
                 'success' => true,
@@ -717,7 +753,7 @@ class SupervisorService
         } catch (Exception $e) {
             Log::error('Error updating config file', ['error' => $e->getMessage()]);
 
-            return ['error' => $e->getMessage()];
+            return ['error' => 'No se pudo actualizar el archivo'];
         }
     }
 }

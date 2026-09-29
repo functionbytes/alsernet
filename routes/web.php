@@ -4,19 +4,11 @@ use App\Http\Controllers\FileServeController;
 
 Route::group(['middleware' => ['web']], function () {
 
-    Route::get('/clear', [FileServeController::class, 'clearCache']);
+    // Seguridad 29-sep-2026: eliminadas GET /clear (público: vaciaba cachés y
+    // contadores de throttle; hay POST protegido en System > Caché), /files,
+    // /thumbs y /p/assets (lectura de ficheros sin normalizar, sin uso).
 
-    Route::get('/files/{uid}/{name}', [FileServeController::class, 'userFile'])
-        ->where('name', '.+')
-        ->name('user_files');
-
-    Route::get('/thumbs/{uid}/{name}', [FileServeController::class, 'userThumb'])
-        ->where('name', '.+')
-        ->name('user_thumbs');
-
-    Route::get('/p/assets/{path}', [FileServeController::class, 'publicAssetDeprecated'])
-        ->name('public_assets_deprecated');
-
+    // Referenciada por nombre en PathHelper::generatePublicPath(); confinada a storage/app/public.
     Route::get('assets/{dirname}/{basename}', [FileServeController::class, 'publicAsset'])
         ->name('public_assets');
 

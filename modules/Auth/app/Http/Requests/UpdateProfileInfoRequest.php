@@ -16,7 +16,9 @@ class UpdateProfileInfoRequest extends FormRequest
         return [
             'firstname' => ['required', 'string', 'min:2', 'max:100'],
             'lastname' => ['required', 'string', 'min:2', 'max:100'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.auth()->id()],
+            // 29-sep-2026: el email ya no se cambia aquí (sin contraseña ni confirmación
+            // permitía tomar la cuenta con una sesión robada). Lo cambia un administrador
+            // desde Usuarios, o el flujo EmailChangeController (pide contraseña y confirma).
             'cellphone' => ['nullable', 'string', 'max:20'],
             'locale' => ['nullable', 'in:es,en'],
         ];
@@ -29,9 +31,6 @@ class UpdateProfileInfoRequest extends FormRequest
             'firstname.min' => 'El nombre debe tener al menos 2 caracteres.',
             'lastname.required' => 'El apellido es obligatorio.',
             'lastname.min' => 'El apellido debe tener al menos 2 caracteres.',
-            'email.required' => 'El correo electrónico es obligatorio.',
-            'email.email' => 'Ingresa un correo electrónico válido.',
-            'email.unique' => 'Este correo ya está registrado por otro usuario.',
             'cellphone.max' => 'El teléfono no puede superar los 20 caracteres.',
             'locale.in' => 'El idioma seleccionado no es válido.',
         ];

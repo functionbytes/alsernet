@@ -4,6 +4,8 @@ namespace Modules\Supplier\Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class SupplierUserSeeder extends Seeder
 {
@@ -12,6 +14,13 @@ class SupplierUserSeeder extends Seeder
      */
     public function run(): void
     {
+        // 29-sep-2026: crea usuarios de prueba. Nunca en producción.
+        if (app()->isProduction()) {
+            $this->command?->warn('SupplierUserSeeder: omitido en producción (crea usuarios de prueba).');
+
+            return;
+        }
+
         $allPermissions = [
             'modules.view.suppliers',
             'can_sync_suppliers',
@@ -113,10 +122,14 @@ class SupplierUserSeeder extends Seeder
                 [
                     'firstname' => $userData['firstname'],
                     'lastname' => $userData['lastname'],
-                    'password' => bcrypt('secret'),
+                    'password' => Hash::make(Str::random(32)),
                     'available' => true,
                 ]
             );
+
+            if ($user->wasRecentlyCreated) {
+                $user->forceFill(['must_change_password' => true])->save();
+            }
 
             $user->syncRoles([$userData['role']]);
             $user->syncPermissions($userData['permissions']);

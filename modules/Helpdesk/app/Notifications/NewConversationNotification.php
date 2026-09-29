@@ -27,7 +27,9 @@ class NewConversationNotification extends Notification implements ShouldQueue
         return [
             'type' => 'helpdesk_new_conversation',
             'title' => 'Nueva conversacion',
-            'message' => "Nueva conversacion #{$this->conversation->id}: {$this->conversation->subject}",
+            // strip_tags (29-sep-2026): el asunto lo elige el cliente y el desplegable
+            // de notificaciones lo pinta como HTML.
+            'message' => "Nueva conversacion #{$this->conversation->id}: ".strip_tags((string) $this->conversation->subject),
             'entity_id' => $this->conversation->id,
             'action_url' => route('manager.helpdesk.conversations.show', $this->conversation),
         ];

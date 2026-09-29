@@ -9,8 +9,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Document\Entities\Document;
+use Modules\Document\Support\DocumentMediaFiles;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Services\ConversationAttachmentStorage;
 use Modules\Helpdesk\Support\OutboundUrlGuard;
 use Modules\HelpdeskDocument\Concerns\AuthorizesConversationDocuments;
 use Modules\HelpdeskDocument\Http\Requests\Managers\ImportChatDocumentsRequest;
@@ -207,13 +209,20 @@ class ChatGalleryDocumentController extends Controller
                 $properties['document_type'] = $category;
             }
 
+            // 29-sep-2026: nombre en disco generado (uuid + extensión según el
+            // contenido); el del cliente solo como metadato. Antes "x.html" con
+            // cabecera GIF89a se guardaba como .html en /storage.
+            $extension = DocumentMediaFiles::safeExtension($file, DocumentMediaFiles::IMAGE_EXTENSIONS);
+            abort_if($extension === null, 422, 'Tipo de archivo no permitido.');
+            $properties['original_name'] = DocumentMediaFiles::originalName($name);
+
             $media = $document->addMedia($file)
-                ->usingFileName($this->sanitizeFileName($name))
+                ->usingFileName(DocumentMediaFiles::storedName($extension))
                 ->withCustomProperties($properties)
                 ->toMediaCollection($collection);
 
             return [
-                'url' => $media->getUrl(),
+                'url' => DocumentMediaFiles::signedUrl($media),
                 'name' => $name,
                 'category' => $category,
                 'mediaId' => $media->id,
@@ -318,7 +327,7 @@ class ChatGalleryDocumentController extends Controller
     /**
      * Attach a chat file to the Document's additional_attachments collection.
      *
-     * Prefers the local file on the public disk (the storage path embedded in the URL);
+     * Prefers the local file (public disk or Helpdesk private disk, see localStoragePath());
      * falls back to fetching the URL for genuinely external attachments.
      *
      * @param  array<int, string>  $requiredDocuments  Pre-computed $document->getRequiredDocuments(),
@@ -345,9 +354,14 @@ class ChatGalleryDocumentController extends Controller
         }
 
         $localPath = $this->localStoragePath($url);
+        $properties['original_name'] = DocumentMediaFiles::originalName($name);
 
         if ($localPath !== null) {
             $adder = $document->addMedia($localPath)->preservingOriginal();
+        } elseif ($this->isOwnAttachmentUrl($url)) {
+            // Adjunto nuestro (disco privado) cuyo fichero no existe: no se
+            // descarga por HTTP (la ruta exige firma/sesión).
+            abort(422, 'El archivo adjunto ya no está disponible.');
         } else {
             // SSRF guard: only download genuinely external URLs that resolve to a
             // public host (blocks loopback, private ranges and the cloud metadata IP).
@@ -360,8 +374,11 @@ class ChatGalleryDocumentController extends Controller
             $adder = $document->addMediaFromUrl($url);
         }
 
+        // 29-sep-2026: nombre en disco generado; la extensión sale del
+        // contenido del fichero local o, si es remoto, de la URL ya filtrada
+        // por isImageAttachment() (lista blanca de imágenes).
         return $adder
-            ->usingFileName($this->sanitizeFileName($name))
+            ->usingFileName(DocumentMediaFiles::storedName($this->storedExtension($localPath, $url)))
             ->withCustomProperties($properties)
             ->toMediaCollection($collection)
             ->id;
@@ -400,10 +417,30 @@ class ChatGalleryDocumentController extends Controller
     }
 
     /**
-     * Resolve a `/storage/...` URL to an absolute path on the public disk, if the file exists.
+     * Ruta absoluta del fichero local de un adjunto de chat, si existe.
+     *
+     * 29-sep-2026: primero con el resolver de Helpdesk
+     * (ConversationAttachmentStorage::resolve), que entiende las URLs antiguas
+     * /storage/…, la ruta firmada del disco privado (/helpdesk/attachments/file/…)
+     * y los adjuntos del widget de livechat (/hd/attachments/…). Si no, el
+     * formato antiguo `/storage/...` del disco public.
      */
     private function localStoragePath(string $url): ?string
     {
+        $resolved = class_exists(ConversationAttachmentStorage::class)
+            ? app(ConversationAttachmentStorage::class)->resolve($url)
+            : null;
+
+        if ($resolved !== null) {
+            [$disk, $relative] = $resolved;
+
+            if (config("filesystems.disks.{$disk}.driver") === 'local' && Storage::disk($disk)->exists($relative)) {
+                return Storage::disk($disk)->path($relative);
+            }
+
+            return null;
+        }
+
         $path = parse_url($url, PHP_URL_PATH) ?: '';
 
         if (! str_contains($path, '/storage/')) {
@@ -412,7 +449,7 @@ class ChatGalleryDocumentController extends Controller
 
         $relative = ltrim(substr($path, (int) strpos($path, '/storage/') + strlen('/storage/')), '/');
 
-        if ($relative === '' || ! Storage::disk('public')->exists($relative)) {
+        if ($relative === '' || str_contains($relative, '..') || ! Storage::disk('public')->exists($relative)) {
             return null;
         }
 
@@ -485,6 +522,13 @@ class ChatGalleryDocumentController extends Controller
         $conversation->forceFill(['metadata' => $metadata])->save();
     }
 
+    private function isOwnAttachmentUrl(string $url): bool
+    {
+        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
+
+        return str_starts_with($path, '/hd/attachments/') || str_starts_with($path, '/helpdesk/attachments/file/');
+    }
+
     private function fileNameFromUrl(string $url): string
     {
         $path = parse_url($url, PHP_URL_PATH) ?: $url;
@@ -492,8 +536,22 @@ class ChatGalleryDocumentController extends Controller
         return basename($path) ?: 'archivo';
     }
 
-    private function sanitizeFileName(string $name): string
+    /**
+     * Extensión (de la lista blanca de imágenes) con la que se guarda un
+     * adjunto importado del chat.
+     */
+    private function storedExtension(?string $localPath, string $url): string
     {
-        return preg_replace('/[^a-zA-Z0-9._-]/', '_', $name) ?: 'archivo';
+        if ($localPath !== null) {
+            $mime = (string) (@mime_content_type($localPath) ?: '');
+            $ext = strtolower((string) (\Symfony\Component\Mime\MimeTypes::getDefault()->getExtensions($mime)[0] ?? ''));
+        } else {
+            $ext = strtolower(pathinfo((string) (parse_url($url, PHP_URL_PATH) ?: ''), PATHINFO_EXTENSION));
+        }
+
+        $ext = $ext === 'jpeg' ? 'jpg' : $ext;
+        abort_unless(in_array($ext, DocumentMediaFiles::IMAGE_EXTENSIONS, true), 422, 'Solo se pueden importar imágenes al expediente.');
+
+        return $ext;
     }
 }

@@ -63,6 +63,13 @@ Route::middleware(['web'])
     ->name('forms.public.')
     ->group(function () {
         Route::get('/access/{token}', [FormPublicController::class, 'accessByToken'])->name('access');
+    });
+
+// 29-sep-2026: restore devuelve datos parciales a quien presente el token; con throttle.
+Route::middleware(['web', 'throttle:forms.public'])
+    ->prefix('forms')
+    ->name('forms.public.')
+    ->group(function () {
         Route::get('/abandon/{slug}/restore', [FormPublicController::class, 'restoreAbandoned'])->name('restore');
     });
 

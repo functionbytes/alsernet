@@ -246,6 +246,23 @@
         </div>
     @endif
 
+    {{-- 29-sep-2026: el widget de livechat (y los tickets públicos) dejan el
+         email que escribe el visitante sin verificar en una ficha de invitado
+         (custom_attributes.claimed_email / email_verified=false). --}}
+    @php
+        $hdCustAttrs = is_array($cust?->custom_attributes) ? $cust->custom_attributes : [];
+        $hdClaimedEmail = is_string($hdCustAttrs['claimed_email'] ?? null) ? $hdCustAttrs['claimed_email'] : null;
+        $hdEmailUnverified = $convo && ($hdClaimedEmail || (($hdCustAttrs['email_verified'] ?? null) === false));
+    @endphp
+    @if($hdEmailUnverified)
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-0 rounded-0 py-2 px-3 small" role="alert" data-bv-unverified-email>
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>{{ $hdClaimedEmail
+                ? __('helpdesk::helpdesk.inbox.thread.unverified_email_banner', ['email' => $hdClaimedEmail])
+                : __('helpdesk::helpdesk.inbox.thread.unverified_email_banner_generic') }}</span>
+        </div>
+    @endif
+
     {{-- Barra de búsqueda en el thread --}}
     <div class="bv-th-search bv-hidden" id="bv-th-search">
         <i class="fas fa-magnifying-glass bv-th-search-icon"></i>

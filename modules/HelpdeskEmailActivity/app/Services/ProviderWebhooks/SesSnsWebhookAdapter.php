@@ -38,6 +38,12 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
 
         $signingCertUrl = (string) ($payload['SigningCertURL'] ?? '');
 
+        if (! $this->isAllowedTopic($payload)) {
+            Log::warning('helpdeskemailactivity: TopicArn de SNS no permitido', ['topic' => $payload['TopicArn'] ?? null]);
+
+            return false;
+        }
+
         if (! $this->isAmazonHost($signingCertUrl) || ! OutboundUrlGuard::isSafe($signingCertUrl)) {
             return false;
         }
@@ -82,6 +88,11 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
 
         if ($type !== 'SubscriptionConfirmation') {
             return null;
+        }
+
+        // Doble comprobación (verify() ya lo hizo): nunca confirmar suscripciones de topics ajenos.
+        if (! $this->isAllowedTopic($payload)) {
+            return response('rejected', 400);
         }
 
         $subscribeUrl = (string) ($payload['SubscribeURL'] ?? '');
@@ -192,8 +203,25 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
         return [];
     }
 
+    /**
+     * 29-sep-2026: allowlist de TopicArn (config ses_allowed_topic_arns).
+     * Vacía = rechazar todo (fail-closed).
+     */
+    private function isAllowedTopic(array $payload): bool
+    {
+        $allowed = (array) config('helpdeskemailactivity.ses_allowed_topic_arns', []);
+        $topic = $payload['TopicArn'] ?? null;
+
+        return is_string($topic) && $topic !== '' && in_array($topic, $allowed, true);
+    }
+
     private function isAmazonHost(string $url): bool
     {
+        // 29-sep-2026: solo https (certificado y SubscribeURL).
+        if (strtolower((string) parse_url($url, PHP_URL_SCHEME)) !== 'https') {
+            return false;
+        }
+
         $host = parse_url($url, PHP_URL_HOST);
 
         // Restringido al host exacto que SNS usa para firmar mensajes

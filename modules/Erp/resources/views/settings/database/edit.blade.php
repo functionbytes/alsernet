@@ -128,9 +128,9 @@
                                         class="form-control @error('oracle_password') is-invalid @enderror"
                                         id="oracle_password"
                                         name="oracle_password"
-                                        value="{{ old('oracle_password', $settings['oracle_password'] ?? '') }}"
-                                        placeholder="••••••••"
-                                        required>
+                                        value=""
+                                        placeholder="{{ ! empty($settings['oracle_password']) ? '•••••••• (sin cambios)' : '' }}"
+                                        autocomplete="new-password">
                                     @error('oracle_password')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror

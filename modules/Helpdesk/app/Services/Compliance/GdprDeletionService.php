@@ -9,6 +9,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\AuditLogService;
+use Modules\Helpdesk\Services\ConversationAttachmentStorage;
 
 class GdprDeletionService
 {
@@ -163,10 +164,12 @@ class GdprDeletionService
     private function deleteAttachmentFiles(array $attachmentUrls): void
     {
         foreach ($attachmentUrls as $url) {
-            $path = $this->urlToStoragePath($url);
+            // Disco public (URLs antiguas) o privado (ruta firmada) — A9.
+            [$disk, $path] = app(ConversationAttachmentStorage::class)->resolve($url)
+                ?? ['public', $this->urlToStoragePath($url)];
 
-            if ($path && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
+            if ($path && Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
             }
         }
     }

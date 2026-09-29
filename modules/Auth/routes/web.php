@@ -31,7 +31,7 @@ Route::get('/logout', [LoginController::class, 'logout'])->withoutMiddleware('gu
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequest'])->name('auth.password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('auth.password.email')->middleware('throttle:password-reset');
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('auth.password.reset');
-Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('auth.password.update');
+Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('auth.password.update')->middleware('throttle:5,1');
 
 // Email verification routes
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('auth.verification.verify');

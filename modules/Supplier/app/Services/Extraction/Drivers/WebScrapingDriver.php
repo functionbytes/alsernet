@@ -9,6 +9,7 @@ use Modules\Supplier\Models\Extraction\ExtractionBatch;
 use Modules\Supplier\Models\Source\Source;
 use Modules\Supplier\Services\DocumentExtractionService;
 use Modules\Supplier\Services\Extraction\Contracts\SourceDriverInterface;
+use Modules\Supplier\Traits\ValidatesPublicUrl;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
@@ -22,6 +23,8 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 class WebScrapingDriver implements SourceDriverInterface
 {
+    use ValidatesPublicUrl;
+
     private const USER_AGENT = 'Mozilla/5.0 (compatible; SupplierBot/1.0; +https://alsernet.es/bot)';
 
     public function __construct(
@@ -50,6 +53,14 @@ class WebScrapingDriver implements SourceDriverInterface
             'timeout' => config('supplier.sources.default_timeout', 30),
             'verify' => config('supplier.sources.verify_ssl', true),
             'headers' => ['User-Agent' => self::USER_AGENT],
+            // 29-sep-2026 (SSRF): cada redirección se revalida contra IPs públicas.
+            'allow_redirects' => [
+                'max' => 5,
+                'protocols' => ['http', 'https'],
+                'on_redirect' => function ($request, $response, $uri): void {
+                    $this->assertUrlIsPublic((string) $uri);
+                },
+            ],
         ]);
 
         $products = [];
@@ -96,6 +107,9 @@ class WebScrapingDriver implements SourceDriverInterface
     private function fetchUrl(Client $client, string $url): ?string
     {
         try {
+            // 29-sep-2026 (SSRF): la URL se valida al usarla, no solo al guardarla.
+            $this->assertUrlIsPublic($url);
+
             $response = $client->get($url);
             $html = (string) $response->getBody();
 
@@ -109,6 +123,13 @@ class WebScrapingDriver implements SourceDriverInterface
 
         } catch (RequestException $e) {
             Log::error('WebScrapingDriver: HTTP request failed', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        } catch (\InvalidArgumentException $e) {
+            Log::warning('WebScrapingDriver: URL no pública bloqueada', [
                 'url' => $url,
                 'error' => $e->getMessage(),
             ]);

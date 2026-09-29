@@ -132,10 +132,22 @@ class TicketOpsController extends Controller
 
         $uuid = $request->string('uuid')->toString();
 
+        // 29-sep-2026: solo jobs del helpdesk. Antes era `queue:retry all` de
+        // TODA la aplicación (login, ERP, proveedores…) con un permiso de tickets.
+        $uuids = $this->helpdeskFailedJobUuids($uuid !== '' ? $uuid : null);
+
+        if ($uuid !== '' && $uuids === []) {
+            return response()->json(['success' => false, 'message' => 'Ese job no es del helpdesk o ya no existe.'], 422);
+        }
+
+        if ($uuids === []) {
+            return response()->json(['success' => true, 'message' => 'No hay jobs fallidos del helpdesk que reencolar.']);
+        }
+
         try {
-            Artisan::call('queue:retry', [
-                'id' => $uuid !== '' ? [$uuid] : ['all'],
-            ]);
+            foreach (array_chunk($uuids, 200) as $chunk) {
+                Artisan::call('queue:retry', ['id' => $chunk]);
+            }
         } catch (\Throwable $e) {
             report($e);
 
@@ -144,7 +156,7 @@ class TicketOpsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $uuid !== '' ? 'Job reencolado.' : 'Todos los jobs fallidos se han reencolado.',
+            'message' => $uuid !== '' ? 'Job reencolado.' : 'Se han reencolado '.count($uuids).' jobs fallidos del helpdesk.',
         ]);
     }
 
@@ -157,15 +169,52 @@ class TicketOpsController extends Controller
         $this->authorize('viewAny', Ticket::class);
         abort_unless($request->user()?->can('helpdesk.tickets.settings'), 403);
 
+        // 29-sep-2026: solo los fallidos del helpdesk (antes `queue:flush`
+        // borraba los de toda la aplicación).
         try {
-            Artisan::call('queue:flush');
+            $failer = app('queue.failer');
+            $uuids = $this->helpdeskFailedJobUuids();
+            foreach ($uuids as $failedUuid) {
+                $failer->forget($failedUuid);
+            }
         } catch (\Throwable $e) {
             report($e);
 
             return response()->json(['success' => false, 'message' => 'No se pudo purgar la cola de fallidos.'], 500);
         }
 
-        return response()->json(['success' => true, 'message' => 'Dead-letter purgada.']);
+        return response()->json(['success' => true, 'message' => 'Dead-letter del helpdesk purgada ('.count($uuids).' jobs).']);
+    }
+
+    /**
+     * UUIDs de failed_jobs que pertenecen al helpdesk: cola "helpdesk*" o
+     * clase del job/mailable/notificación bajo Modules\Helpdesk*.
+     *
+     * @return list<string>
+     */
+    private function helpdeskFailedJobUuids(?string $onlyUuid = null): array
+    {
+        $query = DB::connection(config('queue.failed.database'))
+            ->table(config('queue.failed.table', 'failed_jobs'))
+            ->select(['id', 'uuid', 'queue', 'payload'])
+            ->where(fn ($q) => $q->where('queue', 'like', 'helpdesk%')->orWhere('payload', 'like', '%Helpdesk%'))
+            ->orderBy('id');
+
+        if ($onlyUuid !== null) {
+            $query->where('uuid', $onlyUuid);
+        }
+
+        $uuids = [];
+        foreach ($query->cursor() as $row) {
+            $payload = json_decode((string) $row->payload, true);
+            $name = (string) ($payload['displayName'] ?? ($payload['data']['commandName'] ?? ''));
+
+            if (str_starts_with((string) $row->queue, 'helpdesk') || str_starts_with($name, 'Modules\\Helpdesk')) {
+                $uuids[] = (string) $row->uuid;
+            }
+        }
+
+        return $uuids;
     }
 
     /**

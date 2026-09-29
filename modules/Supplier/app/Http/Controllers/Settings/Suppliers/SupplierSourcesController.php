@@ -386,9 +386,24 @@ class SupplierSourcesController extends Controller
                 default => SourceFile::FILE_TYPE_OTHER,
             };
 
+            // 29-sep-2026: la extensión en disco la decide el servidor (contenido
+            // real vía guessExtension() o la canónica del tipo), nunca el cliente.
+            $allowedExt = ['pdf', 'xlsx', 'xls', 'docx', 'doc', 'csv', 'txt', 'jpg', 'jpeg', 'png', 'webp'];
+            $storedExt = strtolower((string) $uploaded->guessExtension());
+            if (! in_array($storedExt, $allowedExt, true) || ($fileType === SourceFile::FILE_TYPE_CSV && $storedExt === 'txt')) {
+                $storedExt = match ($fileType) {
+                    SourceFile::FILE_TYPE_PDF => 'pdf',
+                    SourceFile::FILE_TYPE_EXCEL => 'xlsx',
+                    SourceFile::FILE_TYPE_WORD => 'docx',
+                    SourceFile::FILE_TYPE_IMAGE => 'jpg',
+                    SourceFile::FILE_TYPE_CSV => 'csv',
+                    default => 'bin',
+                };
+            }
+
             $storedPath = $uploaded->storeAs(
                 "supplier-files/{$supplier->id}",
-                Str::uuid().'.'.$ext,
+                Str::uuid().'.'.$storedExt,
                 'local'
             );
 

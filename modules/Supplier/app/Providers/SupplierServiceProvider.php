@@ -27,6 +27,7 @@ use Modules\Supplier\Console\Commands\TestRegisterOnlySync;
 use Modules\Supplier\Events\SupplierProductUpdated;
 // use Modules\Supplier\Models\SupplierProductPrice;
 // use Modules\Supplier\Observers\SupplierErpProviderObserver;
+use Modules\Supplier\Listeners\MirrorSupplierLogsListener;
 use Modules\Supplier\Listeners\SyncProductToErpListener;
 // use Modules\Supplier\Observers\SupplierProductPriceObserver;
 use Modules\Supplier\Models\Ai\AiBudget;
@@ -458,7 +459,7 @@ class SupplierServiceProvider extends ServiceProvider
             'module' => 'Supplier',
             'items' => [
                 ['label' => 'Workflows', 'route' => 'settings.suppliers.automation.index', 'permission' => 'suppliers.view.automation'],
-                ['label' => 'Logs', 'route' => 'settings.suppliers.automation.logs', 'permission' => 'suppliers.view.automation'],
+                ['label' => 'Logs', 'route' => 'settings.suppliers.automation.logs', 'permission' => 'suppliers.automation.manage'],
                 ['label' => 'Detector de fuentes', 'route' => 'settings.suppliers.detect.show', 'permission' => 'suppliers.configure'],
             ],
         ]);
@@ -552,6 +553,23 @@ class SupplierServiceProvider extends ServiceProvider
         $this->app['events']->listen(
             SupplierProductUpdated::class,
             SyncProductToErpListener::class
+        );
+
+        // 29-sep-2026: canal de log propio del módulo (visor de automatización).
+        if (! config()->has('logging.channels.'.MirrorSupplierLogsListener::CHANNEL)) {
+            config(['logging.channels.'.MirrorSupplierLogsListener::CHANNEL => [
+                'driver' => 'daily',
+                'path' => storage_path('logs/supplier-automation.log'),
+                'level' => config('logging.channels.daily.level', 'debug'),
+                'days' => 14,
+                'permission' => 0666, // escriben www-data (web, horizon) y el cron
+                'replace_placeholders' => true,
+            ]]);
+        }
+
+        $this->app['events']->listen(
+            \Illuminate\Log\Events\MessageLogged::class,
+            [MirrorSupplierLogsListener::class, 'handle']
         );
     }
 

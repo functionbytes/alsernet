@@ -22,6 +22,25 @@ class AuthService
      */
     public function attempt(array $credentials, bool $remember, Request $request): ?User
     {
+        $user = $this->validateCredentials($credentials, $request);
+
+        if (! $user) {
+            return null;
+        }
+
+        Auth::login($user, $remember);
+
+        return $user;
+    }
+
+    /**
+     * Comprueba credenciales aplicando bloqueo de cuenta y contador de fallos,
+     * pero SIN iniciar sesión en el guard web. Lo usa el login por API
+     * (29-sep-2026: antes la API hacía su propio Hash::check y se saltaba el
+     * bloqueo de cuenta, así que el password spraying rotando IPs no tenía límite).
+     */
+    public function validateCredentials(array $credentials, Request $request): ?User
+    {
         $user = User::where('email', $credentials['email'] ?? null)->first();
 
         if ($user && $user->isLocked()) {
@@ -63,7 +82,6 @@ class AuthService
             return null;
         }
 
-        Auth::login($user, $remember);
         $this->resetFailureCount($user);
 
         return $user;
@@ -109,8 +127,9 @@ class AuthService
 
     /**
      * Increment failure counter and apply account lockout if threshold reached.
+     * Pública: también cuentan los fallos del reto 2FA (29-sep-2026).
      */
-    private function registerFailure(User $user): void
+    public function registerFailure(User $user): void
     {
         if (! config('auth.auth-policy.lockout.enabled', true)) {
             return;

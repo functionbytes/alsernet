@@ -11,19 +11,11 @@ class VerifyCsrfToken extends Middleware
      *
      * @var array<int, string>
      */
+    // 29-sep-2026: fuera 'api/*' (dejaba sin CSRF 54 rutas con sesión de
+    // Document/Notification/helpcenter; todo su JS ya envía X-CSRF-TOKEN) y las
+    // excepciones de Acelle sin ninguna ruta detrás. Las rutas del grupo `api`
+    // no pasan por este middleware. Los webhooks validan su propia firma.
     protected $except = [
         'webhooks/*',
-        'plugins/webhooks/*',
-        'delivery/*',
-        'api/*',
-        '*/embedded-form-*',
-        'payments/stripe/credit-card*',
-        'frontend/*',
-        'manager/*',
-        'lc/api/*', // LiveChat widget public API
-        'r/track',
-        'r/unsubscribe/*',
-        'r/preferences/*',
-        'r/webhooks/*',
     ];
 }

@@ -5,9 +5,11 @@ namespace Modules\HelpdeskDocument\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Modules\Document\Entities\Document;
 use Modules\Document\Http\Controllers\Api\DocumentsController;
 use Modules\Document\Http\Controllers\Api\DocumentValidationController;
+use Modules\Document\Support\DocumentMediaFiles;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskDocument\Concerns\AuthorizesConversationDocuments;
 use Modules\HelpdeskDocument\Http\Requests\Managers\AddDocumentNoteRequest;
@@ -200,6 +202,59 @@ class DocumentActionController extends Controller
     {
         $this->assertDocumentBelongsToConversation($conversation, $document);
 
-        return $this->validation->downloadZip($document->uid);
+        // 29-sep-2026: delegaba en DocumentValidationController::downloadZip(),
+        // que ya no existe (500). Se arma aquí, leyendo cada media de su disco
+        // (documents_private) en vez de rutas públicas.
+        $mediaItems = collect(DocumentMediaFiles::COLLECTIONS)
+            ->flatMap(fn (string $collection) => $document->getMedia($collection))
+            ->filter(function ($media) {
+                try {
+                    return Storage::disk($media->disk)->exists($media->getPathRelativeToRoot());
+                } catch (\Throwable) {
+                    return false;
+                }
+            });
+
+        if ($mediaItems->isEmpty()) {
+            return response()->json(['message' => 'El expediente no tiene archivos para descargar.'], 404);
+        }
+
+        $zipName = 'expediente-'.preg_replace('/[^A-Za-z0-9_-]/', '', (string) $document->uid).'.zip';
+        $zipPath = tempnam(sys_get_temp_dir(), 'hdzip_');
+
+        $zip = new \ZipArchive;
+        if ($zipPath === false || $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'No se pudo generar el ZIP.'], 500);
+        }
+
+        $used = [];
+        foreach ($mediaItems as $media) {
+            // Nombre original solo para mostrar: sin rutas ni duplicados.
+            $name = DocumentMediaFiles::originalName((string) $media->getCustomProperty('original_name', $media->file_name));
+            $entry = $media->collection_name.'/'.$name;
+            for ($i = 2; isset($used[mb_strtolower($entry)]); $i++) {
+                $entry = $media->collection_name.'/'.pathinfo($name, PATHINFO_FILENAME).'_'.$i
+                    .(pathinfo($name, PATHINFO_EXTENSION) !== '' ? '.'.pathinfo($name, PATHINFO_EXTENSION) : '');
+            }
+            $used[mb_strtolower($entry)] = true;
+
+            $disk = Storage::disk($media->disk);
+            $relative = $media->getPathRelativeToRoot();
+
+            if (config("filesystems.disks.{$media->disk}.driver") === 'local') {
+                $zip->addFile($disk->path($relative), $entry);
+            } else {
+                $zip->addFromString($entry, (string) $disk->get($relative));
+            }
+        }
+        $zip->close();
+
+        return response()->streamDownload(function () use ($zipPath) {
+            readfile($zipPath);
+            @unlink($zipPath);
+        }, $zipName, [
+            'Content-Type' => 'application/zip',
+            'Cache-Control' => 'no-store, private',
+        ]);
     }
 }

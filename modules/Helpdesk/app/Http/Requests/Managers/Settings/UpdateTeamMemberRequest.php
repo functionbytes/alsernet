@@ -4,11 +4,18 @@ namespace Modules\Helpdesk\Http\Requests\Managers\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\TeamController;
 
 class UpdateTeamMemberRequest extends FormRequest
 {
-    /** Roles that may be assigned through the team-member settings form. */
-    public const ASSIGNABLE_ROLES = ['admin', 'manager', 'support', 'callcenter'];
+    /**
+     * Roles asignables desde el formulario de miembro del equipo: solo los
+     * roles de helpdesk (29-sep-2026). Antes eran 'admin', 'manager',
+     * 'support' y 'callcenter': 'manager' es un rol real con acceso a
+     * configuración, y los roles que ofrecía el select no pasaban la
+     * validación. El controlador aplica además PrivilegeGuard.
+     */
+    public const ASSIGNABLE_ROLES = TeamController::TEAM_ROLES;
 
     public function authorize(): bool
     {

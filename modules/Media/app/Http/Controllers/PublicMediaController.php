@@ -55,7 +55,10 @@ class PublicMediaController extends Controller
      */
     public function show(string $hash, string $id): mixed
     {
-        abort_if(sha1($id) !== $hash, 404);
+        // 29-sep-2026: el hash era sha1($id), calculable por cualquiera (todos los
+        // ficheros no privados eran enumerables). Ahora es un HMAC con clave, el
+        // mismo que genera el helper media().
+        abort_unless(ctype_digit($id) && hash_equals(media_indirect_hash($id), $hash), 404);
 
         $mediaFile = MediaFile::query()->whereKey($id)->firstOrFail();
 

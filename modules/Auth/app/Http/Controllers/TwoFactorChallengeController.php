@@ -56,8 +56,20 @@ class TwoFactorChallengeController extends Controller
             return back()->withErrors(['code' => $message]);
         }
 
-        /** @var User $user */
-        $user = User::findOrFail($userId);
+        /** @var User|null $user */
+        $user = User::find($userId);
+
+        // 29-sep-2026: una cuenta bloqueada o deshabilitada no puede completar el reto.
+        if (! $user || ! $user->available || $user->isLocked()) {
+            $request->session()->forget(['two_factor_user_id', 'two_factor_remember']);
+            $message = 'No se puede completar el inicio de sesión. Inténtalo de nuevo más tarde.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message, 'redirect' => route('auth.login')], 423);
+            }
+
+            return redirect()->route('auth.login')->withErrors(['email' => $message]);
+        }
 
         $method = null;
 
@@ -92,6 +104,8 @@ class TwoFactorChallengeController extends Controller
         }
 
         $this->limiter->hit('two_factor', (string) $userId, $request);
+        // Los fallos de 2FA también cuentan para el bloqueo de cuenta (no solo por IP).
+        $this->auth->registerFailure($user);
         TwoFactorFailed::dispatch($user, $request->ip());
 
         $message = 'Código incorrecto. Inténtalo de nuevo.';
@@ -107,7 +121,8 @@ class TwoFactorChallengeController extends Controller
     {
         $code = (string) $request->input('code', '');
 
-        return $code !== '' && $this->twoFactor->verify($user->two_factor_secret, $code);
+        // verifyOnce: un mismo TOTP no se acepta dos veces (29-sep-2026).
+        return $code !== '' && $this->twoFactor->verifyOnce((string) $user->two_factor_secret, $code, $user->id);
     }
 
     private function isValidRecoveryCode(Request $request, User $user): bool

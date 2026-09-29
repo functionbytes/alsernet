@@ -51,7 +51,9 @@
                                 @endif
                             @endcan
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{{ route('contacts.export', request()->query()) }}">Exportar CSV</a>
+                            @can('contacts.export')
+                                <a class="dropdown-item" href="{{ route('contacts.export', request()->query()) }}">Exportar CSV</a>
+                            @endcan
                             <a class="dropdown-item" href="{{ route('contacts.reports') }}">Reportes</a>
                         </div>
                     </div>

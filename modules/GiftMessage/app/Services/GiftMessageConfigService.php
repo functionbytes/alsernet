@@ -5,6 +5,7 @@ namespace Modules\GiftMessage\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Imagick;
 use ImagickException;
 use Modules\GiftMessage\Models\GiftMessageConfig;
@@ -96,7 +97,11 @@ class GiftMessageConfigService
 
     private function storeImage(UploadedFile $file, string $prefix): string
     {
-        $fileName = $prefix.'_'.now()->timestamp.'.'.$file->getClientOriginalExtension();
+        // 29-sep-2026: nombre y extension los decide el servidor (por contenido),
+        // nunca el cliente: un JPEG valido llamado .html/.svg era XSS en /storage.
+        $extension = $file->guessExtension();
+        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) ? $extension : 'jpg';
+        $fileName = $prefix.'_'.Str::uuid().'.'.$extension;
         $path = self::IMAGES_FOLDER.'/'.$fileName;
 
         Storage::disk(self::DISK)->put($path, $this->toRgb($file->getRealPath()));

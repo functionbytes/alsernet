@@ -176,12 +176,15 @@ class ModulesController extends Controller
     public function uploadForm(): View
     {
         $this->authorize('modules.manage');
+        $this->abortIfProduction();
 
         return view('modules::upload');
     }
 
     public function install(InstallModuleRequest $request): RedirectResponse
     {
+        $this->abortIfProduction();
+
         try {
             $moduleName = $this->moduleService->install($request->file('module_file'));
 
@@ -191,13 +194,14 @@ class ModulesController extends Controller
             Log::error('Error al instalar módulo', ['error' => $e->getMessage()]);
 
             return redirect()->route('settings.modules.uploadForm')
-                ->with('error', 'La instalación falló: '.$e->getMessage());
+                ->with('error', 'La instalación falló. Revisa el log para más detalles.');
         }
     }
 
     public function uninstall(string $moduleAlias): RedirectResponse
     {
         $this->authorize('modules.manage');
+        $this->abortIfProduction();
 
         $module = Module::find($moduleAlias);
 
@@ -230,6 +234,16 @@ class ModulesController extends Controller
             return redirect()->route('settings.modules.index')
                 ->with('error', 'No se pudo desinstalar el módulo.');
         }
+    }
+
+    /**
+     * 29-sep-2026: instalar un ZIP es ejecutar PHP arbitrario y desinstalar
+     * hace rollback de migraciones y borra el directorio; en producción los
+     * módulos se despliegan por git, nunca desde el panel.
+     */
+    private function abortIfProduction(): void
+    {
+        abort_if(app()->isProduction(), 403, 'La instalación/desinstalación de módulos desde el panel está deshabilitada en producción.');
     }
 
     /**

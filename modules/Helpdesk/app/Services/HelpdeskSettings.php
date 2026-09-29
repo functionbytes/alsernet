@@ -40,6 +40,17 @@ class HelpdeskSettings
     }
 
     /**
+     * Extensiones que NUNCA se aceptan como adjunto aunque un admin las añada en
+     * Ajustes → Subida (29-sep-2026): ejecutables en el servidor o contenido
+     * activo (XSS en el mismo origen si se sirve desde /storage).
+     */
+    public const BLOCKED_EXTENSIONS = [
+        'php', 'phtml', 'phar', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'pht', 'phpt',
+        'htaccess', 'htpasswd', 'ini', 'user', 'cgi', 'pl', 'py', 'sh', 'asp', 'aspx', 'jsp',
+        'svg', 'svgz', 'html', 'htm', 'xhtml', 'shtml', 'xml', 'xsl', 'xslt', 'js', 'mjs', 'swf',
+    ];
+
+    /**
      * @return array<int, string>
      */
     public function attachmentExtensions(): array
@@ -59,7 +70,8 @@ class HelpdeskSettings
         }
 
         $extensions = array_map(static fn (mixed $extension): string => strtolower(ltrim(trim((string) $extension), '.')), $value);
-        $extensions = array_filter($extensions, static fn (string $extension): bool => (bool) preg_match('/^[a-z0-9][a-z0-9_-]{0,9}$/', $extension));
+        $extensions = array_filter($extensions, static fn (string $extension): bool => (bool) preg_match('/^[a-z0-9][a-z0-9_-]{0,9}$/', $extension)
+            && ! in_array($extension, self::BLOCKED_EXTENSIONS, true));
 
         return array_values(array_unique($extensions));
     }
@@ -75,15 +87,15 @@ class HelpdeskSettings
     {
         $map = [
             'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
-            'gif' => 'image/gif', 'webp' => 'image/webp', 'svg' => 'image/svg+xml',
+            'gif' => 'image/gif', 'webp' => 'image/webp',
             'bmp' => 'image/bmp', 'pdf' => 'application/pdf', 'doc' => 'application/msword',
             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'xls' => 'application/vnd.ms-excel',
             'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'ppt' => 'application/vnd.ms-powerpoint',
             'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'txt' => 'text/plain', 'csv' => 'text/csv', 'xml' => 'application/xml',
-            'json' => 'application/json', 'html' => 'text/html', 'zip' => 'application/zip',
+            'txt' => 'text/plain', 'csv' => 'text/csv',
+            'json' => 'application/json', 'zip' => 'application/zip',
             'rar' => 'application/vnd.rar', '7z' => 'application/x-7z-compressed',
             'tar' => 'application/x-tar', 'gz' => 'application/gzip', 'mp3' => 'audio/mpeg',
             'mp4' => 'video/mp4', 'mov' => 'video/quicktime', 'avi' => 'video/x-msvideo',

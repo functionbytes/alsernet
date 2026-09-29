@@ -22,6 +22,23 @@ class Setting extends Model implements HasMedia
      */
     private const MISSING = '__setting_missing__';
 
+    /**
+     * Ajustes que son contraseñas/secretos: set() los cifra siempre y get()
+     * los descifra (29-sep-2026, estaban en claro en la tabla y en los volcados).
+     * Las filas antiguas en claro se siguen leyendo tal cual (sin prefijo 'enc:').
+     */
+    public const SECRET_KEYS = [
+        'oracle_password',
+        'erp_sms_password',
+        'prestashop_db_password',
+        'prestashop_api_key',
+        'db_password',
+        'redis_password',
+        'pusher_secret',
+        // Configuración de seguridad (29-sep-2026, H4): secreto HMAC de la tienda.
+        'security_config.documents_prestashop_secret',
+    ];
+
     protected $fillable = ['key', 'value'];
 
     /**
@@ -83,7 +100,16 @@ class Setting extends Model implements HasMedia
             return self::defaultSettings()[$name]['value'] ?? self::MISSING;
         });
 
-        return $value === self::MISSING ? $defaultValue : $value;
+        if ($value === self::MISSING) {
+            return $defaultValue;
+        }
+
+        return in_array($name, self::SECRET_KEYS, true) ? self::decryptIfEncrypted($value) : $value;
+    }
+
+    public static function isSecretKey(string $name): bool
+    {
+        return in_array($name, self::SECRET_KEYS, true);
     }
 
     /**
@@ -161,6 +187,11 @@ class Setting extends Model implements HasMedia
      */
     public static function set($name, $val)
     {
+        // Secretos: siempre cifrados en reposo, lo guarde quien lo guarde.
+        if (self::isSecretKey((string) $name) && is_string($val) && $val !== '' && ! str_starts_with($val, 'enc:')) {
+            $val = 'enc:'.Crypt::encryptString($val);
+        }
+
         $option = self::where('key', $name)->first();
 
         if ($option) {
@@ -835,65 +866,6 @@ class Setting extends Model implements HasMedia
     }
 
     /**
-     * Upload site logo.
-     *
-     * @var bool
-     */
-    public static function uploadSiteLogo($file, $name = null)
-    {
-        $path = 'images/';
-        $upload_path = public_path($path);
-
-        if (! file_exists($upload_path)) {
-            mkdir($upload_path, 0777, true);
-        }
-
-        $md5file = \md5_file($file);
-
-        $filename = $md5file.'.'.$file->getClientOriginalExtension();
-
-        // save to server
-        $file->move($upload_path, $filename);
-
-        // create thumbnails
-        $img = \Image::make($upload_path.$filename);
-
-        self::set($name, $path.$filename);
-
-        return true;
-    }
-
-    /**
-     * Upload site logo.
-     *
-     * @var bool
-     */
-    public static function uploadFile($file, $type = null, $thumbnail = true)
-    {
-        $uploadPath = storage_path(self::UPLOAD_PATH);
-
-        if (! file_exists($uploadPath)) {
-            mkdir($uploadPath, 0777, true);
-        }
-
-        $md5file = \md5_file($file);
-
-        $filename = $type.'-'.$md5file.'.'.$file->getClientOriginalExtension();
-
-        // save to server
-        $file->move($uploadPath, $filename);
-
-        // create thumbnails
-        if ($thumbnail) {
-            $img = \Image::make($uploadPath.$filename);
-        }
-
-        self::set($type, $filename);
-
-        return true;
-    }
-
-    /**
      * Get uploaded file location.
      *
      * @var bool
@@ -1075,7 +1047,7 @@ class Setting extends Model implements HasMedia
         ];
 
         // Single cache entry for all ERP settings (1 cache read instead of 34).
-        return cache()->remember('settings_erp_bundle', now()->addMinutes(10), function () use ($erpKeys) {
+        $result = cache()->remember('settings_erp_bundle', now()->addMinutes(10), function () use ($erpKeys) {
             $stored = self::whereIn('key', $erpKeys)->pluck('value', 'key')->all();
             $result = [];
             foreach ($erpKeys as $key) {
@@ -1084,6 +1056,15 @@ class Setting extends Model implements HasMedia
 
             return $result;
         });
+
+        // Los secretos se cachean cifrados y se descifran al leer.
+        foreach (self::SECRET_KEYS as $key) {
+            if (array_key_exists($key, $result)) {
+                $result[$key] = self::decryptIfEncrypted($result[$key]);
+            }
+        }
+
+        return $result;
     }
 
     public static function clearErpSettingsCache(): void
@@ -1097,9 +1078,10 @@ class Setting extends Model implements HasMedia
     private static function getErpDefaultValue(string $key): mixed
     {
         $defaults = [
-            // API security — default OFF: API accessible only behind firewall.
-            // Flip via /panel/settings/erp/api-security or ERP_API_AUTH_ENABLED env.
-            'erp_api_auth_enabled' => env('ERP_API_AUTH_ENABLED', false) ? 'yes' : 'no',
+            // API security — fail-closed (29-sep-2026): si falta el ajuste, la
+            // autenticación está activa. Hoy hay fila explícita 'no' en settings
+            // hasta repartir tokens a los consumidores (ver ApiAuth).
+            'erp_api_auth_enabled' => filter_var(env('ERP_API_AUTH_ENABLED', true), FILTER_VALIDATE_BOOLEAN) ? 'yes' : 'no',
             'erp_api_auth_guard' => env('ERP_API_AUTH_GUARD', 'sanctum'),
             'erp_api_throttle' => env('ERP_API_THROTTLE', '60,1'),
             'erp_public_token_throttle' => env('ERP_PUBLIC_TOKEN_THROTTLE', '60,1'),
@@ -1140,6 +1122,10 @@ class Setting extends Model implements HasMedia
             // Antes solo guardaba 'erp_*', por lo que el host/puerto/schema del panel ERP Database
             // se descartaban silenciosamente y la app seguía conectando a la BD anterior.
             if (str_starts_with($key, 'erp_') || str_starts_with($key, 'oracle_')) {
+                // Contraseña vacía = "sin cambios" (los formularios ya no la rellenan).
+                if (self::isSecretKey($key) && ($value === null || $value === '')) {
+                    continue;
+                }
                 self::set($key, $value);
             }
         }
@@ -1310,6 +1296,10 @@ class Setting extends Model implements HasMedia
     {
         foreach ($data as $key => $value) {
             if (str_starts_with($key, 'prestashop_')) {
+                // Contraseña/API key vacía = "sin cambios".
+                if (self::isSecretKey($key) && ($value === null || $value === '')) {
+                    continue;
+                }
                 self::set($key, $value);
             }
         }
@@ -1628,6 +1618,10 @@ class Setting extends Model implements HasMedia
     {
         foreach ($data as $key => $value) {
             if (str_starts_with($key, 'db_') || $key === 'cleanup_enabled') {
+                // Contraseña vacía = "sin cambios".
+                if (self::isSecretKey($key) && ($value === null || $value === '')) {
+                    continue;
+                }
                 self::set($key, $value);
             }
         }

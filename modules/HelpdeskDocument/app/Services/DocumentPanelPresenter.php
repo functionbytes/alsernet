@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentMail;
+use Modules\Document\Support\DocumentMediaFiles;
 
 /**
  * Builds the view-model arrays for the document tab of the inbox right-panel.
@@ -101,7 +102,7 @@ class DocumentPanelPresenter
                 'mime' => $m->mime_type,
                 'size_human' => $this->formatBytes($m->size),
                 'uploaded_human' => $m->created_at?->format('d/m/Y H:i') ?? '—',
-                'url' => $m->getUrl(),
+                'url' => DocumentMediaFiles::signedUrl($m),
             ];
         }
 
@@ -121,7 +122,7 @@ class DocumentPanelPresenter
                     'mime' => $m->mime_type,
                     'size_human' => $this->formatBytes($m->size),
                     'uploaded_human' => $m->created_at?->format('d/m/Y H:i') ?? '—',
-                    'url' => $m->getUrl(),
+                    'url' => DocumentMediaFiles::signedUrl($m),
                 ];
             }
         } catch (\Throwable $e) {

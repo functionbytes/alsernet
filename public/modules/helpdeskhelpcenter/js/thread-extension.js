@@ -54,7 +54,7 @@
             document.getElementById('hdArticlePreview').value = '';
             return;
         }
-        function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
         el.innerHTML = list.map(function(a, i) {
             return '<div class="row-pick ' + (i === 0 ? 'on' : '') + '" data-idx="' + i + '" onclick="hdArticleSelect(' + i + ')">'
                 + '<div class="body">'

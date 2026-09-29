@@ -59,8 +59,9 @@ class ChatFlowTestController extends Controller
         $docKey = basename($validated['doc_key']);
 
         $file = $request->file('file');
-        $fileName = $docKey.'_'.time().'.'.$file->getClientOriginalExtension();
-        $file->storeAs('chatflow-test/'.$sessionKey, $fileName);
+        // 29-sep-2026: nombre generado por el servidor (hashName), nunca la
+        // extensión del cliente; disco privado.
+        $file->store('chatflow-test/'.$sessionKey, 'local');
 
         $result = $this->simulator->replyWithFile(
             $sessionKey,

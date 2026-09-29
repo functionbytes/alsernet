@@ -57,7 +57,12 @@ class TicketAttachmentDownloadController extends Controller
 
         abort_unless(Storage::disk($disk)->exists($path), 404);
 
-        $filename = basename($path);
+        // Adjuntos de correo entrante: en disco van con nombre aleatorio y el
+        // original se guarda en metadata.attachment_names (29-sep-2026).
+        $original = data_get($item->metadata, 'attachment_names.'.$index);
+        $filename = is_string($original) && trim($original) !== ''
+            ? str_replace(['/', '\\', "\0"], '_', trim($original))
+            : basename($path);
 
         $response = Storage::disk($disk)->download($path, $filename);
         $response->headers->set('X-Content-Type-Options', 'nosniff');

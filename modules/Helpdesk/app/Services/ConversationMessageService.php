@@ -150,11 +150,12 @@ class ConversationMessageService
             }
 
             $this->attachmentSecurity->assertSafe($file);
-            $path = $file->store('helpdesk/attachments', 'public');
+            // Disco según helpdesk.attachments.disk (29-sep-2026, A9).
+            [$path, $url] = app(ConversationAttachmentStorage::class)->storeUploaded($file, 'helpdesk/attachments');
             $mime = $file->getMimeType() ?? 'application/octet-stream';
             $urls[] = [
                 'name' => $file->getClientOriginalName(),
-                'url' => asset('storage/'.$path),
+                'url' => $url,
                 'size' => $file->getSize(),
                 'mime_type' => $mime,
                 'mime' => $mime,        // backwards-compat with old readers

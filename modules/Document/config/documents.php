@@ -29,6 +29,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Firma de las llamadas servidor-a-servidor de la tienda
+    |--------------------------------------------------------------------------
+    |
+    | 29-sep-2026: POST /api/documents (y /create, /process) lo llama la tienda
+    | sin firmar. Con true se exige la misma firma que el webhook order-paid
+    | (X-Webhook-Timestamp + X-Webhook-Signature = HMAC-SHA256 de
+    | "{timestamp}:{raw_body}" con DOCUMENTS_PRESTASHOP_WEBHOOK_SECRET).
+    | Poner a true solo cuando la tienda firme. GET /verify y /order/{id}
+    | exigen firma siempre (la tienda no los usa).
+    |
+    */
+    'require_signed_server_requests' => (bool) env('DOCUMENTS_REQUIRE_SIGNED_SERVER_REQUESTS', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Disco privado de los ficheros de documentos
+    |--------------------------------------------------------------------------
+    |
+    | 29-sep-2026: DNI, licencias y adjuntos de los expedientes (colecciones
+    | media-library 'documents' y 'additional_attachments'). Root fuera de
+    | public/: no hay URL /storage. La 'url' apunta a la ruta autenticada del
+    | panel (DocumentMediaController), así $media->getUrl() sigue funcionando
+    | para quien tenga can:view-documents-panel.
+    |
+    */
+    'private_disk' => [
+        'driver' => 'local',
+        'root' => storage_path('app/documents_private'),
+        'url' => rtrim((string) env('APP_URL', ''), '/').'/panel/documents/media',
+        'visibility' => 'private',
+        'permissions' => [
+            'file' => ['public' => 0660, 'private' => 0660],
+            'dir' => ['public' => 0770, 'private' => 0770],
+        ],
+        'throw' => false,
+    ],
+
+    // Minutos de validez de las URLs firmadas de ficheros (helpdesk / tienda).
+    'signed_media_url_minutes' => (int) env('DOCUMENTS_SIGNED_MEDIA_URL_MINUTES', 120),
+
+    /*
+    |--------------------------------------------------------------------------
     | Estados pagados de Prestashop
     |--------------------------------------------------------------------------
     |

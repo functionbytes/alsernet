@@ -132,9 +132,9 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                      <label class="form-label">Contraseña <span class="text-danger">*</span></label>
+                      <label class="form-label">Contraseña</label>
                       <input type="password" name="oracle_password" class="form-control @error('oracle_password') is-invalid @enderror"
-                             value="{{ old('oracle_password', config('database.connections.oracle.password') ?? env('ORACLE_PASSWORD')) }}" required autocomplete="new-password">
+                             value="" placeholder="•••••••• (sin cambios)" autocomplete="new-password">
                       <small class="form-text text-muted">Contraseña del usuario Oracle</small>
                       @error('oracle_password')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -331,7 +331,7 @@
                     <div class="col-md-6 mb-3">
                       <label class="form-label">Contraseña SMS</label>
                       <input type="password" name="erp_sms_password" class="form-control @error('erp_sms_password') is-invalid @enderror"
-                             value="{{ old('erp_sms_password', $settings['erp_sms_password']) }}" autocomplete="new-password">
+                             value="" placeholder="{{ ! empty($settings['erp_sms_password']) ? '•••••••• (sin cambios)' : '' }}" autocomplete="new-password">
                       @error('erp_sms_password')
                         <div class="invalid-feedback">{{ $message }}</div>
                       @enderror

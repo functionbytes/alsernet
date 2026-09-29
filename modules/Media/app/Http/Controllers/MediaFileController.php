@@ -65,8 +65,13 @@ class MediaFileController extends Controller
             ]);
         } catch (\RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            throw $e;
         } catch (\Throwable $e) {
-            return response()->json(['message' => 'Descarga fallida: '.$e->getMessage()], 422);
+            // 29-sep-2026: sin el mensaje de la excepción (podía revelar detalles de red interna).
+            report($e);
+
+            return response()->json(['message' => 'Descarga fallida.'], 422);
         }
     }
 
@@ -141,6 +146,8 @@ class MediaFileController extends Controller
 
     public function uploadChunk(Request $request): JsonResponse
     {
+        // 29-sep-2026: la subida por trozos está desactivada por config y no la usa ninguna vista.
+        abort_unless(config('media.chunk.enabled', false), 404);
         $this->authorize('create', MediaFile::class);
 
         $chunkSizeKb = (int) (config('media.chunk.chunk_size', 1048576) * 2 / 1024);
@@ -173,6 +180,7 @@ class MediaFileController extends Controller
 
     public function completeChunkUpload(Request $request): JsonResponse
     {
+        abort_unless(config('media.chunk.enabled', false), 404);
         $this->authorize('create', MediaFile::class);
 
         $request->validate([
@@ -194,6 +202,7 @@ class MediaFileController extends Controller
 
     public function abortChunkUpload(string $uploadId): JsonResponse
     {
+        abort_unless(config('media.chunk.enabled', false), 404);
         $this->authorize('create', MediaFile::class);
 
         if (! preg_match('/^[A-Za-z0-9_-]{8,64}$/', $uploadId)) {

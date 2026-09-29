@@ -294,7 +294,11 @@ class StorageController extends Controller
 
             return ['success' => true];
         } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'No se pudo conectar: '.$e->getMessage()];
+            // 29-sep-2026: mensaje genérico (el detalle permitía usar la prueba
+            // como escáner de puertos/hosts internos); el detalle queda en el log.
+            Log::warning('Storage connection test failed', ['error' => $e->getMessage()]);
+
+            return ['success' => false, 'message' => 'No se pudo conectar con el almacenamiento. Revisa host, puerto y credenciales.'];
         } finally {
             $disks = config('filesystems.disks');
             unset($disks[$testDiskName]);

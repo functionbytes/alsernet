@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -75,6 +76,23 @@ class TwoFactorService
         }
 
         return false;
+    }
+
+    /**
+     * Igual que verify(), pero un mismo código solo vale una vez por usuario
+     * (29-sep-2026: evita reutilizar un TOTP interceptado dentro de su ventana
+     * de ±30 s). El registro caduca solo cuando el código ya no es válido.
+     */
+    public function verifyOnce(string $secret, string $code, int|string $userId): bool
+    {
+        if (! $this->verify($secret, $code)) {
+            return false;
+        }
+
+        $code = preg_replace('/\s+/', '', $code);
+        $ttl = self::PERIOD * (2 * self::WINDOW + 2);
+
+        return Cache::add('auth:totp-used:'.$userId.':'.$code, 1, $ttl);
     }
 
     /**

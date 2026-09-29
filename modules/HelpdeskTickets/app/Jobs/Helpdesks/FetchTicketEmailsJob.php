@@ -13,6 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\HelpdeskSettings;
@@ -467,6 +468,14 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
             'html_body' => EmailReplyQuoteStripper::stripHtml($parsed['body_html']),
             'is_internal' => false,
             'attachment_urls' => array_column($parsed['attachments'], 'path'),
+            // Nombre original de cada adjunto (mismo índice que attachment_urls):
+            // en disco van con nombre aleatorio. Solo para mostrar/descargar.
+            'metadata' => $parsed['attachments'] !== []
+                ? ['attachment_names' => array_map(
+                    static fn ($name): string => mb_substr(str_replace(['/', '\\', "\0"], '_', (string) $name), 0, 200),
+                    array_column($parsed['attachments'], 'filename'),
+                )]
+                : null,
         ]);
 
         // Sin esto, ningún listener de MessageAdded corría para un correo
@@ -483,7 +492,7 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
                 'type' => 'system',
                 'is_internal' => true,
                 'body' => (count($skippedAttachments) === 1 ? 'No se guardó un adjunto' : 'No se guardaron '.count($skippedAttachments).' adjuntos')
-                    .' de este correo por tener una extensión no permitida: '.implode(', ', $skippedAttachments).'.',
+                    .' de este correo por tener una extensión o un tipo no permitido: '.implode(', ', $skippedAttachments).'.',
             ]);
         }
 
@@ -802,7 +811,10 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
         try {
             $filename = $attachment->name ?? time().'_'.random_int(1000, 9999);
 
-            $allowedExtensions = $this->allowedAttachmentExtensions();
+            $allowedExtensions = array_values(array_diff(
+                $this->allowedAttachmentExtensions(),
+                self::FORBIDDEN_ATTACHMENT_EXTENSIONS,
+            ));
             $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
 
             if ($extension === '' || ! in_array($extension, $allowedExtensions, true)) {
@@ -834,8 +846,24 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
                 return null;
             }
 
+            // 29-sep-2026 (A7): tipo real del contenido (finfo) contra la lista
+            // permitida; antes solo se miraba la extensión que pone el remitente.
+            $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->buffer($content);
+            if (! $this->attachmentMimeAllowed($mime, $extension)) {
+                $skippedAttachments[] = $filename;
+                Log::warning('FetchTicketEmailsJob: skipped attachment with disallowed content type', [
+                    'filename' => $filename,
+                    'mime' => $mime,
+                ]);
+
+                return null;
+            }
+
+            // Nombre aleatorio en disco (antes el nombre original en una ruta
+            // solo con la fecha: adivinable y dos adjuntos iguales se pisaban).
+            // El nombre original va a BD (metadata.attachment_names del item).
             $basePath = config('helpdesk.attachments.path', 'helpdesk/attachments');
-            $path = $basePath.'/'.date('Y/m/d').'/'.$filename;
+            $path = $basePath.'/'.date('Y/m/d').'/'.Str::uuid().'.'.$extension;
 
             Storage::disk($disk)->put($path, $content);
 
@@ -873,6 +901,54 @@ class FetchTicketEmailsJob implements ShouldBeUnique, ShouldQueue
     private function allowedAttachmentExtensions(): array
     {
         return app(HelpdeskSettings::class)->attachmentExtensions();
+    }
+
+    /**
+     * Extensiones que nunca se aceptan aunque se añadan en Ajustes (guía de
+     * desarrollo seguro, apartado 2.4).
+     */
+    private const FORBIDDEN_ATTACHMENT_EXTENSIONS = [
+        'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'pht', 'phar', 'phps', 'inc',
+        'htaccess', 'ini', 'cgi', 'pl', 'py', 'sh', 'shtml', 'html', 'htm', 'xhtml', 'xml',
+        'svg', 'svgz', 'js', 'mjs',
+    ];
+
+    /** Tipos que nunca se guardan (se ejecutan o se pintan en el navegador). */
+    private const FORBIDDEN_ATTACHMENT_MIMES = [
+        'text/html', 'application/xhtml+xml', 'image/svg+xml', 'text/xml', 'application/xml',
+        'application/javascript', 'text/javascript', 'text/x-php', 'application/x-php',
+        'application/x-httpd-php', 'text/x-shellscript',
+    ];
+
+    /**
+     * MIME real (finfo) permitido: el de la lista de Ajustes/config, más los
+     * que libmagic da a formatos Office legítimos (contenedor OLE/ZIP).
+     */
+    private function attachmentMimeAllowed(string $mime, string $extension): bool
+    {
+        if ($mime === '' || in_array($mime, self::FORBIDDEN_ATTACHMENT_MIMES, true)) {
+            return false;
+        }
+
+        if (in_array($mime, app(HelpdeskSettings::class)->attachmentMimeTypes(), true)) {
+            return true;
+        }
+
+        $aliases = match ($extension) {
+            'doc', 'xls', 'ppt' => ['application/vnd.ms-office', 'application/CDFV2', 'application/x-ole-storage', 'application/vnd.ms-excel', 'application/msword'],
+            'docx', 'xlsx', 'pptx' => ['application/zip', 'application/octet-stream', 'application/encrypted'],
+            'csv', 'txt' => ['text/plain', 'text/csv', 'application/csv'],
+            'jpg', 'jpeg' => ['image/jpeg', 'image/pjpeg'],
+            'mp3' => ['audio/mpeg', 'audio/mp3'],
+            'wav' => ['audio/wav', 'audio/x-wav', 'audio/wave'],
+            'm4a' => ['audio/mp4', 'audio/x-m4a', 'video/mp4'],
+            'ogg' => ['audio/ogg', 'application/ogg', 'video/ogg'],
+            'webm' => ['video/webm', 'audio/webm'],
+            'zip' => ['application/zip', 'application/x-zip-compressed'],
+            default => [],
+        };
+
+        return in_array($mime, $aliases, true);
     }
 
     /**

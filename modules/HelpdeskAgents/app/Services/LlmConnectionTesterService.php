@@ -100,8 +100,8 @@ class LlmConnectionTesterService
      * rango link-local (169.254.0.0/16, fe80::/10) que incluye el endpoint de
      * metadata cloud 169.254.169.254 — nunca un Ollama y objetivo típico de SSRF.
      *
-     * Si config('helpdeskagents.local_llm_allowed_hosts') no está vacío, actúa
-     * de allowlist estricta: solo esos hosts pueden usarse como base_url.
+     * config('helpdeskagents.local_llm_allowed_hosts') es una allowlist
+     * estricta: solo esos hosts pueden usarse como base_url. Vacía = ninguno.
      */
     private function assertSafeLocalUrl(string $baseUrl): void
     {
@@ -119,7 +119,9 @@ class LlmConnectionTesterService
             (array) config('helpdeskagents.local_llm_allowed_hosts', [])
         );
 
-        if ($allowedHosts !== [] && ! in_array($host, $allowedHosts, true)) {
+        // 29-sep-2026: lista vacía = denegar (fail-closed). Antes aceptaba
+        // cualquier host privado/loopback y servía para escanear la red interna.
+        if ($allowedHosts === [] || ! in_array($host, $allowedHosts, true)) {
             throw new \RuntimeException('El host del LLM local no está en la lista de hosts permitidos.');
         }
 

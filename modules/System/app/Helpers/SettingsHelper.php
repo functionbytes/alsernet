@@ -11,7 +11,11 @@ use Modules\Core\Models\Setting;
  */
 if (! function_exists('updateSettings')) {
     /**
-     * Update multiple settings at once using a single upsert query.
+     * Guarda varios ajustes a la vez.
+     *
+     * 29-sep-2026: pasa por Setting::set() para que los secretos se cifren y se
+     * invalide la misma caché ("setting_{key}") que lee setting(); el upsert
+     * directo dejaba la caché vieja hasta diez minutos.
      *
      * @param  array<string, mixed>  $data  Key-value pairs of settings to update
      */
@@ -21,15 +25,11 @@ if (! function_exists('updateSettings')) {
             return;
         }
 
-        $rows = collect($data)
-            ->map(fn ($val, $key) => [
-                'key' => $key,
-                'value' => is_array($val) ? json_encode($val) : $val,
-            ])
-            ->values()
-            ->all();
-
-        Setting::upsert($rows, ['key'], ['value']);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            foreach ($data as $key => $val) {
+                Setting::set($key, is_array($val) ? json_encode($val) : $val);
+            }
+        });
 
         Cache::forget('settings');
     }
@@ -37,17 +37,18 @@ if (! function_exists('updateSettings')) {
 
 if (! function_exists('setting')) {
     /**
-     * Get a setting value by key
+     * Valor de un ajuste (tabla settings), o $default si no existe.
+     *
+     * Delegado en Setting::get() (caché por clave, valores por defecto del
+     * modelo y descifrado de secretos).
      *
      * @param  string  $key  The setting key
      * @param  mixed  $default  Value to return if setting is not found
      * @return mixed The setting value or default
      */
-    function setting($key, $default = '')
+    function setting($key, $default = null)
     {
-        return Cache::remember("setting.{$key}", 300, function () use ($key, $default) {
-            return Setting::where('key', '=', $key)->value('value') ?? $default;
-        });
+        return Setting::get($key, $default);
     }
 }
 

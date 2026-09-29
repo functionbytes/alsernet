@@ -130,6 +130,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /*
@@ -155,6 +157,13 @@ class User extends Authenticatable
             'deleted_at' => 'datetime',
             'active' => 'boolean',
             'confirmed' => 'boolean',
+            'password_changed_at' => 'datetime',
+            'must_change_password' => 'boolean',
+            // 29-sep-2026: sin estos casts activar 2FA fallaba ("Array to string
+            // conversion") y la semilla TOTP se habría guardado en claro.
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 }

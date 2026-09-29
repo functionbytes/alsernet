@@ -54,6 +54,14 @@ class SourceConfigurationService
             'timeout' => 30,
             'verify' => true,
             'http_errors' => false,
+            // 29-sep-2026 (SSRF): cada redirección se revalida contra IPs públicas.
+            'allow_redirects' => [
+                'max' => 5,
+                'protocols' => ['http', 'https'],
+                'on_redirect' => function ($request, $response, $uri): void {
+                    $this->assertUrlIsPublic((string) $uri);
+                },
+            ],
         ]);
     }
 
@@ -304,6 +312,8 @@ class SourceConfigurationService
                     'response_time' => $responseTime,
                 ]
             );
+        } catch (\InvalidArgumentException $e) {
+            return ConnectionTestResult::failure('Connection target is not allowed: '.$e->getMessage());
         } catch (GuzzleException $e) {
             return ConnectionTestResult::failure(
                 'HTTP request failed: '.$e->getMessage(),
@@ -396,21 +406,22 @@ class SourceConfigurationService
             $healthEndpoint = $config['health_endpoint'] ?? '/';
             $url = rtrim($config['base_url'], '/').'/'.$healthEndpoint;
 
+            // La URL final (base + endpoint) también debe ser pública.
+            $this->assertUrlIsPublic($url);
+
             $response = $this->httpClient->get($url, $options);
             $responseTime = (int) ((microtime(true) - $startTime) * 1000);
 
             $statusCode = $response->getStatusCode();
 
             if ($statusCode >= 200 && $statusCode < 300) {
-                $body = json_decode($response->getBody()->getContents(), true);
-
+                // Sin devolver el cuerpo de la respuesta (29-sep-2026).
                 return ConnectionTestResult::success(
                     "API connection successful (HTTP {$statusCode})",
                     $responseTime,
                     [
                         'status_code' => $statusCode,
                         'api_version' => $config['version'] ?? 'unknown',
-                        'response_data' => $body,
                     ]
                 );
             }
@@ -419,6 +430,8 @@ class SourceConfigurationService
                 "API error: {$statusCode}",
                 ['status_code' => $statusCode, 'response_time' => $responseTime]
             );
+        } catch (\InvalidArgumentException $e) {
+            return ConnectionTestResult::failure('Connection target is not allowed: '.$e->getMessage());
         } catch (GuzzleException $e) {
             return ConnectionTestResult::failure(
                 'API request failed: '.$e->getMessage(),

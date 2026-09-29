@@ -8,6 +8,7 @@ use Modules\Helpdesk\Contracts\GdprExportContributor;
 use Modules\Helpdesk\Models\AuditLog;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\AuditLogService;
+use Modules\Helpdesk\Services\ConversationAttachmentStorage;
 use ZipArchive;
 
 class GdprExportService
@@ -121,16 +122,18 @@ class GdprExportService
         foreach ($data['conversations'] as $conv) {
             foreach ($conv['messages'] as $message) {
                 foreach ($message['attachments'] as $attachmentUrl) {
-                    $path = $this->urlToStoragePath($attachmentUrl);
+                    // Disco public (URLs antiguas) o privado (ruta firmada) — A9.
+                    [$disk, $path] = app(ConversationAttachmentStorage::class)->resolve($attachmentUrl)
+                        ?? ['public', $this->urlToStoragePath($attachmentUrl)];
 
-                    if ($path && Storage::disk('public')->exists($path)) {
+                    if ($path && Storage::disk($disk)->exists($path)) {
                         if (! $hasAttachments) {
                             mkdir($attachmentDir, 0700, true);
                             $hasAttachments = true;
                         }
 
                         $filename = basename($path);
-                        $content = Storage::disk('public')->get($path);
+                        $content = Storage::disk($disk)->get($path);
                         file_put_contents($attachmentDir.'/'.$filename, $content);
                     }
                 }

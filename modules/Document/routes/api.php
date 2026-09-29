@@ -95,7 +95,9 @@ Route::middleware(['web', 'auth:web', 'can:view-documents-panel'])->group(functi
     Route::post('/update', [DocumentsController::class, 'update'])->name('update');
     Route::post('/sync-fields', [DocumentsController::class, 'syncAllDocumentFields'])->name('sync-fields.documents');
     Route::get('/{uid}/state', [DocumentsController::class, 'getDocumentState'])->name('state');
-    Route::get('/destroy/{uid}', [DocumentsController::class, 'destroy'])->name('destroy');
+    // 29-sep-2026: antes GET (borrable con un <img>, sin CSRF). Ahora DELETE
+    // y con el permiso de Document 'delete-documents'.
+    Route::delete('/destroy/{uid}', [DocumentsController::class, 'destroy'])->middleware('can:delete-documents')->name('destroy');
     Route::delete('/{uid}', [DocumentsController::class, 'deleteSingleDocument'])->name('delete');
 
     // Refresh operations
