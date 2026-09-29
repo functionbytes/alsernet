@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->string('bucket', 10); // widget | oct8ne
                 $table->unsignedTinyInteger('pilot_percent')->nullable();
                 $table->decimal('total', 12, 2)->default(0);
-                $table->timestamp('ordered_at')->index();
+                $table->timestamp('ordered_at')->useCurrent()->index();
                 $table->timestamps();
             });
         }
