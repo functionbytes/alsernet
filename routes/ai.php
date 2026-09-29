@@ -35,7 +35,9 @@ if (! class_exists(HelpdeskMcpServer::class) || Module::find('HelpdeskAgents')?-
 
 Mcp::local('helpdesk', HelpdeskMcpServer::class);
 
-if (config('helpdeskagents.mcp.server_enabled', true)) {
+// 29-sep-2026: apagado por defecto en producción (HELPDESKAGENTS_MCP_SERVER=true para
+// publicarlo). Este fichero se carga antes de fusionar la config del módulo, de ahí el env().
+if ((bool) config('helpdeskagents.mcp.server_enabled', env('HELPDESKAGENTS_MCP_SERVER', ! app()->isProduction()))) {
     Mcp::web(
         (string) config('helpdeskagents.mcp.server_route', 'mcp/helpdesk'),
         HelpdeskMcpServer::class

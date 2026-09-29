@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Environment and Configuration File Helpers
  *
@@ -19,33 +21,13 @@ if (! function_exists('write_env')) {
      */
     function write_env($key, $value, $overwrite = true)
     {
-        Artisan::call('config:clear');
+        // 29-sep-2026: la web ya NO reescribe el .env (perdía comentarios,
+        // permitía inyectar claves con saltos de línea y exigía un .env
+        // escribible por www-data). Los ajustes van a la tabla settings y se
+        // aplican en runtime (ver SystemServiceProvider::applyRuntimeSettings).
+        Log::warning('write_env() ignorado: el .env no se modifica desde la aplicación', ['key' => (string) $key]);
 
-        if (file_exists(base_path('bootstrap/cache/config.php'))) {
-            unlink(base_path('bootstrap/cache/config.php'));
-        }
-
-        $envs = load_env_from_file(app()->environmentFilePath());
-
-        if ($overwrite || ! array_key_exists($key, $envs) || empty($envs[$key])) {
-            if (preg_match('/[\s\#!\$]/', $value)) {
-                $value = addcslashes($value, '"');
-                $value = "\"$value\"";
-            }
-
-            $envs[$key] = $value;
-        } else {
-            return;
-        }
-
-        $out = [];
-        foreach ($envs as $k => $v) {
-            $out[] = "$k=$v";
-        }
-
-        $out = implode("\n", $out);
-
-        file_put_contents(app()->environmentFilePath(), $out);
+        return false;
     }
 }
 

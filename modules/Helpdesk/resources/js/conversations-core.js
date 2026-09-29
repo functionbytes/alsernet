@@ -34,10 +34,16 @@
         $('#bv-btn-sort, .rsp-more-toggle').attr('aria-expanded', 'false');
     }
 
+    // Seguridad 29-sep-2026: escapa también comillas. La versión anterior
+    // (textContent→innerHTML) no las escapaba y se usa dentro de atributos
+    // (alt="…", data-…="…") con texto que envía el cliente → XSS almacenado.
     function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        return String(text ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // Exponer de inmediato (no dependen del DOM) para el resto de archivos del inbox.

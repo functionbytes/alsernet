@@ -592,7 +592,9 @@ window.FormsConfig['{{ $formId }}'] = {
     locale: '{{ $locale }}',
     conditions: @json($form->fields->map(fn($f) => ['key' => $f->key, 'conditions' => $f->conditions, 'logicJumps' => $f->logic_jumps])->filter(fn($f) => !empty($f['conditions']) || !empty($f['logicJumps']))->values()),
     calculationFields: @json($form->fields->where('type', 'calculation')->map(fn($f) => ['key' => $f->key, 'formula' => $f->formula])->values()),
-    sessionToken: '{{ session()->getId() }}',
+    {{-- 29-sep-2026: antes era session()->getId() (el ID de sesión de Laravel quedaba
+         en el HTML y en BD). Ahora es un token aleatorio propio, estable por sesión. --}}
+    sessionToken: '{{ session('forms_abandon_token') ?: tap(\Illuminate\Support\Str::random(40), fn ($t) => session(['forms_abandon_token' => $t])) }}',
     {{-- Pedido explicito del usuario: en "Solicitar cotizacion" (fichas de
          producto/servicio) el auto-restore silencioso de initAbandonTracking
          (forms.js) rellenaba el formulario con datos de un intento anterior

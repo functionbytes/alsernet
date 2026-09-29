@@ -4,11 +4,15 @@ namespace Modules\GiftMessage\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\GiftMessage\Models\GiftMessageGeneration;
 
 class GiftMessageGenerationService
 {
-    private const DISK = 'public';
+    // 29-sep-2026: disco privado. Los PDF llevan nombre y mensaje del cliente;
+    // en 'public' se descargaban sin login adivinando el numero de pedido. Se
+    // sirven solo por GiftMessageGenerationController (con policy).
+    public const DISK = 'local';
 
     private const FOLDER = 'giftmessage/generated';
 
@@ -32,8 +36,10 @@ class GiftMessageGenerationService
         // delante el recien creado.
         $this->deleteSupersededBy($type, $orderNumbers);
 
+        // El nombre "bonito" (file_name) es solo para la descarga; en disco se
+        // guarda con un uuid no adivinable.
         $fileName = $this->fileNameFor($type, $orderNumbers);
-        $path = self::FOLDER.'/'.$fileName;
+        $path = self::FOLDER.'/'.Str::uuid().'.pdf';
 
         Storage::disk(self::DISK)->put($path, $pdfContent);
 
@@ -99,16 +105,9 @@ class GiftMessageGenerationService
             ? $this->slug($orderNumbers[0]).'-'.$piece
             : $piece.'s-'.count($orderNumbers).'pedidos-'.now()->format('Ymd-His');
 
-        $name = $base.'.pdf';
-        $suffix = 2;
-
-        // Dos generaciones del mismo pedido que no se sustituyen (por ejemplo,
-        // una suelta y otra dentro de un lote) no pueden pisarse el fichero.
-        while (Storage::disk(self::DISK)->exists(self::FOLDER.'/'.$name)) {
-            $name = $base.'-'.$suffix++.'.pdf';
-        }
-
-        return $name;
+        // En disco el fichero va con uuid, asi que dos generaciones del mismo
+        // pedido ya no pueden pisarse: el nombre de descarga puede repetirse.
+        return $base.'.pdf';
     }
 
     private function slug(string $value): string

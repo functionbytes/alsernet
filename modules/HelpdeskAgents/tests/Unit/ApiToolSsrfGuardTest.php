@@ -22,7 +22,9 @@ class ApiToolSsrfGuardTest extends TestCase
 
         config([
             'helpdeskagents.tools.allow_api' => true,
-            'helpdeskagents.tools.allowed_hosts' => [],
+            // Allowlist vacía = todo bloqueado (29-sep-2026): se listan los
+            // hosts de las pruebas para que llegue a ejecutarse el guard de IPs.
+            'helpdeskagents.tools.allowed_hosts' => ['api.example.com', '127.0.0.1', '169.254.169.254', '192.168.1.10', '10.0.0.5', '172.16.0.1'],
         ]);
 
         Http::preventStrayRequests();
@@ -79,6 +81,15 @@ class ApiToolSsrfGuardTest extends TestCase
                 $this->assertStringContainsString('private or reserved', $e->getMessage(), $url);
             }
         }
+    }
+
+    public function test_empty_allowlist_blocks_everything(): void
+    {
+        config(['helpdeskagents.tools.allowed_hosts' => []]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('not in the allowed hosts list');
+        $this->runApiTool('https://api.example.com/status');
     }
 
     public function test_rejects_host_outside_the_allowlist(): void

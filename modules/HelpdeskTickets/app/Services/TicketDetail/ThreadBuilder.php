@@ -399,9 +399,13 @@ class ThreadBuilder
             return [];
         }
 
-        $disk = Storage::disk('public');
+        // 29-sep-2026: el disco es el configurado (puede ser 'local', privado);
+        // la URL es la ruta autorizada de descarga, no /storage/... (que con
+        // disco privado daba 404 y con el público saltaba la autorización).
+        $disk = Storage::disk(config('helpdesk.attachments.disk', 'local'));
+        $names = (array) data_get($item->metadata, 'attachment_names', []);
 
-        return collect($paths)->map(function ($path) use ($disk): array {
+        return collect($paths)->values()->map(function ($path, int $index) use ($disk, $item, $names): array {
             $path = (string) $path;
             $bytes = null;
             $size = null;
@@ -419,11 +423,11 @@ class ThreadBuilder
             }
 
             return [
-                'name' => basename($path),
+                'name' => (string) ($names[$index] ?? basename($path)),
                 'size' => $size,
                 'bytes' => $bytes,
                 'mime' => $mime,
-                'url' => $disk->url($path),
+                'url' => route('manager.helpdesk.tickets.attachments.download', [$item->ticket_id, $item->id, $index]),
             ];
         })->values()->all();
     }

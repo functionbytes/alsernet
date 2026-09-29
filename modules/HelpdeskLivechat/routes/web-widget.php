@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskLivechat\Http\Controllers\Pages\DemoController;
 use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetAssetController;
+use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetAttachmentController;
 use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetController;
 use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetScriptController;
 
@@ -57,3 +58,12 @@ Route::get('/hd/assets/main.css', [WidgetAssetController::class, 'style'])
 // so we mirror the chunks/ directory under /hd/assets/ with CORS headers.
 Route::get('/hd/assets/chunks/{file}', [WidgetAssetController::class, 'chunk'])
     ->name('helpdesk-livechat.assets.chunk');
+
+// Adjuntos subidos por el visitante (disco privado). Autoriza URL firmada o
+// X-Conversation-Token (visitante) o sesión de agente con permiso sobre la
+// conversación — ver WidgetAttachmentController (29-sep-2026).
+Route::get('/hd/attachments/{conversation}/{file}', [WidgetAttachmentController::class, 'show'])
+    ->whereNumber('conversation')
+    ->where('file', '[A-Za-z0-9]{40}(\.[a-z0-9]{1,5})?')
+    ->middleware('throttle:120,1')
+    ->name(WidgetAttachmentController::ROUTE_NAME);

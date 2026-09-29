@@ -18,11 +18,13 @@ use Modules\System\Http\Controllers\SystemInfoController;
 | System configuration, cache management, and system information
 | Prefix: /panel/settings/system
 | Name: backups.system.* (applied by ServiceProvider)
-| Middleware: web, auth, settings
+| Middleware: web, auth, settings, role:super-admin|super-settings|administrative|manager
 |
 */
 
-Route::middleware(['web', 'auth', 'settings'])
+// 29-sep-2026: también las rutas GET exigen un rol de sistema (antes bastaba
+// con estar logueado: logs, info del servidor, secreto de mantenimiento…).
+Route::middleware(['web', 'auth', 'settings', 'role:super-admin|super-settings|administrative|manager'])
     ->prefix('panel/settings/system')
     ->name('settings.system.')
     ->group(function () {

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Group;
 use Spatie\Permission\Models\Role;
@@ -14,6 +15,13 @@ class HelpdeskTeamMembersSeeder extends Seeder
 {
     public function run(): void
     {
+        // Crea usuarios de demostración: nunca en producción (29-sep-2026).
+        if (app()->isProduction()) {
+            $this->command?->warn('HelpdeskTeamMembersSeeder: omitido en producción (crea usuarios de prueba).');
+
+            return;
+        }
+
         $this->ensureRoles();
 
         $groupKeys = [
@@ -108,17 +116,22 @@ class HelpdeskTeamMembersSeeder extends Seeder
 
         $created = 0;
         foreach ($members as $member) {
-            $user = User::query()->updateOrCreate(
+            // Contraseña aleatoria solo al crear; no se pisa la de un usuario existente.
+            $user = User::query()->firstOrCreate(
                 ['email' => $member['email']],
                 [
                     'firstname' => $member['firstname'],
                     'lastname' => $member['lastname'],
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(Str::random(32)),
                     'mail_verified_at' => now(),
                     'verified' => 1,
                     'available' => 1,
                 ]
             );
+
+            if ($user->wasRecentlyCreated) {
+                $user->forceFill(['must_change_password' => true])->save();
+            }
 
             // Assign role (Spatie)
             $user->syncRoles([$member['role']]);
@@ -156,7 +169,7 @@ class HelpdeskTeamMembersSeeder extends Seeder
             $created++;
         }
 
-        $this->command->info("Team members creados/actualizados ({$created}). Password: 'password'");
+        $this->command->info("Team members creados/actualizados ({$created}). Contraseña aleatoria: usar \"¿Olvidaste tu contraseña?\".");
     }
 
     private function ensureRoles(): void

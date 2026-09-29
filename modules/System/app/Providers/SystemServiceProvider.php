@@ -3,6 +3,7 @@
 namespace Modules\System\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\Models\Setting;
 use Modules\System\Console\Commands\AuditPermissionsCommand;
 use Modules\System\Console\Commands\CleanupTempExportsCommand;
 use Modules\System\Services\GlobalSearchRegistrar;
@@ -37,6 +38,8 @@ class SystemServiceProvider extends ServiceProvider
             return;
         }
 
+        $this->applyRuntimeSettings();
+
         // Load routes
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
 
@@ -62,6 +65,73 @@ class SystemServiceProvider extends ServiceProvider
     /**
      * Registrar menús del módulo System
      */
+    /**
+     * Claves de settings que el panel de Sistema aplica en runtime en lugar de
+     * reescribir el .env (29-sep-2026). Redis queda fuera a propósito: los
+     * settings se leen de la caché Redis.
+     *
+     * @var array<string, string>
+     */
+    private const RUNTIME_SETTINGS = [
+        'queue_connection' => 'queue.default',
+        'broadcast_driver' => 'broadcasting.default',
+        'pusher_app_id' => 'broadcasting.connections.pusher.app_id',
+        'pusher_key' => 'broadcasting.connections.pusher.key',
+        'pusher_secret' => 'broadcasting.connections.pusher.secret',
+        'pusher_cluster' => 'broadcasting.connections.pusher.options.cluster',
+        'reverb_host' => 'broadcasting.connections.reverb.options.host',
+        'reverb_port' => 'broadcasting.connections.reverb.options.port',
+        'reverb_scheme' => 'broadcasting.connections.reverb.options.scheme',
+    ];
+
+    private const RUNTIME_CACHE_KEY = 'settings_system_runtime';
+
+    public static function clearRuntimeSettingsCache(): void
+    {
+        cache()->forget(self::RUNTIME_CACHE_KEY);
+    }
+
+    /**
+     * Aplica sobre la config los ajustes guardados desde el panel de Sistema.
+     * Una sola lectura cacheada; si no hay filas (lo normal) no cambia nada.
+     */
+    private function applyRuntimeSettings(): void
+    {
+        try {
+            $stored = cache()->remember(self::RUNTIME_CACHE_KEY, now()->addMinutes(10), function () {
+                return Setting::whereIn('key', array_keys(self::RUNTIME_SETTINGS))
+                    ->pluck('value', 'key')
+                    ->all();
+            });
+
+            foreach ((array) $stored as $key => $value) {
+                if (! isset(self::RUNTIME_SETTINGS[$key]) || $value === null || $value === '') {
+                    continue;
+                }
+
+                if ($key === 'queue_connection' && ! array_key_exists($value, (array) config('queue.connections', []))) {
+                    continue;
+                }
+                if ($key === 'broadcast_driver' && ! array_key_exists($value, (array) config('broadcasting.connections', []))) {
+                    continue;
+                }
+                if ($key === 'pusher_secret') {
+                    $value = Setting::getDecrypted('pusher_secret');
+                }
+                if ($key === 'reverb_port') {
+                    $value = (int) $value;
+                }
+                if ($key === 'reverb_scheme') {
+                    config(['broadcasting.connections.reverb.options.useTLS' => $value === 'https']);
+                }
+
+                config([self::RUNTIME_SETTINGS[$key] => $value]);
+            }
+        } catch (\Throwable $e) {
+            // Sin BD/caché (instalación, tests): se queda la config del .env.
+        }
+    }
+
     protected function registerMenus(): void
     {
         // Mini-nav item para Settings (configuraciones)

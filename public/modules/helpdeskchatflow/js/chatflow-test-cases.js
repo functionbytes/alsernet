@@ -15,7 +15,7 @@
 
     /** Escape user/bot strings before interpolating into HTML (avoid self-XSS). */
     function escHtml(value) {
-        return $('<div>').text(value ?? '').html();
+        return $('<div>').text(value ?? '').html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function renderDetail(result) {

@@ -53,12 +53,12 @@
 
                     @php
                         $allExtensions = [
-                            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+                            'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',
                             'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
                             'txt', 'csv', 'odt', 'ods',
                             'zip', 'rar', '7z', 'tar', 'gz',
                             'mp3', 'mp4', 'mov', 'avi', 'mkv',
-                            'xml', 'json', 'html',
+                            'json',
                         ];
                         $selectedExtensions = old('allowed_extensions', $settings['allowed_extensions'] ?? []);
                     @endphp

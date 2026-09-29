@@ -660,12 +660,30 @@
                                                                 </div>
                                                             @endforeach
                                                         @elseif($key === 'characteristics' && is_array($value))
-                                                            {{-- Características de modelo ya asignadas en el ERP (nombres vacíos en Oracle se omiten) --}}
-                                                            @php $namedCharacteristics = array_filter($value, fn ($c) => ! empty($c['characteristic_name'])); @endphp
+                                                            {{-- Características de modelo ya asignadas en el ERP (nombres vacíos en Oracle se omiten).
+                                                                 El valor no vive a nivel de modelo en Oracle (solo el nombre de la
+                                                                 característica) — se busca en product_attributes[].characteristics
+                                                                 (nivel artículo/variante, donde sí hay value_name) para no mostrar el
+                                                                 badge "pelado" y obligar a abrir el modal de variantes para ver algo
+                                                                 tan básico como "Largo: 3 m". Si los artículos difieren de valor para
+                                                                 la misma característica, se listan todos separados por "/". --}}
+                                                            @php
+                                                                $namedCharacteristics = array_filter($value, fn ($c) => ! empty($c['characteristic_name']));
+                                                                $charValueNames = [];
+                                                                foreach (($content->source_attributes['product_attributes'] ?? []) as $attrRow) {
+                                                                    foreach (($attrRow['characteristics'] ?? []) as $vc) {
+                                                                        if (empty($vc['characteristic_id']) || empty($vc['value_name'])) {
+                                                                            continue;
+                                                                        }
+                                                                        $charValueNames[$vc['characteristic_id']][$vc['value_name']] = true;
+                                                                    }
+                                                                }
+                                                            @endphp
                                                             @if(count($namedCharacteristics))
                                                                 <div class="d-flex flex-wrap gap-1">
                                                                     @foreach($namedCharacteristics as $c)
-                                                                        <span class="badge bg-secondary-subtle text-secondary">{{ $c['characteristic_name'] }}</span>
+                                                                        @php $vals = array_keys($charValueNames[$c['characteristic_id']] ?? []); @endphp
+                                                                        <span class="badge bg-secondary-subtle text-secondary">{{ $c['characteristic_name'] }}{{ $vals ? ': '.implode(' / ', $vals) : '' }}</span>
                                                                     @endforeach
                                                                 </div>
                                                             @else

@@ -5,6 +5,7 @@ namespace seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -24,10 +25,16 @@ class RolesAndUsersSeeder extends Seeder
         'callcenter',
     ];
 
-    private const PASSWORD = 'secret';
-
     public function run(): void
     {
+        // 29-sep-2026: seeder de usuarios de prueba ({rol}@alsernet.test, antes
+        // con contraseña fija y uno de ellos super-admin). Nunca en producción.
+        if (app()->isProduction()) {
+            $this->command?->warn('RolesAndUsersSeeder: omitido en producción (crea usuarios de prueba).');
+
+            return;
+        }
+
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -59,10 +66,14 @@ class RolesAndUsersSeeder extends Seeder
             [
                 'firstname' => $roleName,
                 'lastname' => $roleName,
-                'password' => Hash::make(self::PASSWORD),
+                'password' => Hash::make(Str::random(32)),
                 'available' => true,
             ]
         );
+
+        if ($user->wasRecentlyCreated) {
+            $user->forceFill(['must_change_password' => true])->save();
+        }
 
         // Asignar rol al usuario si no lo tiene
         if (! $user->hasRole($role)) {

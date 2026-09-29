@@ -30,6 +30,9 @@ class EmailProviderWebhookControllerTest extends TestCase
 
     private function configureProvider(string $provider, string $secret, array $overrides = []): void
     {
+        // Allowlist de TopicArn obligatoria desde 29-sep-2026 (vacía = rechazar).
+        config(['helpdeskemailactivity.ses_allowed_topic_arns' => ['arn:aws:sns:us-east-1:123:topic']]);
+
         app(ProviderWebhookSettingsRepository::class)->save(array_merge([
             'provider' => $provider,
             'secret' => $secret,

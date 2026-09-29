@@ -68,6 +68,22 @@ class PublicSimulatorService
         }
 
         $conversation = $item->conversation;
+
+        // Seguridad 29-sep-2026: solo se marca como simulada una conversación
+        // NUEVA creada por esta llamada. Si ya tenía mensajes previos o marcas de
+        // simulador, es de otro (o real): nunca se toma el control.
+        $isFresh = ! ConversationItem::query()
+            ->where('conversation_id', $conversation->id)
+            ->where('id', '<', $item->id)
+            ->exists()
+            && data_get($conversation->fresh()?->metadata, 'sim_token') === null;
+
+        if (! $isFresh) {
+            Log::warning('PublicSimulator: start rechazado sobre conversación existente', ['conversation_id' => $conversation->id]);
+
+            throw new RuntimeException('No se pudo iniciar la conversación simulada.');
+        }
+
         $token = Str::random(40);
 
         // Friendly display name: the Facebook/Instagram processors use the raw
@@ -388,14 +404,11 @@ class PublicSimulatorService
      */
     private function resolveSender(string $channel, ?string $identifier): string
     {
-        $identifier = trim((string) $identifier);
-
-        if ($identifier !== '') {
-            return $identifier;
-        }
-
+        // Seguridad 29-sep-2026: el identificador del visitante se ignora. Usarlo
+        // permitía engancharse al cliente/conversación REAL de ese email/teléfono/PSID.
+        // Siempre se genera uno propio del simulador (teléfono en el rango 34999…).
         return match ($channel) {
-            'whatsapp' => '34'.random_int(600000000, 699999999),
+            'whatsapp' => '34999'.random_int(1000000, 9999999),
             'facebook' => 'PSID_sim_'.Str::upper(Str::random(10)),
             'instagram' => 'IG_sim_'.Str::upper(Str::random(10)),
             'web' => 'guest-'.Str::lower(Str::random(8)).'@simulador.local',
@@ -454,13 +467,8 @@ class PublicSimulatorService
                 $customer->save();
             }
 
-            if (! empty($links['prestashop_id'])) {
-                $customer->linkExternalId('prestashop', (string) $links['prestashop_id'], ['linked_via' => 'public-simulator']);
-            }
-
-            if (! empty($links['gestion_id'])) {
-                $customer->linkExternalId('erp', (string) $links['gestion_id'], ['linked_via' => 'public-simulator']);
-            }
+            // prestashop_id / gestion_id ya no se aceptan en la versión pública
+            // (29-sep-2026): permitían vincular pedidos de un tercero al cliente.
         } catch (\Throwable $e) {
             Log::warning('PublicSimulator: no se pudo vincular el cliente', ['error' => $e->getMessage()]);
         }

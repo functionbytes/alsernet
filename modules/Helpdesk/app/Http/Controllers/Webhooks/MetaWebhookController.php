@@ -25,10 +25,13 @@ abstract class MetaWebhookController extends Controller
      */
     public function verify(Request $request): Response
     {
+        // Solo strings: un parámetro en forma de array daba TypeError (500).
+        $q = fn (string $key): string => is_string($v = $request->query($key, '')) ? $v : '';
+
         $challenge = $this->verifyChallenge(
-            $request->query('hub_mode', ''),
-            $request->query('hub_challenge', ''),
-            $request->query('hub_verify_token', ''),
+            $q('hub_mode'),
+            $q('hub_challenge'),
+            $q('hub_verify_token'),
         );
 
         if ($challenge === false) {
@@ -37,7 +40,8 @@ abstract class MetaWebhookController extends Controller
             return response('Forbidden', 403);
         }
 
-        return response($challenge, 200);
+        // text/plain (29-sep-2026): el challenge es texto reflejado de la query.
+        return response($challenge, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 
     /**

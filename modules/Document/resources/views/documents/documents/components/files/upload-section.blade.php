@@ -566,7 +566,7 @@
                                             <a href="${docInfo.url}" class="btn btn-sm btn-primary" target="_blank" title="Descargar">
                                                 <i class="fa fa-download"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-danger btn-delete-single-doc" data-media-id="${docInfo.id}" data-doc-type="${docType}" title="Eliminar">
+                                            <button type="button" class="btn btn-sm btn-danger btn-delete-single-doc" data-media-id="${docInfo.id}" data-doc-type="${escapeHtml(String(docType))}" title="Eliminar">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
@@ -600,8 +600,8 @@
                                 <input
                                     type="file"
                                     class="form-control document-file-input"
-                                    name="documents[${docType}]"
-                                    data-doc-type="${docType}"
+                                    name="documents[${escapeHtml(String(docType))}]"
+                                    data-doc-type="${escapeHtml(String(docType))}"
                                     accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                 >
                                 <small class="text-muted d-block mt-1">

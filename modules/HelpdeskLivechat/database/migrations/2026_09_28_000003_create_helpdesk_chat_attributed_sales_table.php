@@ -39,7 +39,7 @@ return new class extends Migration
                 // cookie = hd_chat_session del navegador del cliente.
                 $table->string('matched_by', 16);
                 $table->timestamp('chat_touched_at')->nullable();
-                $table->timestamp('ordered_at')->index();
+                $table->timestamp('ordered_at')->useCurrent()->index();
                 $table->timestamps();
             });
         }

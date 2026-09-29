@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Modules\Role\Helpers\PermissionHelper;
 use Modules\Role\Services\ActivePermissionService;
+use Modules\Role\Services\PrivilegeGuard;
 use Nwidart\Modules\Facades\Module;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -28,6 +29,7 @@ class RolePermissionsController extends Controller
 
     public function __construct(
         private readonly ActivePermissionService $activePermissionService,
+        private readonly PrivilegeGuard $privilegeGuard,
     ) {}
 
     /**
@@ -96,6 +98,10 @@ class RolePermissionsController extends Controller
     {
         $this->authorize('roles.permissions.manage');
 
+        // Jerarquía de roles (29-sep-2026): solo un super-admin toca roles
+        // privilegiados (super-admin, super-settings, settings).
+        abort_unless($this->privilegeGuard->canManageRole(auth()->user(), $role), 403, 'No puedes modificar este rol.');
+
         $activeModuleSlugs = collect(Module::all())
             ->filter(fn ($m) => $m->isEnabled())
             ->map(fn ($m) => strtolower($m->getName()))
@@ -113,6 +119,15 @@ class RolePermissionsController extends Controller
 
         $toGrant = $matrixPermissionNames->intersect($checked)->values();
         $toRevoke = $matrixPermissionNames->diff($checked)->values();
+
+        // Solo se pueden conceder permisos que el propio usuario ya tiene
+        // (se comprueban únicamente los que el rol aún no tenía).
+        $newlyGranted = $toGrant->diff($role->permissions->pluck('name'))->values();
+        abort_unless(
+            $this->privilegeGuard->canGrantPermissions(auth()->user(), $newlyGranted->all()),
+            403,
+            'No puedes conceder permisos que no tienes.'
+        );
 
         if ($toGrant->isNotEmpty()) {
             $role->givePermissionTo($toGrant->all());

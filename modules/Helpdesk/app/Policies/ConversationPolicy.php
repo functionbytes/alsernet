@@ -23,6 +23,30 @@ class ConversationPolicy
             return false;
         }
 
+        // 22-sep-2026: el permiso view-assigned-only (rol helpdesk-agent-
+        // restricted) no se consultaba en ningún lado — un agente
+        // restringido solo quedaba fuera del LISTADO (ver
+        // buildFilteredConversationsQuery) pero podía seguir abriendo
+        // cualquier conversación ajena de su inbox por URL directa
+        // (/conversations/{id}) o por la API. La restricción tiene que
+        // valer también acá, no solo en el listado.
+        //
+        // hasFullConversationAccess(): un rol admin/supervisor puede tener
+        // view-assigned-only colado por un wildcard LIKE 'helpdesk.%' (así
+        // pasó con helpdesk-admin — HelpdeskRolesSeeder::createAdminRole()
+        // — y con super-admin/super-settings, que también arrastran
+        // view-all + manage a la vez). Si el usuario YA tiene acceso amplio
+        // (view-all o manage), esa restricción no debe aplicar aunque el
+        // permiso esté mal asignado en el rol — si no, "supervisor con
+        // acceso a todo" quedaba viendo 0 conversaciones.
+        if (
+            $user->hasPermissionTo('helpdesk.conversations.view-assigned-only')
+            && ! $this->hasFullConversationAccess($user)
+            && $conversation->assignee_id !== $user->id
+        ) {
+            return false;
+        }
+
         return $this->canAccessInbox($user, $conversation);
     }
 
@@ -43,6 +67,15 @@ class ConversationPolicy
         }
 
         if (! $user->hasPermissionTo('helpdesk.conversations.update') && $conversation->assignee_id !== $user->id) {
+            return false;
+        }
+
+        // Mismo criterio que view() — ver comentario ahí.
+        if (
+            $user->hasPermissionTo('helpdesk.conversations.view-assigned-only')
+            && ! $this->hasFullConversationAccess($user)
+            && $conversation->assignee_id !== $user->id
+        ) {
             return false;
         }
 
@@ -72,6 +105,9 @@ class ConversationPolicy
      */
     protected function canAccessInbox(User $user, Conversation $conversation): bool
     {
+        // Mismo criterio que ConversationsController::getUserInboxIds() —
+        // ver comentario ahí: view-all también da acceso a cualquier inbox,
+        // no solo helpdesk.manage.
         if ($user->hasPermissionTo('helpdesk.manage') || $user->hasPermissionTo('helpdesk.conversations.view-all')) {
             return true;
         }
@@ -92,5 +128,17 @@ class ConversationPolicy
         return $user->hasPermissionTo('helpdesk.conversations.view-assigned-only')
             && ! $user->hasPermissionTo('helpdesk.conversations.view-all')
             && ! $user->hasPermissionTo('helpdesk.manage');
+    }
+
+    /**
+     * Si el usuario tiene alguno de estos, "view-assigned-only" no debe
+     * restringirlo a lo suyo aunque el permiso esté presente en su rol —
+     * ver comentario en view()/update().
+     */
+    protected function hasFullConversationAccess(User $user): bool
+    {
+        return $user->hasPermissionTo('helpdesk.manage')
+            || $user->hasPermissionTo('helpdesk.conversations.view-all')
+            || $user->hasPermissionTo('helpdesk.conversations.manage');
     }
 }

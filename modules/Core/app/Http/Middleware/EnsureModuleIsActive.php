@@ -111,11 +111,15 @@ class EnsureModuleIsActive
         }
 
         $statusFile = base_path('modules_statuses.json');
-        if (! file_exists($statusFile)) {
-            return true; // Si no existe el archivo, asumir que todos están activos
+        if (! is_file($statusFile)) {
+            // 29-sep-2026: fail-closed. Antes, sin el fichero, todo se daba por activo.
+            return false;
         }
 
-        $statuses = json_decode(file_get_contents($statusFile), true) ?? [];
+        $statuses = json_decode((string) file_get_contents($statusFile), true);
+        if (! is_array($statuses)) {
+            return false;
+        }
 
         return isset($statuses[$moduleName]) && $statuses[$moduleName] === true;
     }

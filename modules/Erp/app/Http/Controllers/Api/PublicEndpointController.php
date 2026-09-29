@@ -10,19 +10,9 @@ use Modules\Erp\Models\ErpEndpoint;
 use Modules\Erp\Models\ErpEndpointLog;
 use Modules\Erp\Models\ErpEndpointToken;
 use Modules\Erp\Support\ErpEndpointUrlGuard;
-use Modules\Erp\Support\ErpErrorSanitizer;
 
 class PublicEndpointController extends Controller
 {
-    /**
-     * Cabeceras entrantes que nunca se reenvían al endpoint remoto.
-     */
-    private const STRIPPED_HEADERS = [
-        'host', 'connection', 'keep-alive', 'upgrade', 'transfer-encoding', 'content-length',
-        'authorization', 'x-erp-token', 'cookie', 'x-csrf-token', 'x-xsrf-token',
-        'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip',
-    ];
-
     /**
      * Call a public endpoint using a token
      */
@@ -48,19 +38,12 @@ class PublicEndpointController extends Controller
         $startTime = microtime(true);
 
         try {
-            // Cabeceras del cliente sin las de hop-by-hop ni las de sesión/auth:
-            // las credenciales del llamante (su token ERP, cookies) no deben
-            // llegar al upstream. Las del endpoint van después para que el
-            // cliente no pueda sobrescribir la auth configurada.
-            // Symfony entrega las cabeceras del cliente en minúsculas: se
-            // comparan igual las del endpoint para que no viajen duplicadas.
-            $endpointHeaders = $endpoint->headers ?? [];
-            $clientHeaders = array_diff_key(
-                $request->headers->all(),
-                array_flip(self::STRIPPED_HEADERS),
-                array_change_key_case($endpointHeaders, CASE_LOWER)
+            // 29-sep-2026: solo se reenvían al destino las cabeceras de una lista
+            // blanca (antes iban todas: Cookie, Authorization, X-Forwarded-For…).
+            $headers = array_merge(
+                $endpoint->headers ?? [],
+                $this->forwardableHeaders($request)
             );
-            $headers = array_merge($clientHeaders, $endpointHeaders);
 
             // Build HTTP request
             $http = Http::timeout($endpoint->timeout ?? 30)
@@ -90,7 +73,7 @@ class PublicEndpointController extends Controller
                 'token_id' => $endpointToken->id,
                 'method' => $endpoint->method,
                 'url' => $url,
-                'request_headers' => $headers,
+                'request_headers' => $this->redactHeaders($headers),
                 'request_payload' => $request->json()->all() ?? [],
                 'response_headers' => $response->headers(),
                 'response_payload' => $response->json(),
@@ -123,7 +106,7 @@ class PublicEndpointController extends Controller
                 'token_id' => $endpointToken->id,
                 'method' => $endpoint->method,
                 'url' => $endpoint->url,
-                'request_headers' => $headers ?? [],
+                'request_headers' => $this->redactHeaders($this->forwardableHeaders($request)),
                 'execution_time' => $executionTime,
                 'success' => false,
                 'error_message' => $e->getMessage(),
@@ -132,8 +115,45 @@ class PublicEndpointController extends Controller
 
             return response()->json([
                 'message' => 'Error al procesar la solicitud',
-                'error' => ErpErrorSanitizer::forClient($e),
             ], 500);
         }
+    }
+
+    /**
+     * Cabeceras del llamante que se pueden reenviar al endpoint de destino.
+     *
+     * @return array<string, string>
+     */
+    private function forwardableHeaders(Request $request): array
+    {
+        $allowed = ['accept', 'accept-language', 'content-type'];
+        $out = [];
+        foreach ($allowed as $name) {
+            $value = $request->headers->get($name);
+            if ($value !== null && $value !== '') {
+                $out[$name] = $value;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Quita credenciales antes de guardar las cabeceras en erp_endpoint_logs
+     * (las de $endpoint->headers pueden llevar Authorization/API keys).
+     *
+     * @param  array<string, mixed>  $headers
+     * @return array<string, mixed>
+     */
+    private function redactHeaders(array $headers): array
+    {
+        $sensitive = ['authorization', 'proxy-authorization', 'cookie', 'set-cookie', 'x-api-key', 'api-key', 'x-auth-token', 'x-erp-token'];
+        foreach ($headers as $name => $value) {
+            if (in_array(strtolower((string) $name), $sensitive, true)) {
+                $headers[$name] = '[redacted]';
+            }
+        }
+
+        return $headers;
     }
 }

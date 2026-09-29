@@ -3,7 +3,6 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,11 +60,8 @@ class LoginController extends Controller
         if (! $user) {
             $this->limiter->hit('login', $identifier, $request);
 
-            $existing = User::where('email', $identifier)->first();
-            if ($existing && $existing->isLocked()) {
-                return $this->lockedAccountResponse($request, $existing);
-            }
-
+            // 29-sep-2026: mismo mensaje exista o no la cuenta, esté bloqueada o
+            // deshabilitada (antes un 423 distinto confirmaba que el email existía).
             return $this->failedResponse($request);
         }
 
@@ -136,17 +132,5 @@ class LoginController extends Controller
         }
 
         throw ValidationException::withMessages(['email' => [$message]])->status(429);
-    }
-
-    private function lockedAccountResponse(Request $request, User $user): JsonResponse|RedirectResponse
-    {
-        $minutes = (int) ceil(now()->diffInSeconds($user->locked_until, false) / 60);
-        $message = "Tu cuenta está bloqueada por seguridad. Inténtalo de nuevo en {$minutes} minuto(s) o restablece la contraseña.";
-
-        if ($request->expectsJson()) {
-            return response()->json(['success' => false, 'message' => $message, 'locked' => true], 423);
-        }
-
-        throw ValidationException::withMessages(['email' => [$message]])->status(423);
     }
 }

@@ -14,7 +14,7 @@ class UploadMediaFileRequest extends FormRequest
     public function rules(): array
     {
         $maxKb = (int) (config('media.max_upload_size', 104857600) / 1024);
-        $mimes = config('media.allowed_mime_types', 'jpg,jpeg,png,gif,webp,svg,ico,pdf,doc,docx,xls,xlsx,zip,mp4,mp3,txt,csv');
+        $mimes = config('media.allowed_mime_types', 'jpg,jpeg,png,gif,webp,ico,pdf,doc,docx,xls,xlsx,zip,mp4,mp3,txt,csv');
 
         return [
             'file' => ['required', 'file', "max:{$maxKb}", "mimes:{$mimes}"],

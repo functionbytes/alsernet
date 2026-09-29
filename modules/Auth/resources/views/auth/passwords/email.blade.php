@@ -22,7 +22,7 @@
                                 <div class="row g-4">
                                     <div class="col-lg-12">
                                         <div class="input-group">
-                                            <input class="form-control" id="email" type="text" name="email" placeholder="Correo electrónico o cedula" >
+                                            <input class="form-control" id="email" type="email" name="email" value="{{ old('email') }}" placeholder="Correo electrónico" autocomplete="email">
                                         </div>
                                     </div>
                                 </div>

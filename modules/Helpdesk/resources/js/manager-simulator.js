@@ -5,7 +5,7 @@ $(function () {
     let channel = 'whatsapp';
     let searchTimer = null;
 
-    function escapeHtml(s) { return $('<div>').text(s ?? '').html(); }
+    function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
     // --- Buscar clientes ---
     $('#simSearch').on('input', function () {

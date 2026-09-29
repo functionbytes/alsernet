@@ -832,7 +832,16 @@ class ContentGenerationService
             $specifications = implode(', ', $specifications);
         }
 
-        $category = $data['category'] ?? $data['categorie'] ?? '';
+        // 22-sep-2026: source_attributes es un snapshot crudo del ERP guardado
+        // en el momento del último sync del MODELO (ErpModelSyncService::
+        // handleAiContent) — nunca se corrige cuando solo cambia la
+        // clasificación resuelta del producto (p. ej. "Regenerar con datos
+        // actualizados" refresca supplierProduct.category_id vía el
+        // artículo, pero no reescribe este JSON). Preferir la categoría ya
+        // resuelta en el producto vinculado evita que la IA reciba una
+        // categoría vieja aunque el producto ya esté corregido.
+        $category = $content->supplierProduct?->category?->name
+            ?? $data['category'] ?? $data['categorie'] ?? '';
         if (is_array($category)) {
             $category = $category['description'] ?? '';
         }

@@ -15,7 +15,8 @@ class BackupScheduleController extends Controller
         $this->middleware('can:Backup.schedules.index')->only('index', 'create', 'edit', 'getScheduleDetails');
         $this->middleware('can:Backup.schedules.create')->only('store');
         $this->middleware('can:Backup.schedules.update')->only('update', 'toggle');
-        $this->middleware('can:Backup.schedules.delete')->only('destroy');
+        // 29-sep-2026: bulkAction (activar/desactivar/borrar en lote) no tenía permiso.
+        $this->middleware('can:Backup.schedules.delete')->only('destroy', 'bulkAction');
     }
 
     /**

@@ -25,15 +25,19 @@
     </script>
 
     {{-- ─── FOUC: menú lateral de pestañas (.app-menubar-tabs) ──
-         El estado contraído se elige con `.app-toggler` y se guarda en
-         `mc-app-sidebar`. Se aplica antes del primer pintado para que al
-         navegar no se vea el menú abrirse y cerrarse. El breakpoint es el
-         mismo que usan nav.css y main.js. --}}
+         Arranca SIEMPRE contraído (`mini`), sin importar cómo haya quedado
+         en la navegación anterior — antes se restauraba `mc-app-sidebar`
+         desde localStorage, así que si el usuario lo había dejado expandido
+         seguía apareciendo expandido en cada carga. `.app-toggler` lo sigue
+         pudiendo abrir durante la sesión (ver main.js); ese "abierto" ahora
+         flota sobre el contenido en vez de empujarlo (ver nav.css,
+         `[data-app-sidebar=full]`). Se aplica antes del primer pintado para
+         que al navegar no se vea el menú abrirse y cerrarse. El breakpoint
+         es el mismo que usan nav.css y main.js. --}}
     <script>
     (function(){
         try {
-            if (!window.matchMedia('(max-width: 1480px)').matches
-                && localStorage.getItem('mc-app-sidebar') === 'mini')
+            if (!window.matchMedia('(max-width: 1480px)').matches)
                 document.documentElement.setAttribute('data-app-sidebar', 'mini');
         } catch (e) {}
     })();
@@ -145,8 +149,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {!! \Modules\Core\Models\Setting::get('theme.custom_header_html') !!}
-    {!! \Modules\Core\Models\Setting::get('theme.custom_header_js') !!}
+    {{-- Seguridad 29-sep-2026: retirados los hooks theme.custom_header_html/js (HTML/JS sin escapar en todo el panel; sin pantalla que los escriba y vacíos en BD). --}}
 
     @includeIf('analytics::partials._gtag')
 
@@ -465,8 +468,7 @@ $(document).on('submit', 'form.needs-confirm', function (e) {
 </script>
 @endauth
 
-{!! \Modules\Core\Models\Setting::get('theme.custom_footer_html') !!}
-{!! \Modules\Core\Models\Setting::get('theme.custom_footer_js') !!}
+{{-- Seguridad 29-sep-2026: retirados theme.custom_footer_html/js (ver cabecera). --}}
 
 </body>
 

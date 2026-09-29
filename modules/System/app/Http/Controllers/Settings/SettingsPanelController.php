@@ -3,13 +3,26 @@
 namespace Modules\System\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 
 class SettingsPanelController extends Controller
 {
     public function index(): View
     {
-        $groups = $this->getSettingsGroups();
+        // 29-sep-2026: se ocultan las tarjetas cuya ruta ya no existe (route() de
+        // la vista lanzaría una excepción y tumbaría toda la página) y las que
+        // exigen un permiso que el usuario no tiene.
+        $user = auth()->user();
+        $groups = collect($this->getSettingsGroups())
+            ->map(function (array $group) use ($user) {
+                $group['items'] = array_values(array_filter($group['items'], fn (array $item) => Route::has($item['route'])
+                    && (empty($item['ability']) || ($user && $user->can($item['ability'])))));
+
+                return $group;
+            })
+            ->filter(fn (array $group) => $group['items'] !== [])
+            ->all();
 
         return view('system::settings.panel.index', compact('groups'));
     }
@@ -81,6 +94,9 @@ class SettingsPanelController extends Controller
                 'icon' => 'fas fa-shield-alt',
                 'color' => 'danger',
                 'items' => [
+                    ['label' => 'Configuración de seguridad', 'description' => '2FA obligatorio, CSP, vigilancia, IPs del ERP, firmas de la tienda y estado del sistema', 'route' => 'settings.security.config', 'icon' => 'fas fa-user-shield', 'ability' => 'security.config.manage', 'badge' => 'Nuevo'],
+                    ['label' => 'Acceso al panel por IP', 'description' => 'Redes desde las que se puede entrar al login y al panel, y accesos remotos', 'route' => 'settings.auth.ip-filter', 'icon' => 'fas fa-network-wired', 'ability' => 'auth.ip-filter.manage', 'badge' => 'Nuevo'],
+                    ['label' => 'Intentos de login',      'description' => 'Auditoría de accesos, incluidos los bloqueados por IP', 'route' => 'settings.auth.audit.login-attempts', 'icon' => 'fas fa-user-lock', 'ability' => 'auth.audit.view'],
                     ['label' => 'Roles',                  'description' => 'Gestiona los roles disponibles en el sistema',      'route' => 'settings.roles.index',          'icon' => 'fas fa-user-tag'],
                     ['label' => 'Permisos',               'description' => 'Administra los permisos del sistema',               'route' => 'settings.permissions.index',    'icon' => 'fas fa-key'],
                     ['label' => 'Matriz de permisos',     'description' => 'Vista consolidada de roles y permisos',             'route' => 'settings.roles.matrix',         'icon' => 'fas fa-table'],

@@ -24,7 +24,7 @@
     var pendingDocKey = null;
 
     function escHtml(value) {
-        return $('<div>').text(String(value ?? '')).html();
+        return $('<div>').text(String(value ?? '')).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function getNodes() {

@@ -14,7 +14,6 @@ use Modules\Media\Http\Controllers\MediaTagController;
 use Modules\Media\Http\Controllers\MediaWorkflowController;
 use Modules\Media\Http\Controllers\ModerationController;
 use Modules\Media\Http\Controllers\PublicMediaController;
-use Modules\Media\Http\Controllers\WebDavController;
 
 // Public indirect URL (throttled, no auth required)
 Route::middleware(['web', 'throttle:60,1'])
@@ -140,17 +139,8 @@ Route::middleware(['web', 'auth'])->prefix('panel/media')->name('media.')->group
     });
 });
 
-// WebDAV gateway (basic auth, no session required)
-Route::middleware(['web', 'throttle:120,1'])
-    ->prefix('webdav')
-    ->name('media.webdav.')
-    ->group(function (): void {
-        Route::match(
-            ['OPTIONS', 'PROPFIND', 'GET', 'PUT', 'DELETE', 'MKCOL'],
-            '/{path?}',
-            [WebDavController::class, 'handle']
-        )->where('path', '.*')->name('handle');
-    });
+// 29-sep-2026: eliminada la pasarela WebDAV pública (/webdav). Era un stub que
+// listaba ficheros con cualquier cabecera Authorization, sin validar credenciales.
 
 // Public folder share (token-based, throttled, no auth required)
 Route::middleware(['web', 'throttle:60,1'])

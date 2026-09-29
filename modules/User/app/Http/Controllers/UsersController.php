@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Role\Services\PrivilegeGuard;
 use Modules\User\Events\UserCreated;
 use Modules\User\Events\UserDeleted;
 use Modules\User\Events\UserUpdated;
@@ -70,7 +71,7 @@ class UsersController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $roles = SpatieRole::orderBy('name')->pluck('name', 'id');
+        $roles = app(PrivilegeGuard::class)->assignableRoles(auth()->user())->pluck('name', 'id');
 
         return view('user::users.create')->with([
             'roles' => $roles,
@@ -80,6 +81,9 @@ class UsersController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $this->authorize('create', User::class);
+
+        // 29-sep-2026: solo roles que el actor puede conceder (anti-escalada).
+        abort_unless(app(PrivilegeGuard::class)->canAssignRole(auth()->user(), (string) $request->role), 403, 'No puedes asignar ese rol.');
 
         try {
             $user = new User;
@@ -93,6 +97,8 @@ class UsersController extends Controller
             $user->address = $request->address;
             $user->company = $request->company;
             $user->timezone = $request->timezone ?? 'UTC';
+            // La contraseña la pone un administrador: el usuario debe cambiarla al entrar.
+            $user->must_change_password = true;
 
             if ($request->verified === '1' || $request->verified === 1) {
                 $user->mail_verified_at = now();
@@ -162,7 +168,9 @@ class UsersController extends Controller
         $user = User::where('uid', $uid)->firstOrFail();
         $this->authorize('update', $user);
 
-        $roles = SpatieRole::orderBy('name')->pluck('name');
+        // Roles asignables por el actor + los que ya tiene el usuario (para no perderlos en el form).
+        $roles = app(PrivilegeGuard::class)->assignableRoles(auth()->user())->pluck('name')
+            ->merge($user->getRoleNames())->unique()->sort()->values();
 
         return view('user::users.edit')->with([
             'user' => $user,
@@ -184,6 +192,18 @@ class UsersController extends Controller
 
         $this->authorize('update', $user);
 
+        // 29-sep-2026: los roles que se añaden deben ser concedibles por el actor
+        // y los que se quitan, gestionables (anti-escalada).
+        $guard = app(PrivilegeGuard::class);
+        $newRoles = collect((array) $request->roles)->map(fn ($r) => (string) $r);
+        $oldRoles = $user->getRoleNames();
+        foreach ($newRoles->diff($oldRoles) as $added) {
+            abort_unless($guard->canAssignRole(auth()->user(), $added), 403, 'No puedes asignar el rol '.$added.'.');
+        }
+        foreach ($oldRoles->diff($newRoles) as $removed) {
+            abort_unless(! $guard->isPrivilegedRole($removed) || $guard->isSuperAdmin(auth()->user()), 403, 'No puedes quitar el rol '.$removed.'.');
+        }
+
         try {
             $user->firstname = $request->firstname;
             $user->lastname = $request->lastname;
@@ -197,6 +217,10 @@ class UsersController extends Controller
 
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
+                // Contraseña puesta por un administrador: forzar cambio en el siguiente acceso.
+                if ($user->id !== auth()->id()) {
+                    $user->must_change_password = true;
+                }
             }
 
             if ($request->verified === '1' || $request->verified === 1) {
@@ -278,6 +302,10 @@ class UsersController extends Controller
             'ids.*' => 'integer|exists:users,id',
             'value' => 'nullable|string|exists:roles,name',
         ]);
+
+        if ($request->action === 'assign_role') {
+            abort_unless(app(PrivilegeGuard::class)->canAssignRole(auth()->user(), (string) $request->value), 403, 'No puedes asignar ese rol.');
+        }
 
         $policyAction = $request->action === 'delete' ? 'delete' : 'update';
 

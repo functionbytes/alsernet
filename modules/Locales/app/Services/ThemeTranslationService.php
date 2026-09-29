@@ -68,6 +68,8 @@ class ThemeTranslationService
      */
     public function getTranslations(string $locale, string $group): array
     {
+        $this->assertKnownLocale($locale);
+
         $groupData = $this->findGroup($group);
 
         if (! $groupData) {
@@ -101,6 +103,8 @@ class ThemeTranslationService
      */
     public function saveTranslations(string $locale, string $group, array $translations): void
     {
+        $this->assertKnownLocale($locale);
+
         $groupData = $this->findGroup($group);
 
         if (! $groupData) {
@@ -146,6 +150,18 @@ class ThemeTranslationService
     private function findGroup(string $name): ?array
     {
         return collect($this->getGroups())->firstWhere('name', $name);
+    }
+
+    /**
+     * 29-sep-2026: el locale acaba en una ruta de fichero (require/escritura):
+     * solo códigos ISO que existan en la tabla locales (sin '..').
+     */
+    private function assertKnownLocale(string $locale): void
+    {
+        abort_unless(
+            preg_match('/^[a-z]{2}(_[A-Z]{2})?$/', $locale) === 1 && Locale::where('code', $locale)->exists(),
+            404
+        );
     }
 
     private function resolveFilePath(string $locale, array $groupData): string

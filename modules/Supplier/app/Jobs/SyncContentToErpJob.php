@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Ai\AiContent;
+use Modules\Supplier\Support\ErpEndpointGuard;
 
 /**
  * Pushes the AI-generated description to the ERP after a content is approved.
@@ -50,6 +51,13 @@ class SyncContentToErpJob implements ShouldQueue
 
         if (! $erpId || ! $erpUrl) {
             Log::warning('SyncContentToErpJob: missing erpId or erpUrl', ['uid' => $this->contentUid]);
+
+            return;
+        }
+
+        // 29-sep-2026: no enviar contenido a un host que no sea del ERP.
+        if (! ErpEndpointGuard::isAllowed($erpUrl)) {
+            Log::error('SyncContentToErpJob: host del endpoint ERP no permitido', ['uid' => $this->contentUid]);
 
             return;
         }

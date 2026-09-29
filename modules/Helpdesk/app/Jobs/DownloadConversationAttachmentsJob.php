@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\AttachmentSecurityService;
+use Modules\Helpdesk\Services\ConversationAttachmentStorage;
 use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 /**
@@ -207,7 +208,8 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
             }
 
             try {
-                $publicUrl = Storage::disk($disk)->url($filename);
+                // Disco privado → URL firmada (29-sep-2026, A9).
+                $publicUrl = app(ConversationAttachmentStorage::class)->url($filename, $disk);
             } catch (\Throwable) {
                 $publicUrl = $filename;
             }
@@ -298,9 +300,11 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
     {
         $mime = $mime ? trim(strtolower(explode(';', $mime, 2)[0])) : '';
 
+        // Seguridad 29-sep-2026: sin svg/html/xml. El Content-Type lo decide el
+        // servidor remoto y un .svg/.html servido desde nuestro origen ejecuta JS.
         $map = [
             'image/jpeg' => 'jpg', 'image/jpg' => 'jpg', 'image/png' => 'png',
-            'image/gif' => 'gif', 'image/webp' => 'webp', 'image/svg+xml' => 'svg',
+            'image/gif' => 'gif', 'image/webp' => 'webp',
             'audio/mpeg' => 'mp3', 'audio/mp3' => 'mp3', 'audio/ogg' => 'ogg',
             'audio/opus' => 'opus', 'audio/wav' => 'wav', 'audio/aac' => 'aac',
             'audio/mp4' => 'm4a', 'audio/webm' => 'webm', 'audio/3gpp' => '3gp',
@@ -312,6 +316,12 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
 
         if (isset($map[$mime])) {
             return $map[$mime];
+        }
+
+        // Tipos activos (svg, html, xml…): nunca con la extensión "de imagen" del
+        // fallback ni con la suya propia → binario sin interpretar.
+        if ($mime !== '' && (str_contains($mime, 'svg') || str_contains($mime, 'html') || str_contains($mime, 'xml') || str_contains($mime, 'javascript'))) {
+            return 'bin';
         }
 
         return match ($fallbackType) {

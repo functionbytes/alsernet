@@ -45,7 +45,8 @@ class FilesBuilder
                 // requeriría tocar el esquema (columna nueva en TicketItem o
                 // una tabla propia como TicketAttachment) — fuera de alcance
                 // de este fix.
-                'name' => 'Adjunto de '.$item->sender_name.(($ext = pathinfo((string) $path, PATHINFO_EXTENSION)) !== '' ? '.'.$ext : ''),
+                'name' => data_get($item->metadata, 'attachment_names.'.$index)
+                    ?: 'Adjunto de '.$item->sender_name.(($ext = pathinfo((string) $path, PATHINFO_EXTENSION)) !== '' ? '.'.$ext : ''),
                 'item_id' => $item->id,
                 'source' => 'agent',
                 'created_at_human' => $item->created_at?->diffForHumans(),

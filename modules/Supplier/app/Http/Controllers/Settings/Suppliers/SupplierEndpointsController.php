@@ -7,9 +7,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
+use Modules\Supplier\Support\ErpEndpointGuard;
 use Modules\Supplier\Traits\ValidatesPublicUrl;
 
 class SupplierEndpointsController extends Controller
@@ -29,10 +29,18 @@ class SupplierEndpointsController extends Controller
     {
         $this->authorize('suppliers.sync.config');
 
+        // 29-sep-2026: solo hosts del ERP (lista blanca); antes se podía desviar
+        // la escritura de contenido del ERP a cualquier servidor.
+        $erpHost = function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value !== null && $value !== '' && ! ErpEndpointGuard::isAllowed((string) $value)) {
+                $fail('El host de :attribute no está en la lista de hosts permitidos del ERP ('.implode(', ', ErpEndpointGuard::allowedHosts()).').');
+            }
+        };
+
         $validated = $request->validate([
-            'erp_modelo_url' => 'nullable|url|max:500',
-            'erp_internal_url' => 'nullable|url|max:500',
-            'erp_caracteristica_url' => 'nullable|url|max:500',
+            'erp_modelo_url' => ['nullable', 'url:http,https', 'max:500', $erpHost],
+            'erp_internal_url' => ['nullable', 'url:http,https', 'max:500', $erpHost],
+            'erp_caracteristica_url' => ['nullable', 'url:http,https', 'max:500', $erpHost],
         ]);
 
         try {
@@ -42,7 +50,9 @@ class SupplierEndpointsController extends Controller
 
             return redirect()->back()->with('success', 'Configuración de endpoints actualizada correctamente.');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Error al guardar: '.$e->getMessage());
+            report($e);
+
+            return back()->withInput()->with('error', 'Error al guardar la configuración de endpoints.');
         }
     }
 
@@ -54,6 +64,15 @@ class SupplierEndpointsController extends Controller
 
         $url = $request->input('url');
 
+        // 29-sep-2026: solo se prueban hosts del ERP (evita usar esto para
+        // escanear o leer servicios internos).
+        if (! ErpEndpointGuard::isAllowed($url)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El host no está en la lista de hosts permitidos del ERP.',
+            ], 422);
+        }
+
         $body = array_filter([
             'idmodelo' => $request->input('idmodelo'),
             'nombre' => $request->input('nombre') ?: null,
@@ -63,18 +82,20 @@ class SupplierEndpointsController extends Controller
         ], fn ($v) => $v !== null);
 
         try {
-            $response = Http::timeout(5)->asForm()->post($url, $body);
+            // Sin seguir redirecciones y sin devolver el cuerpo: basta el código HTTP.
+            $response = Http::timeout(5)->withoutRedirecting()->asForm()->post($url, $body);
 
             return response()->json([
                 'success' => $response->successful(),
                 'status' => $response->status(),
                 'sent' => $body,
-                'body' => Str::limit($response->body(), 300),
             ]);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'No se pudo conectar con el endpoint.',
                 'sent' => $body,
             ]);
         }

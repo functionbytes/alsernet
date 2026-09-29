@@ -206,7 +206,7 @@
                                             <div class="col-md-6">
                                                 <label for="pusherSecret" class="form-label fw-semibold">Secret <span class="text-danger">*</span></label>
                                                 <input type="password" class="form-control" id="pusherSecret" name="pusher_secret"
-                                                       value="{{ $websocketsSettings['pusher_secret'] }}" placeholder="••••••••••••••••" autocomplete="off">
+                                                       value="" placeholder="{{ $websocketsSettings['pusher_secret_set'] ? '•••••••• (sin cambios)' : '' }}" autocomplete="new-password">
                                             </div>
                                         </div>
                                     </div>
@@ -237,7 +237,7 @@
                                             <div class="col-12">
                                                 <label for="redisPassword" class="form-label fw-semibold">Contraseña</label>
                                                 <input type="password" class="form-control" id="redisPassword" name="redis_password"
-                                                       value="{{ $websocketsSettings['redis_password'] }}" placeholder="••••••••" autocomplete="off">
+                                                       value="" placeholder="{{ $websocketsSettings['redis_password_set'] ? '•••••••• (sin cambios)' : '' }}" autocomplete="new-password">
                                                 <small class="text-muted d-block mt-1">Opcional</small>
                                             </div>
                                         </div>

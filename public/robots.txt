@@ -1,0 +1,4 @@
+# webadmin es un panel interno: ningún buscador debe rastrearlo ni indexarlo.
+# Además, todas las respuestas llevan la cabecera X-Robots-Tag: noindex.
+User-agent: *
+Disallow: /

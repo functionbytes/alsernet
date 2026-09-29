@@ -12,6 +12,7 @@ use Modules\Helpdesk\Http\Requests\StoreGroupRequest;
 use Modules\Helpdesk\Http\Requests\UpdateGroupRequest;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Group;
+use Modules\Role\Services\PrivilegeGuard;
 use Spatie\Permission\Models\Role;
 
 class TeamController extends Controller
@@ -23,7 +24,7 @@ class TeamController extends Controller
      * los de abajo), así que la pantalla de "Miembros del equipo" no
      * mostraba a ningún agente real de helpdesk.
      */
-    private const TEAM_ROLES = [
+    public const TEAM_ROLES = [
         'helpdesk-admin',
         'helpdesk-manager',
         'helpdesk-supervisor',
@@ -156,7 +157,12 @@ class TeamController extends Controller
         $this->authorize('update', $member);
 
         $groups = Group::orderBy('name')->limit(200)->get();
-        $roles = Role::whereIn('name', self::TEAM_ROLES)->limit(200)->get();
+        // Solo los roles de equipo que este usuario puede conceder (29-sep-2026).
+        $guard = app(PrivilegeGuard::class);
+        $roles = Role::with('permissions')->whereIn('name', self::TEAM_ROLES)->limit(200)->get()
+            ->filter(fn (Role $role) => $guard->canAssignRole(auth()->user(), $role)
+                || $member->hasRole($role->name))
+            ->values();
 
         // Ensure agent backups exist
         if (! $member->agentSettings) {
@@ -240,6 +246,14 @@ class TeamController extends Controller
 
         $validated = $request->validated();
 
+        // Jerarquía de roles (29-sep-2026): el rol nuevo debe ser uno que el
+        // usuario pueda conceder (permisos subconjunto de los suyos).
+        $newRole = $validated['role'] ?? null;
+        if ($newRole && ! $member->hasRole($newRole)
+            && ! app(PrivilegeGuard::class)->canAssignRole($request->user(), $newRole)) {
+            return back()->withInput()->withErrors(['role' => 'No puedes asignar este rol.']);
+        }
+
         // Update user basic info
         $member->update([
             'firstname' => $validated['firstname'],
@@ -271,9 +285,15 @@ class TeamController extends Controller
             $member->groups()->detach();
         }
 
-        // Update role if provided
-        if (isset($validated['role'])) {
-            $member->syncRoles([$validated['role']]);
+        // Cambia solo el rol de equipo de helpdesk. Antes syncRoles() quitaba
+        // también los roles ajenos al helpdesk (license, callcenter...).
+        if ($newRole && ! $member->hasRole($newRole)) {
+            foreach (self::TEAM_ROLES as $teamRole) {
+                if ($teamRole !== $newRole && $member->hasRole($teamRole)) {
+                    $member->removeRole($teamRole);
+                }
+            }
+            $member->assignRole($newRole);
         }
 
         return redirect()

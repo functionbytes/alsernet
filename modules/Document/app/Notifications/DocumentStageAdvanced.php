@@ -2,7 +2,7 @@
 
 namespace Modules\Document\Notifications;
 
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -128,7 +128,8 @@ class DocumentStageAdvanced extends Notification implements ShouldBroadcast, Sho
 
         // Use public channel instead of private to avoid WebSocket auth issues
         // Public channels don't require session auth, which WebSocket clients can't provide
-        return [new Channel('public-notifications.'.$this->recipientUserId)];
+        // Seguridad 29-sep-2026: canal privado (autorizado en routes/channels.php) en vez del público public-notifications.{id}.
+        return [new PrivateChannel('user.'.$this->recipientUserId)];
     }
 
     public function broadcastType(): string

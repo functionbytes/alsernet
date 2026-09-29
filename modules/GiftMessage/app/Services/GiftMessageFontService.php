@@ -84,7 +84,9 @@ class GiftMessageFontService
         // en un TTF/OTF suele salir vacio, dejando el fichero sin extension. De
         // ahi dependen tanto el format() del @font-face como el MIME con el que
         // el navegador recibe la fuente en la vista previa del editor.
-        $extension = strtolower($file->getClientOriginalExtension() ?: 'ttf');
+        // 29-sep-2026: la extension sale del contenido (cabecera sfnt), no del
+        // nombre que manda el cliente.
+        $extension = self::fontExtension($file->getRealPath());
         $path = $file->storeAs(self::FOLDER, Str::random(40).'.'.$extension, self::DISK);
 
         return GiftMessageFont::query()->create([
@@ -95,6 +97,16 @@ class GiftMessageFontService
             'file_path' => $path,
             'created_by' => auth()->id(),
         ]);
+    }
+
+    /**
+     * 'otf' si la cabecera sfnt es CFF ("OTTO"), 'ttf' en cualquier otro caso.
+     */
+    public static function fontExtension(string|false $path): string
+    {
+        $head = $path ? (string) @file_get_contents($path, false, null, 0, 4) : '';
+
+        return $head === 'OTTO' ? 'otf' : 'ttf';
     }
 
     public function delete(GiftMessageFont $font): void

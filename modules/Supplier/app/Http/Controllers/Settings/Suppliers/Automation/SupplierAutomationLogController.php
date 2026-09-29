@@ -6,12 +6,28 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Modules\Supplier\Listeners\MirrorSupplierLogsListener;
 
 class SupplierAutomationLogController extends Controller
 {
+    /** Días de ficheros diarios del canal propio que se muestran/descargan. */
+    private const DAYS = 3;
+
+    /**
+     * 29-sep-2026: el visor lee SOLO el log propio del módulo
+     * (MirrorSupplierLogsListener), nunca storage/logs/laravel.log, y exige el
+     * permiso de gestión de automatizaciones además del de verlas.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->middleware('can:suppliers.automation.manage');
+    }
+
     /**
      * Show the logs page
      */
@@ -21,16 +37,42 @@ class SupplierAutomationLogController extends Controller
     }
 
     /**
+     * Contenido de los últimos ficheros diarios del canal del módulo, del más
+     * antiguo al más reciente. Cadena vacía si no hay ninguno.
+     */
+    private function moduleLogContent(): string
+    {
+        $path = (string) config(
+            'logging.channels.'.MirrorSupplierLogsListener::CHANNEL.'.path',
+            storage_path('logs/supplier-automation.log')
+        );
+        $pattern = preg_replace('/\.log$/', '', $path).'-*.log';
+
+        $files = glob($pattern) ?: [];
+        sort($files);
+        $files = array_slice($files, -self::DAYS);
+
+        $content = '';
+        foreach ($files as $file) {
+            if (is_file($file) && is_readable($file)) {
+                $content .= file_get_contents($file)."\n";
+            }
+        }
+
+        return $content;
+    }
+
+    /**
      * Get system logs (AJAX)
      */
     public function data(Request $request): JsonResponse
     {
         try {
-            $type = $request->input('type', 'error');
-            $limit = $request->input('limit', 100);
-            $logFile = storage_path('logs/laravel.log');
+            $type = (string) $request->input('type', 'error');
+            $limit = max(1, min(1000, (int) $request->input('limit', 100)));
+            $logContent = $this->moduleLogContent();
 
-            if (! file_exists($logFile)) {
+            if (trim($logContent) === '') {
                 return response()->json([
                     'success' => true,
                     'logs' => [],
@@ -38,7 +80,7 @@ class SupplierAutomationLogController extends Controller
                 ]);
             }
 
-            $logs = $this->parseLogFile($logFile);
+            $logs = $this->parseLogContent($logContent);
             $counts = $this->countByLevel($logs);
 
             if ($type !== 'all') {
@@ -68,45 +110,44 @@ class SupplierAutomationLogController extends Controller
     /**
      * Download log file
      */
-    public function download(Request $request): RedirectResponse|BinaryFileResponse
+    public function download(Request $request): RedirectResponse|Response
     {
         try {
-            $type = $request->input('type', 'all');
-            $logFile = storage_path('logs/laravel.log');
+            $type = (string) $request->input('type', 'all');
+            $logContent = $this->moduleLogContent();
 
-            if (! file_exists($logFile)) {
+            if (trim($logContent) === '') {
                 return back()->with('error', 'No hay logs disponibles para descargar');
             }
 
             $filename = 'automation-logs-'.date('Y-m-d-His').'.log';
 
-            if ($type === 'all') {
-                return response()->download($logFile, $filename);
+            $lines = explode("\n", $logContent);
+
+            if ($type !== 'all') {
+                $lines = array_filter(
+                    $lines,
+                    fn ($line) => stripos($line, '.'.$type.':') !== false || empty(trim($line))
+                );
             }
 
-            $logContent = file_get_contents($logFile);
-            $filteredLines = array_filter(
-                explode("\n", $logContent),
-                fn ($line) => stripos($line, '.'.$type.':') !== false || empty(trim($line))
-            );
-
-            return response(implode("\n", $filteredLines), 200)
+            return response(implode("\n", $lines), 200)
                 ->header('Content-Type', 'text/plain')
                 ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
 
         } catch (\Exception $e) {
             Log::error('Error downloading logs: '.$e->getMessage());
 
-            return back()->with('error', 'Error al descargar los logs: '.$e->getMessage());
+            return back()->with('error', 'Error al descargar los logs.');
         }
     }
 
     /**
      * @return array<int, array{timestamp: string, level: string, message: string}>
      */
-    private function parseLogFile(string $logFile): array
+    private function parseLogContent(string $content): array
     {
-        $lines = explode("\n", file_get_contents($logFile));
+        $lines = explode("\n", $content);
         $logs = [];
         $currentEntry = null;
 

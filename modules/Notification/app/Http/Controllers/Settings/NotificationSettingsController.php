@@ -4,7 +4,6 @@ namespace Modules\Notification\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
@@ -40,7 +39,7 @@ class NotificationSettingsController extends Controller
     {
         $this->persistSettings($request);
 
-        Artisan::call('config:clear');
+        // Seguridad 29-sep-2026: retirado Artisan::call('config:clear'); los ajustes viven en BD.
 
         return $this->success('Configuración actualizada correctamente');
     }

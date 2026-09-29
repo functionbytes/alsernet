@@ -55,7 +55,10 @@ return [
     // env('APP_ENV', ...) siempre devolvía null → 'production' → false, pisando el valor
     // real. config('app.env') sí sobrevive el cache (queda resuelto en config/app.php al
     // cachear), así que lo usamos para el fallback en vez de leer APP_ENV de nuevo.
-    'simulator_public_enabled' => env('HELPDESK_SIMULATOR_PUBLIC', config('app.env', 'production') !== 'production'),
+    // Seguridad 29-sep-2026: en producción NUNCA, aunque el .env lo fuerce a true
+    // (permitía secuestrar conversaciones reales y enumerar clientes sin login).
+    'simulator_public_enabled' => config('app.env', 'production') !== 'production'
+        && (bool) env('HELPDESK_SIMULATOR_PUBLIC', true),
 
     /*
      * Feature gate for the optional HelpdeskTickets module integration.

@@ -135,6 +135,8 @@
                         <span class="d-none d-md-block">Backups</span>
                     </button>
                 </li>
+                {{-- 29-sep-2026: edición de .conf solo para super-admin/super-settings (SupervisorController::CONFIG_ROLES) --}}
+                @hasanyrole('super-admin|super-settings')
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
                             id="config-tab"
@@ -148,6 +150,7 @@
                         <span class="d-none d-md-block">Configuración</span>
                     </button>
                 </li>
+                @endhasanyrole
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
                             id="logs-tab"
@@ -1518,13 +1521,18 @@
             var highlightedContent = '';
             var matchCount = 0;
 
+            // 29-sep-2026: el log se escapa antes de meterlo con .html() y el
+            // término de búsqueda se escapa para RegExp (antes: XSS con el log).
+            var escapeHtml = function (text) { return $('<div>').text(text).html(); };
+            var searchRegex = new RegExp('(' + escapeHtml(searchTerm).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+
             for (var i = 0; i < lines.length; i++) {
-                var line = lines[i];
+                var line = escapeHtml(lines[i]);
                 var lineNum = showLineNumbers ? ((i + 1).toString().padStart(4, ' ') + ' | ') : '';
 
-                if (line.toLowerCase().includes(searchTerm)) {
+                if (lines[i].toLowerCase().includes(searchTerm)) {
                     // Highlight matching line
-                    var highlightedLine = line.replace(new RegExp('(' + searchTerm + ')', 'gi'), '<span style="background-color: yellow; color: black;">$1</span>');
+                    var highlightedLine = line.replace(searchRegex, '<span style="background-color: yellow; color: black;">$1</span>');
                     highlightedContent += lineNum + highlightedLine + '\n';
                     matchCount++;
                 } else {

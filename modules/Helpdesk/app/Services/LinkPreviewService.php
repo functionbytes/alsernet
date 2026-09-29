@@ -62,7 +62,17 @@ class LinkPreviewService
                     ->withUserAgent(self::USER_AGENT)
                     ->withHeaders(['Accept' => 'text/html,application/xhtml+xml'])
                     ->withOptions([
-                        'allow_redirects' => ['max' => 3],
+                        // 29-sep-2026: revalida CADA redirección contra el guard SSRF
+                        // (antes un 302 a 127.0.0.1/169.254.169.254 se seguía sin comprobar).
+                        'allow_redirects' => [
+                            'max' => 3,
+                            'protocols' => ['http', 'https'],
+                            'on_redirect' => function ($redirectRequest, $redirectResponse, $uri): void {
+                                if (! OutboundUrlGuard::isSafe((string) $uri)) {
+                                    throw new \RuntimeException('LinkPreview redirect blocked by SSRF guard');
+                                }
+                            },
+                        ],
                         'curl' => $curlOptions,
                     ])
                     ->get($url);

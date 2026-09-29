@@ -253,6 +253,19 @@ return [
             'database' => env('REDIS_CACHE_DB', '1'),
         ],
 
+        // 29-sep-2026: contadores de RateLimiter (throttle, bloqueos de login/2FA)
+        // en una BD Redis propia para que `php artisan cache:clear` (FLUSHDB de la
+        // BD de caché) no resetee los bloqueos. Índice 3 libre en este servidor
+        // (0 = pruebas/comparador, 1 = default, 2 = caché).
+        'limiter' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_LIMITER_DB', '3'),
+        ],
+
     ],
 
 ];

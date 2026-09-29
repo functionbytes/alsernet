@@ -6,9 +6,10 @@ return [
 
     'max_upload_size' => env('MEDIA_MAX_UPLOAD_SIZE', 104857600), // 100MB in bytes
 
+    // 29-sep-2026: sin svg (ejecuta JavaScript y se sirve desde public/media).
     'allowed_mime_types' => env(
         'MEDIA_ALLOWED_MIME_TYPES',
-        'jpg,jpeg,png,gif,webp,avif,bmp,svg,ico,mp4,m4v,mov,mp3,wav,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt,csv'
+        'jpg,jpeg,png,gif,webp,avif,bmp,ico,mp4,m4v,mov,mp3,wav,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt,csv'
     ),
 
     'mime_types' => [

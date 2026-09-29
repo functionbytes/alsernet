@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class SettingsController extends Controller
 {
@@ -101,26 +100,6 @@ class SettingsController extends Controller
         return response()->json($images);
     }
 
-    public function storeLogo(Request $request): JsonResponse
-    {
-        $request->validate([
-            'setting' => ['required', 'in:page_logo,page_favicon'],
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,svg,ico', 'max:2048'],
-        ]);
-
-        $setting = Setting::key($request->input('setting'));
-        $setting->addMediaFromRequest('file')->toMediaCollection('logo');
-
-        return response()->json(['status' => 'success', 'setting' => $setting->key]);
-    }
-
-    public function deleteLogo(int $id): JsonResponse
-    {
-        Media::findOrFail($id)->delete();
-
-        return response()->json(['status' => 'success']);
-    }
-
     public function getFavicon(string $uid): JsonResponse
     {
         $setting = Setting::key($uid);
@@ -138,25 +117,5 @@ class SettingsController extends Controller
         }
 
         return response()->json($images);
-    }
-
-    public function storeFavicon(Request $request): JsonResponse
-    {
-        $request->validate([
-            'setting' => ['required', 'in:page_logo,page_favicon'],
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,svg,ico', 'max:2048'],
-        ]);
-
-        $setting = Setting::key($request->input('setting'));
-        $setting->addMediaFromRequest('file')->toMediaCollection('favicon');
-
-        return response()->json(['status' => 'success', 'setting' => $setting->key]);
-    }
-
-    public function deleteFavicon(int $id): JsonResponse
-    {
-        Media::findOrFail($id)->delete();
-
-        return response()->json(['status' => 'success']);
     }
 }

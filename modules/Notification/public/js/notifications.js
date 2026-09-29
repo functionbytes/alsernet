@@ -23,6 +23,35 @@
     // los 4 elementos que se pintan en el dropdown.
     const FETCH_LIMIT = 20;
 
+    // Seguridad 29-sep-2026: title/message vienen de datos de clientes (asunto
+    // de chat/email). Todo lo que se concatena en HTML pasa por escapeHtml y
+    // las URLs por safeUrl (solo http(s) o rutas relativas).
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function safeUrl(value) {
+        if (!value) {
+            return '#';
+        }
+        try {
+            var url = new URL(String(value), window.location.origin);
+            return (url.protocol === 'http:' || url.protocol === 'https:') ? url.href : '#';
+        } catch (e) {
+            return '#';
+        }
+    }
+
+    function safeIconClass(value) {
+        var cls = String(value || '').replace(/[^A-Za-z0-9 _-]/g, '').trim();
+        return cls || 'fas fa-bell';
+    }
+
     // State management
     let state = {
         unreadCount: 0,
@@ -199,8 +228,9 @@
             desktopNotification.onclick = function(event) {
                 event.preventDefault();
                 window.focus();
-                if (notification.action_url) {
-                    window.location.href = notification.action_url;
+                var target = safeUrl(notification.action_url);
+                if (target !== '#') {
+                    window.location.href = target;
                 }
                 desktopNotification.close();
             };
@@ -417,19 +447,19 @@
 
         notifications.forEach(function(notification) {
             var isUnread = !notification.is_read;
-            var iconClass = notification.icon || 'fas fa-bell';
+            var iconClass = safeIconClass(notification.icon);
             var unreadBadge = isUnread ? '<span class="badge-new">Nuevo</span>' : '';
             var unreadClass = isUnread ? ' unread' : '';
 
             var html = '<button class="notif-item' + unreadClass + '"'
-                + ' data-notification-id="' + notification.id + '"'
-                + ' data-action-url="' + (notification.action_url || '#') + '"'
+                + ' data-notification-id="' + escapeHtml(notification.id) + '"'
+                + ' data-action-url="' + escapeHtml(safeUrl(notification.action_url)) + '"'
                 + ' type="button">'
-                + '<div class="ico"><i class="' + iconClass + '"></i></div>'
+                + '<div class="ico"><i class="' + escapeHtml(iconClass) + '"></i></div>'
                 + '<div class="body">'
-                + '<div class="head"><span class="title">' + notification.title + '</span>' + unreadBadge + '</div>'
-                + '<div class="desc">' + notification.message + '</div>'
-                + '<div class="meta"><i class="far fa-clock"></i> ' + notification.created_at + '</div>'
+                + '<div class="head"><span class="title">' + escapeHtml(notification.title) + '</span>' + unreadBadge + '</div>'
+                + '<div class="desc">' + escapeHtml(notification.message) + '</div>'
+                + '<div class="meta"><i class="far fa-clock"></i> ' + escapeHtml(notification.created_at) + '</div>'
                 + '</div>'
                 + '</button>';
 
@@ -472,7 +502,8 @@
             var actionUrl = $item.data('action-url');
 
             markAsRead(notificationId, function() {
-                if (actionUrl && actionUrl !== '#') {
+                actionUrl = safeUrl(actionUrl);
+                if (actionUrl !== '#') {
                     window.location.href = actionUrl;
                 }
             });
@@ -545,7 +576,12 @@
                 const userId = $('meta[name="user-id"]').attr('content');
                 if (userId) {
                     // Private channel: NewNotificationEvent broadcasts on user.{id}
+                    // Seguridad 29-sep-2026: las notificaciones Laravel (Document) también
+                    // emiten en este canal privado; ya no hay canal público de respaldo.
                     window.Echo.private(`user.${userId}`)
+                        .notification(() => {
+                            window.NotificationManager.refresh();
+                        })
                         .listen('.notification.new', (data) => {
                             showDesktopNotification({
                                 title: data.title,
@@ -555,13 +591,9 @@
                             playNotificationSound();
                             window.NotificationManager.refresh();
                         })
-                        .error((error) => {
-                            // Private channel auth failed — fall back to public channel polling
-                            console.warn('Private channel unavailable, using public channel fallback');
-                            window.Echo.channel(`public-notifications.${userId}`)
-                                .notification(() => {
-                                    window.NotificationManager.refresh();
-                                });
+                        .error(() => {
+                            // Sin realtime: el refresco periódico (fallbackInterval) sigue funcionando.
+                            console.warn('Private notifications channel unavailable, using polling');
                         });
                 }
             }

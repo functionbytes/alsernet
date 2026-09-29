@@ -82,7 +82,15 @@ class ConversationsController extends Controller
      * nothing) — never null — so the listing does not leak conversations from
      * other inboxes.
      *
-     * @return int[]|null null = no restriction (helpdesk.manage); array = allowed inbox IDs
+     * 22-sep-2026: helpdesk.conversations.view-all también da acceso sin
+     * restricción de inbox. El rol helpdesk-supervisor tiene view-all pero
+     * NO helpdesk.manage a propósito (ese permiso además abre Settings/
+     * Webhooks/Automatizaciones, que un supervisor no debe tocar — ver
+     * HelpdeskRolesSeeder::createSupervisorRole()), así que sin esto un
+     * supervisor sin fila en helpdesk_agent_inbox_capacity para cada inbox
+     * no veía "todas las bandejas" pese a que el rol lo promete.
+     *
+     * @return int[]|null null = no restriction (helpdesk.manage o conversations.view-all); array = allowed inbox IDs
      */
     private function getUserInboxIds(): ?array
     {

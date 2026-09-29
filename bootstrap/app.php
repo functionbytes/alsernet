@@ -42,13 +42,17 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\View\ViewServiceProvider;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Modules\Auth\Http\Middleware\Authenticate;
+use Modules\Auth\Http\Middleware\CheckPasswordExpired;
 use Modules\Auth\Http\Middleware\CheckSession;
+use Modules\Auth\Http\Middleware\EnforceImpersonationTimeout;
 use Modules\Auth\Http\Middleware\RedirectIfAuthenticated;
+use Modules\Auth\Http\Middleware\RequireTwoFactorForPrivilegedRoles;
 use Modules\Core\Http\Middleware\AuditAccessMiddleware;
 use Modules\Core\Http\Middleware\CheckSettings;
 use Modules\Core\Http\Middleware\EncryptCookies;
 use Modules\Core\Http\Middleware\EnsureModuleIsActive;
 use Modules\Core\Http\Middleware\HandleCors;
+use Modules\Core\Http\Middleware\SecurityHeaders;
 use Modules\Core\Http\Middleware\TrimStrings;
 use Modules\Core\Http\Middleware\TrustProxies;
 use Modules\Core\Http\Middleware\ValidateSignature;
@@ -86,8 +90,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Cleanup commands
         $schedule->command('notifications:clean')->daily();
+
+        // 29-sep-2026: vigilancia de seguridad (subidas ejecutables, cambios en
+        // código PHP, denegaciones ERP, logins fallidos). Umbrales: config/security.php
+        $schedule->command('security:watch')->everyFiveMinutes()->withoutOverlapping(10)->runInBackground();
     })
     ->withMiddleware(function (Middleware $middleware) {
+        // 29-sep-2026: cabeceras de seguridad (nosniff, Referrer/Permissions-Policy,
+        // X-Robots-Tag noindex, CSP Report-Only) en TODAS las respuestas: web, api,
+        // redirecciones, descargas y errores. Primero = más externo. config/security.php
+        $middleware->prepend(SecurityHeaders::class);
+
         // Middleware globales
         $middleware->append([
             TrustProxies::class,
@@ -107,6 +120,12 @@ return Application::configure(basePath: dirname(__DIR__))
             VerifyCsrfToken::class,
             SubstituteBindings::class,
             EnsureModuleIsActive::class,
+            // 29-sep-2026: seguridad de cuenta en TODO el panel autenticado. Solo
+            // actúan en rutas con middleware `auth` y dejan pasar cambio de
+            // contraseña, logout, lock, 2FA y fin de impersonación (sin bucles).
+            EnforceImpersonationTimeout::class,
+            CheckPasswordExpired::class,
+            RequireTwoFactorForPrivilegedRoles::class,
         ]);
 
         $middleware->group('api', [

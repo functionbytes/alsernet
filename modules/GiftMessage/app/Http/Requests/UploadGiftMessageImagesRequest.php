@@ -14,8 +14,8 @@ class UploadGiftMessageImagesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'envelope_image' => ['nullable', 'file', 'image', 'max:5120'],
-            'card_image' => ['nullable', 'file', 'image', 'max:5120'],
+            'envelope_image' => ['nullable', 'file', 'image', 'extensions:jpg,jpeg,png,webp', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'card_image' => ['nullable', 'file', 'image', 'extensions:jpg,jpeg,png,webp', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 
@@ -23,8 +23,12 @@ class UploadGiftMessageImagesRequest extends FormRequest
     {
         return [
             'envelope_image.image' => 'La imagen del sobre debe ser un archivo de imagen valido.',
+            'envelope_image.extensions' => 'La imagen del sobre debe ser JPG, PNG o WEBP.',
+            'envelope_image.mimes' => 'La imagen del sobre debe ser JPG, PNG o WEBP.',
             'envelope_image.max' => 'La imagen del sobre no puede superar los 5 MB.',
             'card_image.image' => 'La imagen de la tarjeta debe ser un archivo de imagen valido.',
+            'card_image.extensions' => 'La imagen de la tarjeta debe ser JPG, PNG o WEBP.',
+            'card_image.mimes' => 'La imagen de la tarjeta debe ser JPG, PNG o WEBP.',
             'card_image.max' => 'La imagen de la tarjeta no puede superar los 5 MB.',
         ];
     }

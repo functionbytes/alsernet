@@ -4,7 +4,9 @@ namespace Modules\Helpdesk\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 
 class StoreInboxRequest extends FormRequest
 {
@@ -32,6 +34,37 @@ class StoreInboxRequest extends FormRequest
             'credentials' => ['nullable', 'array'],
             'credentials.*' => ['nullable', 'string', 'max:5000'],
         ];
+    }
+
+    /**
+     * 29-sep-2026 (SSRF): la URL del feed de catálogo del widget
+     * (widget[product_feed_url]) la descarga el servidor (FeedCatalogDriver):
+     * solo https y con host público. Se valida aparte (no en rules()) para no
+     * meter `widget` en validated(), que se usa para crear el Inbox.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $feedUrl = $this->input('widget.product_feed_url');
+
+            if ($feedUrl === null || $feedUrl === '') {
+                return;
+            }
+
+            $ok = is_string($feedUrl)
+                && strlen($feedUrl) <= 2048
+                && strtolower((string) parse_url($feedUrl, PHP_URL_SCHEME)) === 'https'
+                && filter_var($feedUrl, FILTER_VALIDATE_URL) !== false
+                && parse_url($feedUrl, PHP_URL_USER) === null
+                && OutboundUrlGuard::isSafe($feedUrl);
+
+            if (! $ok) {
+                $validator->errors()->add(
+                    'widget.product_feed_url',
+                    'La URL del product feed debe ser https y apuntar a un servidor público.'
+                );
+            }
+        });
     }
 
     public function messages(): array

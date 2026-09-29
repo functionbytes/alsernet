@@ -12,8 +12,23 @@ return [
     //   - 'sanctum'   → requiere Bearer Sanctum (usuarios autenticados / IssueBridgeToken)
     //   - 'erp_token' → requiere header `X-Erp-Token` con un ErpEndpointToken válido
     //   - 'both'      → acepta cualquiera de los dos en cascada
+    //
+    // 29-sep-2026: el valor real sale de settings.erp_api_auth_enabled (ver
+    // ApiAuth); si falta, la autenticación queda ACTIVA (fail-closed). Con ella
+    // desactivada solo entran las IPs de 'allowed_ips' (el vhost no filtra).
     'api' => [
-        'enabled' => env('ERP_API_AUTH_ENABLED', false),
+        'enabled' => env('ERP_API_AUTH_ENABLED', true),
+        // IPs/CIDR que pueden usar /api/erp/* mientras la autenticación de lectura
+        // esté desactivada: localhost, NAT por el que la propia app se llama a sí
+        // misma (Supplier sync, HelpdeskErp, HelpdeskBirthday) y la tienda.
+        'allowed_ips' => env('ERP_API_ALLOWED_IPS', '127.0.0.1,::1,192.168.1.44,213.134.40.100,213.134.40.101'),
+        // Slug del ErpEndpoint al que deben pertenecer los ErpEndpointToken que
+        // se aceptan en /api/erp/* (lectura) y en las rutas de escritura.
+        // Créalos con is_active=false para que no sirvan en /api/erp/public/.
+        'token_endpoints' => [
+            'read' => env('ERP_API_TOKEN_ENDPOINT', 'api-erp-read'),
+            'write' => env('ERP_API_WRITE_TOKEN_ENDPOINT', 'api-erp-write'),
+        ],
         'guard' => env('ERP_API_AUTH_GUARD', 'sanctum'),
         'throttle' => env('ERP_API_THROTTLE', '60,1'),
         'public_token_throttle' => env('ERP_PUBLIC_TOKEN_THROTTLE', '60,1'),

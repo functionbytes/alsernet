@@ -193,6 +193,14 @@ class HelpdeskRolesSeeder extends Seeder
                         'roles.permissions.manage',
                     ]);
             })
+            // 22-sep-2026: el wildcard 'helpdesk.%' de arriba también
+            // enganchaba helpdesk.conversations.view-assigned-only — un
+            // permiso de RESTRINGIR, no de conceder, pensado solo para
+            // helpdesk-agent-restricted. Colado en helpdesk-admin, dejaba a
+            // los 4 admins reales viendo la bandeja vacía en "Sin leer" y
+            // "Cerradas" (el contador sí sumaba todo, la query del listado
+            // los filtraba a sus propias conversaciones nada más).
+            ->where('name', '!=', 'helpdesk.conversations.view-assigned-only')
             ->pluck('name')
             ->toArray();
 

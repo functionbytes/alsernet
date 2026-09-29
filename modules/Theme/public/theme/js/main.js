@@ -18,7 +18,6 @@
 	   entre 1200px y 1480px el boton solo cambiaba un atributo que ninguna regla
 	   consultaba: pulsarlo no hacia absolutamente nada. */
 	const SIDEBAR_OVERLAY_MQ = '(max-width: 1480px)';
-	const SIDEBAR_STORAGE_KEY = 'mc-app-sidebar';
 
 	const initAppToggler = () => {
 		const appTogglers = document.querySelectorAll('.app-toggler');
@@ -28,13 +27,6 @@
 
 		const overlayMq = window.matchMedia(SIDEBAR_OVERLAY_MQ);
 		const isOverlay = () => overlayMq.matches;
-
-		const readStored = () => {
-			try { return localStorage.getItem(SIDEBAR_STORAGE_KEY); } catch (e) { return null; }
-		};
-		const writeStored = value => {
-			try { localStorage.setItem(SIDEBAR_STORAGE_KEY, value); } catch (e) { /* modo privado */ }
-		};
 
 		// `mini-hover` es una vista previa al pasar el raton, no un estado elegido:
 		// para el boton cuenta como contraido.
@@ -73,13 +65,19 @@
 		// Cada modo guarda su estado en un sitio distinto; al cruzar el breakpoint
 		// hay que limpiar el del otro o queda una clase/atributo fantasma que
 		// congela el ancho del rail o deja el backdrop puesto.
+		//
+		// El menu arranca SIEMPRE contraido (`mini`), sin restaurar el estado
+		// guardado: antes, si la ultima vez habia quedado `full`, `readStored()`
+		// lo reabria en cada carga. El toggler lo sigue pudiendo abrir dentro
+		// de la sesion (`toggle()` de mas abajo) y ese "full" ahora flota sobre
+		// el contenido en vez de empujarlo (ver nav.css).
 		const applyMode = () => {
 			appMenubar.classList.remove('open');
 
 			if (isOverlay()) {
 				docEl.removeAttribute('data-app-sidebar');
 			} else {
-				docEl.setAttribute('data-app-sidebar', readStored() === 'mini' ? 'mini' : 'full');
+				docEl.setAttribute('data-app-sidebar', 'mini');
 			}
 
 			syncTogglers();
@@ -103,7 +101,6 @@
 				// en el que ya estabas-, asi que hacian falta dos clics para contraer.
 				const next = docEl.getAttribute('data-app-sidebar') === 'full' ? 'mini' : 'full';
 				docEl.setAttribute('data-app-sidebar', next);
-				writeStored(next);
 			}
 
 			syncTogglers();

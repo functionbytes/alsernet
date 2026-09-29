@@ -25,7 +25,7 @@
                             <div class="row g-4">
                                 <div class="col-md-12">
                                     <div class="input-group">
-                                        <input class="form-control"  type="text" disabled  value="{{ $email }}" placeholder="Correo electrónico o cedula" >
+                                        <input class="form-control"  type="text" disabled  value="{{ $email }}" placeholder="Correo electrónico" >
                                     </div>
                                 </div>
                                 <div class="col-lg-12">

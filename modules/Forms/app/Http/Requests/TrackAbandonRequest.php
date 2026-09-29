@@ -14,7 +14,7 @@ class TrackAbandonRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session_token' => ['required', 'string', 'max:255'],
+            'session_token' => ['required', 'string', 'min:32', 'max:64', 'alpha_num'],
             'partial_data' => ['nullable', 'json'],
             'current_step' => ['nullable', 'integer', 'min:1'],
             'last_field_key' => ['nullable', 'string', 'max:255'],

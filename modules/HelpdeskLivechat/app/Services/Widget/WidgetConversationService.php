@@ -5,7 +5,7 @@ namespace Modules\HelpdeskLivechat\Services\Widget;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
@@ -15,6 +15,7 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Events\AiAnswerRated;
+use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetAttachmentController;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Models\WidgetSession;
 use Modules\HelpdeskLivechat\Services\WidgetSessionService;
@@ -39,14 +40,14 @@ class WidgetConversationService
      * @param  array<string, mixed>  $data
      * @return array{conversation_id: int, customer_id: int, reused: bool}
      */
-    public function createConversation(string $websiteToken, array $data): array
+    public function createConversation(string $websiteToken, array $data, ?string $verifiedIdentifier = null): array
     {
         $web = Web::where('website_token', $websiteToken)->first();
         if (! $web) {
             throw new \RuntimeException('Invalid widget token');
         }
 
-        $result = DB::connection('helpdesk')->transaction(function () use ($web, $data) {
+        $result = DB::connection('helpdesk')->transaction(function () use ($web, $data, $verifiedIdentifier) {
             $inbox = Inbox::firstOrCreate(
                 ['channel_type' => 'web', 'channel_id' => $web->id],
                 [
@@ -61,10 +62,16 @@ class WidgetConversationService
             // email está probado y manda sobre lo que diga la sesión.
             $verifiedEmail = $this->verifiedIdentityEmail($web, $data);
 
-            $email = $verifiedEmail ?? ($data['email'] ?? null);
-            if (empty($email)) {
-                $email = 'guest-'.Str::random(8).'@anonymous.local';
-            }
+            $claimedEmail = $verifiedEmail !== null
+                ? mb_strtolower(trim($verifiedEmail))
+                : (! empty($data['email']) ? mb_strtolower(trim((string) $data['email'])) : null);
+
+            // El email lo escribe el visitante: solo cuenta como verificado si lo
+            // firmó la tienda o si VerifyWidgetHmac validó el HMAC sobre ESTE email.
+            $identityVerified = $claimedEmail !== null && (
+                $verifiedEmail !== null
+                || ($verifiedIdentifier !== null && strcasecmp(trim($verifiedIdentifier), $claimedEmail) === 0)
+            );
 
             $customerDefaults = [
                 'name' => $data['name'] ?? 'Anonymous',
@@ -75,6 +82,9 @@ class WidgetConversationService
             $customer = $verifiedEmail !== null
                 ? Customer::firstOrCreate(['email' => $verifiedEmail], $customerDefaults)
                 : null;
+            // true cuando el cliente se ha resuelto por un email no verificado que
+            // pertenece a otra ficha: se crea una ficha de invitado aparte.
+            $unverifiedClaim = false;
 
             // La identidad se resuelve desde la sesión del widget del lado del
             // SERVIDOR (WidgetSession.customer_id), NUNCA desde el customer_id
@@ -89,11 +99,31 @@ class WidgetConversationService
                 $customer = Customer::find($session->customer_id);
             }
 
+            // 29-sep-2026 (A5): antes firstOrCreate(['email' => ...]) adjuntaba el
+            // chat a la ficha REAL del cliente cuyo email escribiera cualquiera y
+            // devolvía el token de su conversación abierta. Un email no verificado
+            // nunca da acceso a una ficha existente: se crea una de invitado.
             if (! $customer) {
-                $customer = Customer::firstOrCreate(
-                    ['email' => $email],
-                    $customerDefaults
-                );
+                $existingCustomer = $claimedEmail !== null
+                    ? Customer::where('email', $claimedEmail)->first()
+                    : null;
+
+                if ($existingCustomer && $identityVerified) {
+                    $customer = $existingCustomer;
+                } elseif ($existingCustomer) {
+                    $unverifiedClaim = true;
+                    $customer = Customer::create($customerDefaults + [
+                        'email' => 'guest-'.Str::random(12).'@anonymous.local',
+                        'custom_attributes' => [
+                            'claimed_email' => $claimedEmail,
+                            'email_verified' => false,
+                        ],
+                    ]);
+                } else {
+                    $customer = Customer::create($customerDefaults + [
+                        'email' => $claimedEmail ?? 'guest-'.Str::random(12).'@anonymous.local',
+                    ]);
+                }
             }
 
             // Vincula el cliente a la sesión para dar continuidad segura en las
@@ -104,19 +134,33 @@ class WidgetConversationService
 
             // Promociona el email placeholder de invitado al real cuando el
             // visitante se identifica — solo sobre el cliente de SU sesión,
-            // nunca uno ajeno, y sin machacar un email ya real.
-            if ($verifiedEmail === null && ! empty($data['email']) && str_ends_with((string) $customer->email, '@anonymous.local')) {
-                $customer->update([
-                    'email' => $data['email'],
-                    'name' => $data['name'] ?? $customer->name,
-                ]);
+            // nunca uno ajeno, sin machacar un email ya real y sin tomar un
+            // email que ya pertenece a otra ficha (se anota como reclamado).
+            if ($claimedEmail !== null && ! $unverifiedClaim && str_ends_with((string) $customer->email, '@anonymous.local')) {
+                $taken = Customer::where('email', $claimedEmail)
+                    ->whereKeyNot($customer->id)
+                    ->exists();
+
+                if (! $taken) {
+                    $customer->update([
+                        'email' => $claimedEmail,
+                        'name' => $data['name'] ?? $customer->name,
+                    ]);
+                } else {
+                    $customer->update([
+                        'custom_attributes' => array_merge($customer->custom_attributes ?? [], [
+                            'claimed_email' => $claimedEmail,
+                            'email_verified' => false,
+                        ]),
+                    ]);
+                }
             }
 
             // Persist visitor metadata (cart, orders, etc.) sent by the host site.
             if (! empty($data['custom_attributes']) && is_array($data['custom_attributes'])) {
                 $existing = $customer->custom_attributes ?? [];
                 $customer->update([
-                    'custom_attributes' => array_merge($existing, $data['custom_attributes']),
+                    'custom_attributes' => array_merge($existing, $this->visitorAttributes($data['custom_attributes'])),
                 ]);
             }
 
@@ -126,12 +170,24 @@ class WidgetConversationService
                 fn (): array => ConversationStatus::query()->where('is_open', true)->pluck('id')->all()
             );
 
-            $existing = Conversation::where('customer_id', $customer->id)
+            // 29-sep-2026 (A5): solo se reutiliza (y se devuelve su pubsub_token)
+            // una conversación abierta que creó ESTA misma sesión del widget
+            // (metadata.widget_session_token). Antes bastaba con resolver el
+            // cliente, lo que entregaba el token del chat de otra persona.
+            $sessionToken = (string) ($data['widget_session_token'] ?? '');
+            $existing = $sessionToken === '' ? null : Conversation::where('customer_id', $customer->id)
                 ->where('inbox_id', $inbox->id)
                 ->whereNull('closed_at')
                 ->whereIn('status_id', $openStatusIds)
                 ->latest('last_message_at')
-                ->first();
+                ->limit(20)
+                ->get()
+                ->first(function (Conversation $c) use ($sessionToken): bool {
+                    $meta = is_array($c->metadata) ? $c->metadata : [];
+
+                    return is_string($meta['widget_session_token'] ?? null)
+                        && hash_equals($meta['widget_session_token'], $sessionToken);
+                });
 
             if ($existing) {
                 $firstMessageId = null;
@@ -140,7 +196,7 @@ class WidgetConversationService
                         'conversation_id' => $existing->id,
                         'author_id' => $customer->id,
                         'type' => 'message',
-                        'body' => $data['message'],
+                        'body' => $this->plainText((string) $data['message']),
                         'is_internal' => false,
                     ]);
                     $firstMessageId = (int) $firstItem->id;
@@ -167,11 +223,7 @@ class WidgetConversationService
                 return [
                     'conversation_id' => (int) $existing->id,
                     'customer_id' => (int) $customer->id,
-                    'customer' => [
-                        'id' => $customer->id,
-                        'email' => $customer->email,
-                        'name' => $customer->name,
-                    ],
+                    'customer' => ['id' => $customer->id],
                     'pubsub_token' => $existingPubsubToken,
                     'message_id' => $firstMessageId,
                     'reused' => true,
@@ -210,7 +262,10 @@ class WidgetConversationService
                 'inbox_id' => $inbox->id,
                 'channel' => 'web',
                 'status_id' => $openStatus?->id,
-                'subject' => Str::limit($data['message'] ?? 'Nueva conversación desde widget', 80, ''),
+                // Sin etiquetas ni < >: el asunto sale del texto del visitante y se
+                // pinta en listados y notificaciones del panel (A6, 29-sep-2026).
+                'subject' => Str::limit(trim(str_replace(['<', '>'], '', strip_tags((string) ($data['message'] ?? ''))))
+                    ?: 'Nueva conversación desde widget', 80, ''),
                 'last_message_at' => now(),
                 'metadata' => $metadata,
             ]);
@@ -230,7 +285,7 @@ class WidgetConversationService
                     'conversation_id' => $conversation->id,
                     'author_id' => $customer->id,
                     'type' => 'message',
-                    'body' => $data['message'],
+                    'body' => $this->plainText((string) $data['message']),
                     'is_internal' => false,
                 ]);
                 $firstMessageId = (int) $firstItem->id;
@@ -243,11 +298,8 @@ class WidgetConversationService
             return [
                 'conversation_id' => (int) $conversation->id,
                 'customer_id' => (int) $customer->id,
-                'customer' => [
-                    'id' => $customer->id,
-                    'email' => $customer->email,
-                    'name' => $customer->name,
-                ],
+                // Sin email/nombre: la respuesta es pública (no enumerar clientes).
+                'customer' => ['id' => $customer->id],
                 'pubsub_token' => $pubsubToken,
                 'message_id' => $firstMessageId,
                 'reused' => false,
@@ -345,8 +397,15 @@ class WidgetConversationService
             $customer = Customer::find($customerId);
             if ($customer) {
                 $update = [];
-                if (! empty($data['email']) && $customer->email !== $data['email']) {
-                    $update['email'] = $data['email'];
+                // 29-sep-2026: el visitante solo puede fijar su email si aún es un
+                // invitado (@anonymous.local) y el email no es de otra ficha;
+                // antes podía poner cualquier email libre sobre una ficha real.
+                $newEmail = ! empty($data['email']) ? mb_strtolower(trim((string) $data['email'])) : null;
+                if ($newEmail !== null
+                    && strcasecmp((string) $customer->email, $newEmail) !== 0
+                    && str_ends_with((string) $customer->email, '@anonymous.local')
+                    && ! Customer::where('email', $newEmail)->whereKeyNot($customer->id)->exists()) {
+                    $update['email'] = $newEmail;
                 }
                 if (! empty($data['name']) && $customer->name !== $data['name']) {
                     $update['name'] = $data['name'];
@@ -359,7 +418,7 @@ class WidgetConversationService
                 if (! empty($data['custom_attributes']) && is_array($data['custom_attributes'])) {
                     $existing = $customer->custom_attributes ?? [];
                     $customer->update([
-                        'custom_attributes' => array_merge($existing, $data['custom_attributes']),
+                        'custom_attributes' => array_merge($existing, $this->visitorAttributes($data['custom_attributes'])),
                     ]);
                 }
             }
@@ -410,7 +469,7 @@ class WidgetConversationService
         return [
             'message_id' => (int) $item->id,
             'created_at' => $item->created_at->toIso8601String(),
-            'attachments' => $attachments,
+            'attachments' => array_map(fn (array $a): array => $this->visitorAttachment($a), $attachments),
         ];
     }
 
@@ -512,15 +571,25 @@ class WidgetConversationService
             if (! $file instanceof UploadedFile) {
                 continue;
             }
-            $original = $file->getClientOriginalName();
-            $generated = Str::random(16).'_'.preg_replace('/[^A-Za-z0-9._-]+/', '_', $original);
-            $path = $file->storeAs("helpdesk-conversations/{$conversationId}", $generated, 'public');
+            // 29-sep-2026 (A6-c): disco privado y nombre generado por el servidor
+            // (hashName + extensión según el contenido). El nombre original solo
+            // se guarda para mostrarlo. Se sirve por WidgetAttachmentController.
+            $original = Str::limit(basename(str_replace('\\', '/', $file->getClientOriginalName())), 200, '');
+            $path = $file->store("helpdesk-conversations/{$conversationId}", 'local');
+            if ($path === false) {
+                throw new \RuntimeException('Attachment could not be stored');
+            }
 
             $stored[] = [
                 'name' => $original,
-                'url' => Storage::disk('public')->url($path),
+                'url' => route(WidgetAttachmentController::ROUTE_NAME, [
+                    'conversation' => $conversationId,
+                    'file' => basename($path),
+                ]),
                 'size' => $file->getSize(),
                 'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
+                'disk' => 'local',
+                'path' => $path,
             ];
         }
 
@@ -617,6 +686,7 @@ class WidgetConversationService
 
                 continue;
             }
+            $a = $this->visitorAttachment($a);
             $out[] = [
                 'id' => $i,
                 'name' => (string) ($a['name'] ?? basename($a['url'] ?? '')),
@@ -663,6 +733,41 @@ class WidgetConversationService
         ];
     }
 
+    /**
+     * Para el visitante (sin sesión) los adjuntos del disco privado se
+     * entregan con una URL firmada y temporal; la URL guardada es la del panel.
+     *
+     * @param  array<string, mixed>  $attachment
+     * @return array<string, mixed>
+     */
+    private function visitorAttachment(array $attachment): array
+    {
+        $path = (string) ($attachment['path'] ?? '');
+        if (($attachment['disk'] ?? null) === 'local'
+            && preg_match('#^helpdesk-conversations/(\d+)/([A-Za-z0-9]{40}(?:\.[a-z0-9]{1,5})?)$#', $path, $m)) {
+            $attachment['url'] = URL::temporarySignedRoute(
+                WidgetAttachmentController::ROUTE_NAME,
+                now()->addHours(12),
+                ['conversation' => (int) $m[1], 'file' => $m[2]],
+            );
+        }
+        unset($attachment['disk'], $attachment['path']);
+
+        return $attachment;
+    }
+
+    /**
+     * Texto del visitante sin etiquetas HTML ni comentarios. A diferencia de
+     * strip_tags() conserva texto como "<3" o "a < b" (no son etiquetas); un
+     * "<" que pudiera abrir una etiqueta sin cerrar se neutraliza con un espacio.
+     */
+    private function plainText(string $text): string
+    {
+        $text = (string) preg_replace('#<!--.*?-->|</?[a-zA-Z][^>]*>#s', '', $text);
+
+        return trim((string) preg_replace('#<(?=[a-zA-Z/!?])#', '< ', $text));
+    }
+
     private function resolveSenderName(ConversationItem $item): string
     {
         if ($item->isFromBot()) {
@@ -689,6 +794,20 @@ class WidgetConversationService
         if ((int) $conversation->customer_id !== $customerId) {
             throw new \RuntimeException('Unauthorized access to conversation');
         }
+    }
+
+    /**
+     * Atributos que manda el visitante, sin las claves que marca el servidor
+     * (un visitante no puede autoproclamarse "email verificado").
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function visitorAttributes(array $attributes): array
+    {
+        unset($attributes['claimed_email'], $attributes['email_verified']);
+
+        return $attributes;
     }
 
     private function syncCustomerInbox(Customer $customer, Inbox $inbox): void

@@ -293,6 +293,8 @@
                                     </div>
                                     <a href="{{ route('settings.users.edit', $user->uid) }}" class="btn btn-sm btn-outline-primary">Cambiar</a>
                                 </div>
+
+                                @include('auth::admin.ip-filter.partials.remote-access-user', ['user' => $user])
                             </div>
 
                             <div class="col-lg-4">

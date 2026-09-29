@@ -97,6 +97,11 @@ class PublicTicketFormController extends Controller
             'custom_fields' => $customFields,
         ]);
 
+        // El cliente ya existía: el email no está verificado (no hay login).
+        if (! $customer->wasRecentlyCreated) {
+            $this->ticketService->flagUnverifiedCustomerEmail($ticket, (string) $customer->email);
+        }
+
         $uploadedFiles = collect($fileFieldKeys)
             ->filter(fn ($key) => $request->hasFile($key))
             ->map(fn ($key) => $request->file($key))

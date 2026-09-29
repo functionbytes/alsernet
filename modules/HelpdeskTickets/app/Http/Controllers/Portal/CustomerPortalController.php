@@ -270,6 +270,7 @@ class CustomerPortalController extends Controller
         return Storage::disk($disk)->download(
             $attachment->path,
             $attachment->original_filename ?: $attachment->filename ?: basename((string) $attachment->path),
+            ['X-Content-Type-Options' => 'nosniff'],
         );
     }
 

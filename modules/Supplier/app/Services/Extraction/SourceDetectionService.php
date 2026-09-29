@@ -59,7 +59,16 @@ class SourceDetectionService
                 'User-Agent' => self::USER_AGENT,
                 'Accept' => 'text/html,application/json,*/*',
             ],
-            'allow_redirects' => ['max' => 5, 'track_redirects' => true],
+            // 29-sep-2026: cada redirección se revalida (antes un 302 a una IP
+            // interna saltaba la comprobación de la URL inicial).
+            'allow_redirects' => [
+                'max' => 5,
+                'track_redirects' => true,
+                'protocols' => ['http', 'https'],
+                'on_redirect' => function ($request, $response, $uri): void {
+                    $this->assertUrlIsPublic((string) $uri);
+                },
+            ],
         ]);
 
         // Try API platforms first (definitive detection)

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Core\Models\Setting;
 use Modules\Document\Services\DocumentMailService;
 use Modules\Document\Services\PrestashopOrderLookupService;
+use Modules\Document\Support\DocumentMediaFiles;
 use Modules\Document\Traits\HasUid;
 use Modules\Document\Traits\HasValidationWorkflow;
 use Spatie\MediaLibrary\HasMedia;
@@ -21,6 +22,20 @@ class Document extends Model implements HasMedia
     use HasFactory, HasUid, HasValidationWorkflow, InteractsWithMedia;
 
     protected $table = 'documents';
+
+    /**
+     * 29-sep-2026: los ficheros de expedientes (DNI, licencias, adjuntos) van
+     * al disco privado, nunca a /storage, y solo con nombre generado por el
+     * servidor (ver DocumentMediaFiles).
+     */
+    public function registerMediaCollections(): void
+    {
+        foreach (DocumentMediaFiles::COLLECTIONS as $collection) {
+            $this->addMediaCollection($collection)
+                ->useDisk(DocumentMediaFiles::DISK)
+                ->acceptsFile(fn ($file) => DocumentMediaFiles::isSafeStoredName((string) $file->name));
+        }
+    }
 
     protected $casts = [
         'confirmed_at' => 'datetime',
@@ -876,7 +891,7 @@ class Document extends Model implements HasMedia
      *
      * @return array Documentos con detalles: ["doc_1" => ["id", "url", "size", ...]]
      */
-    public function getUploadedDocumentsWithDetails(): array
+    public function getUploadedDocumentsWithDetails(bool $includeUrls = false): array
     {
         $uploadedWithDetails = [];
 
@@ -885,11 +900,16 @@ class Document extends Model implements HasMedia
             if ($docType) {
                 $uploadedWithDetails[$docType] = [
                     'id' => $media->id,
-                    'file_name' => $media->file_name,
                     'size' => $media->size,
-                    'url' => $media->getUrl(),
                     'created_at' => $media->created_at->format('Y-m-d H:i:s'),
                 ];
+
+                // 29-sep-2026: la API pública (tienda / cliente) solo recibe
+                // tipo, tamaño y fecha. Nombre y URL, solo para el panel.
+                if ($includeUrls) {
+                    $uploadedWithDetails[$docType]['file_name'] = $media->file_name;
+                    $uploadedWithDetails[$docType]['url'] = $media->getUrl();
+                }
             }
         }
 

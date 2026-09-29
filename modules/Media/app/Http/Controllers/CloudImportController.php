@@ -15,6 +15,9 @@ class CloudImportController extends Controller
 {
     public function authorize(Request $request, string $provider): RedirectResponse
     {
+        // 29-sep-2026: estas rutas solo exigían 'auth'; ahora también el permiso del módulo.
+        abort_unless(auth()->user()?->can('media.create'), 403);
+
         $driver = CloudImportFactory::make($provider);
 
         abort_unless($driver, 404, 'Proveedor no configurado');
@@ -24,6 +27,8 @@ class CloudImportController extends Controller
 
     public function callback(Request $request, string $provider): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('media.create'), 403);
+
         $driver = CloudImportFactory::make($provider);
 
         abort_unless($driver, 404, 'Proveedor no configurado');
@@ -43,6 +48,8 @@ class CloudImportController extends Controller
 
     public function listFiles(Request $request, string $provider): JsonResponse
     {
+        abort_unless(auth()->user()?->can('media.view'), 403);
+
         $driver = CloudImportFactory::make($provider);
 
         abort_unless($driver, 404, 'Proveedor no configurado');
@@ -65,6 +72,8 @@ class CloudImportController extends Controller
 
     public function import(Request $request, string $provider): JsonResponse
     {
+        abort_unless(auth()->user()?->can('media.create'), 403);
+
         abort_unless(CloudImportFactory::make($provider), 404, 'Proveedor no configurado');
 
         ImportCloudFileJob::dispatch(

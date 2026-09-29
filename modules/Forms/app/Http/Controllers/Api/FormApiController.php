@@ -17,6 +17,9 @@ class FormApiController extends Controller
 {
     public function index(Form $form): AnonymousResourceCollection
     {
+        // 29-sep-2026: estas rutas sanctum no autorizaban (cualquier token leía/borraba envíos).
+        $this->authorize('Forms.submissions.index');
+
         $submissions = $form->submissions()
             ->with('values')
             ->latest()
@@ -167,6 +170,9 @@ class FormApiController extends Controller
 
     public function show(Form $form, FormSubmission $submission): FormSubmissionResource
     {
+        $this->authorize('Forms.submissions.index');
+        abort_unless((int) $submission->form_id === (int) $form->id, 404);
+
         $submission->load(['values', 'assignedTo']);
 
         return new FormSubmissionResource($submission);
@@ -174,6 +180,9 @@ class FormApiController extends Controller
 
     public function destroy(Form $form, FormSubmission $submission): JsonResponse
     {
+        $this->authorize('Forms.submissions.delete');
+        abort_unless((int) $submission->form_id === (int) $form->id, 404);
+
         $submission->delete();
 
         return response()->json(['message' => 'Envío eliminado correctamente.']);
@@ -181,6 +190,8 @@ class FormApiController extends Controller
 
     public function stats(Form $form): JsonResponse
     {
+        $this->authorize('Forms.submissions.index');
+
         return response()->json([
             'form_id' => $form->id,
             'form_name' => $form->name,

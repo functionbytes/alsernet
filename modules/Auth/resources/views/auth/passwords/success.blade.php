@@ -12,7 +12,7 @@
                             <!-- account tittle -->
                             <div class="account__header">
                                 <h3>Correo recuperación</h3>
-                                <p>Te enviamos un mensaje al correo electrónico: <u>{{ $email }}</u></p>
+                                <p>Si existe una cuenta asociada a <u>{{ $email }}</u>, recibirás en unos minutos un correo con un enlace para restablecer la contraseña.</p>
                                 <p>¿No recibiste el mensaje?</p>
                             </div>
                                 <a href="{{ route('auth.password.request') }}" class="theme-btn w-100 mt-30">Enviar nuevamente</a>

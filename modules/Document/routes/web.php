@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Document\Http\Controllers\DocumentConfigurationController;
 use Modules\Document\Http\Controllers\DocumentGroupsController;
+use Modules\Document\Http\Controllers\DocumentMediaController;
 use Modules\Document\Http\Controllers\DocumentProductBlockadeController;
 use Modules\Document\Http\Controllers\DocumentsController;
 use Modules\Document\Http\Controllers\DocumentSlaPoliciesController;
@@ -30,7 +31,16 @@ Route::middleware(['web', 'auth'])->group(function () {
     // ====================================================================
     // OPERATIONAL ROUTES - /panel/documents
     // ====================================================================
-    Route::prefix('panel/documents')->name('documents.')->group(function () {
+    // 29-sep-2026: todo el panel de expedientes exige el permiso del módulo
+    // (antes show/summary/manage/upload solo pedían estar logueado).
+    Route::prefix('panel/documents')->name('documents.')->middleware('can:view-documents-panel')->group(function () {
+        // Ficheros de expedientes (disco privado documents_private). Es la URL
+        // que devuelve $media->getUrl() para ese disco.
+        Route::get('/media/{media}/{path?}', [DocumentMediaController::class, 'panel'])
+            ->where('media', '[0-9]+')
+            ->where('path', '.*')
+            ->name('media');
+
         // Listing routes
         Route::get('/', [DocumentsController::class, 'index'])->name('index');
         Route::get('/pending', [DocumentsController::class, 'pending'])->name('pending');
@@ -199,3 +209,11 @@ Route::middleware(['web', 'auth'])->group(function () {
         });
 
 });
+
+// 29-sep-2026: ficheros de expedientes por URL firmada y temporal (agentes del
+// helpdesk que no tienen el permiso del panel de Documentos). La URL se genera
+// solo tras autorizar al usuario (DocumentMediaFiles::signedUrl()).
+Route::middleware(['web', 'signed', 'throttle:120,1'])
+    ->get('documents/media/{media}', [DocumentMediaController::class, 'signed'])
+    ->where('media', '[0-9]+')
+    ->name('documents.media.signed');

@@ -11,7 +11,10 @@ use Modules\PriceLabels\Models\PriceLabelTemplate;
 
 class PriceLabelGenerationService
 {
-    private const DISK = 'public';
+    // 29-sep-2026: disco privado. Los PDF (nombre predecible por fecha) y los
+    // Excel subidos se servian sin login desde /storage; ahora solo se
+    // descargan por PriceLabelGenerationController (con policy).
+    public const DISK = 'local';
 
     private const FOLDER = 'pricelabels/generated';
 
@@ -37,8 +40,9 @@ class PriceLabelGenerationService
 
     public function markCompleted(PriceLabelGeneration $generation, int $rowsCount, ?array $sampleRow, string $pdfContent): void
     {
+        // file_name es solo el nombre de descarga; en disco va un uuid.
         $fileName = 'etiquetas-'.$generation->type.'-'.now()->format('Ymd_His').'.pdf';
-        $path = self::FOLDER.'/'.$fileName;
+        $path = self::FOLDER.'/'.Str::uuid().'.pdf';
 
         Storage::disk(self::DISK)->put($path, $pdfContent);
 
@@ -102,7 +106,10 @@ class PriceLabelGenerationService
             return null;
         }
 
-        $newPath = self::UPLOADS_FOLDER.'/'.Str::uuid().'.xlsx';
+        // Se conserva la extension del Excel original (la genero store() por
+        // contenido): el lector elige el formato por la extension.
+        $extension = pathinfo($generation->source_excel_path, PATHINFO_EXTENSION) ?: 'xlsx';
+        $newPath = self::UPLOADS_FOLDER.'/'.Str::uuid().'.'.$extension;
         Storage::disk(self::DISK)->copy($generation->source_excel_path, $newPath);
 
         return $this->createPending($template, $generation->type, $newPath);

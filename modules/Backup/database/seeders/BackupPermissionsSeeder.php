@@ -15,6 +15,7 @@ class BackupPermissionsSeeder extends Seeder
 
         $permissions = [
             'Backup.backups.index' => 'Ver backups',
+            'Backup.backups.create' => 'Lanzar backups',
             'Backup.backups.download' => 'Descargar backups',
             'Backup.backups.delete' => 'Eliminar backups',
             'Backup.schedules.index' => 'Ver programaciones de backup',

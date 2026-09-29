@@ -6,6 +6,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Auth\Console\Commands\IpFilterCommand;
 use Modules\Auth\Console\Commands\PruneAuthLogsCommand;
 use Modules\Auth\Events\ImpersonationStarted;
 use Modules\Auth\Events\LoginFailed;
@@ -27,12 +30,16 @@ use Modules\Auth\Http\Middleware\AddRateLimitHeaders;
 use Modules\Auth\Http\Middleware\CheckPasswordExpired;
 use Modules\Auth\Http\Middleware\CheckSessionLock;
 use Modules\Auth\Http\Middleware\DenyWhenImpersonating;
+use Modules\Auth\Http\Middleware\RequireTwoFactorForPrivilegedRoles;
+use Modules\Auth\Http\Middleware\RestrictStaffAccessByIp;
 use Modules\Auth\Listeners\LogLoginActivity;
 use Modules\Auth\Listeners\LogLoginFailure;
 use Modules\Auth\Listeners\LogTwoFactorActivity;
 use Modules\Auth\Listeners\NotifyImpersonated;
 use Modules\Auth\Listeners\RecordPasswordChange;
 use Modules\Auth\Listeners\SendNewDeviceAlert;
+use Modules\Auth\Services\StaffIpAllowlist;
+use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -94,6 +101,8 @@ class AuthServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        $this->app->scoped(StaffIpAllowlist::class);
+
         $this->mergeConfigFrom(
             __DIR__.'/../../config/verification.php',
             'verification'
@@ -132,8 +141,9 @@ class AuthServiceProvider extends ServiceProvider
         // Lock screen + impersonation (requires auth)
         Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/lock', [LockScreenController::class, 'show'])->name('auth.lock');
-            Route::post('/lock/unlock', [LockScreenController::class, 'unlock'])->name('auth.lock.unlock');
-            Route::post('/lock', [LockScreenController::class, 'lock'])->name('auth.lock.lock');
+            // throttle (29-sep-2026): sin él, una sesión robada permitía fuerza bruta de la contraseña.
+            Route::post('/lock/unlock', [LockScreenController::class, 'unlock'])->name('auth.lock.unlock')->middleware('throttle:5,1');
+            Route::post('/lock', [LockScreenController::class, 'lock'])->name('auth.lock.lock')->middleware('throttle:30,1');
 
             // stop must be before {user} to avoid wildcard capture
             Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])
@@ -164,7 +174,19 @@ class AuthServiceProvider extends ServiceProvider
             });
     }
 
-    protected function registerMenus(): void {}
+    /**
+     * Entradas del módulo en el menú lateral de configuración. Cada una usa el
+     * mismo permiso que su controlador, así que solo la ve quien puede abrirla.
+     */
+    protected function registerMenus(): void
+    {
+        NavService::addItemsToSection('settings', 'Seguridad y acceso', [
+            ['label' => 'Configuración de seguridad', 'route' => 'settings.security.config', 'permission' => 'security.config.manage'],
+            ['label' => 'Acceso al panel por IP', 'route' => 'settings.auth.ip-filter', 'permission' => 'auth.ip-filter.manage'],
+            ['label' => 'Intentos de login', 'route' => 'settings.auth.audit.login-attempts', 'permission' => 'auth.audit.view'],
+            ['label' => 'Suplantaciones', 'route' => 'settings.auth.audit.impersonations', 'permission' => 'auth.audit.view'],
+        ]);
+    }
 
     protected function registerEvents(): void
     {
@@ -202,6 +224,9 @@ class AuthServiceProvider extends ServiceProvider
          * se aplican a este rol, que antes las saltaba.
          */
         Gate::define('viewAudit', fn ($user) => $user->can('auth.audit.view'));
+        // Solo super-admin gestiona las redes permitidas (mismo criterio que
+        // StaffIpFilterController); se usa también para mostrar el menú.
+        Gate::define('auth.ip-filter.manage', fn ($user) => $user->hasRole('super-admin'));
     }
 
     /**
@@ -226,6 +251,32 @@ class AuthServiceProvider extends ServiceProvider
         $router->aliasMiddleware('auth.session.lock', CheckSessionLock::class);
         $router->aliasMiddleware('auth.deny-impersonating', DenyWhenImpersonating::class);
         $router->aliasMiddleware('auth.password.expired', CheckPasswordExpired::class);
+        $router->aliasMiddleware('auth.require-2fa', RequireTwoFactorForPrivilegedRoles::class);
+        $router->aliasMiddleware('auth.staff-ip', RestrictStaffAccessByIp::class);
+
+        // Filtro por IP del personal (29-sep-2026): se añade al final de los grupos
+        // `web` y `api` (tras StartSession) y el propio middleware solo actúa en las
+        // rutas de auth-policy.staff_ip_filter.web_paths/api_paths (login, 2FA,
+        // recuperación, /panel/*, /impersonate/*, /broadcasting/auth, /api/auth/*).
+        // Portal, widget, webhooks, /api/documents, /api/erp, /app y /up no se tocan.
+        // Se añade en el Kernel HTTP (no solo en el router): el Kernel re-sincroniza
+        // sus grupos con el router al resolverse y borraría un push hecho solo ahí.
+        $this->callAfterResolving(HttpKernel::class, function ($kernel) {
+            foreach (['web', 'api'] as $group) {
+                try {
+                    $kernel->appendMiddlewareToGroup($group, RestrictStaffAccessByIp::class);
+                } catch (\InvalidArgumentException) {
+                    // Grupo no definido (p. ej. consola sin Kernel HTTP configurado).
+                }
+            }
+
+            // Antes de `auth`: si no, la prioridad de middleware ejecuta Authenticate
+            // primero y una petición sin sesión de fuera se redirige sin registrarse.
+            $kernel->addToMiddlewarePriorityBefore(AuthenticatesRequests::class, RestrictStaffAccessByIp::class);
+        });
+
+        // EnforceImpersonationTimeout, CheckPasswordExpired y RequireTwoFactorForPrivilegedRoles
+        // van además en el grupo `web` (bootstrap/app.php) para cubrir todo el panel.
     }
 
     protected function registerCommands(): void
@@ -233,6 +284,7 @@ class AuthServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 PruneAuthLogsCommand::class,
+                IpFilterCommand::class,
             ]);
         }
     }

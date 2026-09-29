@@ -310,18 +310,19 @@ class CreateBackupJob implements ShouldBeUnique, ShouldQueue
                 '-h', $dbHost,
                 '-P', (string) $dbPort,
                 '-u', $dbUser,
-                '-p'.($dbPass ?? ''),
                 $dbName,
             ];
 
-            $env = array_merge($_ENV, ['MYSQL_PWD' => $dbPass ?? '']);
-            $cmdStr = implode(' ', array_map('escapeshellarg', $command));
+            // 29-sep-2026: la contraseña ya no va en argv (visible en `ps` para
+            // cualquier usuario local) ni en el log: solo por MYSQL_PWD en el
+            // entorno del proceso. Comando como array: sin shell intermedio.
+            $env = array_merge(getenv() ?: [], $_ENV, ['MYSQL_PWD' => (string) ($dbPass ?? '')]);
 
-            Log::info('Executing mysqldump command: '.substr($cmdStr, 0, 100).'...');
+            Log::info('Executing mysqldump', ['database' => $dbName, 'host' => $dbHost]);
 
             $pipes = [];
             $process = proc_open(
-                $cmdStr,
+                $command,
                 [
                     0 => ['pipe', 'r'],
                     1 => ['pipe', 'w'],

@@ -50,6 +50,17 @@ if (! function_exists('media_human_size')) {
     }
 }
 
+if (! function_exists('media_indirect_hash')) {
+    /**
+     * Token de la URL indirecta media/files/{hash}/{id}.
+     * 29-sep-2026: HMAC con clave (antes sha1($id), calculable por cualquiera).
+     */
+    function media_indirect_hash(int|string $id): string
+    {
+        return hash_hmac('sha256', 'media-indirect:'.$id, (string) config('app.key'));
+    }
+}
+
 if (! function_exists('media')) {
     /**
      * Get the public URL for a MediaFile by id.
@@ -74,7 +85,7 @@ if (! function_exists('media')) {
         }
 
         return route('media.indirect.url', [
-            'hash' => hash('sha256', (string) $file->id.config('app.key')),
+            'hash' => media_indirect_hash($file->id),
             'id' => $file->id,
         ]);
     }

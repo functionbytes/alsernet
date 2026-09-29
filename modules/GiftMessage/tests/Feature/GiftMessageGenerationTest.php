@@ -57,6 +57,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_generating_envelope_pdf_records_it_in_history(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $backgroundPath = UploadedFile::fake()->image('envelope-bg.jpg')->store('giftmessage/images', 'public');
         GiftMessageConfig::current()->update(['envelope_image' => $backgroundPath]);
@@ -83,7 +84,7 @@ class GiftMessageGenerationTest extends TestCase
         ]);
 
         $generation = GiftMessageGeneration::query()->latest()->first();
-        Storage::disk('public')->assertExists($generation->file_path);
+        Storage::disk('local')->assertExists($generation->file_path);
     }
 
     public function test_envelope_pdf_prints_the_gift_message_and_not_the_recipient_name(): void
@@ -93,6 +94,7 @@ class GiftMessageGenerationTest extends TestCase
         GiftMessageConfig::current()->update(['env_t1_content' => 'message']);
 
         Storage::fake('public');
+        Storage::fake('local');
 
         $captured = null;
         View::composer('giftmessage::pdf.page', function ($view) use (&$captured) {
@@ -125,6 +127,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_envelope_pdf_uses_the_envelope_config_columns_not_the_card_ones(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         GiftMessageConfig::current()->update([
             'env_t1_y' => 10, 'env_t1_size' => 30, 'env_t1_font' => 'times',
@@ -160,6 +163,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_pdf_boxes_use_the_configured_width_and_height(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         GiftMessageConfig::current()->update([
             'env_t1_x' => 10, 'env_t1_y' => 20, 'env_t1_w' => 50, 'env_t1_h' => 30,
@@ -194,6 +198,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_t2_prints_the_erp_npedidocli_and_not_the_gestion_id(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $captured = null;
         View::composer('giftmessage::pdf.page', function ($view) use (&$captured) {
@@ -220,6 +225,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_pdf_receives_the_configured_color_and_opacity(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         GiftMessageConfig::current()->update([
             'env_t1_color' => '#90bb13',
@@ -256,6 +262,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_pdf_falls_back_to_black_when_the_stored_color_is_invalid(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         GiftMessageConfig::current()->update(['env_t1_color' => 'roto']);
 
@@ -284,6 +291,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_generating_card_pdf_with_emoji_message_does_not_fail(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         Http::fake(['*' => Http::response(str_repeat('x', 200), 200)]);
 
         $response = $this->actingAs($this->admin)
@@ -305,6 +313,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_generating_card_pdf_does_not_fail_when_the_twemoji_cdn_is_unreachable(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         Http::fake(fn () => throw new ConnectionException('cdnjs unreachable'));
 
         $response = $this->actingAs($this->admin)
@@ -354,7 +363,8 @@ class GiftMessageGenerationTest extends TestCase
     public function test_download_serves_the_stored_pdf(): void
     {
         Storage::fake('public');
-        Storage::disk('public')->put('giftmessage/generated/test.pdf', '%PDF-1.7 fake content');
+        Storage::fake('local');
+        Storage::disk('local')->put('giftmessage/generated/test.pdf', '%PDF-1.7 fake content');
 
         $generation = GiftMessageGeneration::factory()->create([
             'file_path' => 'giftmessage/generated/test.pdf',
@@ -369,7 +379,8 @@ class GiftMessageGenerationTest extends TestCase
     public function test_view_serves_the_stored_pdf_inline(): void
     {
         Storage::fake('public');
-        Storage::disk('public')->put('giftmessage/generated/test.pdf', '%PDF-1.7 fake content');
+        Storage::fake('local');
+        Storage::disk('local')->put('giftmessage/generated/test.pdf', '%PDF-1.7 fake content');
 
         $generation = GiftMessageGeneration::factory()->create([
             'file_path' => 'giftmessage/generated/test.pdf',
@@ -387,7 +398,8 @@ class GiftMessageGenerationTest extends TestCase
     public function test_destroy_removes_row_and_file(): void
     {
         Storage::fake('public');
-        Storage::disk('public')->put('giftmessage/generated/test.pdf', 'fake content');
+        Storage::fake('local');
+        Storage::disk('local')->put('giftmessage/generated/test.pdf', 'fake content');
 
         $generation = GiftMessageGeneration::factory()->create([
             'file_path' => 'giftmessage/generated/test.pdf',
@@ -398,16 +410,17 @@ class GiftMessageGenerationTest extends TestCase
             ->assertRedirect(route('giftmessage.history.index'));
 
         $this->assertDatabaseMissing('gift_message_generations', ['id' => $generation->id]);
-        Storage::disk('public')->assertMissing('giftmessage/generated/test.pdf');
+        Storage::disk('local')->assertMissing('giftmessage/generated/test.pdf');
     }
 
     public function test_bulk_delete_removes_multiple_generations(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $generations = GiftMessageGeneration::factory()->count(2)->create();
         foreach ($generations as $generation) {
-            Storage::disk('public')->put($generation->file_path, 'fake content');
+            Storage::disk('local')->put($generation->file_path, 'fake content');
         }
 
         $this->actingAs($this->admin)
@@ -426,9 +439,10 @@ class GiftMessageGenerationTest extends TestCase
     public function test_bulk_delete_ignores_ids_that_no_longer_exist(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $generation = GiftMessageGeneration::factory()->create();
-        Storage::disk('public')->put($generation->file_path, 'fake content');
+        Storage::disk('local')->put($generation->file_path, 'fake content');
 
         // Un id ya borrado (por otro usuario, con el listado abierto) no puede
         // tumbar la seleccion entera: se ignora y el resto se borra igual.
@@ -446,6 +460,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_regenerating_one_order_creates_a_single_page_pdf(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $generation = GiftMessageGeneration::factory()->card()->create([
             'rows_count' => 2,
@@ -476,12 +491,13 @@ class GiftMessageGenerationTest extends TestCase
     public function test_generating_again_replaces_the_previous_pdf_of_the_same_order(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $previous = GiftMessageGeneration::factory()->envelope()->create([
             'rows_count' => 1,
             'order_numbers' => ['41234'],
         ]);
-        Storage::disk('public')->put($previous->file_path, 'pdf viejo');
+        Storage::disk('local')->put($previous->file_path, 'pdf viejo');
 
         $this->actingAs($this->admin)
             ->postJson(route('giftmessage.generate'), [
@@ -493,12 +509,13 @@ class GiftMessageGenerationTest extends TestCase
         // El anterior desaparece con su fichero: no se acumulan "Ver sobre"
         // repetidos en el listado de pedidos.
         $this->assertDatabaseMissing('gift_message_generations', ['id' => $previous->id]);
-        Storage::disk('public')->assertMissing($previous->file_path);
+        Storage::disk('local')->assertMissing($previous->file_path);
     }
 
     public function test_regenerating_one_order_keeps_the_batch_it_belonged_to(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         // Un lote con tres pedidos es la unica copia de los otros dos, asi que
         // rehacer uno suelto no puede llevarselo por delante.
@@ -506,7 +523,7 @@ class GiftMessageGenerationTest extends TestCase
             'rows_count' => 3,
             'order_numbers' => ['41234', '41235', '41236'],
         ]);
-        Storage::disk('public')->put($batch->file_path, 'pdf del lote');
+        Storage::disk('local')->put($batch->file_path, 'pdf del lote');
 
         $otherType = GiftMessageGeneration::factory()->card()->create([
             'rows_count' => 1,
@@ -521,7 +538,7 @@ class GiftMessageGenerationTest extends TestCase
             ->assertOk();
 
         $this->assertDatabaseHas('gift_message_generations', ['id' => $batch->id]);
-        Storage::disk('public')->assertExists($batch->file_path);
+        Storage::disk('local')->assertExists($batch->file_path);
 
         // Y la tarjeta del mismo pedido tampoco: solo se reemplaza el mismo tipo.
         $this->assertDatabaseHas('gift_message_generations', ['id' => $otherType->id]);
@@ -571,6 +588,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_regenerating_an_old_generation_falls_back_to_the_bridge(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         Config::set('giftmessage.bridge_url', 'https://ps.test/modules/alsernetbridge/api.php');
         Config::set('giftmessage.bridge_secret', 'test-secret');
 
@@ -634,6 +652,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_generation_reports_messages_that_do_not_fit(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         GiftMessageConfig::current()->update(['card_t1_size' => 14, 'card_t1_w' => 71.64, 'card_t1_h' => 55.71, 'min_font_size' => 7]);
 
         $response = $this->actingAs($this->admin)
@@ -744,6 +763,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_the_file_name_says_the_order_and_the_piece(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $service = app(GiftMessageGenerationService::class);
 
@@ -763,6 +783,7 @@ class GiftMessageGenerationTest extends TestCase
     public function test_regenerating_does_not_delete_the_file_it_just_wrote(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $service = app(GiftMessageGenerationService::class);
 
@@ -772,13 +793,14 @@ class GiftMessageGenerationTest extends TestCase
         // Mismo nombre de fichero para el mismo pedido y pieza: si se borrara la
         // anterior DESPUES de escribir, el PDF recien creado desapareceria.
         $this->assertDatabaseMissing('gift_message_generations', ['id' => $primera->id]);
-        Storage::disk('public')->assertExists($segunda->file_path);
-        $this->assertSame('pdf nuevo', Storage::disk('public')->get($segunda->file_path));
+        Storage::disk('local')->assertExists($segunda->file_path);
+        $this->assertSame('pdf nuevo', Storage::disk('local')->get($segunda->file_path));
     }
 
     public function test_generate_returns_a_download_url(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $this->actingAs($this->admin)
             ->postJson(route('giftmessage.generate'), [
@@ -872,20 +894,21 @@ class GiftMessageGenerationTest extends TestCase
     public function test_prune_command_deletes_only_old_generations(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
 
         $old = GiftMessageGeneration::factory()->create(['file_path' => 'giftmessage/generated/old.pdf']);
         $old->created_at = now()->subDays(100);
         $old->save();
-        Storage::disk('public')->put($old->file_path, 'old content');
+        Storage::disk('local')->put($old->file_path, 'old content');
 
         $recent = GiftMessageGeneration::factory()->create(['file_path' => 'giftmessage/generated/recent.pdf']);
-        Storage::disk('public')->put($recent->file_path, 'recent content');
+        Storage::disk('local')->put($recent->file_path, 'recent content');
 
         $this->artisan('giftmessage:prune-generations')->assertSuccessful();
 
         $this->assertDatabaseMissing('gift_message_generations', ['id' => $old->id]);
         $this->assertDatabaseHas('gift_message_generations', ['id' => $recent->id]);
-        Storage::disk('public')->assertMissing($old->file_path);
-        Storage::disk('public')->assertExists($recent->file_path);
+        Storage::disk('local')->assertMissing($old->file_path);
+        Storage::disk('local')->assertExists($recent->file_path);
     }
 }

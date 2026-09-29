@@ -101,7 +101,7 @@
                             <div class="card-body">
                                 <label class="form-label fw-semibold small text-muted">Descripción larga</label>
                                 <div class="border rounded p-3 bg-light" style="max-height:300px;overflow-y:auto;font-size:.875rem">
-                                    {!! $latestContent->long_description !!}
+                                    {!! \Modules\Supplier\Helpers\HtmlSanitizer::clean($latestContent->long_description) !!}
                                 </div>
                             </div>
                         @endif

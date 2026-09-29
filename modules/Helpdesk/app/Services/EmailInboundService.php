@@ -134,7 +134,8 @@ class EmailInboundService
         $conversation = Conversation::create([
             'customer_id' => $customerId,
             'channel' => 'email',
-            'subject' => $subject ?: 'Email sin asunto',
+            // strip_tags (29-sep-2026): el asunto viene del remitente y se muestra en notificaciones.
+            'subject' => trim(strip_tags($subject)) ?: 'Email sin asunto',
             'last_message_at' => now(),
         ]);
         $conversation->status_id = $statusId;
