@@ -13,6 +13,7 @@ use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
 use Modules\Helpdesk\Services\AI\SentimentService;
 use Modules\Helpdesk\Services\WhatsAppHsmService;
+use Modules\HelpdeskChatFlow\Console\Commands\ChatFlowReadinessCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\ExpireInactiveSessionsCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\LaunchOutboundFlowCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\PollAbandonedCartsCommand;
@@ -71,6 +72,7 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
         $this->registerPolicies();
         $this->registerConfig();
         $this->registerViews();
+        $this->registerTranslations();
         $this->registerRoutes();
         $this->registerListeners();
         $this->registerMenus();
@@ -90,6 +92,7 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
                 PollAbandonedCartsCommand::class,
                 PruneEndedSessionsCommand::class,
                 RunChatFlowTestCasesCommand::class,
+                ChatFlowReadinessCommand::class,
             ]);
         }
 
@@ -254,6 +257,11 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
             $this->publishes([$configPath => config_path($this->moduleNameLower.'.php')], 'config');
             $this->mergeConfigFrom($configPath, $this->moduleNameLower);
         }
+    }
+
+    protected function registerTranslations(): void
+    {
+        $this->loadTranslationsFrom(module_path($this->moduleName, 'lang'), $this->moduleNameLower);
     }
 
     protected function registerViews(): void

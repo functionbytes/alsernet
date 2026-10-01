@@ -52,6 +52,9 @@ class ImportChatFlowRequest extends FormRequest
             // the engine reads (keywords, timeouts, A/B config, toggles…).
             'flow.trigger_conditions' => ['nullable', 'array'],
             'flow.trigger_conditions.keywords' => ['sometimes', 'array'],
+            'flow.trigger_conditions.rollout_percent' => ['sometimes', 'integer', 'min:0', 'max:100'],
+            'flow.trigger_conditions.inbox_ids' => ['sometimes', 'array'],
+            'flow.trigger_conditions.inbox_ids.*' => ['integer'],
             'flow.trigger_conditions.keywords.*' => ['string', 'max:100'],
             'flow.trigger_conditions.timeout_minutes' => ['sometimes', 'integer', 'min:1', 'max:1440'],
             'flow.trigger_conditions.multilingual' => ['sometimes', 'boolean'],

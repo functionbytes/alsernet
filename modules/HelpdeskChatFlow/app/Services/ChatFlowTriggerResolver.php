@@ -33,10 +33,15 @@ class ChatFlowTriggerResolver
             ->orderByDesc('priority')
             ->orderBy('id');
 
+        // Gradual rollout: only flows whose rollout/inbox allowlist admits this
+        // conversation compete; the rest of the traffic follows the normal path.
+        $candidates = $query->get()
+            ->filter(fn (ChatFlow $flow) => $this->isInRollout($flow, $conversation))
+            ->values();
+
         $message = isset($context['message']) ? trim((string) $context['message']) : '';
 
         if ($triggerType === 'keyword' && isset($context['message'])) {
-            $candidates = $query->get();
 
             // Exact keyword (substring) match always wins and keeps its priority order.
             $matched = $candidates->first(fn (ChatFlow $flow) => $this->matchesKeyword($flow, $message));
@@ -57,10 +62,76 @@ class ChatFlowTriggerResolver
         if (in_array($triggerType, ['intent', 'nlu'], true) && $message !== '') {
             // Sin coincidencia clara no se devuelve ningún flujo: caer al primero por
             // prioridad lanzaría un flujo "intent" ante cualquier mensaje.
-            return $this->resolveByIntent($query->get(), $message, requireOptIn: false);
+            return $this->resolveByIntent($candidates, $message, requireOptIn: false);
         }
 
-        return $query->first();
+        return $candidates->first();
+    }
+
+    /**
+     * Rollout percentage of a flow (0-100). Absent or invalid = 100.
+     */
+    public static function rolloutPercent(ChatFlow $flow): int
+    {
+        $value = ($flow->trigger_conditions ?? [])['rollout_percent'] ?? null;
+
+        if ($value === null || $value === '' || ! is_numeric($value)) {
+            return 100;
+        }
+
+        return max(0, min(100, (int) $value));
+    }
+
+    /**
+     * Optional inbox allowlist (trigger_conditions.inbox_ids). Empty = any inbox.
+     *
+     * @return array<int, int>
+     */
+    public static function allowedInboxIds(ChatFlow $flow): array
+    {
+        $ids = ($flow->trigger_conditions ?? [])['inbox_ids'] ?? [];
+
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_map('intval', array_filter($ids, 'is_numeric')));
+    }
+
+    /**
+     * Whether the conversation falls inside the flow's gradual rollout.
+     *
+     * The bucket is a deterministic hash of conversation id + flow id, so a
+     * conversation always gets the same answer (no flapping between messages).
+     * It is salted so it does not correlate with the A/B split bucket.
+     */
+    public function isInRollout(ChatFlow $flow, Conversation $conversation): bool
+    {
+        $inboxIds = self::allowedInboxIds($flow);
+
+        if ($inboxIds !== [] && ! in_array((int) $conversation->inbox_id, $inboxIds, true)) {
+            return false;
+        }
+
+        $percent = self::rolloutPercent($flow);
+
+        if ($percent >= 100) {
+            return true;
+        }
+
+        if ($percent <= 0) {
+            return false;
+        }
+
+        return self::rolloutBucket($flow, $conversation) < $percent;
+    }
+
+    /**
+     * Bucket 0-99 of a conversation for a flow.
+     */
+    public static function rolloutBucket(ChatFlow $flow, Conversation $conversation): int
+    {
+        return crc32('rollout:'.$flow->id.':'.$conversation->id) % 100;
     }
 
     private function matchesKeyword(ChatFlow $flow, string $message): bool
