@@ -18,10 +18,15 @@ use Modules\Helpdesk\Services\OutboundMessageService;
  */
 class BotMessageDispatcher
 {
+    private readonly ChatFlowCardDelivery $cards;
+
     public function __construct(
         private readonly OutboundMessageService $outbound,
         private readonly ChatFlowHsmDelivery $hsm,
-    ) {}
+        ?ChatFlowCardDelivery $cards = null,
+    ) {
+        $this->cards = $cards ?? app(ChatFlowCardDelivery::class);
+    }
 
     public function deliver(Conversation $conversation, ConversationItem $item): void
     {
@@ -68,12 +73,12 @@ class BotMessageDispatcher
 
         $body = trim((string) ($item->body ?? ''));
 
-        // Carousel of product cards → native per channel (Messenger template,
-        // WhatsApp/Instagram image cards). On success we're done; otherwise we
+        // Cards (with optional per-card button) → see ChatFlowCardDelivery for the
+        // per-channel format. On success we're done; otherwise we
         // fall through to the numbered text body, which lists the same cards.
         $cards = $meta['cards'] ?? [];
         if (! empty($cards) && is_array($cards)) {
-            $delivered = $this->outbound->sendCarousel($conversation, $cards) !== null;
+            $delivered = $this->cards->send($conversation, $cards) !== null;
             $options = $meta['bot_options'] ?? [];
 
             if ($delivered) {

@@ -86,6 +86,8 @@ export interface BotCard {
     subtitle?: string;
     image_url?: string;
     url?: string;
+    /** Con url: muestra un botón (en vez de enlazar toda la tarjeta). */
+    button_label?: string;
 }
 
 export interface Message {
@@ -123,6 +125,7 @@ function parseBotExtras(src: any): Pick<Message, 'options' | 'prompt' | 'cards'>
                 subtitle: typeof c.subtitle === 'string' ? c.subtitle : undefined,
                 image_url: typeof c.image_url === 'string' && /^https?:\/\//i.test(c.image_url) ? c.image_url : undefined,
                 url: typeof c.url === 'string' && /^https?:\/\//i.test(c.url) ? c.url : undefined,
+                button_label: typeof c.button_label === 'string' && c.button_label.trim() !== '' ? c.button_label.trim().slice(0, 40) : undefined,
             }))
         : [];
     return {

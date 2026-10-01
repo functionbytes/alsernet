@@ -80,6 +80,22 @@ class AiActionCatalogSeeder extends Seeder
 
         return [
             [
+                'key' => 'consultar_pedido',
+                'name' => 'Consultar el estado de un pedido',
+                'description' => 'Consulta un pedido del cliente: estado, transportista y seguimiento, fechas y total. Necesita el número de pedido y, si el cliente no está identificado, el email de la compra. Es el puente para los procedimientos de ChatFlow (lookup_order no es una acción del catálogo).',
+                'parameters' => [],
+                'config' => ['action' => 'order.detail', 'payload' => ['order_id' => '{{order.id}}']],
+                'response' => [
+                    'fields' => [
+                        'reference', 'state_name', 'created_at', 'expected_date', 'currency', 'totals.total',
+                        'tracking.*.carrier_name', 'tracking.*.tracking_number', 'tracking.*.tracking_url', 'tracking.*.date',
+                    ],
+                    'max_chars' => 1200,
+                    'empty_message' => 'No hay información de ese pedido.',
+                ],
+                'rules' => $order,
+            ],
+            [
                 'key' => 'documentos_pedido',
                 'name' => 'Facturas y albaranes de un pedido',
                 'description' => 'Indica qué facturas y albaranes tiene emitidos un pedido del cliente (número y fecha de cada uno). No devuelve el PDF ni enlaces de descarga. Necesita el número de pedido.',

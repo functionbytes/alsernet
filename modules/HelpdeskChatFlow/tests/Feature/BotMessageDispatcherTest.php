@@ -6,8 +6,10 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Services\FacebookMessengerService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\HelpdeskChatFlow\Services\BotMessageDispatcher;
+use Modules\HelpdeskChatFlow\Services\ChatFlowCardDelivery;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHsmDelivery;
 use Modules\HelpdeskChatFlow\Tests\TestCase;
 
@@ -19,14 +21,16 @@ class BotMessageDispatcherTest extends TestCase
      * Build a dispatcher whose HSM delivery is inert by default (no template),
      * so existing tests exercise the normal text/carousel paths.
      */
-    private function dispatcher(OutboundMessageService $outbound, ?ChatFlowHsmDelivery $hsm = null): BotMessageDispatcher
+    private function dispatcher(OutboundMessageService $outbound, ?ChatFlowHsmDelivery $hsm = null, ?FacebookMessengerService $facebook = null): BotMessageDispatcher
     {
         if ($hsm === null) {
             $hsm = Mockery::mock(ChatFlowHsmDelivery::class);
             $hsm->shouldReceive('shouldUseTemplate')->andReturn(false);
         }
 
-        return new BotMessageDispatcher($outbound, $hsm);
+        $facebook ??= Mockery::mock(FacebookMessengerService::class);
+
+        return new BotMessageDispatcher($outbound, $hsm, new ChatFlowCardDelivery($outbound, $facebook));
     }
 
     private function conversation(string $channel = 'whatsapp'): Conversation
@@ -107,41 +111,124 @@ class BotMessageDispatcherTest extends TestCase
         $this->dispatcher($outbound)->deliver($conversation, $item);
     }
 
-    public function test_sends_carousel_natively_without_text_fallback(): void
+    public function test_messenger_cards_go_as_generic_template_with_web_url_button(): void
     {
         $conversation = $this->conversation('facebook');
         $cards = [
-            ['title' => 'Camisa', 'subtitle' => '29,90 €', 'image_url' => 'https://cdn/1.jpg'],
-            ['title' => 'Pantalón', 'subtitle' => '39,90 €', 'image_url' => 'https://cdn/2.jpg'],
+            ['title' => 'Camisa', 'subtitle' => '29,90 €', 'image_url' => 'https://cdn/1.jpg', 'url' => 'https://shop/1', 'button_label' => 'Comprar'],
+            ['title' => 'Pantalón', 'url' => 'https://shop/2'],
+            ['title' => 'Sin enlace'],
         ];
         $item = $this->item("Productos\n1. Camisa\n2. Pantalón", ['cards' => $cards]);
 
         $outbound = Mockery::mock(OutboundMessageService::class);
         $outbound->shouldReceive('supports')->once()->andReturn(true);
         $outbound->shouldReceive('setTyping')->andReturn(true);
-        $outbound->shouldReceive('sendCarousel')->once()->with($conversation, $cards)->andReturn('mid.car');
-        // Native carousel delivered (no selection options) → no extra text.
         $outbound->shouldNotReceive('sendReply');
 
-        $this->dispatcher($outbound)->deliver($conversation, $item);
+        $facebook = Mockery::mock(FacebookMessengerService::class);
+        $facebook->shouldReceive('sendGenericTemplate')->once()->with('34600111222', [
+            [
+                'title' => 'Camisa',
+                'subtitle' => '29,90 €',
+                'image_url' => 'https://cdn/1.jpg',
+                'buttons' => [['type' => 'web_url', 'url' => 'https://shop/1', 'title' => 'Comprar']],
+            ],
+            [
+                'title' => 'Pantalón',
+                'buttons' => [['type' => 'web_url', 'url' => 'https://shop/2', 'title' => 'Ver']],
+            ],
+            ['title' => 'Sin enlace'],
+        ])->andReturn('mid.car');
+
+        $this->dispatcher($outbound, null, $facebook)->deliver($conversation, $item);
     }
 
-    public function test_carousel_falls_back_to_numbered_text_when_unavailable(): void
+    public function test_whatsapp_cards_send_image_with_caption_and_link_as_text(): void
     {
         $conversation = $this->conversation('whatsapp');
-        $cards = [['title' => 'Camisa'], ['title' => 'Pantalón']];
+        $cards = [
+            ['title' => 'Camisa', 'subtitle' => '29,90 €', 'image_url' => 'https://cdn/1.jpg', 'url' => 'https://shop/1', 'button_label' => 'Comprar'],
+            ['title' => 'Pantalón', 'url' => 'https://shop/2'],
+        ];
         $item = $this->item("Productos\n1. Camisa\n2. Pantalón", ['cards' => $cards]);
 
         $outbound = Mockery::mock(OutboundMessageService::class);
         $outbound->shouldReceive('supports')->once()->andReturn(true);
         $outbound->shouldReceive('setTyping')->andReturn(true);
-        $outbound->shouldReceive('sendCarousel')->once()->andReturn(null); // channel can't render
-        $outbound->shouldReceive('sendReply')
-            ->once()
+        $outbound->shouldReceive('sendAttachment')->once()
+            ->with($conversation, 'image', 'https://cdn/1.jpg', "Camisa\n29,90 €\n👉 Comprar: https://shop/1")
+            ->andReturn('wamid.1');
+        $outbound->shouldReceive('sendReply')->once()
+            ->with($conversation, "Pantalón\n👉 https://shop/2")
+            ->andReturn('wamid.2');
+
+        $this->dispatcher($outbound)->deliver($conversation, $item);
+    }
+
+    public function test_instagram_cards_send_image_then_text_with_link(): void
+    {
+        $conversation = $this->conversation('instagram');
+        $cards = [['title' => 'Camisa', 'image_url' => 'https://cdn/1.jpg', 'url' => 'https://shop/1']];
+        $item = $this->item('Camisa', ['cards' => $cards]);
+
+        $outbound = Mockery::mock(OutboundMessageService::class);
+        $outbound->shouldReceive('supports')->once()->andReturn(true);
+        $outbound->shouldReceive('setTyping')->andReturn(true);
+        $outbound->shouldReceive('sendAttachment')->once()->with($conversation, 'image', 'https://cdn/1.jpg')->andReturn('mid.img');
+        $outbound->shouldReceive('sendReply')->once()->with($conversation, "Camisa\n👉 https://shop/1")->andReturn('mid.txt');
+
+        $this->dispatcher($outbound)->deliver($conversation, $item);
+    }
+
+    public function test_cards_send_prompt_when_node_also_expects_a_selection(): void
+    {
+        $conversation = $this->conversation('whatsapp');
+        $item = $this->item('Elige uno', [
+            'cards' => [['title' => 'Camisa', 'url' => 'https://shop/1']],
+            'bot_options' => ['Camisa'],
+        ]);
+
+        $outbound = Mockery::mock(OutboundMessageService::class);
+        $outbound->shouldReceive('supports')->once()->andReturn(true);
+        $outbound->shouldReceive('setTyping')->andReturn(true);
+        $outbound->shouldReceive('sendReply')->once()->with($conversation, "Camisa\n👉 https://shop/1")->andReturn('wamid.1');
+        $outbound->shouldReceive('sendReply')->once()->with($conversation, 'Elige uno')->andReturn('wamid.2');
+
+        $this->dispatcher($outbound)->deliver($conversation, $item);
+    }
+
+    public function test_carousel_falls_back_to_numbered_text_when_cards_cannot_be_sent(): void
+    {
+        $conversation = $this->conversation('whatsapp');
+        $item = $this->item("Productos\n1. Camisa\n2. Pantalón", ['cards' => [['title' => 'Camisa'], ['title' => 'Pantalón']]]);
+
+        $outbound = Mockery::mock(OutboundMessageService::class);
+        $outbound->shouldReceive('supports')->once()->andReturn(true);
+        $outbound->shouldReceive('setTyping')->andReturn(true);
+        $outbound->shouldReceive('sendReply')->with($conversation, 'Camisa')->andReturn(null);
+        $outbound->shouldReceive('sendReply')->with($conversation, 'Pantalón')->andReturn(null);
+        $outbound->shouldReceive('sendReply')->once()
             ->with($conversation, "Productos\n1. Camisa\n2. Pantalón")
             ->andReturn('wamid.txt');
 
         $this->dispatcher($outbound)->deliver($conversation, $item);
+    }
+
+    public function test_messenger_failure_falls_back_to_numbered_text(): void
+    {
+        $conversation = $this->conversation('facebook');
+        $item = $this->item("Productos\n1. Camisa", ['cards' => [['title' => 'Camisa']]]);
+
+        $outbound = Mockery::mock(OutboundMessageService::class);
+        $outbound->shouldReceive('supports')->once()->andReturn(true);
+        $outbound->shouldReceive('setTyping')->andReturn(true);
+        $outbound->shouldReceive('sendReply')->once()->with($conversation, "Productos\n1. Camisa")->andReturn('mid.txt');
+
+        $facebook = Mockery::mock(FacebookMessengerService::class);
+        $facebook->shouldReceive('sendGenericTemplate')->once()->andThrow(new \RuntimeException('boom'));
+
+        $this->dispatcher($outbound, null, $facebook)->deliver($conversation, $item);
     }
 
     public function test_sends_file_attachment_natively(): void

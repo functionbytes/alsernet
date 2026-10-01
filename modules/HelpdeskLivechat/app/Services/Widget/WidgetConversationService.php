@@ -706,7 +706,7 @@ class WidgetConversationService
      * one or several cards). Empty/null for non-bot items or plain text.
      *
      * @param  array<string, mixed>  $metadata
-     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed}>, ai: bool, ai_feedback: int|null}
+     * @return array{options: array<int, string>, prompt: string|null, cards: array<int, array{title: string, subtitle: string, image_url: mixed, url: mixed, button_label: string|null}>, ai: bool, ai_feedback: int|null}
      */
     private function botExtras(array $metadata): array
     {
@@ -722,6 +722,7 @@ class WidgetConversationService
             'subtitle' => (string) ($c['subtitle'] ?? ''),
             'image_url' => $c['image_url'] ?? null,
             'url' => $c['url'] ?? null,
+            'button_label' => isset($c['button_label']) && $c['button_label'] !== '' ? (string) $c['button_label'] : null,
         ], array_filter($rawCards, 'is_array')));
 
         return [

@@ -228,6 +228,7 @@ export function MessageBubble({
     onQuickReply,
     onRateAiAnswer,
 }: MessageBubbleProps) {
+    const t = useTranslation();
     const isUser = message.author === 'user';
     const isAgent = message.author === 'agent';
 
@@ -282,20 +283,31 @@ export function MessageBubble({
                 {message.cards && message.cards.length > 0 && (
                     <div className="wgt-bot-cards">
                         {message.cards.map((card, i) => {
+                            const hasButton = Boolean(card.url && card.button_label);
                             const inner = (
                                 <>
                                     {card.image_url && <img src={card.image_url} alt="" loading="lazy" className="wgt-bot-card-img" />}
                                     <span className="wgt-bot-card-body">
                                         <span className="wgt-bot-card-title">{card.title}</span>
                                         {card.subtitle && <span className="wgt-bot-card-sub">{card.subtitle}</span>}
+                                        {hasButton && (
+                                            <a
+                                                className="wgt-bot-card-btn"
+                                                href={card.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label={`${card.button_label} - ${card.title} (${t('ui.bot_card_new_tab')})`}
+                                            >
+                                                {card.button_label}
+                                            </a>
+                                        )}
                                     </span>
                                 </>
                             );
-                            return card.url ? (
-                                <a key={i} className="wgt-bot-card" href={card.url} target="_blank" rel="noopener noreferrer">{inner}</a>
-                            ) : (
-                                <div key={i} className="wgt-bot-card">{inner}</div>
-                            );
+                            if (card.url && !hasButton) {
+                                return <a key={i} className="wgt-bot-card" href={card.url} target="_blank" rel="noopener noreferrer">{inner}</a>;
+                            }
+                            return <div key={i} className="wgt-bot-card">{inner}</div>;
                         })}
                     </div>
                 )}

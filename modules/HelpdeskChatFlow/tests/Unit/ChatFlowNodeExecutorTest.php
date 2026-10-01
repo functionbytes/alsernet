@@ -218,6 +218,30 @@ class ChatFlowNodeExecutorTest extends TestCase
         $this->handle([$node, $this->makeSession(['nombre' => 'Ada']), $conversation]);
     }
 
+    public function test_rich_message_card_keeps_button_label_only_with_url(): void
+    {
+        $conversation = $this->conversationExpectingItem(function ($a) {
+            $cards = $a['metadata']['cards'];
+
+            return $cards[0]['button_label'] === 'Comprar Ada'
+                && $cards[0]['url'] === 'https://shop/1'
+                && $cards[1]['button_label'] === null
+                && $cards[2]['button_label'] === null
+                && $cards[2]['url'] === null;
+        });
+
+        $node = ['id' => 'c', 'type' => 'rich_message', 'data' => [
+            'options' => ['A', 'B'],
+            'cards' => [
+                ['title' => 'Uno', 'url' => 'https://shop/1', 'button_label' => 'Comprar {{nombre}}'],
+                ['title' => 'Dos', 'url' => 'https://shop/2'],
+                ['title' => 'Tres', 'button_label' => 'Sin url'],
+            ],
+        ]];
+
+        $this->handle([$node, $this->makeSession(['nombre' => 'Ada']), $conversation]);
+    }
+
     public function test_send_file_creates_native_attachment_item(): void
     {
         $conversation = $this->conversationExpectingItem(function ($a) {

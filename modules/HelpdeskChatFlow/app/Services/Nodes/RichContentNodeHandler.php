@@ -83,7 +83,12 @@ class RichContentNodeHandler implements NodeHandler
      * (Messenger generic template, WhatsApp/Instagram image cards); the text
      * body lists them numbered so web/email and fallbacks still work.
      *
-     * @param  array<int, array{title: string, subtitle: string, image_url: ?string, url: ?string}>  $cards
+     * Card contract (metadata `cards`, also consumed by the widget and
+     * ChatFlowCardDelivery): title, subtitle, image_url, url (opens a link) and
+     * button_label (optional; only kept when url is set — shows a per-card button
+     * instead of making the whole card a link).
+     *
+     * @param  array<int, array{title: string, subtitle: string, image_url: ?string, url: ?string, button_label: ?string}>  $cards
      * @param  array<int, string>  $options
      */
     private function executeCarousel(array $node, ChatFlowSession $session, Conversation $conversation, array $cards, array $options): ?string
@@ -119,7 +124,7 @@ class RichContentNodeHandler implements NodeHandler
      *
      * @param  array<int, mixed>  $cards
      * @param  array<string, mixed>  $ctx
-     * @return array<int, array{title: string, subtitle: string, image_url: ?string, url: ?string}>
+     * @return array<int, array{title: string, subtitle: string, image_url: ?string, url: ?string, button_label: ?string}>
      */
     private function normalizeCards(array $cards, array $ctx): array
     {
@@ -132,6 +137,7 @@ class RichContentNodeHandler implements NodeHandler
             $subtitle = $this->interpolateContext((string) ($card['subtitle'] ?? ''), $ctx);
             $image = $card['image_url'] ?? null;
             $url = $card['url'] ?? null;
+            $buttonLabel = $this->interpolateContext((string) ($card['button_label'] ?? ''), $ctx);
 
             if ($title === '' && $subtitle === '' && empty($image)) {
                 return null;
@@ -142,6 +148,7 @@ class RichContentNodeHandler implements NodeHandler
                 'subtitle' => $subtitle,
                 'image_url' => $image ?: null,
                 'url' => $url ?: null,
+                'button_label' => $url && $buttonLabel !== '' ? $buttonLabel : null,
             ];
         }, $cards)));
     }

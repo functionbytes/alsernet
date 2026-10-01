@@ -5118,3 +5118,50 @@ a.wgt-bot-card:hover {
     white-space: nowrap;
     border: 0;
 }
+
+/* ============================================================
+   Tarjetas del bot v2: imagen con ratio fijo, título a 2 líneas y botón por tarjeta
+   ============================================================ */
+
+.wgt-bot-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.wgt-bot-card-img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+}
+
+.wgt-bot-card-sub {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.wgt-bot-card-btn {
+    display: block;
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--wgt-primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition: filter 0.15s;
+}
+
+.wgt-bot-card-btn:hover {
+    filter: brightness(0.92);
+}
+
+.wgt-bot-card-btn:focus-visible {
+    outline: 2px solid var(--wgt-primary);
+    outline-offset: 2px;
+}
