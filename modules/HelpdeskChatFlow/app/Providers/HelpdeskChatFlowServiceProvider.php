@@ -37,6 +37,7 @@ use Modules\HelpdeskChatFlow\Services\Compliance\ChatflowGdprExportContributor;
 use Modules\HelpdeskChatFlow\Services\CustomerIdentityResolver;
 use Modules\HelpdeskChatFlow\Services\Nodes\AiNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\ConversationNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\FlowCallNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\IntegrationNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\MessagingNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
@@ -234,6 +235,7 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
             IntegrationNodeHandler::class,
             RichContentNodeHandler::class,
             ConversationNodeHandler::class,
+            FlowCallNodeHandler::class,
         ], NodeHandlerRegistry::TAG);
 
         $this->app->bind(NodeHandlerRegistry::class, fn ($app) => new NodeHandlerRegistry($app->tagged(NodeHandlerRegistry::TAG)));

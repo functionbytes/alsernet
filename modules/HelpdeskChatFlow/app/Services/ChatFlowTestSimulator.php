@@ -9,6 +9,7 @@ use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
 use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
 use Modules\HelpdeskChatFlow\Services\Simulation\SimulatedChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Simulation\SimulatedConversation;
+use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
 
 /**
  * Editor test panel. What the customer sees is rendered by the SAME node
@@ -165,6 +166,21 @@ class ChatFlowTestSimulator
                 $messages = array_merge($messages, $termMessages);
                 $session['status'] = $termStatus;
                 break;
+            }
+
+            if ($node['type'] === 'collect_input' && $this->shouldSkipCollectInput($node['data'] ?? [], $session['context'] ?? [])) {
+                $messages[] = ['type' => 'bot', 'text' => '⏭ [Pregunta omitida: «'.($node['data']['variable_name'] ?? '').'» ya tiene valor]', 'system' => true];
+                $nextId = $this->firstChildId($session, $node['id']);
+
+                if ($nextId === null) {
+                    $session['status'] = 'completed';
+                    break;
+                }
+
+                $currentId = $nextId;
+                $depth++;
+
+                continue;
             }
 
             $isRichWait = $node['type'] === 'rich_message' && ! empty($node['data']['options']);
@@ -415,13 +431,13 @@ class ChatFlowTestSimulator
         switch ($node['type']) {
             case 'collect_input':
                 $rule = $data['validation'] ?? 'none';
-                if ($rule !== 'none' && ! $this->passesValidation($rule, $userMessage)) {
-                    $messages[] = ['type' => 'bot', 'text' => $this->validationError($rule)];
+                if ($rule !== 'none' && ! $this->passesValidation($rule, $userMessage, $data)) {
+                    $messages[] = ['type' => 'bot', 'text' => $this->validationError($rule, $data)];
 
                     return [$messages, $session]; // stay on the node
                 }
                 $varName = $data['variable_name'] ?? 'last_input';
-                $session['context'][$varName] = $userMessage;
+                $session['context'][$varName] = $this->normalizeInput($rule, $userMessage, $data);
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
 
@@ -712,7 +728,7 @@ class ChatFlowTestSimulator
             if ($this->evaluateConditions(
                 $item['data']['conditions'] ?? [],
                 strtolower((string) ($item['data']['match'] ?? 'all')),
-                fn (string $variable): mixed => $session['context'][$variable] ?? null,
+                fn (string $variable): mixed => ContextPath::get($session['context'] ?? [], $variable),
             )) {
                 return $this->firstChildId($session, $item['id']);
             }
@@ -803,6 +819,6 @@ class ChatFlowTestSimulator
 
     private function interpolate(string $text, array $context): string
     {
-        return preg_replace_callback('/\{\{(\w+)\}\}/', fn ($m) => $context[$m[1]] ?? $m[0], $text);
+        return ContextPath::interpolate($text, $context);
     }
 }

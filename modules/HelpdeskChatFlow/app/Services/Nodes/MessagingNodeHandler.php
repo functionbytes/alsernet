@@ -89,9 +89,7 @@ class MessagingNodeHandler implements NodeHandler
     {
         $text = $node['data']['text'] ?? '';
 
-        $text = preg_replace_callback('/\{\{(\w+)\}\}/', function ($matches) use ($session) {
-            return $session->getContextValue($matches[1], $matches[0]);
-        }, $text);
+        $text = $this->interpolateContext($text, $session->context ?? []);
 
         $text = $this->localizeForCustomer($text, $session);
 

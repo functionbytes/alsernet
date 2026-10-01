@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskChatFlow\Services\Concerns;
 
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
+use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
 
 /**
  * Helpers shared by the node executor and the node handlers: localisation of
@@ -58,7 +59,7 @@ trait RendersNodeMessages
 
     protected function interpolateContext(string $text, array $context): string
     {
-        return preg_replace_callback('/\{\{(\w+)\}\}/', fn ($m) => $context[$m[1]] ?? $m[0], $text);
+        return ContextPath::interpolate($text, $context);
     }
 
     protected function getFirstChildId(array $node, ChatFlowSession $session): ?string

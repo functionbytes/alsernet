@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskChatFlow\Services;
 
 use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -20,6 +21,9 @@ use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
 use Modules\HelpdeskChatFlow\Services\Input\CsatInputHandler;
 use Modules\HelpdeskChatFlow\Services\Input\DocumentUploadInputHandler;
 use Modules\HelpdeskChatFlow\Services\Input\IdentificationInputHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\FlowCallNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\FlowCallRefused;
+use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
 
 class ChatFlowEngine
 {
@@ -42,7 +46,10 @@ class ChatFlowEngine
         private readonly DocumentUploadInputHandler $documentUploads,
         private readonly CsatInputHandler $csat,
         private readonly ChatFlowScheduler $scheduler,
-    ) {}
+        private ?FlowCallNodeHandler $flowCalls = null,
+    ) {
+        $this->flowCalls ??= new FlowCallNodeHandler;
+    }
 
     /**
      * Starts a new flow for a conversation.
@@ -281,14 +288,17 @@ class ChatFlowEngine
             }
         }
 
-        // collect_input validation (email/phone/number) → re-ask on failure.
+        // collect_input validation (email/phone/number/order_ref/regex/enum) → re-ask on failure.
         if ($currentNode['type'] === 'collect_input') {
             $rule = $currentNode['data']['validation'] ?? 'none';
-            if ($rule !== 'none' && ! $this->passesValidation($rule, $message)) {
+            $inputData = $currentNode['data'] ?? [];
+            if ($rule !== 'none' && ! $this->passesValidation($rule, $message, $inputData)) {
                 $this->repromptInvalidInput($session, $currentNode, $rule);
 
                 return;
             }
+
+            $message = $this->normalizeInput($rule, $message, $inputData);
         }
 
         if ($currentNode['type'] === 'csat') {
@@ -312,6 +322,11 @@ class ChatFlowEngine
      */
     private function continueFrom(ChatFlowSession $session, ?string $nodeId): void
     {
+        // A procedure that ran out of nodes while waiting hands control back to its caller.
+        if ($nodeId === null && $session->isActive()) {
+            $nodeId = $this->flowCalls->resumeCaller($session);
+        }
+
         $node = $nodeId ? $session->chatFlow->getNodeById($nodeId) : null;
 
         if ($node) {
@@ -361,6 +376,7 @@ class ChatFlowEngine
         // Handoff to a human: the conversation re-enters the agent inbox.
         $session->conversation?->releaseFromBot();
 
+        $this->flowCalls->restoreRootFlow($session);
         $session->update(['status' => 'transferred', 'ended_at' => now()]);
         ChatFlowCompleted::dispatch($session);
     }
@@ -387,7 +403,7 @@ class ChatFlowEngine
             return;
         }
 
-        $this->sendBotMessage($session, $node, $this->localize($session, $this->validationError($rule)));
+        $this->sendBotMessage($session, $node, $this->localize($session, $this->validationError($rule, $node['data'] ?? [])));
     }
 
     private function exceededRetries(ChatFlowSession $session, array $node): bool
@@ -465,6 +481,7 @@ class ChatFlowEngine
 
         if ($action === 'transfer') {
             $session->conversation?->releaseFromBot();
+            $this->flowCalls->restoreRootFlow($session);
             $session->update(['status' => 'transferred', 'ended_at' => now()]);
             ChatFlowCompleted::dispatch($session);
 
@@ -488,6 +505,7 @@ class ChatFlowEngine
         // to the inbox so a human can follow up (otherwise it stays handled_by_bot
         // and invisible to agents forever).
         $session->conversation?->releaseFromBot();
+        $this->flowCalls->restoreRootFlow($session);
         $session->update(['status' => 'abandoned', 'ended_at' => now()]);
         ChatFlowCompleted::dispatch($session);
     }
@@ -501,6 +519,7 @@ class ChatFlowEngine
         $session = $this->getActiveSession($conversation);
 
         if ($session) {
+            $this->flowCalls->restoreRootFlow($session);
             $session->update(['status' => 'transferred', 'ended_at' => now()]);
         }
 
@@ -596,7 +615,7 @@ class ChatFlowEngine
 
         // Index the node tree once: the loop resolves the next node O(1) instead of
         // re-scanning the JSON array (and re-querying via refresh()) on every hop.
-        $nodesById = collect($session->chatFlow->runtimeNodes())->keyBy('id');
+        $nodesById = $this->indexNodes($session);
 
         while ($node && $depth < $maxDepth) {
             $session->update(['current_node_id' => $node['id']]);
@@ -610,6 +629,28 @@ class ChatFlowEngine
                 return;
             }
 
+            // collect_input + skip_if_set: the value is already known, so the
+            // question is not asked and the run moves straight to the next node.
+            if ($node['type'] === 'collect_input' && $this->shouldSkipCollectInput($node['data'] ?? [], $session->context ?? [])) {
+                $nextNodeId = $this->getFirstChildId($session, $node['id']);
+
+                $nextNodeId ??= $this->flowCalls->resumeCaller($session);
+
+                if ($nextNodeId === null) {
+                    $this->completeSession($session);
+
+                    return;
+                }
+
+                $nodesById = $this->indexNodes($session);
+                $node = $nodesById[$nextNodeId] ?? null;
+                $depth++;
+
+                continue;
+            }
+
+            $flowIdBefore = (int) $session->chat_flow_id;
+
             try {
                 $nextNodeId = $this->executeNode($session, $node);
             } catch (\Throwable $e) {
@@ -621,6 +662,16 @@ class ChatFlowEngine
                 $this->failSession($session);
 
                 return;
+            }
+
+            // Natural end of a procedure (a branch with nothing left to run): go back to the caller.
+            if ($nextNodeId === null && $this->endsBranchInsideProcedure($session, $node)) {
+                $nextNodeId = $this->flowCalls->resumeCaller($session);
+            }
+
+            // call_flow / return moved the session to another flow: index its nodes.
+            if ((int) $session->chat_flow_id !== $flowIdBefore) {
+                $nodesById = $this->indexNodes($session);
             }
 
             if (in_array($node['type'], self::PAUSE_TYPES) || $nextNodeId === null) {
@@ -655,11 +706,48 @@ class ChatFlowEngine
     }
 
     /**
+     * @return Collection<string, array<string, mixed>>
+     */
+    private function indexNodes(ChatFlowSession $session): Collection
+    {
+        return collect($session->chatFlow->runtimeNodes())->keyBy('id');
+    }
+
+    /**
+     * Whether a node that returned no next node ended a branch of a called flow
+     * (as opposed to pausing for input, a delay, or finishing the session).
+     */
+    private function endsBranchInsideProcedure(ChatFlowSession $session, array $node): bool
+    {
+        return $session->isActive()
+            && ! in_array($node['type'], self::WAIT_FOR_INPUT_TYPES, true)
+            && $this->flowCalls->hasCaller($session);
+    }
+
+    /**
+     * Enters a procedure (a flow with trigger `procedure`) and runs it. When it
+     * ends (return node or natural end) the session continues at $returnNodeId
+     * of the flow that is current now — e.g. the ai_agent node that called it.
+     * Procedure refusals (cycle, depth, not callable) are thrown to the caller.
+     *
+     * @param  array<string, mixed>  $input  Variables set for the procedure (restored on return).
+     *
+     * @throws FlowCallRefused
+     */
+    public function callProcedure(ChatFlowSession $session, ChatFlow $procedure, string $returnNodeId, array $input = []): void
+    {
+        $startNodeId = $this->flowCalls->enter($session, $procedure, $returnNodeId, $input);
+
+        $this->continueFrom($session, $startNodeId);
+    }
+
+    /**
      * Marks a session failed and returns the conversation to the agent inbox, so a
      * bot breakdown never leaves a customer stranded with no human follow-up.
      */
     private function failSession(ChatFlowSession $session): void
     {
+        $this->flowCalls->restoreRootFlow($session);
         $session->update(['status' => 'failed', 'ended_at' => now()]);
         $session->conversation?->releaseFromBot();
         ChatFlowCompleted::dispatch($session);
@@ -714,13 +802,14 @@ class ChatFlowEngine
         return $this->evaluateConditions(
             $conditions,
             $match,
-            fn (string $variable): mixed => $session->getContextValue($variable),
+            fn (string $variable): mixed => ContextPath::get($session->context ?? [], $variable),
         );
     }
 
     private function finalizeIfNeeded(ChatFlowSession $session, array $node, ?string $nextNodeId): void
     {
         if ($session->status !== 'active') {
+            $this->flowCalls->restoreRootFlow($session);
             ChatFlowCompleted::dispatch($session);
 
             return;
@@ -732,13 +821,21 @@ class ChatFlowEngine
         }
 
         if ($node['type'] !== 'end' && $nextNodeId === null) {
-            // Release too: the flow ran off its last node without an explicit
-            // close/end/transfer, so nothing else would clear handled_by_bot and
-            // a later customer reply would stay invisible to agents forever.
-            $session->conversation?->releaseFromBot();
-            $session->update(['status' => 'completed', 'ended_at' => now()]);
-            ChatFlowCompleted::dispatch($session);
+            $this->completeSession($session);
         }
+    }
+
+    /**
+     * Release too: the flow ran off its last node without an explicit
+     * close/end/transfer, so nothing else would clear handled_by_bot and
+     * a later customer reply would stay invisible to agents forever.
+     */
+    private function completeSession(ChatFlowSession $session): void
+    {
+        $this->flowCalls->restoreRootFlow($session);
+        $session->conversation?->releaseFromBot();
+        $session->update(['status' => 'completed', 'ended_at' => now()]);
+        ChatFlowCompleted::dispatch($session);
     }
 
     private function captureInput(ChatFlowSession $session, array $node, string $message): void

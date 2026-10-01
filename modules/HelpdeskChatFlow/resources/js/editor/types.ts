@@ -8,10 +8,12 @@ export interface BackendNode {
     data: Record<string, any>;
 }
 
+// `value` is a string for most operators, a list for in / not_in and a
+// [min, max] pair for between. is_empty / not_empty carry no value.
 export interface Condition {
     variable: string;
     operator: string;
-    value: string;
+    value: string | string[];
 }
 
 export interface AssignOption { id: number; name: string; }

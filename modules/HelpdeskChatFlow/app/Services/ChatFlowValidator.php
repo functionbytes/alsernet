@@ -3,6 +3,9 @@
 namespace Modules\HelpdeskChatFlow\Services;
 
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
+use Modules\HelpdeskChatFlow\Services\Support\BranchOperators;
+use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
+use Modules\HelpdeskChatFlow\Services\Support\SafeRegex;
 
 /**
  * Validates a chat flow's node tree before publishing: blocking errors prevent
@@ -29,6 +32,8 @@ class ChatFlowValidator
     ];
 
     private const SYSTEM_VARIABLE_PREFIXES = ['customer_', 'order_', '_'];
+
+    private const VALIDATION_RULES = ['none', 'email', 'phone', 'number', 'order_ref', 'regex', 'enum'];
 
     /**
      * @return array{errors: array<int, string>, warnings: array<int, string>}
@@ -91,6 +96,14 @@ class ChatFlowValidator
                 }
             }
 
+            if ($type === 'collect_input') {
+                array_push($errors, ...$this->collectInputErrors($node, $label($node)));
+            }
+
+            if ($type === 'branchItem') {
+                array_push($errors, ...$this->branchItemErrors($node, $label($node)));
+            }
+
             // go_to_step must point to an existing node, or the engine fails the
             // session at runtime when it resolves the missing target.
             if ($type === 'go_to_step') {
@@ -115,10 +128,17 @@ class ChatFlowValidator
         // Variables referenced via {{var}} but never written stay literal at runtime.
         $defined = $this->definedVariables($nodes);
         foreach ($this->referencedVariables($nodes) as $var) {
-            if ($this->isVariableDefined($var, $defined)) {
+            if ($this->isVariableDefined(ContextPath::root($var), $defined)) {
                 continue;
             }
             $warnings[] = "La variable «{{{$var}}}» se usa pero no se define en ningún paso anterior.";
+        }
+
+        foreach ($this->conditionVariables($nodes) as $var) {
+            if ($this->isVariableDefined(ContextPath::root($var), $defined)) {
+                continue;
+            }
+            $warnings[] = "La condición usa la variable «{$var}», que no se define en ningún paso anterior.";
         }
 
         // Seguridad: si el flow expone datos de pedidos (nodo order_lookup o un
@@ -134,6 +154,53 @@ class ChatFlowValidator
         }
 
         return ['errors' => array_values($errors), 'warnings' => array_values(array_unique($warnings))];
+    }
+
+    /**
+     * Regex patterns written by the designer (collect_input `regex` validation
+     * and branch conditions with the `regex` operator) that do not compile or
+     * could hang the server. Cheap enough to run on every save, so a bad
+     * pattern never reaches the database.
+     *
+     * @param  array<int, mixed>  $nodes
+     * @return array<int, string>
+     */
+    public function regexErrors(array $nodes): array
+    {
+        $errors = [];
+
+        foreach ($nodes as $node) {
+            if (! is_array($node)) {
+                continue;
+            }
+
+            $data = $node['data'] ?? [];
+            $label = $node['label'] ?? ($node['type'] ?? 'nodo');
+
+            if (($node['type'] ?? '') === 'collect_input' && ($data['validation'] ?? '') === 'regex') {
+                $problem = SafeRegex::problem((string) ($data['pattern'] ?? ''));
+                if ($problem !== null) {
+                    $errors[] = "El paso «{$label}» tiene una expresión regular no válida: {$problem}.";
+                }
+            }
+
+            if (($node['type'] ?? '') !== 'branchItem') {
+                continue;
+            }
+
+            foreach ($data['conditions'] ?? [] as $condition) {
+                if (! is_array($condition) || ($condition['operator'] ?? '') !== 'regex') {
+                    continue;
+                }
+
+                $problem = SafeRegex::problem((string) ($condition['value'] ?? ''));
+                if ($problem !== null) {
+                    $errors[] = "Una condición de la rama «{$label}» tiene una expresión regular no válida: {$problem}.";
+                }
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -187,7 +254,7 @@ class ChatFlowValidator
     }
 
     /**
-     * Variable names referenced as {{var}} anywhere in the node data.
+     * Variable names or dot paths ({{pedido.estado}}) referenced as {{var}} anywhere in the node data.
      *
      * @param  array<int, array<string, mixed>>  $nodes
      * @return array<int, string>
@@ -199,7 +266,7 @@ class ChatFlowValidator
             if (! is_string($value)) {
                 return;
             }
-            if (preg_match_all('/\{\{(\w+)\}\}/', $value, $matches)) {
+            if (preg_match_all('/\{\{('.ContextPath::REFERENCE.')\}\}/', $value, $matches)) {
                 foreach ($matches[1] as $name) {
                     $found[$name] = true;
                 }
@@ -234,6 +301,117 @@ class ChatFlowValidator
         }
 
         return array_keys($defined);
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return array<int, string>
+     */
+    private function collectInputErrors(array $node, string $label): array
+    {
+        $data = $node['data'] ?? [];
+        $rule = (string) ($data['validation'] ?? 'none');
+        $errors = [];
+
+        if (! in_array($rule, self::VALIDATION_RULES, true)) {
+            $errors[] = "El paso «{$label}» usa una validación desconocida («{$rule}»).";
+        }
+
+        if ($rule === 'regex') {
+            $problem = SafeRegex::problem((string) ($data['pattern'] ?? ''));
+            if ($problem !== null) {
+                $errors[] = "El paso «{$label}» tiene una expresión regular no válida: {$problem}.";
+            }
+        }
+
+        if ($rule === 'enum') {
+            $allowed = array_filter(
+                is_array($data['allowed'] ?? null) ? $data['allowed'] : [],
+                fn ($option) => is_scalar($option) && trim((string) $option) !== '',
+            );
+            if ($allowed === []) {
+                $errors[] = "El paso «{$label}» valida contra una lista, pero la lista de valores permitidos está vacía.";
+            }
+        }
+
+        if (filter_var($data['skip_if_set'] ?? false, FILTER_VALIDATE_BOOLEAN) && trim((string) ($data['variable_name'] ?? '')) === '') {
+            $errors[] = "El paso «{$label}» tiene «saltar si ya se sabe» pero no indica la variable donde guarda la respuesta.";
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Operator and value of every condition of a branch item, plus its all/any mode.
+     *
+     * @param  array<string, mixed>  $node
+     * @return array<int, string>
+     */
+    private function branchItemErrors(array $node, string $label): array
+    {
+        $data = $node['data'] ?? [];
+
+        if ($data['isElse'] ?? false) {
+            return [];
+        }
+
+        $errors = [];
+        $match = strtolower((string) ($data['match'] ?? 'all'));
+
+        if (! in_array($match, ['all', 'any'], true)) {
+            $errors[] = "La rama «{$label}» tiene un modo de combinación no válido («{$match}»); usa «all» o «any».";
+        }
+
+        foreach ($data['conditions'] ?? [] as $index => $condition) {
+            if (! is_array($condition)) {
+                continue;
+            }
+
+            $position = $index + 1;
+            $operator = (string) ($condition['operator'] ?? '=');
+
+            if (trim((string) ($condition['variable'] ?? '')) === '') {
+                $errors[] = "La condición {$position} de la rama «{$label}» no indica la variable.";
+            }
+
+            if (! BranchOperators::isValid($operator)) {
+                $errors[] = "La condición {$position} de la rama «{$label}» usa un operador desconocido («{$operator}»).";
+
+                continue;
+            }
+
+            $problem = BranchOperators::valueProblem($condition);
+            if ($problem !== null) {
+                $errors[] = "La condición {$position} de la rama «{$label}» no es válida: {$problem}.";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Variables (or dot paths) read by branch conditions.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    private function conditionVariables(array $nodes): array
+    {
+        $found = [];
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'branchItem') {
+                continue;
+            }
+            foreach ($node['data']['conditions'] ?? [] as $condition) {
+                $variable = trim((string) (is_array($condition) ? $condition['variable'] ?? '' : ''));
+                $variable = trim(preg_replace('/^\{\{(.*)\}\}$/s', '$1', $variable) ?? $variable);
+                if ($variable !== '') {
+                    $found[$variable] = true;
+                }
+            }
+        }
+
+        return array_keys($found);
     }
 
     /**

@@ -2,8 +2,11 @@
 
 namespace Modules\HelpdeskChatFlow\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
+use Modules\HelpdeskChatFlow\Services\ChatFlowValidator;
 
 class UpdateChatFlowRequest extends FormRequest
 {
@@ -30,7 +33,7 @@ class UpdateChatFlowRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'inbox_id' => ['nullable', 'exists:helpdesk.helpdesk_inboxes,id'],
-            'trigger_type' => ['sometimes', 'required', 'in:conversation_start,keyword,manual,no_agent,intent'],
+            'trigger_type' => ['sometimes', 'required', Rule::in(ChatFlow::TRIGGER_TYPES)],
             'trigger_conditions' => ['nullable', 'array'],
             'trigger_conditions.keywords' => ['sometimes', 'array'],
             'trigger_conditions.keywords.*' => ['string', 'max:100'],
@@ -58,6 +61,21 @@ class UpdateChatFlowRequest extends FormRequest
             'status' => ['nullable', 'in:draft,active,archived'],
             'priority' => ['nullable', 'integer', 'min:0', 'max:100'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v): void {
+            $nodes = $this->input('nodes');
+
+            if (! is_array($nodes)) {
+                return;
+            }
+
+            foreach ((new ChatFlowValidator)->regexErrors($nodes) as $error) {
+                $v->errors()->add('nodes', $error);
+            }
+        });
     }
 
     public function messages(): array

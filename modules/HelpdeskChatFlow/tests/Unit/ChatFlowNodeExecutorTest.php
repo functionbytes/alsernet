@@ -20,6 +20,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
 use Modules\HelpdeskChatFlow\Services\HandoffContextNote;
 use Modules\HelpdeskChatFlow\Services\Nodes\AiNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\ConversationNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\FlowCallNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\IntegrationNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\MessagingNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandler;
@@ -46,6 +47,7 @@ class ChatFlowNodeExecutorTest extends TestCase
             new IntegrationNodeHandler(Mockery::mock(ChatFlowOrderLookup::class), new ChatFlowHttpRequester, $localizer),
             new RichContentNodeHandler($localizer, new ChatFlowDocumentLink(null)),
             new ConversationNodeHandler($localizer, Mockery::mock(ChatFlowHandoffSummary::class)),
+            new FlowCallNodeHandler,
         ]);
     }
 

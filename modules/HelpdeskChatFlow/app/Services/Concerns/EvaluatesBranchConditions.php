@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskChatFlow\Services\Concerns;
 
+use Modules\HelpdeskChatFlow\Services\Support\SafeRegex;
+
 /**
  * Shared branch-condition evaluation used by BOTH the runtime ChatFlowEngine and
  * the ChatFlowTestSimulator, so test-cases evaluate conditions identically to
@@ -17,7 +19,7 @@ trait EvaluatesBranchConditions
      * the legacy fall-through behaviour of an else/unconditional branch.
      *
      * @param  array<int, array<string, mixed>>  $conditions
-     * @param  callable(string): mixed  $resolve  Resolves a variable name to its actual value
+     * @param  callable(string): mixed  $resolve  Resolves a variable name (or dot path such as `pedido.estado`) to its actual value
      */
     private function evaluateConditions(array $conditions, string $match, callable $resolve): bool
     {
@@ -28,7 +30,10 @@ trait EvaluatesBranchConditions
         $any = $match === 'any';
 
         foreach ($conditions as $cond) {
-            $matches = $this->matchesCondition($resolve($cond['variable'] ?? ''), $cond);
+            $variable = trim((string) ($cond['variable'] ?? ''));
+            $variable = trim(preg_replace('/^\{\{(.*)\}\}$/s', '$1', $variable) ?? $variable);
+
+            $matches = $this->matchesCondition($resolve($variable), $cond);
 
             if ($any && $matches) {
                 return true;
@@ -54,8 +59,15 @@ trait EvaluatesBranchConditions
     private function matchesCondition(mixed $actual, array $cond): bool
     {
         $value = $cond['value'] ?? '';
+        $operator = $cond['operator'] ?? '=';
 
-        return match ($cond['operator'] ?? '=') {
+        // A dot path can resolve to a nested array: compare it as JSON text,
+        // except for the emptiness checks, which understand arrays.
+        if (is_array($actual) && ! in_array($operator, ['is_empty', 'not_empty'], true)) {
+            $actual = json_encode($actual, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        return match ($operator) {
             '=' => (string) $actual === (string) $value,
             '!=' => (string) $actual !== (string) $value,
             '>' => (float) $actual > (float) $value,
@@ -99,29 +111,13 @@ trait EvaluatesBranchConditions
     }
 
     /**
-     * Regex match with a safety guard: the pattern is supplied without
-     * delimiters and wrapped here. An invalid pattern or a match that exceeds
-     * PCRE's backtrack/recursion limits (catastrophic backtracking) yields
-     * `false` (no-match) instead of throwing.
+     * Regex match through {@see SafeRegex}: the pattern is supplied without
+     * delimiters; an invalid pattern or one that exceeds the backtrack limit
+     * (catastrophic backtracking) yields `false` instead of throwing.
      */
     private function matchesRegex(string $actual, string $pattern): bool
     {
-        if ($pattern === '') {
-            return false;
-        }
-
-        $delimited = '/'.str_replace('/', '\\/', $pattern).'/u';
-
-        set_error_handler(static fn (): bool => true);
-
-        $result = 0;
-        try {
-            $result = preg_match($delimited, $actual);
-        } finally {
-            restore_error_handler();
-        }
-
-        return $result === 1;
+        return SafeRegex::matches($pattern, $actual);
     }
 
     /**

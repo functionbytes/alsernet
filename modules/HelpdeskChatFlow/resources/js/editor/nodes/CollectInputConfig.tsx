@@ -28,8 +28,49 @@ export default function CollectInputConfig({ draft, setData }: NodeConfigProps) 
                     <option value="email">Email</option>
                     <option value="phone">Teléfono</option>
                     <option value="number">Número</option>
+                    <option value="order_ref">Pedido (número o referencia de 9 letras)</option>
+                    <option value="regex">Expresión regular</option>
+                    <option value="enum">Una de una lista</option>
                 </select>
+                {d.validation === 'order_ref' && (
+                    <p style={hintStyle}>Acepta un id numérico o una referencia de PrestaShop (9 letras, sin distinguir mayúsculas); se guarda en mayúsculas.</p>
+                )}
+                {d.validation === 'regex' && (
+                    <>
+                        <input type="text" className="form-control form-control-sm mt-2"
+                            placeholder="ej: ^[A-Z]{3}-\d{4}$"
+                            maxLength={200}
+                            value={d.pattern || ''}
+                            onChange={e => setData({ pattern: e.target.value })} />
+                        <p style={hintStyle}>Sin delimitadores, máx. 200 caracteres. Se rechazan patrones que puedan bloquear el servidor (como <code>(a+)+</code>).</p>
+                    </>
+                )}
+                {d.validation === 'enum' && (
+                    <>
+                        <textarea className="form-control form-control-sm mt-2" rows={3}
+                            placeholder={'Un valor por línea\ndevolución\ncambio\nreclamación'}
+                            value={(d.allowed || []).join('\n')}
+                            onChange={e => setData({ allowed: e.target.value.split('\n') })}
+                            onBlur={e => setData({ allowed: e.target.value.split('\n').map(v => v.trim()).filter(Boolean) })} />
+                        <p style={hintStyle}>Sin distinguir mayúsculas ni acentos. Se guarda el valor tal como lo escribas aquí.</p>
+                    </>
+                )}
+                {!!d.validation && d.validation !== 'none' && (
+                    <input type="text" className="form-control form-control-sm mt-2"
+                        placeholder="Mensaje de error personalizado (opcional)"
+                        value={d.error_message || ''}
+                        onChange={e => setData({ error_message: e.target.value })} />
+                )}
                 <p style={hintStyle}>Si no valida, el bot vuelve a preguntar (hasta {d.max_retries || 3} veces, luego transfiere).</p>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+                <label className="d-flex align-items-center gap-2" style={{ fontSize: 13, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!d.skip_if_set}
+                        onChange={e => setData({ skip_if_set: e.target.checked })} />
+                    Saltar si ya se sabe
+                </label>
+                <p style={hintStyle}>Si la variable ya tiene valor (p. ej. <code>customer_email</code> de un cliente verificado), no se pregunta y el flujo sigue.</p>
             </div>
 
             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 10, marginTop: 4 }}>

@@ -63,11 +63,14 @@ class ChatFlow extends Model
         return array_values(array_unique([...self::NODE_TYPES, ...$contributed]));
     }
 
-    const TRIGGER_TYPES = ['conversation_start', 'keyword', 'manual', 'no_agent', 'intent'];
+    const TRIGGER_TYPES = ['conversation_start', 'keyword', 'manual', 'no_agent', 'intent', 'procedure'];
+
+    /** Flows that never start on their own: they only run when another flow calls them. */
+    public const TRIGGER_PROCEDURE = 'procedure';
 
     const STATUSES = ['draft', 'active', 'archived'];
 
-    const NODE_TYPES = ['start', 'message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'branches', 'branchItem', 'action', 'delay', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'rich_message', 'send_file', 'document_link', 'csat', 'business_hours', 'add_tag', 'set_attribute', 'go_to_step', 'transfer', 'close', 'create_ticket', 'end'];
+    const NODE_TYPES = ['start', 'message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'branches', 'branchItem', 'action', 'delay', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'rich_message', 'send_file', 'document_link', 'csat', 'business_hours', 'add_tag', 'set_attribute', 'go_to_step', 'transfer', 'close', 'create_ticket', 'end', 'call_flow', 'return'];
 
     /**
      * Cache key for the cheap "any active flows?" gate used by the global
