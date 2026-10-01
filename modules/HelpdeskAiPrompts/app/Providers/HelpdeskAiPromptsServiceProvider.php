@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskAiPrompts\Listeners\RecordAiAnswerFeedback;
+use Modules\HelpdeskAiPrompts\Models\AiAction;
 use Modules\HelpdeskAiPrompts\Models\AiPromptBlock;
 use Modules\HelpdeskAiPrompts\Models\AiPromptCase;
 use Modules\HelpdeskAiPrompts\Observers\ConversationItemAiCaseObserver;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
 use Modules\HelpdeskAiPrompts\Services\PromptLibrary;
 use Modules\HelpdeskLivechat\Events\AiAnswerRated;
 use Modules\Theme\Services\NavService;
@@ -33,6 +35,7 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
         $this->loadViewsFrom(module_path($this->moduleName, 'resources/views'), $this->moduleNameLower);
         $this->loadTranslationsFrom(module_path($this->moduleName, 'lang'), $this->moduleNameLower);
         $this->registerPromptCacheInvalidation();
+        $this->registerActionCacheInvalidation();
         $this->registerConversationItemObserver();
         $this->registerFeedbackListener();
         $this->registerRoutes();
@@ -104,6 +107,21 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
         };
         AiPromptCase::saved($forgetCases);
         AiPromptCase::deleted($forgetCases);
+    }
+
+    /**
+     * ActionRegistry cachea 5 min las acciones activas y los overrides de las
+     * integradas; guardar o borrar una acción debe invalidarlas. Closure void
+     * a propósito (ver comentario de arriba: un `false` cortaría el guardado
+     * de versiones).
+     */
+    protected function registerActionCacheInvalidation(): void
+    {
+        $forget = function (): void {
+            ActionRegistry::forget();
+        };
+        AiAction::saved($forget);
+        AiAction::deleted($forget);
     }
 
     /**

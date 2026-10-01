@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionExecutor;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
 use Modules\HelpdeskAiPrompts\Services\PromptComposer;
 use Modules\HelpdeskAiPrompts\Services\PromptRunRecorder;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
@@ -200,7 +202,12 @@ class ChatFlowAgentService
         // Productos que el modelo consultó: se muestran al cliente como tarjetas.
         $shown = [];
 
-        $tools = $this->buildTools($data, $catalog !== null, $cart !== null, $this->isVerifiedCustomer($context));
+        $tools = $this->applyActionCatalog(
+            $this->buildTools($data, $catalog !== null, $cart !== null, $this->isVerifiedCustomer($context)),
+            $context,
+            $data,
+            $visitorContext,
+        );
         // El caso limita las herramientas (p. ej. devoluciones no añade a la cesta);
         // responder y derivar están siempre disponibles.
         if ($composed !== null && is_array($composed['allowed_tools'] ?? null)) {
@@ -772,7 +779,97 @@ class ChatFlowAgentService
             return 'La herramienta no está disponible en este momento.';
         }
 
+        // Acciones del catálogo (bridge / HTTP) definidas en el panel.
+        $registry = $this->actionRegistry();
+        if ($registry !== null && $registry->isCustom($name)) {
+            try {
+                return (string) (app(ActionExecutor::class)
+                    ->run($name, $args, $this->actionContext($context), 'ai')['content'] ?? 'La acción no está disponible.');
+            } catch (\Throwable $e) {
+                Log::warning('ChatFlowAgentService: catalog action failed', ['action' => $name, 'error' => $e->getMessage()]);
+
+                return 'La acción no está disponible en este momento.';
+            }
+        }
+
         return 'Herramienta desconocida.';
+    }
+
+    private function actionRegistry(): ?object
+    {
+        return class_exists(ActionRegistry::class)
+            ? app(ActionRegistry::class)
+            : null;
+    }
+
+    /**
+     * Contexto para el catálogo de acciones: los datos del cliente SOLO si su
+     * identidad está verificada (OTP o sesión firmada por la tienda); nunca de
+     * lo que escribe en el chat.
+     *
+     * @param  array<string,mixed>  $context
+     * @return array<string,mixed>
+     */
+    private function actionContext(array $context, ?string $channel = null): array
+    {
+        $verified = $this->isVerifiedCustomer($context);
+
+        return [
+            'verified' => $verified,
+            'customer_email' => $verified ? ($context['customer_email'] ?? null) : null,
+            'customer_ps_id' => $verified ? ($context['customer_ps_id'] ?? null) : null,
+            'customer_erp_id' => $verified ? ($context['customer_erp_id'] ?? null) : null,
+            'conversation_id' => $context['conversation_id'] ?? null,
+            'trace_id' => $context['_trace_id'] ?? null,
+            'channel' => $channel ?? ($context['_channel'] ?? null),
+            'locale' => $context['_locale'] ?? null,
+        ];
+    }
+
+    /**
+     * Herramientas configurables desde el panel: desactivar o redescribir las
+     * integradas y añadir las acciones del catálogo.
+     *
+     * @param  array<int, array<string,mixed>>  $tools
+     * @param  array<string,mixed>  $context
+     * @param  array<string,mixed>  $data
+     * @param  array<string,mixed>|null  $visitorContext
+     * @return array<int, array<string,mixed>>
+     */
+    private function applyActionCatalog(array $tools, array $context, array $data, ?array $visitorContext): array
+    {
+        $registry = $this->actionRegistry();
+        if ($registry === null) {
+            return $tools;
+        }
+
+        try {
+            $overrides = $registry->builtinOverrides();
+            $result = [];
+            foreach ($tools as $tool) {
+                $name = $tool['function']['name'] ?? '';
+                $override = $overrides[$name] ?? null;
+                // Responder y derivar no se pueden desactivar.
+                if ($override !== null && ! ($override['enabled'] ?? true) && ! in_array($name, ['answer_customer', 'escalate_to_agent'], true)) {
+                    continue;
+                }
+                if ($override !== null && ! empty($override['description'])) {
+                    $tool['function']['description'] = (string) $override['description'];
+                }
+                $result[] = $tool;
+            }
+
+            $channel = $data['_channel'] ?? ($visitorContext !== null ? 'web' : null);
+            foreach ($registry->toolsFor($this->actionContext($context, $channel)) as $tool) {
+                $result[] = $tool;
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            Log::warning('ChatFlowAgentService: action catalog unavailable', ['error' => $e->getMessage()]);
+
+            return $tools;
+        }
     }
 
     /**

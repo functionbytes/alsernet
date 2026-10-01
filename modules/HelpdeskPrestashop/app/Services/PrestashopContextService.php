@@ -1133,6 +1133,33 @@ class PrestashopContextService
     }
 
     /**
+     * Puerta de entrada del catálogo de acciones de la IA (HelpdeskAiPrompts):
+     * solo deja pasar las acciones de config('ai-actions.bridge_allowlist').
+     * Cualquier otra se rechaza SIN llamar al bridge. Las claves de la lista
+     * contienen puntos, por eso se lee el array completo y no con notación de
+     * puntos.
+     *
+     * @throws \InvalidArgumentException si la acción no está en la lista blanca
+     * @throws PsUpstreamException
+     */
+    public function callAllowedAction(string $action, array $payload, ?string $idempotencyKey = null): ?array
+    {
+        $allowlist = (array) config('ai-actions.bridge_allowlist', []);
+
+        if (! isset($allowlist[$action])) {
+            Log::warning('PrestashopContextService: acción del bridge fuera de la lista blanca de la IA — rechazada.', [
+                'action' => $action,
+            ]);
+
+            throw new \InvalidArgumentException("La acción «{$action}» no está permitida para el asistente IA.");
+        }
+
+        $isWrite = ($allowlist[$action]['mode'] ?? 'read') === 'write';
+
+        return $this->callApi($action, $payload, $isWrite ? $idempotencyKey : null);
+    }
+
+    /**
      * Lookup de propiedad (email y/o external_id) para acciones por cliente;
      * null si no hay forma de identificar al cliente (la llamada no debe hacerse).
      *

@@ -4,6 +4,8 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 
 use Illuminate\Support\Facades\Http;
 use Mockery;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionExecutor;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
 use Modules\HelpdeskChatFlow\Tests\TestCase;
@@ -685,5 +687,46 @@ class ChatFlowAgentServiceTest extends TestCase
 
         $this->assertSame('¿Qué talla usas?', $result['text']);
         $this->assertArrayNotHasKey('options', $result);
+    }
+
+    public function test_action_catalog_can_disable_builtin_tools_and_add_custom_actions(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        $registry = Mockery::mock(ActionRegistry::class);
+        $registry->shouldReceive('builtinOverrides')->andReturn([
+            'search_help' => ['enabled' => false, 'description' => null],
+            'escalate_to_agent' => ['enabled' => false, 'description' => null],
+            'lookup_order' => ['enabled' => true, 'description' => 'Descripción editada en el panel'],
+        ]);
+        $registry->shouldReceive('toolsFor')->andReturnUsing(function (array $ctx) {
+            // Sin verificar, el contexto no lleva datos del cliente.
+            $this->assertNull($ctx['customer_email']);
+
+            return [['type' => 'function', 'function' => ['name' => 'documentos_pedido', 'description' => 'Documentos de un pedido', 'parameters' => ['type' => 'object', 'properties' => new \stdClass, 'required' => []]]]];
+        });
+        $registry->shouldReceive('isCustom')->andReturnUsing(fn ($k) => $k === 'documentos_pedido');
+        $this->app->instance(ActionRegistry::class, $registry);
+
+        $executor = Mockery::mock(ActionExecutor::class);
+        $executor->shouldReceive('run')->once()->with('documentos_pedido', ['order_ref' => '5001'], Mockery::type('array'), 'ai')
+            ->andReturn(['ok' => true, 'content' => '{"invoice":"FA-1"}', 'status' => 'ok']);
+        $this->app->instance(ActionExecutor::class, $executor);
+
+        Http::fakeSequence('api.openai.com/*')
+            ->push($this->toolCall('documentos_pedido', ['order_ref' => '5001']), 200)
+            ->push(['choices' => [['message' => ['content' => 'Tu factura es la FA-1.', 'tool_calls' => []]]]], 200);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), (object) []);
+        $result = $agent->run('quiero la factura del pedido 5001', ['customer_email' => 'no-verificado@example.com'], []);
+
+        $this->assertSame('Tu factura es la FA-1.', $result['text']);
+        Http::assertSent(function ($request) {
+            $tools = collect($request->data()['tools'] ?? [])->keyBy('function.name');
+
+            return ! $tools->has('search_help')
+                && $tools->has('escalate_to_agent') // nunca se desactiva
+                && $tools['lookup_order']['function']['description'] === 'Descripción editada en el panel'
+                && $tools->has('documentos_pedido');
+        });
     }
 }

@@ -11,6 +11,7 @@ class HelpdeskAiPromptsDatabaseSeeder extends Seeder
         $this->call([
             HelpdeskAiPromptsPermissionsSeeder::class,
             AiPromptLibrarySeeder::class,
+            AiActionCatalogSeeder::class,
         ]);
     }
 }

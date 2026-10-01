@@ -36,7 +36,7 @@ trait HasPromptVersions
                 'subject_type' => $model->versionSubjectType(),
                 'subject_id' => $model->getKey(),
                 'version' => $model->version,
-                'snapshot' => $model->attributesToArray(),
+                'snapshot' => $model->versionSnapshot(),
                 'created_by' => Auth::id() ?? $model->updated_by,
                 'created_at' => now(),
             ]);
@@ -44,6 +44,17 @@ trait HasPromptVersions
     }
 
     abstract public function versionSubjectType(): string;
+
+    /**
+     * Contenido que se guarda en cada versión. Los modelos con datos que no
+     * deben versionarse (p. ej. secretos) lo sobrescriben.
+     *
+     * @return array<string, mixed>
+     */
+    public function versionSnapshot(): array
+    {
+        return $this->attributesToArray();
+    }
 
     /**
      * @return HasMany<AiPromptVersion, $this>
