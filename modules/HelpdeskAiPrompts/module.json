@@ -5,7 +5,8 @@
     "keywords": ["helpdesk", "ai", "prompts", "chatbot", "chatflow"],
     "priority": 57,
     "providers": [
-        "Modules\\HelpdeskAiPrompts\\Providers\\HelpdeskAiPromptsServiceProvider"
+        "Modules\\HelpdeskAiPrompts\\Providers\\HelpdeskAiPromptsServiceProvider",
+        "Modules\\HelpdeskAiPrompts\\Providers\\QualityServiceProvider"
     ],
     "aliases": {},
     "files": [],
