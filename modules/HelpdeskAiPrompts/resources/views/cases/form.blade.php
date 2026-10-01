@@ -187,6 +187,35 @@
                             </div>
                         </div>
 
+                        {{-- Procedimiento --}}
+                        @if($procedureFlows->isNotEmpty() || $case->procedure_flow_id)
+                            <h6 class="fw-semibold mb-1">{{ __('helpdeskaiprompts::ai-prompts.section_procedure') }}</h6>
+                            <p class="text-muted small mb-2">{{ __('helpdeskaiprompts::ai-prompts.section_procedure_help') }}</p>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="c-procedure">{{ __('helpdeskaiprompts::ai-prompts.field_procedure') }}</label>
+                                    <select name="procedure_flow_id" id="c-procedure" class="form-select">
+                                        <option value="">{{ __('helpdeskaiprompts::ai-prompts.procedure_none') }}</option>
+                                        @foreach($procedureFlows as $flow)
+                                            <option value="{{ $flow->id }}" @selected((int) old('procedure_flow_id', $case->procedure_flow_id) === $flow->id)>{{ $flow->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('procedure_flow_id')<div class="text-danger small">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="c-procedure-input">{{ __('helpdeskaiprompts::ai-prompts.field_procedure_input') }}</label>
+                                    <textarea name="procedure_input_text" id="c-procedure-input" class="form-control" rows="3" placeholder="email={{ '{{customer_email}}' }}">{{ old('procedure_input_text', collect((array) $case->procedure_input)->map(fn ($value, $name) => $name.'='.$value)->implode("\n")) }}</textarea>
+                                    <small class="text-muted">{{ __('helpdeskaiprompts::ai-prompts.field_procedure_input_help') }}</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="c-procedure-outputs">{{ __('helpdeskaiprompts::ai-prompts.field_procedure_outputs') }}</label>
+                                    <input type="text" name="procedure_outputs_text" id="c-procedure-outputs" class="form-control"
+                                           value="{{ old('procedure_outputs_text', implode(', ', (array) $case->procedure_outputs)) }}">
+                                    <small class="text-muted">{{ __('helpdeskaiprompts::ai-prompts.field_procedure_outputs_help') }}</small>
+                                </div>
+                            </div>
+                        @endif
+
                         {{-- Filtros --}}
                         <h6 class="fw-semibold mb-1">{{ __('helpdeskaiprompts::ai-prompts.section_filters') }}</h6>
                         <p class="text-muted small mb-2">{{ __('helpdeskaiprompts::ai-prompts.section_filters_help') }}</p>

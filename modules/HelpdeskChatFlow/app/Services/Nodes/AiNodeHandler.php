@@ -13,6 +13,7 @@ use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\RendersNodeMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\ResolvesVisitorContext;
 use Modules\HelpdeskChatFlow\Services\HandoffContextNote;
+use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
 use Modules\HelpdeskLivechat\Events\BotTyping;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogManager;
@@ -99,6 +100,15 @@ class AiNodeHandler implements NodeHandler
         $question = (string) ($session->getContextValue($data['question_variable'] ?? 'last_input') ?? '');
         $locale = (string) ($session->getContextValue('customer_lang') ?? $conversation->locale ?? config('app.locale', 'es'));
 
+        // Vuelta de un procedimiento: la misma pregunta y el mismo caso, ahora
+        // con los datos recogidos (la respuesta del cliente al procedimiento
+        // sobrescribió last_input).
+        $procedureDone = (array) ($session->getContextValue('_ai_procedure_done') ?? []);
+        if ($procedureDone !== []) {
+            $question = (string) ($session->getContextValue('_ai_procedure_question') ?? $question);
+            $data['_forced_case'] ??= $procedureDone[0];
+        }
+
         $catalog = $this->catalogFor($conversation);
         $history = ($data['use_memory'] ?? true) ? $this->conversationHistory($conversation) : [];
         $visitorContext = $this->resolveVisitorContext($conversation);
@@ -109,6 +119,17 @@ class AiNodeHandler implements NodeHandler
             $result = $this->agent->run($question, $session->context ?? [], $data, $locale, $catalog, $this->cartFor($conversation), $history, $visitorContext);
         } finally {
             $this->broadcastBotTyping($conversation, false);
+        }
+
+        if ($result['action'] === 'procedure') {
+            $procedureNodeId = $this->enterProcedure($node, $session, $result, $question);
+
+            if ($procedureNodeId !== null) {
+                return $procedureNodeId;
+            }
+
+            // Procedimiento no disponible: responde la IA como siempre.
+            $result = $this->runWithoutProcedure((string) $result['case'], $question, $session, $data, $locale, $catalog, $conversation, $history, $visitorContext);
         }
 
         // Pregunta con botones/enlaces (ask_customer): el widget pinta prompt +
@@ -134,9 +155,11 @@ class AiNodeHandler implements NodeHandler
 
         // Si el bot acaba de preguntar con opciones, la respuesta del cliente
         // sigue en el mismo caso de prompt (ver ChatFlowAgentService).
+        $asked = ! empty($result['options']);
         $session->setContextValues([
-            'ai_pending_case' => ! empty($result['options']) ? ($result['case'] ?? null) : null,
-            'ai_pending_options' => ! empty($result['options']) ? $result['options'] : null,
+            'ai_pending_case' => $asked ? ($result['case'] ?? null) : null,
+            'ai_pending_options' => $asked ? $result['options'] : null,
+            ...($asked ? [] : $this->clearedProcedureState()),
         ]);
 
         if ($result['action'] === 'escalate') {
@@ -155,6 +178,79 @@ class AiNodeHandler implements NodeHandler
         }
 
         return $this->getFirstChildId($node, $session);
+    }
+
+    /**
+     * Entra en el procedimiento del caso (return = este mismo nodo ai_agent) y
+     * devuelve su nodo de inicio, o null si no se puede (no existe, no es un
+     * procedimiento activo, ciclo, profundidad). Se usa el mismo mecanismo que
+     * call_flow (no ChatFlowEngine::callProcedure): ese ejecuta el procedimiento
+     * anidado dentro del bucle del motor, y si se pausa en un collect_input el
+     * bucle exterior cerraría la llamada.
+     *
+     * @param  array<string,mixed>  $result
+     */
+    private function enterProcedure(array $node, ChatFlowSession $session, array $result, string $question): ?string
+    {
+        $context = $session->context ?? [];
+
+        try {
+            $calls = app(FlowCallNodeHandler::class);
+            $procedure = $calls->load((int) ($result['procedure_flow_id'] ?? 0));
+
+            if ($procedure === null) {
+                throw new FlowCallRefused('El procedimiento del caso no existe.');
+            }
+
+            $input = [];
+            foreach ((array) ($result['input'] ?? []) as $name => $template) {
+                $input[$name] = is_string($template) ? ContextPath::interpolate($template, $context) : $template;
+            }
+
+            // Marca antes de entrar: al volver al nodo no se vuelve a llamar.
+            $session->setContextValues([
+                '_ai_procedure_done' => [$result['case']],
+                '_ai_procedure_question' => $question,
+                '_ai_procedure_keys' => array_keys($context),
+            ]);
+
+            return $calls->enter($session, $procedure, $node['id'], $input, (array) ($result['outputs'] ?? []));
+        } catch (FlowCallRefused $e) {
+            Log::warning('ChatFlow ai_agent: procedure refused, answering with AI', [
+                'session_id' => $session->id,
+                'node_id' => $node['id'],
+                'case' => $result['case'] ?? null,
+                'reason' => $e->getMessage(),
+            ]);
+
+            $session->setContextValues($this->clearedProcedureState());
+
+            return null;
+        }
+    }
+
+    /**
+     * La IA responde sin procedimiento: se marca el caso como hecho para que el
+     * agente no devuelva otra vez la acción 'procedure'.
+     *
+     * @param  array<string,mixed>  $data
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @return array<string,mixed>
+     */
+    private function runWithoutProcedure(string $caseKey, string $question, ChatFlowSession $session, array $data, string $locale, ?object $catalog, Conversation $conversation, array $history, ?array $visitorContext): array
+    {
+        $context = $session->context ?? [];
+        $context['_ai_procedure_done'] = [$caseKey];
+
+        return $this->agent->run($question, $context, $data, $locale, $catalog, $this->cartFor($conversation), $history, $visitorContext);
+    }
+
+    /**
+     * @return array<string, null>
+     */
+    private function clearedProcedureState(): array
+    {
+        return ['_ai_procedure_done' => null, '_ai_procedure_question' => null, '_ai_procedure_keys' => null];
     }
 
     /**

@@ -31,6 +31,9 @@ class AiPromptCase extends Model
         'filters',
         'test_questions',
         'channel',
+        'procedure_flow_id',
+        'procedure_input',
+        'procedure_outputs',
         'version',
         'updated_by',
     ];
@@ -46,6 +49,9 @@ class AiPromptCase extends Model
             'keywords' => 'array',
             'filters' => 'array',
             'test_questions' => 'array',
+            'procedure_flow_id' => 'integer',
+            'procedure_input' => 'array',
+            'procedure_outputs' => 'array',
             'version' => 'integer',
         ];
     }

@@ -368,4 +368,13 @@ return [
         'email' => 'Email',
         'web' => 'Chat web',
     ],
+
+    'section_procedure' => 'Procedimiento',
+    'section_procedure_help' => 'Si el router elige este caso, la IA no responde: entra en este procedimiento de ChatFlow y, al volver, contesta con los datos recogidos.',
+    'field_procedure' => 'Procedimiento',
+    'procedure_none' => 'Sin procedimiento (responde la IA)',
+    'field_procedure_input' => 'Variables de entrada',
+    'field_procedure_input_help' => 'Una por línea: variable=valor (admite {{variables}}).',
+    'field_procedure_outputs' => 'Datos que recibe la IA',
+    'field_procedure_outputs_help' => 'Variables separadas por coma. Vacío: las que fije el procedimiento.',
 ];

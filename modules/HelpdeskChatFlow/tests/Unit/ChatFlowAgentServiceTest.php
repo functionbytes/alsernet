@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Mockery;
 use Modules\HelpdeskAiPrompts\Services\Actions\ActionExecutor;
 use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
+use Modules\HelpdeskAiPrompts\Services\PromptComposer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
 use Modules\HelpdeskChatFlow\Tests\TestCase;
@@ -777,5 +778,127 @@ class ChatFlowAgentServiceTest extends TestCase
 
         $this->assertSame(10, $second['usage']['prompt_tokens']);
         $this->assertSame(1, $second['usage']['calls']);
+    }
+
+    /**
+     * @param  array<string,mixed>  $overrides
+     */
+    private function bindComposer(array $overrides = []): void
+    {
+        $composed = array_merge([
+            'system' => 'Eres el asistente.',
+            'case_key' => 'estado_pedido',
+            'case_name' => 'Estado de pedido',
+            'routed_by' => 'keyword',
+            'allowed_tools' => null,
+            'escalation' => 'on_doubt',
+            'escalation_message' => null,
+            'procedure_flow_id' => 7,
+            'procedure_input' => ['email' => '{{customer_email}}'],
+            'procedure_outputs' => [],
+        ], $overrides);
+
+        $composer = Mockery::mock(PromptComposer::class);
+        $composer->shouldReceive('compose')->andReturn($composed);
+        $this->app->instance(PromptComposer::class, $composer);
+    }
+
+    public function test_case_with_procedure_returns_procedure_action_without_calling_openai(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake();
+        $this->bindComposer();
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('¿dónde está mi pedido?', [], ['use_prompt_library' => true]);
+
+        $this->assertSame('procedure', $result['action']);
+        $this->assertSame(7, $result['procedure_flow_id']);
+        $this->assertSame(['email' => '{{customer_email}}'], $result['input']);
+        $this->assertSame('estado_pedido', $result['case']);
+        Http::assertNothingSent();
+    }
+
+    public function test_after_the_procedure_the_agent_answers_with_declared_collected_data(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'Tu pedido está en preparación.', 'tool_calls' => []]]],
+        ], 200)]);
+        $this->bindComposer(['procedure_outputs' => ['pedido.estado', 'order_ref']]);
+
+        $context = [
+            '_ai_procedure_done' => ['estado_pedido'],
+            'pedido' => ['estado' => 'En preparación'],
+            'order_ref' => 'A-123',
+            'otra' => 'no declarada',
+        ];
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('¿dónde está mi pedido?', $context, ['use_prompt_library' => true]);
+
+        $this->assertSame('respond', $result['action']);
+        Http::assertSent(function ($request): bool {
+            $system = collect($request['messages'])->where('role', 'system')->pluck('content')->implode("\n");
+
+            return str_contains($system, '<<DATOS_RECOGIDOS>>')
+                && str_contains($system, 'pedido.estado: En preparación')
+                && str_contains($system, 'order_ref: A-123')
+                && ! str_contains($system, 'no declarada');
+        });
+    }
+
+    public function test_collected_data_without_declared_outputs_skips_internal_keys_and_third_party_contacts(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'ok', 'tool_calls' => []]]],
+        ], 200)]);
+        $this->bindComposer();
+
+        $context = [
+            'customer_email' => 'yo@example.com',
+            'identity_verified' => true,
+            '_ai_procedure_done' => ['estado_pedido'],
+            '_ai_procedure_keys' => ['customer_email', 'identity_verified', '_ai_procedure_done'],
+            'order_status' => 'Enviado',
+            'ai_used_kb' => true,
+            '_secret' => 'interno',
+            'contact_email' => 'tercero@example.com',
+            'telefono' => '600123456',
+            'owner_email' => 'yo@example.com',
+        ];
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('pedido', $context, ['use_prompt_library' => true]);
+
+        Http::assertSent(function ($request): bool {
+            $system = collect($request['messages'])->where('role', 'system')->pluck('content')->implode("\n");
+
+            return str_contains($system, 'order_status: Enviado')
+                && str_contains($system, 'owner_email: yo@example.com')
+                && ! str_contains($system, 'tercero@example.com')
+                && ! str_contains($system, '600123456')
+                && ! str_contains($system, 'interno')
+                && ! str_contains($system, 'ai_used_kb');
+        });
+    }
+
+    public function test_collected_data_block_is_capped(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+        Http::fake(['api.openai.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'ok', 'tool_calls' => []]]],
+        ], 200)]);
+        $this->bindComposer(['procedure_outputs' => ['a']]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('x', ['_ai_procedure_done' => ['estado_pedido'], 'a' => str_repeat('z', 5000)], ['use_prompt_library' => true]);
+
+        Http::assertSent(function ($request): bool {
+            $block = collect($request['messages'])->first(fn ($m) => str_contains((string) $m['content'], '<<DATOS_RECOGIDOS>>'))['content'];
+
+            return mb_strlen($block) < 1700;
+        });
     }
 }

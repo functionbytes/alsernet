@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskAiPrompts\Support\ToolCatalog;
+use Modules\HelpdeskChatFlow\Models\ChatFlow;
 
 /**
  * Shared rules/sanitizing for the case create/edit form and the "probar
@@ -60,7 +61,23 @@ abstract class AiPromptCaseFormRequest extends FormRequest
             'test_questions.*.must_not_contain' => ['nullable', 'array'],
             'test_questions.*.must_not_contain.*' => ['string', 'max:255'],
             'channel' => ['nullable', 'string', Rule::in(Inbox::CHANNEL_TYPES)],
+            'procedure_flow_id' => ['nullable', 'integer', $this->procedureExistsRule()],
+            'procedure_input' => ['nullable', 'array'],
+            'procedure_input.*' => ['nullable', 'string', 'max:255'],
+            'procedure_outputs' => ['nullable', 'array'],
+            'procedure_outputs.*' => ['string', 'max:64', 'regex:/^[A-Za-z0-9_.]+$/'],
         ];
+    }
+
+    private function procedureExistsRule(): mixed
+    {
+        if (! class_exists(ChatFlow::class)) {
+            return Rule::prohibitedIf(true);
+        }
+
+        return Rule::exists('helpdesk.helpdesk_chat_flows', 'id')
+            ->where('trigger_type', 'procedure')
+            ->where('status', 'active');
     }
 
     public function messages(): array
@@ -82,7 +99,54 @@ abstract class AiPromptCaseFormRequest extends FormRequest
             'allowed_tools' => $this->filteredList('allowed_tools'),
             'test_questions' => $this->filteredTestQuestions(),
             'channel' => $this->input('channel') ?: null,
+            ...$this->procedureFields(),
         ]);
+    }
+
+    /**
+     * El formulario envía el procedimiento como texto (una línea "variable=valor"
+     * por entrada, salidas separadas por coma): se normaliza a la forma guardada.
+     *
+     * @return array<string, mixed>
+     */
+    private function procedureFields(): array
+    {
+        $fields = [
+            'procedure_flow_id' => $this->input('procedure_flow_id') ?: null,
+        ];
+
+        if ($this->has('procedure_input_text')) {
+            $fields['procedure_input'] = $this->parseInputLines((string) $this->input('procedure_input_text'));
+        }
+
+        if ($this->has('procedure_outputs_text')) {
+            $fields['procedure_outputs'] = collect(preg_split('/[\s,]+/', (string) $this->input('procedure_outputs_text')) ?: [])
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function parseInputLines(string $text): array
+    {
+        $input = [];
+
+        foreach (preg_split('/\R/', $text) ?: [] as $line) {
+            [$name, $value] = array_pad(explode('=', $line, 2), 2, '');
+            $name = trim($name);
+
+            if ($name !== '') {
+                $input[$name] = trim($value);
+            }
+        }
+
+        return $input;
     }
 
     /**

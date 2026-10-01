@@ -20,7 +20,7 @@ class PromptComposer
      * @param  array{channel?: ?string, locale?: ?string, page_url?: ?string, logged_in?: bool, now?: ?Carbon}  $ctx
      * @param  array<string,mixed>  $nodeData
      * @param  array<string,mixed>|null  $draftCase  Unsaved case (tester): takes priority over everything, routed_by = 'forced'
-     * @return array{system: string, case_key: ?string, case_name: ?string, routed_by: string, allowed_tools: ?array, escalation: string, escalation_message: ?string}
+     * @return array{system: string, case_key: ?string, case_name: ?string, routed_by: string, allowed_tools: ?array, escalation: string, escalation_message: ?string, procedure_flow_id: ?int, procedure_input: array<string,mixed>, procedure_outputs: array<int,string>}
      */
     public function compose(string $question, array $ctx, array $nodeData = [], ?string $forcedCaseKey = null, ?array $draftCase = null): array
     {
@@ -49,6 +49,9 @@ class PromptComposer
             'allowed_tools' => $case !== null ? $this->caseValue($case, 'allowed_tools') : null,
             'escalation' => $case !== null ? (string) ($this->caseValue($case, 'escalation') ?? 'on_doubt') : 'on_doubt',
             'escalation_message' => $case !== null ? $this->caseValue($case, 'escalation_message') : null,
+            'procedure_flow_id' => $case !== null && $this->caseValue($case, 'procedure_flow_id') ? (int) $this->caseValue($case, 'procedure_flow_id') : null,
+            'procedure_input' => $case !== null ? (array) ($this->caseValue($case, 'procedure_input') ?? []) : [],
+            'procedure_outputs' => $case !== null ? array_values((array) ($this->caseValue($case, 'procedure_outputs') ?? [])) : [],
         ];
     }
 

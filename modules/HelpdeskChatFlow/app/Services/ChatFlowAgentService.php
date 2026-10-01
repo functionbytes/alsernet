@@ -12,6 +12,7 @@ use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
 use Modules\HelpdeskAiPrompts\Services\PromptComposer;
 use Modules\HelpdeskAiPrompts\Services\PromptRunRecorder;
 use Modules\HelpdeskAiPrompts\Services\PromptRunUsage;
+use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 use Modules\HelpdeskPrestashop\Services\Ext\CatalogService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
@@ -84,6 +85,22 @@ class ChatFlowAgentService
         $this->runUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0, 'model' => null, 'calls' => 0];
         $composed = $this->composePrompt($question, $context, $data, $locale, $visitorContext);
 
+        // Casos con procedimiento (ChatFlow): la IA no responde, entra en él y
+        // al volver (flag _ai_procedure_done) sigue con los datos recogidos.
+        if ($this->shouldEnterProcedure($composed, $context)) {
+            return [
+                'action' => 'procedure',
+                'text' => '',
+                'used_tools' => [],
+                'products' => [],
+                'procedure_flow_id' => (int) $composed['procedure_flow_id'],
+                'input' => (array) ($composed['procedure_input'] ?? []),
+                'outputs' => array_values((array) ($composed['procedure_outputs'] ?? [])),
+                'case' => $composed['case_key'],
+                'usage' => $this->runUsage,
+            ];
+        }
+
         // Casos que siempre pasan a una persona (p. ej. quejas): sin llamar al modelo.
         if ($composed !== null && ($composed['escalation'] ?? '') === 'always') {
             $result = [
@@ -101,6 +118,19 @@ class ChatFlowAgentService
         $this->recordRun($context, $composed, $result, $startedAt);
 
         return $result;
+    }
+
+    /**
+     * @param  array<string,mixed>|null  $composed
+     * @param  array<string,mixed>  $context
+     */
+    private function shouldEnterProcedure(?array $composed, array $context): bool
+    {
+        if (empty($composed['procedure_flow_id']) || empty($composed['case_key'])) {
+            return false;
+        }
+
+        return ! in_array($composed['case_key'], (array) ($context['_ai_procedure_done'] ?? []), true);
     }
 
     /**
@@ -250,6 +280,11 @@ class ChatFlowAgentService
             $visitorContextIndex = count($messages) - 1;
         }
 
+        $collectedData = $this->buildCollectedDataText($composed, $context);
+        if ($collectedData !== '') {
+            $messages[] = ['role' => 'system', 'content' => $collectedData];
+        }
+
         foreach ($this->sanitizeHistory($history) as $turn) {
             $messages[] = $turn;
         }
@@ -394,6 +429,107 @@ class ChatFlowAgentService
         $text = implode("\n\n", $lines);
 
         return $this->sanitizer?->wrap($text, 'CONTEXTO_VISITANTE') ?? $text;
+    }
+
+    /** Máximo de caracteres del bloque DATOS_RECOGIDOS. */
+    private const MAX_COLLECTED_CHARS = 1500;
+
+    /**
+     * Datos que recogió el procedimiento del caso, en un bloque acotado y
+     * saneado: las variables declaradas en procedure_outputs o, sin
+     * declaración, las que el procedimiento fijó (claves no internas, sin
+     * emails ni teléfonos de terceros: solo el email del cliente verificado).
+     *
+     * @param  array<string,mixed>|null  $composed
+     * @param  array<string,mixed>  $context
+     */
+    private function buildCollectedDataText(?array $composed, array $context): string
+    {
+        if (empty($composed['procedure_flow_id']) || ! in_array($composed['case_key'] ?? null, (array) ($context['_ai_procedure_done'] ?? []), true)) {
+            return '';
+        }
+
+        $declared = array_values(array_filter((array) ($composed['procedure_outputs'] ?? [])));
+        $values = $declared !== [] ? $this->declaredValues($declared, $context) : $this->procedureSetValues($context);
+
+        $lines = [];
+        foreach ($values as $name => $value) {
+            $lines[] = $name.': '.$this->sanitize($value);
+        }
+
+        if ($lines === []) {
+            return '';
+        }
+
+        $text = mb_substr(implode("\n", $lines), 0, self::MAX_COLLECTED_CHARS);
+
+        return $this->sanitizer?->wrap($text, 'DATOS_RECOGIDOS') ?? $text;
+    }
+
+    /**
+     * @param  array<int, string>  $names
+     * @param  array<string,mixed>  $context
+     * @return array<string, string>
+     */
+    private function declaredValues(array $names, array $context): array
+    {
+        $values = [];
+
+        foreach ($names as $name) {
+            $text = $this->scalarText(ContextPath::get($context, $name));
+            if ($text !== null) {
+                $values[$name] = $text;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param  array<string,mixed>  $context
+     * @return array<string, string>
+     */
+    private function procedureSetValues(array $context): array
+    {
+        $before = (array) ($context['_ai_procedure_keys'] ?? []);
+        $ownEmail = $this->isVerifiedCustomer($context) ? mb_strtolower(trim((string) ($context['customer_email'] ?? ''))) : '';
+        $values = [];
+
+        foreach ($context as $name => $value) {
+            if (in_array($name, $before, true) || str_starts_with((string) $name, '_') || str_starts_with((string) $name, 'ai_')) {
+                continue;
+            }
+
+            $text = $this->scalarText($value);
+            $isContact = $this->looksLikeContactData($text ?? '') || preg_match('/phone|tel[eé]fono|movil|m[oó]vil|mobile|whatsapp/i', (string) $name) === 1;
+            if ($text === null || ($isContact && mb_strtolower($text) !== $ownEmail)) {
+                continue;
+            }
+
+            $values[(string) $name] = $text;
+        }
+
+        return $values;
+    }
+
+    private function scalarText(mixed $value): ?string
+    {
+        if (is_bool($value)) {
+            return $value ? 'sí' : 'no';
+        }
+
+        if (! is_scalar($value) || trim((string) $value) === '') {
+            return null;
+        }
+
+        return trim((string) $value);
+    }
+
+    private function looksLikeContactData(string $text): bool
+    {
+        return filter_var($text, FILTER_VALIDATE_EMAIL) !== false
+            || preg_match('/^(\+\d[\d\s().-]{6,}|\d{3}[\s.-]\d{2,3}[\s.-]\d{2,4}[\s.-]?\d{0,4}|[67]\d{8})$/', $text) === 1
+            || preg_match('/[\w.+-]+@[\w-]+\.[\w.-]+/', $text) === 1;
     }
 
     private function formatMoney(mixed $amount, ?string $currency): string

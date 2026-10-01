@@ -368,4 +368,13 @@ return [
         'email' => 'Email',
         'web' => 'Web chat',
     ],
+
+    'section_procedure' => 'Procedure',
+    'section_procedure_help' => 'If the router picks this case, the AI does not answer: it enters this ChatFlow procedure and, on return, replies with the collected data.',
+    'field_procedure' => 'Procedure',
+    'procedure_none' => 'No procedure (the AI answers)',
+    'field_procedure_input' => 'Input variables',
+    'field_procedure_input_help' => 'One per line: variable=value ({{variables}} allowed).',
+    'field_procedure_outputs' => 'Data passed to the AI',
+    'field_procedure_outputs_help' => 'Comma-separated variables. Empty: those set by the procedure.',
 ];

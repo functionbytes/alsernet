@@ -251,7 +251,7 @@ class FlowCallNodeHandler implements NodeHandler
         $session->setRelation('chatFlow', $flow);
     }
 
-    private function load(int $flowId): ?ChatFlow
+    public function load(int $flowId): ?ChatFlow
     {
         if ($this->flowLoader !== null) {
             return ($this->flowLoader)($flowId);

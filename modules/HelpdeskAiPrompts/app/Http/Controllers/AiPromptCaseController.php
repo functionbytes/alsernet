@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskAiPrompts\Http\Requests\StoreAiPromptCaseRequest;
 use Modules\HelpdeskAiPrompts\Http\Requests\TestDraftCaseRequest;
@@ -17,6 +18,7 @@ use Modules\HelpdeskAiPrompts\Models\AiPromptVersion;
 use Modules\HelpdeskAiPrompts\Services\PromptTestRunner;
 use Modules\HelpdeskAiPrompts\Support\ToolCatalog;
 use Modules\HelpdeskAiPrompts\Support\VersionDiff;
+use Modules\HelpdeskChatFlow\Models\ChatFlow;
 
 class AiPromptCaseController extends Controller
 {
@@ -126,7 +128,27 @@ class AiPromptCaseController extends Controller
             'channels' => Inbox::CHANNEL_TYPES,
             'tools' => ToolCatalog::catalog($this->selectedTools($case)),
             'knowledgeBlocks' => AiPromptBlock::query()->where('kind', 'knowledge')->orderBy('name')->get(),
+            'procedureFlows' => $this->procedureFlows($case),
         ];
+    }
+
+    /**
+     * Flujos ChatFlow activos de tipo procedimiento (vacío sin HelpdeskChatFlow).
+     * El que ya usa el caso se mantiene aunque se haya desactivado.
+     *
+     * @return Collection<int, ChatFlow>
+     */
+    private function procedureFlows(AiPromptCase $case): Collection
+    {
+        if (! class_exists(ChatFlow::class)) {
+            return collect();
+        }
+
+        return ChatFlow::query()
+            ->where('trigger_type', 'procedure')
+            ->where(fn ($query) => $query->where('status', 'active')->orWhere('id', $case->procedure_flow_id))
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     /**
