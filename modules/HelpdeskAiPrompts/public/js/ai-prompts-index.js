@@ -44,7 +44,8 @@
             },
             error: function (xhr) {
                 $toggle.prop('checked', !wasChecked);
-                toastr.error(xhr.responseJSON?.message ?? 'No se pudo actualizar.');
+                const errors = xhr.responseJSON?.errors;
+                toastr.error(errors ? Object.values(errors)[0][0] : (xhr.responseJSON?.message ?? 'No se pudo actualizar.'));
             },
             complete: function () {
                 $toggle.prop('disabled', false);

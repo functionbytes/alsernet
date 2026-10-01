@@ -44,16 +44,18 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
 
     protected function registerRoutes(): void
     {
-        $path = module_path($this->moduleName, 'routes/web.php');
+        foreach (['web.php', 'actions.php'] as $file) {
+            $path = module_path($this->moduleName, 'routes/'.$file);
 
-        if (! file_exists($path)) {
-            return;
+            if (! file_exists($path)) {
+                continue;
+            }
+
+            Route::middleware(['web', 'auth', 'can:helpdesk.ai-prompts.view'])
+                ->prefix('panel/helpdesk/ai-prompts')
+                ->name('helpdesk-ai-prompts.')
+                ->group($path);
         }
-
-        Route::middleware(['web', 'auth', 'can:helpdesk.ai-prompts.view'])
-            ->prefix('panel/helpdesk/ai-prompts')
-            ->name('helpdesk-ai-prompts.')
-            ->group($path);
     }
 
     /**

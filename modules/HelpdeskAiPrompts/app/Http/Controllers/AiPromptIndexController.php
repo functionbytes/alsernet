@@ -9,11 +9,12 @@ use Illuminate\Support\Collection;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskAiPrompts\Models\AiPromptBlock;
 use Modules\HelpdeskAiPrompts\Models\AiPromptCase;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionPanel;
 use Modules\HelpdeskAiPrompts\Services\PromptMetrics;
 
 class AiPromptIndexController extends Controller
 {
-    public function index(Request $request, PromptMetrics $metrics): View
+    public function index(Request $request, PromptMetrics $metrics, ActionPanel $actions): View
     {
         $metricsByCase = $metrics->perCase(30);
 
@@ -28,6 +29,7 @@ class AiPromptIndexController extends Controller
             'knowledgeBlocks' => AiPromptBlock::query()->where('kind', 'knowledge')->orderBy('name')->get(),
             'baseBlocks' => AiPromptBlock::query()->where('kind', 'base')->orderBy('name')->get(),
             'stats' => $this->stats($cases, $metricsByCase),
+            'actionsPanel' => $actions->forIndex(),
             'channels' => Inbox::CHANNEL_TYPES,
             'canManage' => (bool) $request->user()?->can('helpdesk.ai-prompts.manage'),
             'activeTab' => $request->query('tab', 'casos'),

@@ -71,6 +71,11 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ $activeTab === 'acciones' ? 'active' : '' }}" id="acciones-tab" data-bs-toggle="tab" data-bs-target="#acciones-content" type="button" role="tab">
+                            <i class="fas fa-bolt me-1"></i> {{ __('helpdeskaiprompts::ai-prompts.tab_acciones') }}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link {{ $activeTab === 'probador' ? 'active' : '' }}" id="probador-tab" data-bs-toggle="tab" data-bs-target="#probador-content" type="button" role="tab">
                             <i class="fas fa-flask me-1"></i> {{ __('helpdeskaiprompts::ai-prompts.tab_probador') }}
                         </button>
@@ -216,6 +221,11 @@
                         ])
                     </div>
 
+                    {{-- ===== Acciones ===== --}}
+                    <div class="tab-pane fade {{ $activeTab === 'acciones' ? 'show active' : '' }}" id="acciones-content" role="tabpanel">
+                        @include('helpdeskaiprompts::partials.actions-tab')
+                    </div>
+
                     {{-- ===== Probador ===== --}}
                     <div class="tab-pane fade {{ $activeTab === 'probador' ? 'show active' : '' }}" id="probador-content" role="tabpanel">
                         <div class="row g-3">
@@ -308,6 +318,9 @@
     </div>
 
     @include('helpdeskaiprompts::partials.test-results-modal')
+    @if($canManage)
+        @include('helpdeskaiprompts::partials.action-test-modal')
+    @endif
 
     @if($canManage)
         <div class="modal fade" id="duplicate-modal" tabindex="-1">
@@ -372,4 +385,24 @@
         };
     </script>
     <script src="{{ asset('modules/helpdeskaiprompts/js/ai-prompts-index.js') }}?v={{ @filemtime(public_path('modules/helpdeskaiprompts/js/ai-prompts-index.js')) }}"></script>
+    @if($canManage)
+        <script>
+            window.AiActionsConfig = {
+                i18n: {
+                    statusOk: @json(__('helpdeskaiprompts::ai-prompts.actions.status_ok')),
+                    statusDenied: @json(__('helpdeskaiprompts::ai-prompts.actions.status_denied')),
+                    statusError: @json(__('helpdeskaiprompts::ai-prompts.actions.status_error')),
+                    helpOk: @json(__('helpdeskaiprompts::ai-prompts.actions.test_help_ok')),
+                    helpDenied: @json(__('helpdeskaiprompts::ai-prompts.actions.test_help_denied')),
+                    helpError: @json(__('helpdeskaiprompts::ai-prompts.actions.test_help_error')),
+                    inactive: @json(__('helpdeskaiprompts::ai-prompts.actions.test_inactive')),
+                    running: @json(__('helpdeskaiprompts::ai-prompts.actions.test_running')),
+                    run: @json(__('helpdeskaiprompts::ai-prompts.actions.test_run')),
+                    testFailed: @json(__('helpdeskaiprompts::ai-prompts.actions.test_failed')),
+                    boolYes: @json(__('helpdeskaiprompts::ai-prompts.actions.bool_yes')),
+                },
+            };
+        </script>
+        <script src="{{ asset('modules/helpdeskaiprompts/js/ai-prompts-actions.js') }}?v={{ @filemtime(public_path('modules/helpdeskaiprompts/js/ai-prompts-actions.js')) }}"></script>
+    @endif
 @endpush

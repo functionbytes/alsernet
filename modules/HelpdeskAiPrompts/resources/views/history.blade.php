@@ -75,6 +75,44 @@
                 @endif
             </div>
 
+            @isset($runs)
+                <div class="card-body border-top">
+                    <h6 class="fw-semibold mb-3">{{ __('helpdeskaiprompts::ai-prompts.actions.runs_title') }}</h6>
+                    @if($runs->isEmpty())
+                        <p class="text-muted small mb-0">{{ __('helpdeskaiprompts::ai-prompts.actions.runs_empty') }}</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{{ __('helpdeskaiprompts::ai-prompts.th_date') }}</th>
+                                        <th>{{ __('helpdeskaiprompts::ai-prompts.actions.run_source') }}</th>
+                                        <th>{{ __('helpdeskaiprompts::ai-prompts.actions.run_status') }}</th>
+                                        <th class="text-end">{{ __('helpdeskaiprompts::ai-prompts.actions.run_latency') }}</th>
+                                        <th>{{ __('helpdeskaiprompts::ai-prompts.actions.run_args') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($runs as $run)
+                                        @php $badge = ['ok' => 'success', 'denied' => 'warning', 'error' => 'danger'][$run->status] ?? 'secondary'; @endphp
+                                        <tr>
+                                            <td class="small text-muted">{{ $run->created_at?->format('d/m/Y H:i:s') }}</td>
+                                            <td class="small">{{ $run->source }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ $badge }}-subtle text-{{ $badge }}">{{ __('helpdeskaiprompts::ai-prompts.actions.status_'.$run->status) }}</span>
+                                                @if($run->error)<div class="small text-muted">{{ $run->error }}</div>@endif
+                                            </td>
+                                            <td class="small text-end">{{ $run->latency_ms }} ms</td>
+                                            <td class="small"><code>{{ collect((array) $run->args_summary)->map(fn ($v, $k) => $k.'='.(is_scalar($v) ? var_export($v, true) : json_encode($v)))->implode(', ') ?: '—' }}</code></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            @endisset
+
             <div class="card-footer bg-white border-top">
                 <a href="{{ $backRoute }}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i>{{ __('helpdeskaiprompts::ai-prompts.back') }} {{ $backLabel }}</a>
             </div>

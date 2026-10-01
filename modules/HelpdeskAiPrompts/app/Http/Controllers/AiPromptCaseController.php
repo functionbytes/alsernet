@@ -124,9 +124,22 @@ class AiPromptCaseController extends Controller
         return [
             'case' => $case,
             'channels' => Inbox::CHANNEL_TYPES,
-            'tools' => ToolCatalog::TOOLS,
+            'tools' => ToolCatalog::catalog($this->selectedTools($case)),
             'knowledgeBlocks' => AiPromptBlock::query()->where('kind', 'knowledge')->orderBy('name')->get(),
         ];
+    }
+
+    /**
+     * Herramientas que el caso ya usa (permitidas o esperadas en sus pruebas):
+     * siguen apareciendo en el formulario aunque su acción esté desactivada.
+     *
+     * @return array<int, string>
+     */
+    private function selectedTools(AiPromptCase $case): array
+    {
+        $expected = collect((array) $case->test_questions)->flatMap(fn ($question) => (array) ($question['expect_tools'] ?? []));
+
+        return collect((array) $case->allowed_tools)->merge($expected)->unique()->values()->all();
     }
 
     /**
