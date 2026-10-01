@@ -17,6 +17,8 @@ class AiActionRun extends Model
         'source',
         'trace_id',
         'conversation_id',
+        'user_id',
+        'agent_verified',
         'status',
         'error',
         'latency_ms',
@@ -28,6 +30,8 @@ class AiActionRun extends Model
     {
         return [
             'conversation_id' => 'integer',
+            'user_id' => 'integer',
+            'agent_verified' => 'boolean',
             'latency_ms' => 'integer',
             'args_summary' => 'array',
             'created_at' => 'datetime',

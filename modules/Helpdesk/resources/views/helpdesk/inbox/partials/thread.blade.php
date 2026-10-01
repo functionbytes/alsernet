@@ -5,6 +5,7 @@
 @if(helpdesk_document_enabled())
     @includeIf('helpdeskdocument::partials.thread-extension')
 @endif
+@includeIf('helpdeskaiprompts::partials.thread-extension')
 @php
     $convo = $selectedConversation ?? null;
     $cust = $convo?->customer;

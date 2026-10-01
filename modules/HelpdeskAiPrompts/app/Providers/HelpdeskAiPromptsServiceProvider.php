@@ -42,6 +42,7 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
         $this->registerConversationItemObserver();
         $this->registerFeedbackListener();
         $this->registerRoutes();
+        $this->registerAgentActionRoutes();
         $this->registerMenus();
     }
 
@@ -59,6 +60,25 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
                 ->name('helpdesk-ai-prompts.')
                 ->group($path);
         }
+    }
+
+    /**
+     * Acciones del catálogo desde la bandeja: sin `.view` de la biblioteca;
+     * el permiso `.agent-actions` y la política de la conversación se
+     * comprueban en las rutas y el controlador.
+     */
+    protected function registerAgentActionRoutes(): void
+    {
+        $path = module_path($this->moduleName, 'routes/agent-actions.php');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        Route::middleware(['web', 'auth'])
+            ->prefix('panel/helpdesk/agent-actions')
+            ->name('helpdesk-ai-prompts.agent-actions.')
+            ->group($path);
     }
 
     /**

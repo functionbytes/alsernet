@@ -32,7 +32,7 @@ class ActionExecutor
 
     /**
      * @param  array<string, mixed>  $args
-     * @param  array<string, mixed>  $ctx  verified, customer_email, customer_ps_id, customer_erp_id, conversation_id, trace_id, channel, locale
+     * @param  array<string, mixed>  $ctx  verified, customer_email, customer_ps_id, customer_erp_id, conversation_id, trace_id, channel, locale, user_id/agent_verified (source agent)
      * @return array{ok: bool, content: string, status: string}
      */
     public function run(string $key, array $args, array $ctx, string $source = 'ai'): array
@@ -101,7 +101,11 @@ class ActionExecutor
         $clean = $this->validateArgs(ActionParameters::effective($definition, $verified), $args);
         $argsSummary = $this->redactor->summarizeArgs($clean);
 
-        $this->consumeQuota($action, $ctx);
+        // El límite por conversación frena a la IA; un agente humano ya tiene su
+        // throttle por usuario y puede necesitar repetir una consulta.
+        if ($source !== 'agent') {
+            $this->consumeQuota($action, $ctx);
+        }
 
         $ownership = $this->resolveOwnership($definition, $clean, $ctx);
         $vars = [
@@ -364,6 +368,8 @@ class ActionExecutor
                 'source' => $source,
                 'trace_id' => isset($ctx['trace_id']) ? mb_substr((string) $ctx['trace_id'], 0, 64) : null,
                 'conversation_id' => $ctx['conversation_id'] ?? null,
+                'user_id' => $source === 'agent' ? ($ctx['user_id'] ?? null) : null,
+                'agent_verified' => $source === 'agent' && ! empty($ctx['agent_verified']),
                 'status' => $status,
                 'error' => $reason !== null ? mb_substr($this->redactor->redactString($reason), 0, 255) : null,
                 'latency_ms' => (int) ((hrtime(true) - $startedAt) / 1_000_000),
