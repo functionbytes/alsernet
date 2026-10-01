@@ -5,6 +5,7 @@ namespace Modules\HelpdeskChatFlow\Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Modules\HelpdeskAiPrompts\Models\AiPromptCase;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTemplateLibrary;
 
@@ -43,6 +44,37 @@ class ProcedureFlowsSeeder extends Seeder
             );
 
             $this->command?->info("{$flow->name}: id {$flow->id}");
+
+            $this->linkToPromptCase($meta['key'], $flow);
         }
     }
+
+    /**
+     * Procedimiento → caso de la librería de prompts (HelpdeskAiPrompts), solo
+     * si el caso aún no tiene uno: nunca pisa lo configurado en el panel.
+     */
+    private function linkToPromptCase(string $procedureKey, ChatFlow $flow): void
+    {
+        $caseKey = self::PROMPT_CASES[$procedureKey] ?? null;
+        $caseClass = AiPromptCase::class;
+
+        if ($caseKey === null || ! class_exists($caseClass)) {
+            return;
+        }
+
+        $linked = $caseClass::query()
+            ->where('key', $caseKey)
+            ->whereNull('procedure_flow_id')
+            ->update(['procedure_flow_id' => $flow->id]);
+
+        if ($linked > 0) {
+            $this->command?->info("  → asignado al caso de prompt {$caseKey}");
+        }
+    }
+
+    /** Procedimiento → caso de prompt que lo usa. aviso_stock se llama desde otros flujos. */
+    private const PROMPT_CASES = [
+        'estado_pedido' => 'estado_pedido',
+        'devoluciones' => 'devoluciones_cambios',
+    ];
 }
