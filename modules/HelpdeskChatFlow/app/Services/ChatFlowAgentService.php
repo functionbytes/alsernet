@@ -11,6 +11,7 @@ use Modules\HelpdeskAiPrompts\Services\Actions\ActionExecutor;
 use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
 use Modules\HelpdeskAiPrompts\Services\PromptComposer;
 use Modules\HelpdeskAiPrompts\Services\PromptRunRecorder;
+use Modules\HelpdeskAiPrompts\Services\PromptRunUsage;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
 use Modules\HelpdeskPrestashop\Services\Ext\CatalogService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
@@ -39,6 +40,9 @@ class ChatFlowAgentService
     private readonly ?AiClient $aiClient;
 
     private readonly ?PromptSanitizer $sanitizer;
+
+    /** @var array{prompt_tokens: int, completion_tokens: int, model: ?string, calls: int} */
+    private array $runUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0, 'model' => null, 'calls' => 0];
 
     /**
      * @param  object|null  $embeddings  HelpdeskHelpcenter EmbeddingsService (optional)
@@ -77,6 +81,7 @@ class ChatFlowAgentService
         ?array $visitorContext = null,
     ): array {
         $startedAt = microtime(true);
+        $this->runUsage = ['prompt_tokens' => 0, 'completion_tokens' => 0, 'model' => null, 'calls' => 0];
         $composed = $this->composePrompt($question, $context, $data, $locale, $visitorContext);
 
         // Casos que siempre pasan a una persona (p. ej. quejas): sin llamar al modelo.
@@ -92,6 +97,7 @@ class ChatFlowAgentService
         }
 
         $result['case'] = $composed['case_key'] ?? null;
+        $result['usage'] = $this->runUsage;
         $this->recordRun($context, $composed, $result, $startedAt);
 
         return $result;
@@ -161,7 +167,7 @@ class ChatFlowAgentService
         }
 
         try {
-            app(PromptRunRecorder::class)->record(
+            $run = app(PromptRunRecorder::class)->record(
                 $traceId !== '' ? $traceId : null,
                 $composed['case_key'] ?? null,
                 (string) ($composed['routed_by'] ?? 'none'),
@@ -169,6 +175,10 @@ class ChatFlowAgentService
                 array_values(array_unique($result['used_tools'] ?? [])),
                 (int) round((microtime(true) - $startedAt) * 1000),
             );
+
+            if ($run !== null && class_exists(PromptRunUsage::class)) {
+                app(PromptRunUsage::class)->attach($run, $result['usage'] ?? []);
+            }
         } catch (\Throwable $e) {
             Log::warning('ChatFlowAgentService: prompt run not recorded', ['error' => $e->getMessage()]);
         }
@@ -412,6 +422,12 @@ class ChatFlowAgentService
             'timeout' => 40,
             'retries' => 1,
             'retry_delay' => 400,
+            'on_usage' => function (array $usage): void {
+                $this->runUsage['prompt_tokens'] += $usage['prompt_tokens'];
+                $this->runUsage['completion_tokens'] += $usage['completion_tokens'];
+                $this->runUsage['model'] = $usage['model'];
+                $this->runUsage['calls']++;
+            },
         ]);
     }
 

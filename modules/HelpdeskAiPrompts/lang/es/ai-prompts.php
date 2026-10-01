@@ -14,6 +14,7 @@ return [
     'stat_escalation_rate' => '% Derivación',
     'stat_satisfaction' => 'Satisfacción 👍',
     'stat_active_cases' => 'Casos activos',
+    'stat_cost_30d' => 'Coste IA (30 días)',
 
     'new_case' => 'Nuevo caso',
     'new_knowledge_block' => 'Nuevo bloque de conocimiento',
@@ -27,6 +28,8 @@ return [
     'col_runs_30d' => 'Ejec. 30d',
     'col_escalation_rate' => '% Derivación',
     'col_satisfaction' => 'Satisfacción',
+    'col_tokens_30d' => 'Tokens 30d',
+    'col_cost_30d' => 'Coste 30d',
     'col_actions' => 'Acciones',
     'col_channel_locale' => 'Canal / idioma',
     'col_version' => 'Versión',

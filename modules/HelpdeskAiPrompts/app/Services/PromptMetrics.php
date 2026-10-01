@@ -11,7 +11,7 @@ use Modules\HelpdeskAiPrompts\Models\AiPromptRun;
 class PromptMetrics
 {
     /**
-     * @return Collection<string, array{case_key: string, runs: int, escalations: int, escalation_rate: float, likes: int, dislikes: int, satisfaction: float, top_tools: array<int,string>}>
+     * @return Collection<string, array{case_key: string, runs: int, escalations: int, escalation_rate: float, likes: int, dislikes: int, satisfaction: float, top_tools: array<int,string>, tokens: int, cost_eur: float}>
      */
     public function perCase(int $days = 30): Collection
     {
@@ -34,6 +34,8 @@ class PromptMetrics
                     'dislikes' => $dislikes,
                     'satisfaction' => ($likes + $dislikes) > 0 ? round($likes / ($likes + $dislikes), 4) : 0.0,
                     'top_tools' => $this->topTools($runs),
+                    'tokens' => (int) ($runs->sum('prompt_tokens') + $runs->sum('completion_tokens')),
+                    'cost_eur' => round((float) $runs->sum('cost_eur'), 4),
                 ];
             });
     }

@@ -52,6 +52,7 @@ class AiPromptIndexController extends Controller
             'runs_30d' => $runs,
             'escalation_rate' => $runs > 0 ? round($escalations / $runs * 100, 1) : 0.0,
             'satisfaction' => ($likes + $dislikes) > 0 ? round($likes / ($likes + $dislikes) * 100, 1) : 0.0,
+            'cost_30d' => round((float) $metricsByCase->sum('cost_eur'), 2),
             'active_cases' => $cases->where('is_active', true)->count(),
         ];
     }

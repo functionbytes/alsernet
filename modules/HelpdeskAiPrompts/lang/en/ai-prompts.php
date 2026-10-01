@@ -14,6 +14,7 @@ return [
     'stat_escalation_rate' => '% Escalation',
     'stat_satisfaction' => 'Satisfaction 👍',
     'stat_active_cases' => 'Active cases',
+    'stat_cost_30d' => 'AI cost (30 days)',
 
     'new_case' => 'New case',
     'new_knowledge_block' => 'New knowledge block',
@@ -27,6 +28,8 @@ return [
     'col_runs_30d' => 'Runs 30d',
     'col_escalation_rate' => '% Escalation',
     'col_satisfaction' => 'Satisfaction',
+    'col_tokens_30d' => 'Tokens 30d',
+    'col_cost_30d' => 'Cost 30d',
     'col_actions' => 'Actions',
     'col_channel_locale' => 'Channel / locale',
     'col_version' => 'Version',

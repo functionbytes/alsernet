@@ -63,7 +63,10 @@ class AiClient
      * `services.openai.api_key`) so existing, working callers are not regressed.
      *
      * @param  array<int, array<string,mixed>>  $messages
-     * @param  array{model?: string, temperature?: float|int, max_tokens?: int, tools?: array<int, array<string,mixed>>, timeout?: int, retries?: int, retry_delay?: int}  $options
+     *                                                     Optional `on_usage` callable receives `['prompt_tokens' => int,
+     *                                                     'completion_tokens' => int, 'model' => string]` after each successful
+     *                                                     call (the return value is unchanged, so tool_calls loops are unaffected).
+     * @param  array{model?: string, temperature?: float|int, max_tokens?: int, tools?: array<int, array<string,mixed>>, timeout?: int, retries?: int, retry_delay?: int, on_usage?: callable}  $options
      * @return array<string,mixed>|null
      */
     public function chatCompletion(array $messages, array $options = []): ?array
@@ -105,6 +108,14 @@ class AiClient
                 Log::warning('AiClient: chatCompletion failed', ['status' => $response->status()]);
 
                 return null;
+            }
+
+            if (is_callable($options['on_usage'] ?? null)) {
+                $options['on_usage']([
+                    'prompt_tokens' => (int) $response->json('usage.prompt_tokens', 0),
+                    'completion_tokens' => (int) $response->json('usage.completion_tokens', 0),
+                    'model' => (string) ($response->json('model') ?: $payload['model']),
+                ]);
             }
 
             $message = $response->json('choices.0.message');

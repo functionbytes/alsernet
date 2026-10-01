@@ -729,4 +729,53 @@ class ChatFlowAgentServiceTest extends TestCase
                 && $tools->has('documentos_pedido');
         });
     }
+
+    public function test_accumulates_usage_across_llm_calls(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+
+        Http::fakeSequence('api.openai.com/*')
+            ->push([
+                'model' => 'gpt-4o-mini-2024-07-18',
+                'usage' => ['prompt_tokens' => 100, 'completion_tokens' => 20],
+                'choices' => [['message' => [
+                    'content' => null,
+                    'tool_calls' => [[
+                        'id' => 'call_p',
+                        'type' => 'function',
+                        'function' => ['name' => 'product_search', 'arguments' => '{"query":"estuche"}'],
+                    ]],
+                ]]],
+            ], 200)
+            ->push([
+                'model' => 'gpt-4o-mini-2024-07-18',
+                'usage' => ['prompt_tokens' => 150, 'completion_tokens' => 30],
+                'choices' => [['message' => ['content' => 'Te muestro un estuche.', 'tool_calls' => []]]],
+            ], 200);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $result = $agent->run('busco un estuche', [], [], 'es', $this->fakeCatalog());
+
+        $this->assertSame(250, $result['usage']['prompt_tokens']);
+        $this->assertSame(50, $result['usage']['completion_tokens']);
+        $this->assertSame('gpt-4o-mini-2024-07-18', $result['usage']['model']);
+        $this->assertSame(2, $result['usage']['calls']);
+    }
+
+    public function test_usage_is_reset_between_runs(): void
+    {
+        config()->set('services.openai.key', 'sk-test');
+
+        Http::fake(['api.openai.com/*' => Http::response([
+            'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 5],
+            'choices' => [['message' => ['content' => 'Hola', 'tool_calls' => []]]],
+        ], 200)]);
+
+        $agent = new ChatFlowAgentService(new ChatFlowOrderLookup(null, null), null);
+        $agent->run('hola', [], []);
+        $second = $agent->run('hola', [], []);
+
+        $this->assertSame(10, $second['usage']['prompt_tokens']);
+        $this->assertSame(1, $second['usage']['calls']);
+    }
 }

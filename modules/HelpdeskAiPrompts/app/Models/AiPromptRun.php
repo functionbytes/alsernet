@@ -22,6 +22,11 @@ class AiPromptRun extends Model
         'used_tools',
         'latency_ms',
         'feedback',
+        'prompt_tokens',
+        'completion_tokens',
+        'model',
+        'cost_eur',
+        'calls',
         'created_at',
     ];
 
@@ -33,6 +38,10 @@ class AiPromptRun extends Model
             'used_tools' => 'array',
             'latency_ms' => 'integer',
             'feedback' => 'integer',
+            'prompt_tokens' => 'integer',
+            'completion_tokens' => 'integer',
+            'cost_eur' => 'float',
+            'calls' => 'integer',
             'created_at' => 'datetime',
         ];
     }

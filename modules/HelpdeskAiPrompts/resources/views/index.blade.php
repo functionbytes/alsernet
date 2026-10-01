@@ -43,6 +43,14 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-lg-3">
+                        <div class="card bg-light-info h-100 mb-0">
+                            <div class="card-body">
+                                <h6 class="card-title mb-1">{{ __('helpdeskaiprompts::ai-prompts.stat_cost_30d') }}</h6>
+                                <h3 class="mb-0 fw-bold">{{ number_format($stats['cost_30d'], 2) }} €</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
                         <div class="card bg-light-secondary h-100 mb-0">
                             <div class="card-body">
                                 <h6 class="card-title mb-1">{{ __('helpdeskaiprompts::ai-prompts.stat_active_cases') }}</h6>
@@ -114,6 +122,8 @@
                                             <th class="text-center">{{ __('helpdeskaiprompts::ai-prompts.col_runs_30d') }}</th>
                                             <th class="text-center">{{ __('helpdeskaiprompts::ai-prompts.col_escalation_rate') }}</th>
                                             <th class="text-center">{{ __('helpdeskaiprompts::ai-prompts.col_satisfaction') }}</th>
+                                            <th class="text-center">{{ __('helpdeskaiprompts::ai-prompts.col_tokens_30d') }}</th>
+                                            <th class="text-center">{{ __('helpdeskaiprompts::ai-prompts.col_cost_30d') }}</th>
                                             @if($canManage)
                                                 <th class="text-center">{{ __('helpdeskaiprompts::ai-prompts.col_actions') }}</th>
                                             @endif
@@ -158,6 +168,8 @@
                                                 <td class="text-center">{{ $metrics['runs'] ?? 0 }}</td>
                                                 <td class="text-center">{{ isset($metrics['escalation_rate']) ? number_format($metrics['escalation_rate'] * 100, 1).'%' : '—' }}</td>
                                                 <td class="text-center">{{ isset($metrics['satisfaction']) && ($metrics['likes'] + $metrics['dislikes']) > 0 ? number_format($metrics['satisfaction'] * 100, 1).'%' : '—' }}</td>
+                                                <td class="text-center">{{ isset($metrics['tokens']) && $metrics['tokens'] > 0 ? number_format($metrics['tokens']) : '—' }}</td>
+                                                <td class="text-center">{{ isset($metrics['cost_eur']) && $metrics['cost_eur'] > 0 ? number_format($metrics['cost_eur'], 4).' €' : '—' }}</td>
                                                 @if($canManage)
                                                     <td class="text-center">
                                                         <div class="dropdown">
