@@ -17,6 +17,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowHttpRequester;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowNodeExecutor;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
+use Modules\HelpdeskChatFlow\Services\HandoffContextNote;
 use Modules\HelpdeskChatFlow\Services\Nodes\AiNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\ConversationNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\IntegrationNodeHandler;
@@ -118,8 +119,18 @@ class ChatFlowNodeExecutorTest extends TestCase
         $this->assertNull($result);
     }
 
+    /** La nota de contexto tiene su propio test; aquí se aísla de los mocks de items(). */
+    private function stubHandoffNote(): void
+    {
+        $note = Mockery::mock(HandoffContextNote::class);
+        $note->shouldReceive('post')->once()->andReturn(true);
+        $this->app->instance(HandoffContextNote::class, $note);
+    }
+
     public function test_transfer_assigns_conversation_to_agent_and_group(): void
     {
+        $this->stubHandoffNote();
+
         $items = Mockery::mock(HasMany::class);
         $items->shouldReceive('create')->once();
 
@@ -142,6 +153,8 @@ class ChatFlowNodeExecutorTest extends TestCase
 
     public function test_transfer_without_assignment_does_not_update_conversation(): void
     {
+        $this->stubHandoffNote();
+
         $items = Mockery::mock(HasMany::class);
         $items->shouldReceive('create')->once();
 
@@ -317,6 +330,9 @@ class ChatFlowNodeExecutorTest extends TestCase
 
         $this->assertContains('ai_agent', $types);
         $this->assertContains('create_ticket', $types);
-        $this->assertEqualsCanonicalizing(ChatFlow::NODE_TYPES, ChatFlow::nodeTypes());
+        // Los tipos del núcleo siempre; otros módulos pueden aportar los suyos
+        // por el registry (p. ej. ai_action de HelpdeskAiPrompts).
+        $this->assertEmpty(array_diff(ChatFlow::NODE_TYPES, ChatFlow::nodeTypes()));
+        $this->assertEmpty(array_diff(ChatFlow::nodeTypes(), array_merge(ChatFlow::NODE_TYPES, $types)));
     }
 }

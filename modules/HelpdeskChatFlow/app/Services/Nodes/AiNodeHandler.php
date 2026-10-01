@@ -7,10 +7,12 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAgentService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAiResponder;
+use Modules\HelpdeskChatFlow\Services\ChatFlowHandoffSummary;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\RendersNodeMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\ResolvesVisitorContext;
+use Modules\HelpdeskChatFlow\Services\HandoffContextNote;
 use Modules\HelpdeskLivechat\Events\BotTyping;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogManager;
@@ -138,6 +140,14 @@ class AiNodeHandler implements NodeHandler
         ]);
 
         if ($result['action'] === 'escalate') {
+            app(HandoffContextNote::class)->post(
+                $conversation,
+                $session,
+                HandoffContextNote::REASON_AI_ESCALATION,
+                ($session->flowConditions()['handoff_summary'] ?? false)
+                    ? fn (): ?string => app(ChatFlowHandoffSummary::class)->generate($conversation)
+                    : null,
+            );
             $conversation->releaseFromBot();
             $session->update(['status' => 'transferred', 'ended_at' => now()]);
 

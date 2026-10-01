@@ -13,6 +13,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowHandoffSummary;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\RendersNodeMessages;
+use Modules\HelpdeskChatFlow\Services\HandoffContextNote;
 
 /**
  * Nodes that act on the conversation itself rather than talk to the customer:
@@ -70,9 +71,8 @@ class ConversationNodeHandler implements NodeHandler
             $this->postBotMessage($conversation, $node['id'], $message);
         }
 
-        if (($session->flowConditions()['handoff_summary'] ?? false) || ($data['summary'] ?? false)) {
-            $this->handoff->postFor($conversation);
-        }
+        $withSummary = ($session->flowConditions()['handoff_summary'] ?? false) || ($data['summary'] ?? false);
+        $this->postHandoffNote($conversation, $session, HandoffContextNote::REASON_NODE, $withSummary);
 
         // Release first so the assignment broadcast finds the conversation back
         // in the inbox, then assign — which notifies the agent/group in real time.
@@ -82,6 +82,16 @@ class ConversationNodeHandler implements NodeHandler
         $session->update(['status' => 'transferred', 'ended_at' => now()]);
 
         return null;
+    }
+
+    private function postHandoffNote(Conversation $conversation, ChatFlowSession $session, string $reason, bool $withSummary): void
+    {
+        app(HandoffContextNote::class)->post(
+            $conversation,
+            $session,
+            $reason,
+            $withSummary ? fn (): ?string => $this->handoff->generate($conversation) : null,
+        );
     }
 
     /**
@@ -264,6 +274,15 @@ class ConversationNodeHandler implements NodeHandler
     {
         $data = $node['data'] ?? [];
         $isTransfer = ($data['action'] ?? '') === 'transfer_to_agent';
+
+        if ($isTransfer) {
+            $this->postHandoffNote(
+                $conversation,
+                $session,
+                HandoffContextNote::REASON_END,
+                (bool) ($session->flowConditions()['handoff_summary'] ?? false),
+            );
+        }
 
         // Release in every case (see executeClose() for why a "resolved"
         // ending must not leave the conversation permanently hidden).
