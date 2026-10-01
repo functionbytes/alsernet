@@ -15,6 +15,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Disparadores por mensaje entrante (keyword / intent / no_agent)
+    |--------------------------------------------------------------------------
+    | Minutos que deben pasar desde que terminó una sesión de un flujo antes de
+    | relanzar ese mismo flujo en la misma conversación (anti-bucle). 0 lo desactiva.
+    */
+    'triggers' => [
+        'cooldown_minutes' => (int) env('CHATFLOW_TRIGGER_COOLDOWN_MINUTES', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AI response node
     |--------------------------------------------------------------------------
     | Defaults for the `ai_response` node (RAG over the help center + LLM).

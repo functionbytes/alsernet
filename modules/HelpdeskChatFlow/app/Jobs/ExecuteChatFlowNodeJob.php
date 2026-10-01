@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
+use Modules\HelpdeskChatFlow\Services\ChatFlowInboundTriggerService;
 
 /**
  * Runs the chat-flow work for a single inbound customer message off the request
@@ -20,8 +21,9 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
  * Two modes:
  *  - MODE_PROCESS: an active session exists → feed the reply (text + attachments)
  *    to the waiting node via the engine.
- *  - MODE_TRIGGER: no active session → start the conversation_start flow, but only
- *    when this is the conversation's first inbound customer message.
+ *  - MODE_TRIGGER: no active session → start the conversation_start flow (only for
+ *    the conversation's first inbound customer message) or, on any message, a
+ *    keyword / intent / no_agent flow (ChatFlowInboundTriggerService).
  *
  * The mode supplied at dispatch is only a hint: it is re-resolved at execution
  * time so the job self-corrects if the session state changed in between (e.g. a
@@ -68,7 +70,7 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
         ];
     }
 
-    public function handle(ChatFlowEngine $engine): void
+    public function handle(ChatFlowEngine $engine, ChatFlowInboundTriggerService $inboundTriggers): void
     {
         $conversation = Conversation::on('helpdesk')->find($this->conversationId);
 
@@ -103,12 +105,10 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
             return;
         }
 
-        // Start the flow only for the conversation's first inbound customer message
-        // (mirrors the original observer gate) so a mid-conversation reply after a
-        // finished flow does not silently relaunch the bot.
-        // Solo mensajes con autor (el cliente): las respuestas automáticas
-        // (saludo, fuera de horario…) tampoco tienen user_id y, contadas aquí,
-        // impedían que el bot arrancase si el saludo salía antes.
+        // conversation_start solo aplica al primer mensaje del cliente (mirrors the
+        // original observer gate). Solo mensajes con autor (el cliente): las
+        // respuestas automáticas (saludo, fuera de horario…) tampoco tienen user_id
+        // y, contadas aquí, impedían que el bot arrancase si el saludo salía antes.
         $hasPriorCustomerMessage = ConversationItem::on('helpdesk')
             ->where('conversation_id', $this->conversationId)
             ->where('type', 'message')
@@ -119,16 +119,24 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
             ->whereJsonDoesntContain('metadata->sent_by_chatflow', true)
             ->exists();
 
-        if ($hasPriorCustomerMessage) {
-            return;
-        }
-
         // El mensaje que dispara el flujo queda en el contexto (first_message y
         // last_input) para que un nodo IA lo conteste sin volver a preguntarlo.
-        $firstMessage = trim((string) ($item->body ?? ''));
-        $engine->triggerFor($conversation, 'conversation_start', $firstMessage !== ''
-            ? ['first_message' => $firstMessage, 'last_input' => $firstMessage]
-            : []);
+        $message = trim((string) ($item->body ?? ''));
+
+        if (! $hasPriorCustomerMessage) {
+            $started = $engine->triggerFor($conversation, 'conversation_start', $message !== ''
+                ? ['first_message' => $message, 'last_input' => $message]
+                : []);
+
+            if ($started) {
+                return;
+            }
+        }
+
+        // Sin sesión: en cualquier mensaje (no solo el primero) pueden arrancar
+        // los flujos por keyword > intent > no_agent, con anti-bucle y sin pisar
+        // a un agente humano. Ver ChatFlowInboundTriggerService.
+        $inboundTriggers->triggerFromMessage($conversation, $message);
     }
 
     public function failed(\Throwable $exception): void

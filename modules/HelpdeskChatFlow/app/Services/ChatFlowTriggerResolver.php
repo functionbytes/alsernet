@@ -20,9 +20,15 @@ class ChatFlowTriggerResolver
      */
     public function resolve(Conversation $conversation, string $triggerType, array $context = []): ?ChatFlow
     {
+        // Procedures only run when another flow calls them.
+        if ($triggerType === ChatFlow::TRIGGER_PROCEDURE) {
+            return null;
+        }
+
         $query = ChatFlow::query()
             ->active()
             ->where('trigger_type', $triggerType)
+            ->where('trigger_type', '!=', ChatFlow::TRIGGER_PROCEDURE)
             ->forInbox($conversation->inbox_id)
             ->orderByDesc('priority')
             ->orderBy('id');
@@ -49,8 +55,9 @@ class ChatFlowTriggerResolver
         // message is present. No existing flow uses these types, so current
         // behaviour for the four canonical trigger types is unchanged.
         if (in_array($triggerType, ['intent', 'nlu'], true) && $message !== '') {
-            return $this->resolveByIntent($query->get(), $message, requireOptIn: false)
-                ?? $query->first();
+            // Sin coincidencia clara no se devuelve ningún flujo: caer al primero por
+            // prioridad lanzaría un flujo "intent" ante cualquier mensaje.
+            return $this->resolveByIntent($query->get(), $message, requireOptIn: false);
         }
 
         return $query->first();
@@ -62,7 +69,9 @@ class ChatFlowTriggerResolver
         $message = strtolower(trim($message));
 
         foreach ($keywords as $keyword) {
-            if (str_contains($message, strtolower($keyword))) {
+            $keyword = strtolower(trim((string) $keyword));
+
+            if ($keyword !== '' && str_contains($message, $keyword)) {
                 return true;
             }
         }
