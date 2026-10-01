@@ -21,6 +21,11 @@
                 'chatFlowId'     => $chatFlow->id,
                 'chatFlowName'   => $chatFlow->name,
                 'chatFlowStatus' => $chatFlow->status,
+                'chatFlowTriggerType' => $chatFlow->trigger_type,
+                'proceduresUrl'  => route('chatflow.procedures'),
+                'actionsCatalogUrl' => \Illuminate\Support\Facades\Route::has('helpdesk-ai-prompts.actions.catalog-json')
+                    ? route('helpdesk-ai-prompts.actions.catalog-json')
+                    : null,
                 'nodes'          => $chatFlow->nodes ?? [],
                 'settings'       => $chatFlow->trigger_conditions ?? [],
                 'agents'         => $agents ?? [],

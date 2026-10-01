@@ -27,6 +27,9 @@ import GoToStepConfig from './GoToStepConfig';
 import AddTagConfig from './AddTagConfig';
 import SetAttributeConfig from './SetAttributeConfig';
 import CreateTicketConfig from './CreateTicketConfig';
+import CallFlowConfig from './CallFlowConfig';
+import ReturnConfig from './ReturnConfig';
+import AiActionConfig from './AiActionConfig';
 
 // Maps a BackendNode `type` to its configuration panel component, replacing
 // the previous giant switch/if-chain. Node types with no entry here render
@@ -58,4 +61,7 @@ export const NODE_CONFIG_REGISTRY: Record<string, ComponentType<NodeConfigProps>
     add_tag:            AddTagConfig,
     set_attribute:      SetAttributeConfig,
     create_ticket:      CreateTicketConfig,
+    call_flow:          CallFlowConfig,
+    return:             ReturnConfig,
+    ai_action:          AiActionConfig,
 };

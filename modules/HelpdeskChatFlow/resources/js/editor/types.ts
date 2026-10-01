@@ -22,6 +22,9 @@ export interface ChatFlowEditorProps {
     chatFlowId: number;
     chatFlowName: string;
     chatFlowStatus: string;
+    chatFlowTriggerType?: string;
+    proceduresUrl?: string;
+    actionsCatalogUrl?: string | null;
     nodes: BackendNode[];
     settings?: Record<string, any>;
     agents?: AssignOption[];
@@ -59,6 +62,7 @@ export interface NodeConfigProps {
 
 declare global {
     interface Window {
+        __chatflowUrls?:              { flowId: number; procedures?: string; actionsCatalog?: string | null };
         __chatflowNodes?:             BackendNode[];
         __chatflowAddNode?:           (type: string, parentId: string) => void;
         __chatflowDeleteNode?:        (id: string) => void;

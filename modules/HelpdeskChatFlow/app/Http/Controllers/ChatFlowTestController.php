@@ -25,7 +25,7 @@ class ChatFlowTestController extends Controller
             $nodes = $chatFlow->nodes ?? [];
         }
 
-        $result = $this->simulator->start($nodes, $request->user()?->id);
+        $result = $this->simulator->start($nodes, $request->user()?->id, $chatFlow->id);
 
         if (isset($result['error'])) {
             return response()->json(['success' => false, 'message' => $result['error']], 422);

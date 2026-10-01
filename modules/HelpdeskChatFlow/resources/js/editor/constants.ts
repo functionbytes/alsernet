@@ -23,6 +23,9 @@ export const NODE_LABELS: Record<string, string> = {
     add_tag:            'Agregar etiqueta',
     set_attribute:      'Establecer atributo',
     go_to_step:         'Ir a paso',
+    call_flow:          'Llamar procedimiento',
+    return:             'Volver al flow llamante',
+    ai_action:          'Acción IA',
     create_ticket:      'Crear ticket',
     transfer:           'Transferir agente',
     close:              'Cerrar conversación',
@@ -61,6 +64,9 @@ export const NODE_COLORS: Record<string, string> = {
     delay:             CAT_PURPLE,
     create_ticket:     CAT_PURPLE,
     go_to_step:        CAT_ORANGE,
+    call_flow:         CAT_PURPLE,
+    return:            CAT_ORANGE,
+    ai_action:         CAT_PURPLE,
     transfer:          CAT_ORANGE,
     close:             CAT_ORANGE,
     end:               CAT_ORANGE,
@@ -89,6 +95,9 @@ export const NODE_ICONS: Record<string, string> = {
     add_tag:           'fas fa-tag',
     set_attribute:     'fas fa-sliders',
     go_to_step:        'fas fa-share',
+    call_flow:         'fas fa-diagram-project',
+    return:            'fas fa-rotate-left',
+    ai_action:         'fas fa-bolt-lightning',
     create_ticket:     'fas fa-ticket',
     transfer:          'fas fa-headset',
     close:             'fas fa-circle-xmark',
@@ -96,12 +105,12 @@ export const NODE_ICONS: Record<string, string> = {
 };
 
 // Terminal node types — they end the branch (no child nodes, addStepNode shown before them).
-export const TERMINAL_TYPES = new Set(['end', 'transfer', 'close', 'go_to_step']);
+export const TERMINAL_TYPES = new Set(['end', 'transfer', 'close', 'go_to_step', 'return']);
 
 export const ADDABLE_TYPES = [
     'message', 'rich_message', 'send_file', 'quick_replies', 'ai_response', 'ai_agent', 'collect_input', 'identify_customer',
     'order_lookup', 'request_documents', 'document_link', 'business_hours', 'branches', 'http_request', 'action', 'delay',
-    'csat', 'add_tag', 'set_attribute', 'create_ticket', 'go_to_step', 'transfer', 'close', 'end',
+    'csat', 'add_tag', 'set_attribute', 'create_ticket', 'ai_action', 'call_flow', 'go_to_step', 'return', 'transfer', 'close', 'end',
 ];
 
 export const DOC_TYPE_LABELS: Record<string, string> = {
@@ -118,7 +127,7 @@ export const DOC_TYPE_LABELS: Record<string, string> = {
 };
 
 // Node types that end a branch when validating (no continuation expected).
-export const VALIDATE_TERMINAL = new Set(['end', 'transfer', 'close', 'go_to_step']);
+export const VALIDATE_TERMINAL = new Set(['end', 'transfer', 'close', 'go_to_step', 'return']);
 // Node types that wait for customer input (no "no continuation" warning needed).
 export const VALIDATE_WAIT = new Set(['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat', 'rich_message']);
 

@@ -2,6 +2,9 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
+use Closure;
+use Modules\HelpdeskAiPrompts\Models\AiAction;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionParameters;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\Support\BranchOperators;
 use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
@@ -15,7 +18,11 @@ use Modules\HelpdeskChatFlow\Services\Support\SafeRegex;
  */
 class ChatFlowValidator
 {
-    private const TERMINAL_TYPES = ['end', 'transfer', 'close', 'go_to_step'];
+    private const TERMINAL_TYPES = ['end', 'transfer', 'close', 'go_to_step', 'return'];
+
+    private const ON_FAILURE_MODES = ['continue', 'handoff'];
+
+    private const DEFAULT_ACTION_SAVE_TO = 'accion';
 
     // Nodes exempt from the dead-end warning: they either wait for customer
     // input or are flow-control nodes whose continuation may live in branches.
@@ -34,6 +41,25 @@ class ChatFlowValidator
     private const SYSTEM_VARIABLE_PREFIXES = ['customer_', 'order_', '_'];
 
     private const VALIDATION_RULES = ['none', 'email', 'phone', 'number', 'order_ref', 'regex', 'enum'];
+
+    /** @var (Closure(int): ?ChatFlow)|null */
+    private readonly ?Closure $procedureLoader;
+
+    /** @var (Closure(): ?array<string, array{write: bool, required: array<int, string>}>)|null */
+    private readonly ?Closure $actionCatalogLoader;
+
+    /** @var array<string, array{write: bool, required: array<int, string>}>|null|false */
+    private array|null|false $actionCatalog = false;
+
+    /**
+     * @param  (Closure(int): ?ChatFlow)|null  $procedureLoader  Overrides how called flows are loaded (tests).
+     * @param  (Closure(): ?array<string, array{write: bool, required: array<int, string>}>)|null  $actionCatalogLoader  Overrides the AI action catalog lookup (tests); null result = catalog unavailable.
+     */
+    public function __construct(?Closure $procedureLoader = null, ?Closure $actionCatalogLoader = null)
+    {
+        $this->procedureLoader = $procedureLoader;
+        $this->actionCatalogLoader = $actionCatalogLoader;
+    }
 
     /**
      * @return array{errors: array<int, string>, warnings: array<int, string>}
@@ -114,6 +140,22 @@ class ChatFlowValidator
                     $errors[] = "El salto «{$label($node)}» apunta a un paso que no existe.";
                 }
             }
+
+            if ($type === 'call_flow') {
+                [$callErrors, $callWarnings] = $this->callFlowIssues($node, $label($node), $flow);
+                array_push($errors, ...$callErrors);
+                array_push($warnings, ...$callWarnings);
+            }
+
+            if ($type === 'ai_action') {
+                [$actionErrors, $actionWarnings] = $this->aiActionIssues($node, $label($node));
+                array_push($errors, ...$actionErrors);
+                array_push($warnings, ...$actionWarnings);
+            }
+
+            if ($type === 'return' && $flow->trigger_type !== ChatFlow::TRIGGER_PROCEDURE) {
+                $warnings[] = "El nodo «{$label($node)}» solo vuelve a un flow llamante dentro de un procedimiento; aquí terminará la conversación.";
+            }
         }
 
         // Nodes that can never be reached from start are dead config — flag them so
@@ -127,15 +169,16 @@ class ChatFlowValidator
 
         // Variables referenced via {{var}} but never written stay literal at runtime.
         $defined = $this->definedVariables($nodes);
+        $prefixes = $this->definedPrefixes($nodes);
         foreach ($this->referencedVariables($nodes) as $var) {
-            if ($this->isVariableDefined(ContextPath::root($var), $defined)) {
+            if ($this->isVariableDefined(ContextPath::root($var), $defined, $prefixes)) {
                 continue;
             }
             $warnings[] = "La variable «{{{$var}}}» se usa pero no se define en ningún paso anterior.";
         }
 
         foreach ($this->conditionVariables($nodes) as $var) {
-            if ($this->isVariableDefined(ContextPath::root($var), $defined)) {
+            if ($this->isVariableDefined(ContextPath::root($var), $defined, $prefixes)) {
                 continue;
             }
             $warnings[] = "La condición usa la variable «{$var}», que no se define en ningún paso anterior.";
@@ -298,9 +341,211 @@ class ChatFlowValidator
             foreach ($keys as $key) {
                 $defined[$key] = true;
             }
+
+            foreach ($this->nodeOutputVariables($node) as $key) {
+                $defined[$key] = true;
+            }
         }
 
         return array_keys($defined);
+    }
+
+    /**
+     * Variables a node writes that don't follow the generic keys above:
+     * ai_action ({save_to}, {save_to}_ok, {save_to}_status) and the `output`
+     * list of call_flow (what the procedure leaves set for the caller).
+     *
+     * @param  array<string, mixed>  $node
+     * @return array<int, string>
+     */
+    private function nodeOutputVariables(array $node): array
+    {
+        $data = $node['data'] ?? [];
+
+        if (($node['type'] ?? '') === 'ai_action') {
+            $saveTo = $this->actionSaveTo($data);
+
+            return [$saveTo, $saveTo.'_ok', $saveTo.'_status'];
+        }
+
+        if (($node['type'] ?? '') === 'call_flow') {
+            return array_values(array_filter(
+                (array) ($data['output'] ?? []),
+                fn ($name) => is_string($name) && $name !== '',
+            ));
+        }
+
+        return [];
+    }
+
+    /**
+     * Prefixes of the per-field variables ai_action flattens its result into
+     * ({save_to}_{field}); the field names depend on the action, so any
+     * variable starting with the prefix counts as defined.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    private function definedPrefixes(array $nodes): array
+    {
+        $prefixes = [];
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') === 'ai_action') {
+                $prefixes[$this->actionSaveTo($node['data'] ?? []).'_'] = true;
+            }
+        }
+
+        return array_keys($prefixes);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function actionSaveTo(array $data): string
+    {
+        $saveTo = trim((string) ($data['save_to'] ?? ''));
+
+        return $saveTo !== '' ? $saveTo : self::DEFAULT_ACTION_SAVE_TO;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return array{0: array<int, string>, 1: array<int, string>} [errors, warnings]
+     */
+    private function callFlowIssues(array $node, string $label, ChatFlow $flow): array
+    {
+        $data = $node['data'] ?? [];
+        $errors = [];
+        $warnings = [];
+        $flowId = (int) ($data['flow_id'] ?? 0);
+
+        if ($flowId <= 0) {
+            $errors[] = "El paso «{$label}» no indica el procedimiento que debe llamar.";
+        } elseif ($flow->id !== null && $flowId === (int) $flow->id) {
+            $errors[] = "El paso «{$label}» llama al propio flow; un flow no puede llamarse a sí mismo.";
+        } else {
+            $procedure = $this->loadProcedure($flowId);
+
+            if ($procedure === null) {
+                $errors[] = "El paso «{$label}» llama a un flow que no existe (#{$flowId}).";
+            } elseif ($procedure->trigger_type !== ChatFlow::TRIGGER_PROCEDURE) {
+                $errors[] = "El paso «{$label}» llama a «{$procedure->name}», que no es un procedimiento (su activación no es «procedure»).";
+            } elseif ($procedure->status !== 'active') {
+                $warnings[] = "El procedimiento «{$procedure->name}» llamado por «{$label}» no está activo; hasta publicarlo la llamada se omitirá.";
+            }
+        }
+
+        $onMissing = (string) ($data['on_missing'] ?? 'continue');
+        if (! in_array($onMissing, self::ON_FAILURE_MODES, true)) {
+            $errors[] = "El paso «{$label}» tiene un valor no válido en «si el procedimiento falta» («{$onMissing}»); usa «continue» o «handoff».";
+        }
+
+        return [$errors, $warnings];
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return array{0: array<int, string>, 1: array<int, string>} [errors, warnings]
+     */
+    private function aiActionIssues(array $node, string $label): array
+    {
+        $data = $node['data'] ?? [];
+        $errors = [];
+        $warnings = [];
+        $key = trim((string) ($data['action_key'] ?? ''));
+
+        $onError = (string) ($data['on_error'] ?? 'continue');
+        if (! in_array($onError, self::ON_FAILURE_MODES, true)) {
+            $errors[] = "El paso «{$label}» tiene un valor no válido en «si la acción falla» («{$onError}»); usa «continue» o «handoff».";
+        }
+
+        if ($key === '') {
+            $errors[] = "El paso «{$label}» no indica qué acción del catálogo ejecutar.";
+
+            return [$errors, $warnings];
+        }
+
+        $catalog = $this->actionCatalog();
+        if ($catalog === null) {
+            return [$errors, $warnings];
+        }
+
+        if (! isset($catalog[$key])) {
+            $errors[] = "El paso «{$label}» usa la acción «{$key}», que no existe o no está activa en el catálogo.";
+
+            return [$errors, $warnings];
+        }
+
+        if ($catalog[$key]['write'] && trim((string) ($data['confirmed_variable'] ?? '')) === '') {
+            $errors[] = "La acción «{$key}» modifica datos: el paso «{$label}» debe indicar la variable que guarda la confirmación del cliente.";
+        }
+
+        $args = (array) ($data['args'] ?? []);
+        foreach ($catalog[$key]['required'] as $param) {
+            if (trim((string) ($args[$param] ?? '')) === '') {
+                $warnings[] = "El paso «{$label}» no rellena el parámetro obligatorio «{$param}» de la acción «{$key}».";
+            }
+        }
+
+        return [$errors, $warnings];
+    }
+
+    private function loadProcedure(int $flowId): ?ChatFlow
+    {
+        if ($this->procedureLoader !== null) {
+            return ($this->procedureLoader)($flowId);
+        }
+
+        return ChatFlow::query()->find($flowId);
+    }
+
+    /**
+     * Active catalog actions keyed by `key`, or null when the catalog can't be
+     * read (HelpdeskAiPrompts absent/disabled, no database): then the key is
+     * not checked rather than reported as missing.
+     *
+     * @return array<string, array{write: bool, required: array<int, string>}>|null
+     */
+    private function actionCatalog(): ?array
+    {
+        if ($this->actionCatalog === false) {
+            $this->actionCatalog = $this->actionCatalogLoader !== null
+                ? ($this->actionCatalogLoader)()
+                : $this->readActionCatalog();
+        }
+
+        return $this->actionCatalog;
+    }
+
+    /**
+     * @return array<string, array{write: bool, required: array<int, string>}>|null
+     */
+    private function readActionCatalog(): ?array
+    {
+        if (! class_exists(AiAction::class)) {
+            return null;
+        }
+
+        try {
+            $catalog = [];
+
+            foreach (AiAction::query()->where('is_active', true)->get(['key', 'type', 'parameters', 'config', 'rules']) as $action) {
+                $definition = $action->only(['type', 'parameters', 'config', 'rules']);
+                $required = collect(ActionParameters::effective($definition, false))
+                    ->filter(fn (array $param): bool => ! empty($param['required']) && $param['name'] !== ActionParameters::CONFIRM)
+                    ->pluck('name')
+                    ->all();
+
+                $catalog[$action->key] = [
+                    'write' => ActionParameters::needsConfirmation($definition),
+                    'required' => $required,
+                ];
+            }
+
+            return $catalog;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -416,11 +661,18 @@ class ChatFlowValidator
 
     /**
      * @param  array<int, string>  $defined
+     * @param  array<int, string>  $definedPrefixes
      */
-    private function isVariableDefined(string $var, array $defined): bool
+    private function isVariableDefined(string $var, array $defined, array $definedPrefixes = []): bool
     {
         if (in_array($var, self::SYSTEM_VARIABLES, true) || in_array($var, $defined, true)) {
             return true;
+        }
+
+        foreach ($definedPrefixes as $prefix) {
+            if (str_starts_with($var, $prefix)) {
+                return true;
+            }
         }
 
         foreach (self::SYSTEM_VARIABLE_PREFIXES as $prefix) {

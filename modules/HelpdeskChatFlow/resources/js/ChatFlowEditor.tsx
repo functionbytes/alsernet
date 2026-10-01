@@ -25,12 +25,13 @@ import NodePropertiesPanel from './editor/components/NodePropertiesPanel';
 // ─── Main Editor ──────────────────────────────────────────────────────────────
 
 export default function ChatFlowEditor({
-    chatFlowName, chatFlowStatus,
+    chatFlowId, chatFlowName, chatFlowStatus, chatFlowTriggerType, proceduresUrl, actionsCatalogUrl,
     nodes: initialNodes, settings: initialSettings, agents = [], groups = [],
     saveUrl, publishUrl, indexUrl, csrfToken,
 }: ChatFlowEditorProps) {
     const [backendNodes, setBackendNodes] = useState<BackendNode[]>(() => migrateNodes(initialNodes));
     const [flowName,     setFlowName]     = useState(chatFlowName);
+    const [triggerType,  setTriggerType]  = useState(chatFlowTriggerType || 'conversation_start');
     const [flowSettings, setFlowSettings] = useState<Record<string, any>>(() => initialSettings || {});
     const [showSettings, setShowSettings] = useState(false);
     const [selectedId,   setSelectedId]   = useState<string | null>(null);
@@ -39,6 +40,9 @@ export default function ChatFlowEditor({
     const [showIssues,   setShowIssues]    = useState(false);
     const [nodes,        setNodes,         onNodesChange] = useNodesState<Node>([]);
     const [edges,        setEdges,         onEdgesChange] = useEdgesState<Edge>([]);
+
+    // Endpoints the node config panels read (procedures list, AI action catalog).
+    window.__chatflowUrls = { flowId: chatFlowId, procedures: proceduresUrl, actionsCatalog: actionsCatalogUrl };
 
     const validation = React.useMemo(() => validateFlow(backendNodes), [backendNodes]);
 
@@ -63,7 +67,7 @@ export default function ChatFlowEditor({
             return;
         }
         setDirty(true);
-    }, [backendNodes, flowName, flowSettings]);
+    }, [backendNodes, flowName, flowSettings, triggerType]);
 
     // Warn before leaving with unsaved changes.
     useEffect(() => {
@@ -190,7 +194,7 @@ export default function ChatFlowEditor({
             // El body va como JSON, asi que un campo _method no lo lee Laravel (solo
             // mira form/multipart o query string) y hay que spoofear con la cabecera,
             // igual que en public/vendor/helpdesk/*.js.
-            await axios.post(saveUrl, { name: flowName, nodes: JSON.stringify(backendNodes), trigger_conditions: flowSettings }, {
+            await axios.post(saveUrl, { name: flowName, nodes: JSON.stringify(backendNodes), trigger_type: triggerType, trigger_conditions: flowSettings }, {
                 headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PUT' },
             });
             setDirty(false);
@@ -322,6 +326,8 @@ export default function ChatFlowEditor({
                         <FlowSettingsPanel
                             flowSettings={flowSettings}
                             setFlowSettings={setFlowSettings}
+                            triggerType={triggerType}
+                            setTriggerType={setTriggerType}
                             onClose={() => setShowSettings(false)}
                         />
                     )}

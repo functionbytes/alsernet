@@ -21,7 +21,7 @@ class ChatFlowTestRunner
      */
     public function run(ChatFlow $flow, array $steps): array
     {
-        $session = $this->simulator->start($flow->nodes ?? []);
+        $session = $this->simulator->start($flow->nodes ?? [], null, $flow->id);
 
         if (isset($session['error'])) {
             return ['passed' => false, 'error' => $session['error'], 'steps' => []];

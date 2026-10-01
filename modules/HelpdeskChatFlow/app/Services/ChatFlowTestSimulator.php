@@ -3,12 +3,17 @@
 namespace Modules\HelpdeskChatFlow\Services;
 
 use Illuminate\Support\Str;
+use Modules\HelpdeskAiPrompts\Services\Actions\ActionExecutor;
+use Modules\HelpdeskAiPrompts\Services\Flow\AiActionNodeHandler;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBranchConditions;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
+use Modules\HelpdeskChatFlow\Services\Nodes\FlowCallNodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandler;
 use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
 use Modules\HelpdeskChatFlow\Services\Simulation\SimulatedChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Simulation\SimulatedConversation;
+use Modules\HelpdeskChatFlow\Services\Simulation\TestModeActionExecutor;
 use Modules\HelpdeskChatFlow\Services\Support\ContextPath;
 
 /**
@@ -25,10 +30,14 @@ class ChatFlowTestSimulator
     private const HANDLER_RENDERED_TYPES = ['message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'csat', 'rich_message', 'send_file', 'business_hours'];
 
     /** Simulated here: routing, or nodes whose real effect must not happen in a test. */
-    private const SIMULATED_TYPES = ['start', 'branches', 'branchItem', 'delay', 'go_to_step', 'action', 'add_tag', 'set_attribute', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'document_link', 'create_ticket', 'transfer', 'close', 'end'];
+    private const SIMULATED_TYPES = ['start', 'branches', 'branchItem', 'delay', 'go_to_step', 'action', 'add_tag', 'set_attribute', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'document_link', 'create_ticket', 'transfer', 'close', 'end', 'call_flow', 'return', 'ai_action'];
 
+    /**
+     * @param  NodeHandler|null  $aiActionHandler  Overrides the test-mode ai_action handler (tests).
+     */
     public function __construct(
         private readonly ?NodeHandlerRegistry $handlers = null,
+        private readonly ?NodeHandler $aiActionHandler = null,
     ) {}
 
     /**
@@ -50,7 +59,10 @@ class ChatFlowTestSimulator
 
     private const TTL = 1800;
 
-    public function start(array $nodes, ?int $userId = null): array
+    /**
+     * @param  int|null  $flowId  Id of the flow being tested (so a procedure can't call it back).
+     */
+    public function start(array $nodes, ?int $userId = null, ?int $flowId = null): array
     {
         $startNode = collect($nodes)->first(fn ($n) => ($n['type'] ?? '') === 'start');
 
@@ -65,6 +77,9 @@ class ChatFlowTestSimulator
             'context' => [],
             'current_node_id' => null,
             'status' => 'active',
+            'flow_id' => $flowId,
+            // Draft nodes of each flow waiting for a procedure to return, innermost last.
+            'call_stack' => [],
         ];
 
         [$messages, $session] = $this->runFrom($session, $startNode['id']);
@@ -194,8 +209,15 @@ class ChatFlowTestSimulator
             [$nodeMessages, $nextId, $session] = $this->executeNode($session, $node);
             $messages = array_merge($messages, $nodeMessages);
 
+            if ($nextId === null && $this->canResumeCaller($session)) {
+                [$resumeMessages, $nextId, $session] = $this->resumeCaller($session);
+                $messages = array_merge($messages, $resumeMessages);
+            }
+
             if ($nextId === null) {
-                $session['status'] = 'completed';
+                if ($session['status'] === 'active') {
+                    $session['status'] = 'completed';
+                }
                 break;
             }
 
@@ -318,6 +340,15 @@ class ChatFlowTestSimulator
                 $nextId = $this->firstChildId($session, $node['id']);
                 break;
 
+            case 'call_flow':
+            case 'return':
+                [$messages, $nextId, $session] = $this->runProcedureNode($session, $node);
+                break;
+
+            case 'ai_action':
+                [$messages, $nextId, $session] = $this->simulateAiAction($session, $node);
+                break;
+
             case 'branches':
                 $nextId = $this->executeBranches($session, $node);
                 break;
@@ -342,17 +373,177 @@ class ChatFlowTestSimulator
      *
      * @return array{0: array<int, array<string, mixed>>, 1: ?string, 2: array<string, mixed>}
      */
-    private function renderWithHandler(array $session, array $node): array
+    private function renderWithHandler(array $session, array $node, ?NodeHandler $handler = null): array
     {
         $conversation = new SimulatedConversation;
-        $simSession = SimulatedChatFlowSession::for($session['nodes'], $session['context'] ?? [], $conversation);
+        $simSession = $this->simulatedSession($session, $conversation);
 
-        $handler = ($this->handlers ?? app(NodeHandlerRegistry::class))->for($node['type']);
+        $handler ??= $this->registry()->for($node['type']);
         $nextId = $handler?->handle($node, $simSession, $conversation);
 
         $session['context'] = $simSession->context ?? [];
 
+        if (($simSession->status ?? 'active') !== 'active') {
+            $session['status'] = $simSession->status;
+        }
+
         return [$this->toPanelMessages($conversation->takeCaptured()), $nextId, $session];
+    }
+
+    private function registry(): NodeHandlerRegistry
+    {
+        return $this->handlers ?? app(NodeHandlerRegistry::class);
+    }
+
+    private function simulatedSession(array $session, SimulatedConversation $conversation): SimulatedChatFlowSession
+    {
+        return SimulatedChatFlowSession::for($session['nodes'], $session['context'] ?? [], $conversation, $session['flow_id'] ?? null);
+    }
+
+    // ─── Procedures (call_flow / return) ───────────────────────────────────────
+
+    /**
+     * Runs call_flow / return through the production FlowCallNodeHandler (return
+     * stack, input/output variables, cycle and depth limits) and mirrors the
+     * flow switch it does on the session: the caller's DRAFT nodes are kept on
+     * `call_stack` so a return resumes the draft being tested, not the saved flow.
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: ?string, 2: array<string, mixed>}
+     */
+    private function runProcedureNode(array $session, array $node): array
+    {
+        $conversation = new SimulatedConversation;
+        $simSession = $this->simulatedSession($session, $conversation);
+        $depthBefore = $this->stackDepth($simSession);
+
+        $nextId = $this->registry()->for($node['type'])?->handle($node, $simSession, $conversation);
+
+        return $this->applyProcedureSwitch($session, $simSession, $depthBefore, $nextId, $node['type'] === 'call_flow');
+    }
+
+    private function canResumeCaller(array $session): bool
+    {
+        return $session['status'] === 'active' && ! empty($session['call_stack']);
+    }
+
+    /**
+     * Natural end of a procedure (a branch with nothing left to run): back to the caller.
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: ?string, 2: array<string, mixed>}
+     */
+    private function resumeCaller(array $session): array
+    {
+        $handler = $this->registry()->for('return');
+
+        if (! $handler instanceof FlowCallNodeHandler) {
+            return [[], null, $session];
+        }
+
+        $simSession = $this->simulatedSession($session, new SimulatedConversation);
+        $depthBefore = $this->stackDepth($simSession);
+
+        return $this->applyProcedureSwitch($session, $simSession, $depthBefore, $handler->resumeCaller($simSession), false);
+    }
+
+    /**
+     * @return array{0: array<int, array<string, mixed>>, 1: ?string, 2: array<string, mixed>}
+     */
+    private function applyProcedureSwitch(array $session, SimulatedChatFlowSession $simSession, int $depthBefore, ?string $nextId, bool $isCall): array
+    {
+        $messages = [];
+        $depthAfter = $this->stackDepth($simSession);
+        $session['context'] = $simSession->context ?? [];
+
+        if ($depthAfter > $depthBefore) {
+            $session['call_stack'][] = ['nodes' => $session['nodes'], 'flow_id' => $session['flow_id'] ?? null];
+            $session['nodes'] = $simSession->chatFlow->nodes ?? [];
+            $session['flow_id'] = $simSession->chat_flow_id;
+            $name = e((string) ($simSession->chatFlow->name ?? ''));
+            $messages[] = ['type' => 'bot', 'text' => '📞 [Llamada al procedimiento'.($name !== '' ? " «{$name}»" : '').']', 'system' => true];
+
+            return [$messages, $nextId, $session];
+        }
+
+        if ($depthAfter < $depthBefore) {
+            $caller = null;
+
+            for ($i = $depthBefore - $depthAfter; $i > 0; $i--) {
+                $caller = array_pop($session['call_stack']);
+            }
+
+            $session['nodes'] = $caller['nodes'] ?? $session['nodes'];
+            $session['flow_id'] = $caller['flow_id'] ?? null;
+            $messages[] = ['type' => 'bot', 'text' => '↩️ [Fin del procedimiento: vuelve al flow que lo llamó]', 'system' => true];
+
+            return [$messages, $nextId, $session];
+        }
+
+        if (($simSession->status ?? 'active') !== 'active') {
+            $session['status'] = $simSession->status;
+            $messages[] = ['type' => 'bot', 'text' => '🔀 [No se pudo llamar al procedimiento — transferido a agente]', 'system' => true];
+        } elseif ($isCall) {
+            $messages[] = ['type' => 'bot', 'text' => '⚠️ [No se pudo llamar al procedimiento (no existe, no está activo, llamada cíclica o demasiado profunda): se continúa]', 'system' => true];
+        }
+
+        return [$messages, $nextId, $session];
+    }
+
+    private function stackDepth(SimulatedChatFlowSession $simSession): int
+    {
+        $stack = $simSession->getContextValue(FlowCallNodeHandler::STACK_KEY, []);
+
+        return is_array($stack) ? count($stack) : 0;
+    }
+
+    // ─── ai_action ─────────────────────────────────────────────────────────────
+
+    /**
+     * Runs the production ai_action handler on a test-mode executor: read
+     * actions execute (source `test`), actions that modify data are simulated.
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: ?string, 2: array<string, mixed>}
+     */
+    private function simulateAiAction(array $session, array $node): array
+    {
+        $handler = $this->aiActionHandler ?? $this->testModeAiActionHandler();
+
+        if ($handler === null) {
+            $message = '⚠️ [Acción del catálogo IA no simulable: el módulo HelpdeskAiPrompts no está disponible]';
+            $session['context'][trim((string) ($node['data']['save_to'] ?? '')) ?: 'accion'] = null;
+
+            return [[['type' => 'bot', 'text' => $message, 'system' => true]], $this->firstChildId($session, $node['id']), $session];
+        }
+
+        [$messages, $nextId, $session] = $this->renderWithHandler($session, $node, $handler);
+
+        $data = $node['data'] ?? [];
+        $saveTo = trim((string) ($data['save_to'] ?? '')) ?: 'accion';
+        $ok = (bool) ($session['context'][$saveTo.'_ok'] ?? false);
+        $status = (string) ($session['context'][$saveTo.'_status'] ?? '');
+        $key = e((string) ($data['action_key'] ?? ''));
+        $var = e($saveTo);
+
+        $summary = match (true) {
+            $status === 'simulated' => "🧠 [Acción «{$key}» simulada: modifica datos y no se ejecuta en modo prueba → {{{$var}}}]",
+            $ok => "🧠 [Acción «{$key}» ejecutada (solo lectura) → {{{$var}}}]",
+            default => "🧠 [Acción «{$key}» falló ({$status})]",
+        };
+
+        array_unshift($messages, ['type' => 'bot', 'text' => $summary, 'system' => true]);
+
+        return [$messages, $nextId, $session];
+    }
+
+    private function testModeAiActionHandler(): ?NodeHandler
+    {
+        if (! class_exists(AiActionNodeHandler::class)) {
+            return null;
+        }
+
+        return new AiActionNodeHandler(
+            new TestModeActionExecutor(app(ActionExecutor::class)),
+            app(ChatFlowLocalizer::class),
+        );
     }
 
     /**
@@ -493,6 +684,11 @@ class ChatFlowTestSimulator
         }
 
         $stayTypes = ['identify_customer', 'request_documents'];
+
+        if ($nextId === null && ! in_array($node['type'], $stayTypes) && $this->canResumeCaller($session)) {
+            [$resumeMessages, $nextId, $session] = $this->resumeCaller($session);
+            $messages = array_merge($messages, $resumeMessages);
+        }
 
         if ($nextId) {
             [$nextMessages, $session] = $this->runFrom($session, $nextId);

@@ -21,6 +21,8 @@ export function getPreviewText(node: BackendNode): string {
     if (node.type === 'add_tag') return (d.tags || []).join(', ').substring(0, 50);
     if (node.type === 'set_attribute') return d.attribute ? `${d.attribute} = ${d.value || ''}` : '';
     if (node.type === 'go_to_step') return d.target_label ? `→ ${d.target_label}` : '';
+    if (node.type === 'call_flow') return d.flow_name ? `→ ${d.flow_name}` : '';
+    if (node.type === 'ai_action') return String(d.action_key || '').substring(0, 50);
     if (node.type === 'transfer') return d.assignee_id ? 'a un agente' : (d.group_id ? 'a un grupo' : 'a la cola general');
     if (node.type === 'close') return d.farewell?.substring(0, 50) || '';
     if (node.type === 'ai_response') return d.use_knowledge_base !== false ? 'RAG · centro de ayuda' : 'LLM';
@@ -45,6 +47,11 @@ export function collectFlowVariables(nodes: BackendNode[]): string[] {
         if (d.variable_name) vars.add(d.variable_name);
         if (n.type === 'order_lookup' && d.order_variable) vars.add(d.order_variable);
         if ((n.type === 'http_request' || n.type === 'ai_response') && d.save_to) vars.add(d.save_to);
+        if (n.type === 'ai_action') {
+            const base = d.save_to || 'accion';
+            [base, `${base}_ok`, `${base}_status`].forEach(v => vars.add(v));
+        }
+        if (n.type === 'call_flow') (d.output || []).filter(Boolean).forEach((v: string) => vars.add(v));
     });
     return Array.from(vars).sort();
 }
@@ -139,6 +146,8 @@ export function validateFlow(nodes: BackendNode[]): FlowValidation {
         if (n.type === 'message' && !String(d.text || '').trim()) add('warning', `«${labelOf(n)}» no tiene texto.`, n.id);
         if (n.type === 'quick_replies' && !(d.options || []).length) add('warning', `«${labelOf(n)}» no tiene opciones.`, n.id);
         if (n.type === 'collect_input' && !String(d.question || '').trim()) add('warning', `«${labelOf(n)}» no tiene pregunta.`, n.id);
+        if (n.type === 'call_flow' && !d.flow_id) add('error', `«${labelOf(n)}» no tiene procedimiento seleccionado.`, n.id);
+        if (n.type === 'ai_action' && !d.action_key) add('error', `«${labelOf(n)}» no tiene acción seleccionada.`, n.id);
         if (n.type === 'go_to_step' && !d.target_node_id) add('warning', `«${labelOf(n)}» no tiene destino seleccionado.`, n.id);
 
         if (n.type === 'branches') {

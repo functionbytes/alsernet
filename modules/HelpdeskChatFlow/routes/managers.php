@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowAnalyticsController;
+use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowProceduresController;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowsController;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowSessionsController;
 use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowTestCasesController;
@@ -15,6 +16,7 @@ Route::prefix('chatflows')
     ->group(function () {
         Route::get('/', [ChatFlowsController::class, 'index'])->name('index');
         Route::get('/create', [ChatFlowsController::class, 'create'])->name('create');
+        Route::get('/procedures', [ChatFlowProceduresController::class, 'index'])->name('procedures');
         Route::post('/', [ChatFlowsController::class, 'store'])->name('store');
         Route::post('/template/{template}', [ChatFlowsController::class, 'storeFromTemplate'])->name('store-template');
         Route::post('/import', [ChatFlowTransferController::class, 'import'])->name('import');

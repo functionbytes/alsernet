@@ -6,17 +6,38 @@ import SettingToggle from './SettingToggle';
 interface FlowSettingsPanelProps {
     flowSettings: Record<string, any>;
     setFlowSettings: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+    triggerType: string;
+    setTriggerType: (type: string) => void;
     onClose: () => void;
 }
 
+const TRIGGER_TYPES: [string, string][] = [
+    ['conversation_start', 'Al iniciar la conversación'],
+    ['keyword', 'Palabra clave'],
+    ['intent', 'Intención detectada'],
+    ['no_agent', 'Sin agentes disponibles'],
+    ['manual', 'Manual'],
+    ['procedure', 'Procedimiento (solo se llama desde otro flow)'],
+];
+
 // "Ajustes del flow" panel: multilingual/escalation toggles, A/B testing and event trigger.
-export default function FlowSettingsPanel({ flowSettings, setFlowSettings, onClose }: FlowSettingsPanelProps) {
+export default function FlowSettingsPanel({ flowSettings, setFlowSettings, triggerType, setTriggerType, onClose }: FlowSettingsPanelProps) {
     return (
         <Panel position="top-right" style={{ margin: 12 }}>
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,.12)', width: 300, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <strong style={{ fontSize: 13 }}>Ajustes del flow</strong>
                     <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8' }}><i className="fas fa-times" /></button>
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                    <label style={{ ...labelStyle, marginBottom: 4 }}>Tipo de activación</label>
+                    <select className="form-select form-select-sm" value={triggerType}
+                        onChange={e => setTriggerType(e.target.value)}>
+                        {TRIGGER_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                    {triggerType === 'procedure' && (
+                        <p style={hintStyle}>Nunca arranca solo: otros flows lo usan con «Llamar procedimiento» y termina con «Volver». Debe estar publicado.</p>
+                    )}
                 </div>
                 <SettingToggle label="Responder en el idioma del cliente"
                     hint="Detecta el idioma y traduce/responde en él (WhatsApp, Instagram…)."
