@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\HelpdeskAiPrompts\Http\Controllers\AiActionCatalogController;
 use Modules\HelpdeskAiPrompts\Http\Controllers\AiActionController;
 
 /*
@@ -31,3 +32,6 @@ Route::middleware('can:helpdesk.ai-prompts.manage')
         Route::get('{aiAction}/history', [AiActionController::class, 'history'])->name('history');
         Route::post('{aiAction}/versions/{version}/restore', [AiActionController::class, 'restoreVersion'])->name('versions.restore');
     });
+
+// Catálogo para el editor de ChatFlow: solo lectura, basta `.view` (el del grupo).
+Route::get('actions/catalog', [AiActionCatalogController::class, 'index'])->name('actions.catalog-json');

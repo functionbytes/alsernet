@@ -13,7 +13,10 @@ use Modules\HelpdeskAiPrompts\Models\AiPromptBlock;
 use Modules\HelpdeskAiPrompts\Models\AiPromptCase;
 use Modules\HelpdeskAiPrompts\Observers\ConversationItemAiCaseObserver;
 use Modules\HelpdeskAiPrompts\Services\Actions\ActionRegistry;
+use Modules\HelpdeskAiPrompts\Services\Flow\AiActionNodeHandler;
 use Modules\HelpdeskAiPrompts\Services\PromptLibrary;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandler;
+use Modules\HelpdeskChatFlow\Services\Nodes\NodeHandlerRegistry;
 use Modules\HelpdeskLivechat\Events\AiAnswerRated;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
@@ -83,7 +86,20 @@ class HelpdeskAiPromptsServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        //
+        $this->registerChatFlowNode();
+    }
+
+    /**
+     * Nodo `ai_action` de ChatFlow. Sin HelpdeskChatFlow no hay contrato que
+     * implementar, así que ni se etiqueta (la clase nunca llega a cargarse).
+     */
+    protected function registerChatFlowNode(): void
+    {
+        if (! interface_exists(NodeHandler::class) || ! class_exists(NodeHandlerRegistry::class)) {
+            return;
+        }
+
+        $this->app->tag([AiActionNodeHandler::class], NodeHandlerRegistry::TAG);
     }
 
     /**
