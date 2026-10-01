@@ -1,0 +1,14 @@
+{
+    "name": "HelpdeskMedia",
+    "alias": "helpdeskmedia",
+    "description": "Procesado en segundo plano de los adjuntos de conversaciones y tickets: antivirus ClamAV, optimización de imágenes y transcripción de audio.",
+    "keywords": ["helpdesk", "media", "antivirus", "clamav", "images", "transcription"],
+    "priority": 58,
+    "providers": [
+        "Modules\\HelpdeskMedia\\Providers\\HelpdeskMediaServiceProvider",
+        "Modules\\HelpdeskMedia\\Providers\\MediaUiServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}

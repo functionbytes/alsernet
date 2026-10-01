@@ -1,0 +1,28 @@
+{
+    "name": "modules/helpdeskmedia",
+    "description": "Procesado en segundo plano de los adjuntos de conversaciones y tickets: antivirus ClamAV, optimización de imágenes y transcripción de audio.",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskMedia\\": "app/",
+            "Modules\\HelpdeskMedia\\Database\\Factories\\": "database/factories/",
+            "Modules\\HelpdeskMedia\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HelpdeskMedia\\Tests\\": "tests/"
+        }
+    }
+}
