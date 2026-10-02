@@ -244,6 +244,10 @@ class BirthdayCampaignsController extends Controller
     {
         abort_unless($recipient->campaign_id === $campaign->id, 404);
 
+        if (! $campaign->isActive() && ! $campaign->isPaused()) {
+            return back()->with('error', __('helpdeskbirthday::messages.transition_not_allowed'));
+        }
+
         if ($recipient->status !== BirthdayRecipient::STATUS_FAILED) {
             return back()->with('error', __('helpdeskbirthday::messages.retry_not_allowed'));
         }
@@ -378,6 +382,10 @@ class BirthdayCampaignsController extends Controller
      */
     public function retryFailed(BirthdayCampaign $campaign): RedirectResponse
     {
+        if ($campaign->isTerminal()) {
+            return back()->with('error', __('helpdeskbirthday::messages.transition_not_allowed'));
+        }
+
         $requeued = $campaign->recipients()
             ->where('status', BirthdayRecipient::STATUS_FAILED)
             ->update([
@@ -413,6 +421,10 @@ class BirthdayCampaignsController extends Controller
      */
     public function retryBonos(BirthdayCampaign $campaign): RedirectResponse
     {
+        if ($campaign->isTerminal()) {
+            return back()->with('error', __('helpdeskbirthday::messages.transition_not_allowed'));
+        }
+
         $result = $this->campaigns->retryBonos($campaign);
 
         if ($result['generated'] === 0 && $result['failed'] === 0) {

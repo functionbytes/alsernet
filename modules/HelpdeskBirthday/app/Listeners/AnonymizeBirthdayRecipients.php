@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\CustomerGdprDeleted;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskBirthday\Models\BirthdayRedemption;
 
 /**
  * Borra el dato personal de este módulo cuando un cliente ejerce su derecho de
@@ -48,6 +49,15 @@ class AnonymizeBirthdayRecipients implements ShouldQueue
                 // La fecha de nacimiento es el dato más sensible que guardamos.
                 'birth_date' => null,
                 'erp_customer_id' => null,
+                'updated_at' => now(),
+            ]);
+
+        // Los canjes copian el email del cliente de PrestaShop; el pedido y los
+        // importes se conservan, la persona no.
+        BirthdayRedemption::query()
+            ->whereRaw('LOWER(customer_email) = ?', [$email])
+            ->update([
+                'customer_email' => 'anonimizado-'.substr(hash('sha256', $email), 0, 16).'@anonimo.local',
                 'updated_at' => now(),
             ]);
 

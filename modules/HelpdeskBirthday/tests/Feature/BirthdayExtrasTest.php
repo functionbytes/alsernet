@@ -162,6 +162,43 @@ class BirthdayExtrasTest extends TestCase
         $this->assertNull($campaign->recipients()->first()->error_message);
     }
 
+    public function test_una_campana_cancelada_o_fallida_no_se_reabre_con_reintentos(): void
+    {
+        foreach ([BirthdayCampaign::STATUS_CANCELLED, BirthdayCampaign::STATUS_FAILED] as $status) {
+            BirthdayCampaign::query()->whereDate('campaign_date', now()->toDateString())->delete();
+
+            $campaign = BirthdayCampaign::create([
+                'campaign_date' => now()->toDateString(),
+                'status' => $status,
+                'coupon_code' => 'X-1',
+                'template_key' => 'birthday-coupon',
+                'recipients_total' => 1,
+                'failed_count' => 1,
+            ]);
+
+            $recipient = BirthdayRecipient::create([
+                'campaign_id' => $campaign->id,
+                'email' => 'a@t.test',
+                'status' => BirthdayRecipient::STATUS_FAILED,
+                'error_message' => 'timeout',
+            ]);
+
+            foreach ([
+                route('helpdeskbirthday.campaigns.retry-failed', $campaign),
+                route('helpdeskbirthday.campaigns.retry-bonos', $campaign),
+                route('helpdeskbirthday.campaigns.recipient-retry', [$campaign, $recipient]),
+            ] as $url) {
+                $this->actingAs($this->admin)
+                    ->post($url)
+                    ->assertRedirect()
+                    ->assertSessionHas('error');
+            }
+
+            $this->assertSame($status, $campaign->fresh()->status);
+            $this->assertSame(BirthdayRecipient::STATUS_FAILED, $recipient->fresh()->status);
+        }
+    }
+
     public function test_sin_fallidos_el_reintento_masivo_avisa(): void
     {
         $campaign = BirthdayCampaign::create([

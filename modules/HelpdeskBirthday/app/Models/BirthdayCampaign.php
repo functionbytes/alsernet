@@ -118,6 +118,15 @@ class BirthdayCampaign extends Model
         return in_array($this->status, self::ACTIVE_STATUSES, true);
     }
 
+    /**
+     * Cancelada o fallida es un estado terminal: reabrirla reanudaría el envío
+     * de correos a clientes que alguien decidió no mandar.
+     */
+    public function isTerminal(): bool
+    {
+        return in_array($this->status, [self::STATUS_CANCELLED, self::STATUS_FAILED], true);
+    }
+
     public function isPaused(): bool
     {
         return $this->status === self::STATUS_PAUSED;

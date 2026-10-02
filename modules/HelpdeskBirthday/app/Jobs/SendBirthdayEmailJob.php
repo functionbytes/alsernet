@@ -9,6 +9,7 @@ use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
 use Modules\HelpdeskBirthday\Support\BirthdayMailRenderer;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
+use Modules\HelpdeskEmailActivity\Models\EmailSuppression;
 use Modules\Queue\Jobs\BaseJob;
 use Throwable;
 
@@ -126,11 +127,27 @@ class SendBirthdayEmailJob extends BaseJob
             return;
         }
 
+        if ($this->isSuppressed($recipient)) {
+            $this->markSuppressed($recipient, $campaign);
+
+            return;
+        }
+
         [$subject, $html] = BirthdayMailRenderer::render($campaign, $recipient);
 
-        Mail::to($recipient->email)->send(
+        $sent = Mail::to($recipient->email)->send(
             new BirthdayCouponMailable($recipient, $subject, $html)
         );
+
+        // EnforceEmailSuppression cancela el envío devolviendo false en
+        // MessageSending y entonces send() devuelve null. Si la dirección entró
+        // en la lista entre la comprobación de arriba y el envío, no salió
+        // nada: marcarlo como enviado sería mentir en el panel y en los contadores.
+        if ($sent === null && $this->isSuppressed($recipient)) {
+            $this->markSuppressed($recipient, $campaign);
+
+            return;
+        }
 
         $recipient->forceFill([
             'status' => BirthdayRecipient::STATUS_SENT,
@@ -148,6 +165,22 @@ class SendBirthdayEmailJob extends BaseJob
         ])->save();
 
         $campaign->increment('sent_count');
+    }
+
+    private function isSuppressed(BirthdayRecipient $recipient): bool
+    {
+        return EmailSuppression::isSuppressed($recipient->email, 'HelpdeskBirthday');
+    }
+
+    private function markSuppressed(BirthdayRecipient $recipient, BirthdayCampaign $campaign): void
+    {
+        $recipient->forceFill([
+            'status' => BirthdayRecipient::STATUS_SKIPPED,
+            'skip_reason' => BirthdayRecipient::SKIP_SUPPRESSED,
+            'error_message' => null,
+        ])->save();
+
+        $campaign->increment('skipped_count');
     }
 
     /**

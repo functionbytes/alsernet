@@ -8,6 +8,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskBirthday\Listeners\AnonymizeBirthdayRecipients;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskBirthday\Models\BirthdayRedemption;
 use Modules\HelpdeskBirthday\Services\BirthdayLanguageResolver;
 use Modules\HelpdeskBirthday\Services\BirthdayQueueHealthService;
 use Tests\TestCase;
@@ -68,6 +69,31 @@ class BirthdayComplianceAndLanguageTest extends TestCase
         $this->assertSame(BirthdayRecipient::STATUS_SENT, $recipient->status);
         $this->assertNotNull($recipient->sent_at);
         $this->assertSame(1, $campaign->recipients()->count());
+    }
+
+    public function test_el_borrado_gdpr_anonimiza_el_email_de_los_canjes(): void
+    {
+        $redemption = BirthdayRedemption::create([
+            'ps_order_id' => 777001,
+            'customer_email' => 'BorrarMe@ejemplo.test',
+            'order_total' => 50,
+        ]);
+        $otro = BirthdayRedemption::create([
+            'ps_order_id' => 777002,
+            'customer_email' => 'otro@ejemplo.test',
+        ]);
+
+        $customer = new Customer(['email' => 'borrarme@ejemplo.test']);
+        $customer->id = 1;
+
+        (new AnonymizeBirthdayRecipients)->handle(new CustomerGdprDeleted(
+            customer: $customer, hard: true, conversationIds: [], result: [],
+            customerEmail: 'borrarme@ejemplo.test', customerPhones: [],
+        ));
+
+        $this->assertStringContainsString('@anonimo.local', $redemption->fresh()->customer_email);
+        $this->assertSame(777001, (int) $redemption->fresh()->ps_order_id);
+        $this->assertSame('otro@ejemplo.test', $otro->fresh()->customer_email);
     }
 
     public function test_el_borrado_gdpr_no_toca_a_otros_destinatarios(): void

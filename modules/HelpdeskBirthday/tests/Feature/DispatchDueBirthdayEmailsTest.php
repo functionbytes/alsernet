@@ -9,6 +9,8 @@ use Modules\HelpdeskBirthday\Jobs\SendBirthdayEmailJob;
 use Modules\HelpdeskBirthday\Mail\BirthdayCouponMailable;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskEmailActivity\Enums\SuppressionReason;
+use Modules\HelpdeskEmailActivity\Models\EmailSuppression;
 use Tests\TestCase;
 
 /**
@@ -112,6 +114,34 @@ class DispatchDueBirthdayEmailsTest extends TestCase
         $this->assertSame(BirthdayRecipient::STATUS_SENT, $recipient->status);
         $this->assertNotNull($recipient->sent_at);
         $this->assertSame(1, $campaign->fresh()->sent_count);
+    }
+
+    public function test_un_destinatario_suprimido_se_omite_sin_enviar_ni_contar_como_enviado(): void
+    {
+        Mail::fake();
+
+        EmailSuppression::query()->create([
+            'email' => 'ana@ejemplo.test',
+            'module' => 'HelpdeskBirthday',
+            'reason' => SuppressionReason::Manual,
+        ]);
+
+        $campaign = $this->campaign(BirthdayCampaign::STATUS_SENDING);
+        $recipient = $this->recipient($campaign, 'ana@ejemplo.test', now()->subMinute());
+        $recipient->update(['status' => BirthdayRecipient::STATUS_SENDING]);
+
+        (new SendBirthdayEmailJob($recipient->id))->handle();
+
+        Mail::assertNothingSent();
+
+        $recipient->refresh();
+        $this->assertSame(BirthdayRecipient::STATUS_SKIPPED, $recipient->status);
+        $this->assertSame(BirthdayRecipient::SKIP_SUPPRESSED, $recipient->skip_reason);
+        $this->assertNull($recipient->sent_at);
+
+        $campaign->refresh();
+        $this->assertSame(0, $campaign->sent_count);
+        $this->assertSame(1, $campaign->skipped_count);
     }
 
     public function test_el_job_no_reenvia_si_el_destinatario_ya_no_esta_reservado(): void

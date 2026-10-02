@@ -299,6 +299,10 @@ class BirthdayCampaignService
      */
     public function retryBonos(BirthdayCampaign $campaign): array
     {
+        if ($campaign->isTerminal()) {
+            return ['generated' => 0, 'failed' => 0];
+        }
+
         $sinBono = $campaign->recipients()
             ->whereIn('status', [BirthdayRecipient::STATUS_PENDING, BirthdayRecipient::STATUS_SKIPPED])
             ->where(fn ($q) => $q->whereNull('skip_reason')->orWhere('skip_reason', BirthdayRecipient::SKIP_NO_COUPON))
