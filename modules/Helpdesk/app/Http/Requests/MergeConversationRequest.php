@@ -2,7 +2,9 @@
 
 namespace Modules\Helpdesk\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class MergeConversationRequest extends FormRequest
 {
@@ -25,5 +27,18 @@ class MergeConversationRequest extends FormRequest
         return [
             'target_id.not_in' => __('helpdesk::helpdesk.messages.merge_self'),
         ];
+    }
+
+    /**
+     * Mismo formato que el resto de errores de merge() ({success: false,
+     * message}), más `errors` para quien muestre el error por campo.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(response()->json([
+            'success' => false,
+            'message' => $validator->errors()->first(),
+            'errors' => $validator->errors(),
+        ], 422));
     }
 }

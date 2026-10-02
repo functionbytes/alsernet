@@ -10,8 +10,10 @@ class MergeTest extends InboxTestCase
     public function test_merge_copies_items_to_target_and_soft_deletes_source(): void
     {
         $customer = $this->createCustomer();
-        $source = $this->createConversation(['customer_id' => $customer->id]);
-        $target = $this->createConversation(['customer_id' => $customer->id]);
+        // Mismo canal: merge() rechaza fusionar canales distintos y la
+        // factory elige uno al azar.
+        $source = $this->createConversation(['customer_id' => $customer->id, 'channel' => 'web']);
+        $target = $this->createConversation(['customer_id' => $customer->id, 'channel' => 'web']);
 
         ConversationItem::factory()->count(2)->create([
             'conversation_id' => $source->id,
