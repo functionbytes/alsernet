@@ -94,7 +94,7 @@ class CachedTranslator
             }
         }
 
-        if ($translated === null || $translated === '' || $translated === $text) {
+        if ($translated === null || $translated === '') {
             return $translated;
         }
 
@@ -389,7 +389,7 @@ class CachedTranslator
         $translated = $result['translated'];
         $detected = $result['detected_source_language'];
 
-        if ($translated === null || $translated === '' || $translated === $text) {
+        if ($translated === null || $translated === '') {
             return ['translated' => $translated, 'detected_source_language' => $detected];
         }
 

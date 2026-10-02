@@ -13,6 +13,9 @@ class TranslateItemController extends Controller
 {
     use EnforcesTranslationQuota;
 
+    /** Mismo tope que TranslateRequest (text max:2000). */
+    private const MAX_TEXT_LENGTH = 2000;
+
     public function __construct(
         private readonly CachedTranslator $translator,
     ) {}
@@ -23,7 +26,7 @@ class TranslateItemController extends Controller
 
         $this->authorize('view', $item->conversation);
 
-        $text = strip_tags($item->body ?? '');
+        $text = mb_substr(strip_tags($item->body ?? ''), 0, self::MAX_TEXT_LENGTH);
 
         if (trim($text) === '') {
             return response()->json(
