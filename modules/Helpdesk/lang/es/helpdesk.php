@@ -24,6 +24,7 @@ return [
         // Merge
         'merge_self' => 'No puedes fusionar una conversación consigo misma.',
         'merge_different_customer' => 'Las conversaciones no pertenecen al mismo contacto.',
+        'merge_different_channel' => 'Las conversaciones pertenecen a canales distintos y no se pueden fusionar.',
         'merge_success' => 'Conversaciones fusionadas correctamente.',
         'link_customer_same' => 'La conversación ya está vinculada a este cliente.',
         'link_customer_success' => 'Conversación vinculada correctamente.',

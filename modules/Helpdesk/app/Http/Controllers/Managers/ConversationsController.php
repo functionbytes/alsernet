@@ -25,6 +25,7 @@ use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
 use Modules\Helpdesk\Http\Requests\Managers\LinkConversationCustomerRequest;
 use Modules\Helpdesk\Http\Requests\MarkSpamRequest;
+use Modules\Helpdesk\Http\Requests\MergeConversationRequest;
 use Modules\Helpdesk\Http\Requests\SendHsmRequest;
 use Modules\Helpdesk\Http\Requests\SnoozeConversationRequest;
 use Modules\Helpdesk\Http\Requests\StoreConversationMessageRequest;
@@ -1320,17 +1321,11 @@ class ConversationsController extends Controller
     /**
      * Merge current conversation into a target: moves items then soft-deletes current.
      */
-    public function merge(Request $request, Conversation $conversation): JsonResponse
+    public function merge(MergeConversationRequest $request, Conversation $conversation): JsonResponse
     {
         $this->authorize('update', $conversation);
 
-        $targetId = (int) $request->input('target_id');
-
-        if ($targetId === $conversation->id) {
-            return response()->json(['success' => false, 'message' => __('helpdesk::helpdesk.messages.merge_self')], 422);
-        }
-
-        $target = Conversation::findOrFail($targetId);
+        $target = Conversation::findOrFail($request->validated('target_id'));
 
         // La conversación destino recibe los mensajes: el agente debe poder
         // actualizarla y tener acceso a su inbox (ConversationPolicy::update()
@@ -1341,8 +1336,20 @@ class ConversationsController extends Controller
             return response()->json(['success' => false, 'message' => __('helpdesk::helpdesk.messages.merge_different_customer')], 422);
         }
 
-        \DB::transaction(function () use ($conversation, $target): void {
+        // Mover mensajes de WhatsApp a una conversación de email (o al revés)
+        // haría que la siguiente respuesta saliera por el canal equivocado.
+        if ($target->channel !== $conversation->channel) {
+            return response()->json(['success' => false, 'message' => __('helpdesk::helpdesk.messages.merge_different_channel')], 422);
+        }
+
+        DB::connection('helpdesk')->transaction(function () use ($conversation, $target): void {
             $conversation->items()->update(['conversation_id' => $target->id]);
+
+            $lastActivity = collect([$target->last_message_at, $conversation->last_message_at])->filter()->max();
+            if ($lastActivity !== null) {
+                $target->forceFill(['last_message_at' => $lastActivity])->save();
+            }
+
             $conversation->delete();
         });
 
@@ -1514,31 +1521,39 @@ class ConversationsController extends Controller
         }
 
         $userId = (int) auth()->id();
-        $metadata = $item->metadata ?? [];
-        $reactions = collect($metadata['reactions'] ?? []);
 
-        $existing = $reactions->first(
-            fn ($r) => ($r['user_id'] ?? null) === $userId && ($r['emoji'] ?? null) === $emoji
-        );
+        // Lectura-modificación-escritura del JSON bajo lock para no perder
+        // reacciones concurrentes de otros agentes sobre el mismo mensaje.
+        [$action, $metadata] = DB::connection('helpdesk')->transaction(function () use ($item, $userId, $emoji): array {
+            $locked = ConversationItem::query()->lockForUpdate()->findOrFail($item->id);
+            $metadata = $locked->metadata ?? [];
+            $reactions = collect($metadata['reactions'] ?? []);
 
-        if ($existing) {
-            $reactions = $reactions->reject(
+            $existing = $reactions->first(
                 fn ($r) => ($r['user_id'] ?? null) === $userId && ($r['emoji'] ?? null) === $emoji
-            )->values();
-            $action = 'removed';
-        } else {
-            $reactions = $reactions->reject(fn ($r) => ($r['user_id'] ?? null) === $userId)->values();
-            $reactions->push([
-                'user_id' => $userId,
-                'emoji' => $emoji,
-                'at' => now()->toIso8601String(),
-            ]);
-            $action = 'added';
-        }
+            );
 
-        $metadata['reactions'] = $reactions->values()->all();
-        $item->metadata = $metadata;
-        $item->save();
+            if ($existing) {
+                $reactions = $reactions->reject(
+                    fn ($r) => ($r['user_id'] ?? null) === $userId && ($r['emoji'] ?? null) === $emoji
+                )->values();
+                $action = 'removed';
+            } else {
+                $reactions = $reactions->reject(fn ($r) => ($r['user_id'] ?? null) === $userId)->values();
+                $reactions->push([
+                    'user_id' => $userId,
+                    'emoji' => $emoji,
+                    'at' => now()->toIso8601String(),
+                ]);
+                $action = 'added';
+            }
+
+            $metadata['reactions'] = $reactions->values()->all();
+            $locked->metadata = $metadata;
+            $locked->save();
+
+            return [$action, $metadata];
+        });
 
         return response()->json([
             'success' => true,

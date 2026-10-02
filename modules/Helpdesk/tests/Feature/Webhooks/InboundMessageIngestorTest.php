@@ -3,6 +3,8 @@
 namespace Modules\Helpdesk\Tests\Feature\Webhooks;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
+use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
@@ -80,6 +82,33 @@ class InboundMessageIngestorTest extends TestCase
         $this->assertNotNull($first);
         $this->assertNull($second);
         $this->assertSame(1, ConversationItem::where('external_id', $externalId)->count());
+    }
+
+    public function test_ingest_no_crea_conversacion_vacia_al_reintentar_tras_cerrarla(): void
+    {
+        $customer = $this->customer();
+        $externalId = 'wamid.'.uniqid();
+
+        $first = $this->ingestor()->ingest('whatsapp', $customer->whatsapp_phone, $customer, ['body' => 'Hola', 'external_id' => $externalId]);
+        $first->conversation->update(['status_id' => ConversationStatus::query()->where('is_open', false)->value('id')]);
+
+        $retry = $this->ingestor()->ingest('whatsapp', $customer->whatsapp_phone, $customer, ['body' => 'Hola', 'external_id' => $externalId]);
+
+        $this->assertNull($retry);
+        $this->assertSame(1, Conversation::query()->where('external_sender_id', $customer->whatsapp_phone)->count());
+    }
+
+    public function test_ingest_libera_el_dedupe_si_la_ingesta_falla(): void
+    {
+        $customer = $this->customer();
+        $externalId = 'wamid.'.uniqid();
+
+        try {
+            $this->ingestor()->ingest('whatsapp', $customer->whatsapp_phone, $customer, ['body' => 'Hola', 'external_id' => $externalId, 'type' => null, 'conversation_id' => null]);
+        } catch (\Throwable) {
+        }
+
+        $this->assertTrue(Cache::add("ingest:dedupe:whatsapp:{$externalId}", 1, 5));
     }
 
     public function test_ingest_reabre_la_ventana_de_servicio_whatsapp(): void

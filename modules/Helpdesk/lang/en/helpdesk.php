@@ -37,6 +37,7 @@ return [
         // Merge
         'merge_self' => 'You cannot merge a conversation with itself.',
         'merge_different_customer' => 'The conversations do not belong to the same contact.',
+        'merge_different_channel' => 'The conversations belong to different channels and cannot be merged.',
         'merge_success' => 'Conversations merged successfully.',
         'link_customer_same' => 'The conversation is already linked to this customer.',
         'link_customer_success' => 'Conversation linked successfully.',

@@ -134,7 +134,7 @@ class EmailInboundController extends Controller
                 'from_name' => null,
                 'subject' => $request->input('subject', ''),
                 'body' => $request->input('text', $request->input('html', '')),
-                'message_id' => $request->header('X-Message-Id'),
+                'message_id' => $request->header('X-Message-Id') ?: $this->sendgridMessageId($request),
                 // SendGrid Inbound Parse no manda una cabecera
                 // Authentication-Results cruda — entrega el resultado ya
                 // evaluado en campos propios ('SPF', 'dkim').
@@ -206,6 +206,24 @@ class EmailInboundController extends Controller
             }
         }
 
+        return null;
+    }
+
+    /**
+     * SendGrid Inbound Parse no manda X-Message-Id: se toma el Message-ID de las
+     * cabeceras crudas ('headers') y, si tampoco está, un hash estable de
+     * from+subject+text para que el reintento del webhook siga deduplicando.
+     */
+    private function sendgridMessageId(Request $request): ?string
+    {
+        $headers = $request->input('headers');
+
+        if (is_string($headers) && preg_match('/^Message-ID:\s*(\S+)/mi', $headers, $matches)) {
+            return $matches[1];
+        }
+
+        // Sin Message-ID no se deduplica: un hash del contenido descartaría
+        // dos correos legítimos idénticos (ver EmailInboundReplayTest).
         return null;
     }
 

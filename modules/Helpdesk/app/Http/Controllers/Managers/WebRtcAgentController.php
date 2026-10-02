@@ -21,6 +21,8 @@ class WebRtcAgentController extends Controller
             return response()->json(['success' => false], 403);
         }
 
+        $this->authorize('update', $conversation);
+
         WebRtcSignal::dispatch(
             $conversation->id,
             'answer',
@@ -37,6 +39,8 @@ class WebRtcAgentController extends Controller
         if (! $this->user()?->can('helpdesk.conversations.view')) {
             return response()->json(['success' => false], 403);
         }
+
+        $this->authorize('update', $conversation);
 
         WebRtcSignal::dispatch(
             $conversation->id,
@@ -55,6 +59,8 @@ class WebRtcAgentController extends Controller
             return response()->json(['success' => false], 403);
         }
 
+        $this->authorize('update', $conversation);
+
         WebRtcSignal::dispatch($conversation->id, 'end', [], 'to-widget', $this->widgetPubsubToken($conversation));
 
         return response()->json(['success' => true]);
@@ -65,6 +71,8 @@ class WebRtcAgentController extends Controller
         if (! $this->user()?->can('helpdesk.conversations.view')) {
             return response()->json(['success' => false], 403);
         }
+
+        $this->authorize('update', $conversation);
 
         $agent = $this->user();
 
@@ -90,6 +98,8 @@ class WebRtcAgentController extends Controller
         if (! $this->user()?->can('helpdesk.conversations.view')) {
             return response()->json(['events' => []], 403);
         }
+
+        $this->authorize('view', $conversation);
 
         $rows = LivestreamEvent::query()
             ->where('conversation_id', $conversation->id)

@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
@@ -210,9 +211,14 @@ class ProcessSocialWebhookJob implements ShouldQueue
         $this->markItemsAsReceipted($conversation, $field, $watermark, $messageId);
 
         if ($watermark) {
-            $conversation->forceFill([
-                'metadata' => array_merge($conversation->metadata ?? [], [$watermarkKey => $watermark]),
-            ])->save();
+            // Re-lee la fila bajo lock: merge sobre el estado fresco para no
+            // pisar otras claves de metadata escritas en paralelo.
+            DB::connection('helpdesk')->transaction(function () use ($conversation, $watermarkKey, $watermark): void {
+                $fresh = Conversation::query()->lockForUpdate()->findOrFail($conversation->id);
+                $fresh->forceFill([
+                    'metadata' => array_merge($fresh->metadata ?? [], [$watermarkKey => $watermark]),
+                ])->save();
+            });
         }
     }
 

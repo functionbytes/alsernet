@@ -42,12 +42,45 @@ class InboundMessageIngestor
         array $itemAttributes,
         array $downloadAttachments = [],
     ): ?ConversationItem {
-        $conversation = $this->findOrCreateConversation($channel, $externalSenderId, $customer->id);
+        // Dedupe atómico ANTES de resolver/crear la conversación: external_id no
+        // es único en BD, y un reintento tras cerrar la conversación crearía una
+        // conversación nueva vacía. Cache::add es atómico entre workers.
+        $externalId = $itemAttributes['external_id'] ?? null;
+        $dedupeKey = filled($externalId) ? "ingest:dedupe:{$channel}:{$externalId}" : null;
 
+        if ($dedupeKey !== null && ! Cache::add($dedupeKey, 1, now()->addDay())) {
+            return null;
+        }
+
+        try {
+            return $this->persistInbound($channel, $externalSenderId, $customer, $itemAttributes, $downloadAttachments);
+        } catch (\Throwable $e) {
+            // Si la ingesta falla, el reintento del proveedor debe poder procesarse.
+            if ($dedupeKey !== null) {
+                Cache::forget($dedupeKey);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $itemAttributes
+     * @param  array<int, array<string, mixed>>  $downloadAttachments
+     */
+    private function persistInbound(
+        string $channel,
+        string $externalSenderId,
+        Customer $customer,
+        array $itemAttributes,
+        array $downloadAttachments,
+    ): ?ConversationItem {
         $externalId = $itemAttributes['external_id'] ?? null;
         if ($externalId !== null && $this->isDuplicate($channel, $externalSenderId, $externalId)) {
             return null;
         }
+
+        $conversation = $this->findOrCreateConversation($channel, $externalSenderId, $customer->id);
 
         $item = ConversationItem::create(array_merge([
             'conversation_id' => $conversation->id,
@@ -122,6 +155,8 @@ class InboundMessageIngestor
 
         // Cache the default status ID and per-channel inbox ID for 30 minutes —
         // these almost never change and saved 2 DB queries per webhook.
+        // Sin estado por defecto/abierto se lanza (el job se reintenta y el
+        // dedupe se libera) en vez de asignar un id mágico que puede no existir.
         $statusId = Cache::remember(
             'helpdesk:default_status_id',
             now()->addMinutes(30),
@@ -129,7 +164,8 @@ class InboundMessageIngestor
                 ->where('is_default', true)
                 ->orWhere('is_open', true)
                 ->orderByDesc('is_default')
-                ->value('id') ?? 1,
+                ->value('id')
+                ?? throw new \RuntimeException('InboundMessageIngestor: no hay ConversationStatus por defecto ni abierto configurado.'),
         );
 
         $inboxId = Cache::remember(

@@ -24,22 +24,26 @@ class CheckSlaBreaches extends Command
             return self::SUCCESS;
         }
 
-        $conversations = Conversation::query()
+        $thresholdMinutes = (int) config('helpdesk.sla.legacy_first_response_minutes', 15);
+        $dispatched = 0;
+
+        Conversation::query()
             ->whereHas('status', fn ($q) => $q->where('is_open', true))
             ->whereNull('first_response_at')
             ->whereNull('sla_warned_at')
-            ->where('created_at', '<=', now()->subMinutes(15))
-            ->get();
+            ->where('created_at', '<=', now()->subMinutes($thresholdMinutes))
+            ->chunkById(200, function ($conversations) use (&$dispatched): void {
+                foreach ($conversations as $conversation) {
+                    $conversation->timestamps = false;
+                    $conversation->sla_warned_at = now();
+                    $conversation->save();
 
-        foreach ($conversations as $conversation) {
-            SlaBreached::dispatch($conversation);
+                    SlaBreached::dispatch($conversation);
+                    $dispatched++;
+                }
+            });
 
-            $conversation->timestamps = false;
-            $conversation->sla_warned_at = now();
-            $conversation->save();
-        }
-
-        $this->info("SLA check complete. {$conversations->count()} breach(es) dispatched.");
+        $this->info("SLA check complete. {$dispatched} breach(es) dispatched.");
 
         return Command::SUCCESS;
     }

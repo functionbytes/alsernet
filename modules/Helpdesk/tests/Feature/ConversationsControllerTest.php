@@ -789,8 +789,8 @@ class ConversationsControllerTest extends TestCase
     public function test_manager_can_merge_conversations(): void
     {
         $customer = Customer::factory()->create();
-        $source = $this->createConversation(['customer_id' => $customer->id]);
-        $target = $this->createConversation(['customer_id' => $customer->id]);
+        $source = $this->createConversation(['customer_id' => $customer->id, 'channel' => 'web']);
+        $target = $this->createConversation(['customer_id' => $customer->id, 'channel' => 'web']);
 
         $this->actingAs($this->manager)
             ->postJson(route('manager.helpdesk.conversations.merge', $source), [
@@ -1070,8 +1070,8 @@ class ConversationsControllerTest extends TestCase
         $inboxB = Inbox::create(['name' => 'Inbox B', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
 
         $customer = Customer::factory()->create();
-        $source = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inboxA->id]);
-        $target = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inboxB->id]);
+        $source = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inboxA->id, 'channel' => 'web']);
+        $target = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inboxB->id, 'channel' => 'web']);
 
         $agent = User::factory()->create();
         // Ambos permisos de ruta (helpdesk.view + conversations.update) para
@@ -1092,8 +1092,8 @@ class ConversationsControllerTest extends TestCase
         $inbox = Inbox::create(['name' => 'Inbox A', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
 
         $customer = Customer::factory()->create();
-        $source = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inbox->id]);
-        $target = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inbox->id]);
+        $source = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inbox->id, 'channel' => 'web']);
+        $target = $this->createConversation(['customer_id' => $customer->id, 'inbox_id' => $inbox->id, 'channel' => 'web']);
 
         $agent = User::factory()->create();
         $agent->givePermissionTo(['helpdesk.view', 'helpdesk.conversations.update']);
