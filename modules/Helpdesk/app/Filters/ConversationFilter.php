@@ -16,6 +16,8 @@ class ConversationFilter
      */
     private const FULLTEXT_MIN_LENGTH = 4;
 
+    private const SEARCH_MAX_LENGTH = 100;
+
     /** @var array<string, mixed> Filters of the active view, remembered so apply()'s base scope doesn't fight them. */
     protected array $viewFilters = [];
 
@@ -41,8 +43,8 @@ class ConversationFilter
                 fn ($q) => $this->applyMultiValue($q, 'priority', $this->request->priority)
             )
             ->when(
-                $this->request->has('search') && ! empty($this->request->search),
-                fn ($q) => $this->applySearchValue($q, $this->request->search)
+                $this->request->filled('search') && is_string($this->request->input('search')),
+                fn ($q) => $this->applySearchValue($q, $this->request->input('search'))
             )
             ->when(
                 $this->request->filled('channel'),
@@ -239,6 +241,12 @@ class ConversationFilter
 
     protected function applySearchValue(Builder $query, string $search): Builder
     {
+        $search = mb_substr(trim($search), 0, self::SEARCH_MAX_LENGTH);
+
+        if ($search === '') {
+            return $query;
+        }
+
         return $query->where(function ($q) use ($search) {
             $this->applySubjectSearch($q, $search)
                 ->orWhereHas('customer', fn ($c) => $this->applyCustomerSearch($c, $search));
@@ -261,7 +269,7 @@ class ConversationFilter
         $fullTextTerm = $this->fullTextBooleanTerm($search);
 
         if ($fullTextTerm === null) {
-            return $q->where('subject', 'like', "%{$search}%");
+            return $q->where('subject', 'like', $this->likeTerm($search));
         }
 
         return $q->whereFullText('subject', $fullTextTerm, ['mode' => 'boolean']);
@@ -280,14 +288,32 @@ class ConversationFilter
 
         $c->where(function ($q) use ($search, $fullTextTerm) {
             if ($fullTextTerm === null) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $q->where('name', 'like', $this->likeTerm($search))
+                    ->orWhere('email', 'like', $this->likeTerm($search));
             } else {
                 $q->whereFullText(['name', 'email'], $fullTextTerm, ['mode' => 'boolean']);
             }
         });
 
-        return $c->orWhere('phone', 'like', "%{$search}%");
+        $c->orWhere('phone', 'like', $this->likeTerm($search));
+
+        // "+34 600 123 456" / "600-123-456": el teléfono se guarda sin
+        // separadores o con ellos; se compara también sin espacios/guiones.
+        $compact = preg_replace('/[\s().-]/', '', $search);
+        if ($compact !== $search && preg_match('/^\+?\d{3,}$/', (string) $compact) === 1) {
+            $c->orWhereRaw(
+                "REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '.', '') LIKE ?",
+                [$this->likeTerm($compact)]
+            );
+        }
+
+        return $c;
+    }
+
+    /** `%term%` con los comodines LIKE (% _ \) del usuario escapados. */
+    private function likeTerm(string $search): string
+    {
+        return '%'.addcslashes($search, '%_\\').'%';
     }
 
     /**
@@ -307,7 +333,15 @@ class ConversationFilter
 
         $sanitized = trim((string) preg_replace('/[+\-<>()~*"@]/', ' ', $search));
 
-        return $sanitized === '' ? null : $sanitized.'*';
+        if ($sanitized === '') {
+            return null;
+        }
+
+        // Todas las palabras deben aparecer ("Juan Pérez" no debe traer a
+        // cualquier "Juan" o "Pérez"): '+' las hace obligatorias en boolean mode.
+        $words = preg_split('/\s+/u', $sanitized, -1, PREG_SPLIT_NO_EMPTY);
+
+        return implode(' ', array_map(fn (string $w) => '+'.$w.'*', $words));
     }
 
     protected function applyArchived(Builder $query): Builder

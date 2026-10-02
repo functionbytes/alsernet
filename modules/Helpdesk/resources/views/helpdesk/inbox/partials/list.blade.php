@@ -3,7 +3,7 @@
     <div class="bv-list-head">
         <div class="bv-list-search">
             <i class="fas fa-magnifying-glass bv-list-search-icon"></i>
-            <input type="text" id="bv-search-input" placeholder="{{ __('helpdesk::helpdesk.inbox.search_conversations') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.search_conversations') }}" autocomplete="off">
+            <input type="text" id="bv-search-input" placeholder="{{ __('helpdesk::helpdesk.inbox.search_conversations') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.search_conversations') }}" autocomplete="off" value="{{ request('search') }}">
             <kbd class="bv-list-search-kbd">F</kbd>
         </div>
         <div class="bv-list-actions">

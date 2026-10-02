@@ -267,6 +267,7 @@
         }
 
         let lastInboxRefresh = 0;
+        let inboxRequestSeq = 0;
         let pendingInboxRefresh = null;
 
         function refreshInboxList(params, opts = {}) {
@@ -286,6 +287,8 @@
             const newUrl = '/panel/helpdesk/conversations' + (qs ? '?' + qs : '');
             history.pushState({}, '', newUrl);
 
+            // Descarta respuestas desordenadas (p. ej. dos búsquedas seguidas).
+            const requestSeq = ++inboxRequestSeq;
             $.ajax({
                 url: '/panel/helpdesk/conversations/list' + (qs ? '?' + qs : ''),
                 method: 'GET',
@@ -293,6 +296,7 @@
                 headers: { 'Accept': 'application/json' },
             })
                 .done(resp => {
+                    if (requestSeq !== inboxRequestSeq) return;
                     if (resp.html) {
                         const $temp = $('<div>').html(resp.html);
                         const $newConvList = $temp.find('.bv-conv-list');
