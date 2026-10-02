@@ -78,7 +78,7 @@ Route::name('contacts.')
 
         // Envío masivo de plantilla HSM a varios contactos seleccionados
         Route::post('/bulk-send-hsm', [ContactsController::class, 'bulkSendHsm'])
-            ->middleware('can:contacts.update')
+            ->middleware(['can:contacts.update', 'throttle:5,1'])
             ->name('bulk-send-hsm');
 
         // Búsqueda ERP/PrestaShop → crear ficha nueva o vincular a un contacto

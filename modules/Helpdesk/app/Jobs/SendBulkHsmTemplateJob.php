@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\HsmConversationService;
@@ -35,6 +36,7 @@ class SendBulkHsmTemplateJob implements ShouldQueue
         private readonly string $templateName,
         private readonly array $variables,
         private readonly ?string $language,
+        private readonly ?string $batchId = null,
     ) {
         $this->onQueue('helpdesk');
     }
@@ -44,6 +46,10 @@ class SendBulkHsmTemplateJob implements ShouldQueue
         $customers = Customer::query()->whereIn('id', $this->customerIds)->get();
 
         foreach ($customers as $customer) {
+            if (! $this->claimSend($customer)) {
+                continue;
+            }
+
             try {
                 $conversation = $hsmConversations->findOrCreateWhatsAppConversation($customer);
                 $hsmConversations->sendToConversation($conversation, $this->templateName, $this->variables, $this->language);
@@ -55,6 +61,21 @@ class SendBulkHsmTemplateJob implements ShouldQueue
                 ]);
             }
         }
+    }
+
+    /**
+     * Idempotencia por (lote, cliente, plantilla): un reintento del job no
+     * reenvía a quien ya recibió la plantilla.
+     */
+    private function claimSend(Customer $customer): bool
+    {
+        if ($this->batchId === null) {
+            return true;
+        }
+
+        $key = "hsm-bulk:{$this->batchId}:{$customer->id}:{$this->templateName}";
+
+        return Cache::add($key, 1, now()->addDay());
     }
 
     public function failed(\Throwable $exception): void

@@ -17,7 +17,7 @@ class BulkSendHsmRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_ids' => ['required', 'array', 'min:1'],
+            'customer_ids' => ['required', 'array', 'min:1', 'max:500'],
             // customers live on the 'helpdesk' connection (see ExecuteMergeRequest).
             'customer_ids.*' => ['integer', 'exists:helpdesk.helpdesk_customers,id'],
             'template_name' => ['required', 'string', 'max:255'],
@@ -35,6 +35,7 @@ class BulkSendHsmRequest extends FormRequest
         return [
             'customer_ids.required' => 'Debes seleccionar al menos un contacto.',
             'customer_ids.min' => 'Debes seleccionar al menos un contacto.',
+            'customer_ids.max' => 'Puedes enviar a un máximo de 500 contactos por vez.',
             'customer_ids.*.exists' => 'Uno o más contactos seleccionados no existen.',
             'template_name.required' => 'El nombre de la plantilla es obligatorio.',
             'variables.array' => 'Las variables deben ser un listado.',

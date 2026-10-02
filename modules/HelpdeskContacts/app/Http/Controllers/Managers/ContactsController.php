@@ -1143,9 +1143,12 @@ class ContactsController extends Controller
         // (aislamiento por inbox), mismo criterio que bulkAction().
         $ids = Customer::query()
             ->forAgent($request->user())
+            ->whereNull('banned_at')
             ->whereIn('id', $data['customer_ids'])
             ->pluck('id')
             ->all();
+
+        $batchId = (string) Str::uuid();
 
         foreach (array_chunk($ids, self::HSM_BULK_CHUNK_SIZE) as $chunk) {
             SendBulkHsmTemplateJob::dispatch(
@@ -1153,6 +1156,7 @@ class ContactsController extends Controller
                 $data['template_name'],
                 $data['variables'] ?? [],
                 $data['language'] ?? null,
+                $batchId,
             );
         }
 
