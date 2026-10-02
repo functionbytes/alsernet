@@ -21,6 +21,9 @@ class ConversationUpdated implements ShouldBroadcast
     public function __construct(
         public Conversation $conversation,
         public readonly ?int $byUserId = null,
+        // true cuando un agente acaba de leerla: el leído es compartido, así
+        // que la fila deja de mostrarse "sin leer" en la bandeja de todos.
+        public readonly bool $read = false,
     ) {}
 
     /**
@@ -106,6 +109,7 @@ class ConversationUpdated implements ShouldBroadcast
                 'name' => $groupName,
             ] : null,
             'by_user_id' => $this->byUserId,
+            'read' => $this->read,
             'updated_at' => $this->conversation->updated_at?->toIso8601String(),
         ];
     }

@@ -152,7 +152,7 @@ class ConversationFilter
                 'search' => $this->applySearchValue($query, (string) $value),
                 'urgent' => $query->where('priority', 'urgent'),
                 'mine' => $query->where('assignee_id', auth()->id()),
-                'unread' => $query->whereDoesntHave('reads', fn ($r) => $r->where('user_id', auth()->id())),
+                'unread' => $query->notReadSinceLastMessage(),
                 'vip' => $query->whereHas('customer', fn ($c) => $c->where('total_conversations', '>=', 5)),
                 'date' => $this->applyDateValue($query, (string) $value),
                 default => null,

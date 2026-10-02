@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\ConversationUserTyping;
 use Modules\Helpdesk\Http\Requests\BroadcastTypingRequest;
 use Modules\Helpdesk\Jobs\SendSenderActionJob;
@@ -29,6 +30,13 @@ class ConversationMessagesController extends Controller
 
         $userId = auth()->id();
 
+        // El leído es compartido entre agentes: solo hay que avisar al resto
+        // si esta apertura es la que la saca de "Sin leer".
+        $wasUnread = Conversation::query()
+            ->whereKey($conversation->id)
+            ->notReadSinceLastMessage()
+            ->exists();
+
         // Mark the whole conversation as read for this user (idempotent).
         // The reads table is keyed by (conversation_id, user_id), not per-item.
         ConversationRead::updateOrCreate(
@@ -36,10 +44,14 @@ class ConversationMessagesController extends Controller
             ['read_at' => now()],
         );
 
-        // Otherwise the sidebar's "Sin leer" badge keeps showing the stale
-        // pre-read count for up to 120s (Cache::flexible TTL) after opening
-        // a conversation marks it read.
-        $this->inboxMetrics->forgetCountersFor($userId);
+        if ($wasUnread) {
+            // Sin esto el contador "Sin leer" de los demás agentes seguiría
+            // cacheado (hasta 120 s) y su fila en la bandeja seguiría marcada.
+            $this->inboxMetrics->forgetCountersForAllAgents();
+            ConversationUpdated::dispatch($conversation, $userId, true);
+        } else {
+            $this->inboxMetrics->forgetCountersFor($userId);
+        }
 
         // Send "seen" receipt to the customer via the channel API. This calls
         // out to Meta Graph (or WhatsApp), so it's queued instead of made

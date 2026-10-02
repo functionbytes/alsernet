@@ -407,9 +407,11 @@ class ConversationsController extends Controller
 
         $query = Conversation::query()
             ->with([
-                'customer', 'status', 'assignee', 'inbox', 'lastMessage',
-                'reads' => fn ($q) => $q->where('user_id', auth()->id()),
+                'customer', 'status', 'assignee', 'inbox', 'lastMessage', 'conversationTags',
             ])
+            // Leído compartido entre agentes: última lectura de cualquiera
+            // (user_id 0 = visitante del widget), para el contador de la tarjeta.
+            ->withMax(['reads as agent_last_read_at' => fn ($q) => $q->where('user_id', '>', 0)], 'read_at')
             ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])
             ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
             // 'helpdesk-agent-restricted': forzado siempre, no depende del chip
@@ -433,10 +435,7 @@ class ConversationsController extends Controller
         $query
             ->when(
                 $request->boolean('unread'),
-                fn ($q) => $q->whereDoesntHave(
-                    'reads',
-                    fn ($r) => $r->where('user_id', $userId)
-                )
+                fn ($q) => $q->notReadSinceLastMessage()
             )
             ->when(
                 $request->boolean('mine'),
@@ -467,7 +466,7 @@ class ConversationsController extends Controller
                 )
             );
 
-        $this->applySortOrder($query, $request->input('sort', 'newest'), $userId);
+        $this->applySortOrder($query, $request->input('sort', 'newest'));
 
         return $query;
     }
@@ -1947,15 +1946,14 @@ class ConversationsController extends Controller
      *
      * Supported values: newest (default), oldest, priority, unassigned, unread
      */
-    private function applySortOrder(Builder $query, string $sort, int $userId): void
+    private function applySortOrder(Builder $query, string $sort): void
     {
         match ($sort) {
             'oldest' => $query->orderBy('last_message_at'),
             'priority' => $query->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')"),
             'unassigned' => $query->orderByRaw('assignee_id IS NOT NULL ASC')->orderBy('last_message_at', 'desc'),
             'unread' => $query->orderByRaw(
-                '(SELECT COUNT(*) FROM helpdesk_conversation_reads WHERE conversation_id = helpdesk_conversations.id AND user_id = ?) = 0 DESC',
-                [$userId]
+                'NOT EXISTS (SELECT 1 FROM helpdesk_conversation_reads r WHERE r.conversation_id = helpdesk_conversations.id AND r.user_id > 0 AND r.read_at >= COALESCE(helpdesk_conversations.last_message_at, helpdesk_conversations.updated_at)) DESC'
             )->orderBy('last_message_at', 'desc'),
             default => $query->orderBy('last_message_at', 'desc'),
         };

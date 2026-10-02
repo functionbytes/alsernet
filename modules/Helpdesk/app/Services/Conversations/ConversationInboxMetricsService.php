@@ -167,6 +167,19 @@ class ConversationInboxMetricsService
     }
 
     /**
+     * El leído es compartido entre agentes: abrir o marcar una conversación
+     * cambia el "Sin leer" de todos, no solo el de quien la abre. Sin esto los
+     * demás seguirían viendo el contador cacheado (hasta 120 s).
+     */
+    public function forgetCountersForAllAgents(): void
+    {
+        User::query()
+            ->permission('helpdesk.conversations.reply')
+            ->pluck('users.id')
+            ->each(fn (int $id) => $this->forgetCountersFor($id));
+    }
+
+    /**
      * Forget the sidebar's structural counters — BANDEJAS/EQUIPOS/ETIQUETAS
      * (sidebarInboxes/sidebarGroups/inboxTags) — all three are single global
      * cache keys (not per-user), so one agent's action can invalidate what

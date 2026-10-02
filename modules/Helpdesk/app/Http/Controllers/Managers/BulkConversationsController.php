@@ -14,6 +14,7 @@ use Modules\Helpdesk\Http\Requests\BulkConversationsRequest;
 use Modules\Helpdesk\Jobs\UnsnoozeConversationJob;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 use Modules\Helpdesk\Services\CsatService;
 
 class BulkConversationsController extends Controller
@@ -67,7 +68,7 @@ class BulkConversationsController extends Controller
 
                     'mark_read' => $this->bulkMarkRead($ids, $request->user()->id),
 
-                    'mark_unread' => $this->bulkMarkUnread($ids, $request->user()->id),
+                    'mark_unread' => $this->bulkMarkUnread($ids),
 
                     'priority' => Conversation::whereIn('id', $ids)
                         ->update(['priority' => $payload['priority'] ?? 'normal', 'updated_at' => now()]),
@@ -295,15 +296,25 @@ class BulkConversationsController extends Controller
         DB::connection('helpdesk')->table('helpdesk_conversation_reads')
             ->upsert($rows, ['conversation_id', 'user_id'], ['read_at', 'updated_at']);
 
+        // El leído es compartido: cambia el "Sin leer" de todos los agentes.
+        app(ConversationInboxMetricsService::class)->forgetCountersForAllAgents();
+
         return count($ids);
     }
 
-    private function bulkMarkUnread(array $ids, int $userId): int
+    private function bulkMarkUnread(array $ids): int
     {
-        return DB::connection('helpdesk')->table('helpdesk_conversation_reads')
+        // Leído compartido: "no leída" lo es para todo el equipo, así que se
+        // borran las lecturas de todos los agentes (user_id 0 es el visitante
+        // del widget y se conserva).
+        DB::connection('helpdesk')->table('helpdesk_conversation_reads')
             ->whereIn('conversation_id', $ids)
-            ->where('user_id', $userId)
+            ->where('user_id', '>', 0)
             ->delete();
+
+        app(ConversationInboxMetricsService::class)->forgetCountersForAllAgents();
+
+        return count($ids);
     }
 
     /**
