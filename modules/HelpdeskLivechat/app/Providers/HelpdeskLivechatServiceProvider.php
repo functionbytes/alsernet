@@ -16,6 +16,7 @@ use Modules\HelpdeskLivechat\Console\Commands\ProcessAutoActionsCommand;
 use Modules\HelpdeskLivechat\Http\Middleware\ValidateTrustedOrigin;
 use Modules\HelpdeskLivechat\Http\Middleware\VerifyWidgetHmac;
 use Modules\HelpdeskLivechat\Jobs\PruneLivestreamEventsJob;
+use Modules\HelpdeskLivechat\Jobs\PruneWidgetTrackingJob;
 use Modules\HelpdeskLivechat\Listeners\AttributeChatSaleOnPsOrderCreated;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Services\Widget\WidgetConversationService;
@@ -55,6 +56,11 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
 
             $schedule->job(new PruneLivestreamEventsJob)
                 ->dailyAt('03:30')
+                ->onOneServer()
+                ->when(fn () => helpdesk_livechat_enabled());
+
+            $schedule->job(new PruneWidgetTrackingJob)
+                ->dailyAt('03:45')
                 ->onOneServer()
                 ->when(fn () => helpdesk_livechat_enabled());
 

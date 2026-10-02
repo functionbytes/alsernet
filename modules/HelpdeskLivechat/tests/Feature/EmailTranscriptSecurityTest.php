@@ -4,6 +4,7 @@ namespace Modules\HelpdeskLivechat\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
@@ -205,6 +206,57 @@ class EmailTranscriptSecurityTest extends TestCase
         )->assertOk();
 
         Mail::assertQueued(ConversationTranscriptMail::class);
+    }
+
+    // -----------------------------------------------------------------------
+    // (e) claimed_email is visitor-typed: only valid for verified identities
+    // -----------------------------------------------------------------------
+
+    public function test_unverified_claimed_email_is_rejected(): void
+    {
+        Mail::fake();
+        $this->buildConversationWithWeb(enableTranscripts: true);
+        $this->customer->forceFill(['custom_attributes' => ['claimed_email' => 'victim@example.com']])->save();
+
+        $this->postJson(
+            route('helpdesk-livechat.widget.conversation.email-transcript', $this->conversation->id),
+            ['email' => 'victim@example.com', 'customer_id' => $this->customer->id]
+        )->assertForbidden();
+
+        Mail::assertNothingQueued();
+    }
+
+    public function test_verified_claimed_email_is_accepted(): void
+    {
+        Mail::fake();
+        $this->buildConversationWithWeb(enableTranscripts: true);
+        $this->customer->forceFill(['custom_attributes' => ['claimed_email' => 'claimed@example.com']])->save();
+        $this->conversation->forceFill([
+            'metadata' => ['widget_pubsub_token' => 'pubsub_transcript_token', 'identity_verified' => true],
+        ])->save();
+
+        $this->postJson(
+            route('helpdesk-livechat.widget.conversation.email-transcript', $this->conversation->id),
+            ['email' => 'claimed@example.com', 'customer_id' => $this->customer->id]
+        )->assertOk();
+
+        Mail::assertQueued(ConversationTranscriptMail::class);
+    }
+
+    public function test_transcripts_are_capped_per_conversation(): void
+    {
+        Mail::fake();
+        $this->buildConversationWithWeb(enableTranscripts: true);
+        RateLimiter::clear("livechat-transcript:{$this->conversation->id}");
+
+        $url = route('helpdesk-livechat.widget.conversation.email-transcript', $this->conversation->id);
+        $payload = ['email' => $this->customer->email, 'customer_id' => $this->customer->id];
+
+        foreach (range(1, 3) as $i) {
+            $this->postJson($url, $payload)->assertOk();
+        }
+
+        $this->postJson($url, $payload)->assertStatus(429);
     }
 
     // -----------------------------------------------------------------------

@@ -126,10 +126,6 @@ class WidgetSessionService
     private function updateSession(WidgetSession $session, string $url, ?string $title, Request $request, ?array $product = null, array $commerce = []): void
     {
         $urlChanged = $session->current_url !== $url;
-        $lastActivity = $session->last_activity_at;
-        $cooldown = $this->resolveCooldownSeconds();
-        $cooldownPassed = $lastActivity === null
-            || $lastActivity->diffInSeconds(now()) >= $cooldown;
 
         $session->last_activity_at = now();
 
@@ -171,7 +167,7 @@ class WidgetSessionService
 
         $session->saveQuietly();
 
-        if ($urlChanged || $cooldownPassed) {
+        if ($urlChanged) {
             WidgetPageView::create([
                 'session_id' => $session->id,
                 'url' => $url,

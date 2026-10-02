@@ -34,4 +34,15 @@ return [
             'decay_seconds' => 3600,
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retención de datos de tracking del widget
+    |--------------------------------------------------------------------------
+    | PruneWidgetTrackingJob borra sesiones del widget (y sus vistas de página
+    | en cascada) sin actividad desde hace más de N días.
+    */
+    'retention' => [
+        'widget_sessions_days' => (int) env('HD_LIVECHAT_WIDGET_RETENTION_DAYS', 90),
+    ],
 ];

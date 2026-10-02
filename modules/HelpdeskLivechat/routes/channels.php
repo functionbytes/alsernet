@@ -20,8 +20,9 @@ use Nwidart\Modules\Facades\Module;
 | intentionally sent to unauthenticated browser sessions.
 |
 | The session_token itself acts as the access credential: it is a random
-| 32-char token generated server-side on first visit and stored only in the
-| visitor's localStorage. An attacker would need to enumerate ~62^32 tokens
+| token supplied by the client (the widget generates it and sends it in the
+| heartbeat; the server does not mint it) and stored in the visitor's
+| localStorage. An attacker would need to enumerate ~62^32 tokens
 | to intercept another visitor's session, which is computationally infeasible.
 |
 | The channel authorization callback below simply confirms the token exists,

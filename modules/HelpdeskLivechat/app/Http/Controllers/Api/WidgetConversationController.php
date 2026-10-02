@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationRead;
@@ -26,6 +27,8 @@ use Modules\HelpdeskLivechat\Services\Widget\WidgetConversationService;
 class WidgetConversationController extends Controller
 {
     use VerifiesConversationToken;
+
+    private const MAX_TRANSCRIPTS_PER_DAY = 3;
 
     public function __construct(
         private readonly WidgetConversationService $service,
@@ -244,9 +247,26 @@ class WidgetConversationController extends Controller
         $customer = $conversation->customer;
         $destinationEmail = trim((string) $request->validated('email'));
 
-        if (! $customer || strcasecmp(trim((string) $customer->email), $destinationEmail) !== 0) {
+        // `claimed_email` is typed by the visitor and unverified: only honour it
+        // when the conversation was opened with a verified identity.
+        $claimedEmail = ! empty($conversation->metadata['identity_verified'])
+            ? (string) ($customer?->custom_attributes['claimed_email'] ?? '')
+            : '';
+        $matchesOwner = $customer
+            && (strcasecmp(trim((string) $customer->email), $destinationEmail) === 0
+                || ($claimedEmail !== '' && strcasecmp(trim($claimedEmail), $destinationEmail) === 0));
+
+        if (! $matchesOwner) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
+
+        $throttleKey = "livechat-transcript:{$conversation->id}";
+
+        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_TRANSCRIPTS_PER_DAY)) {
+            return response()->json(['error' => 'Too many transcript requests'], 429);
+        }
+
+        RateLimiter::hit($throttleKey, 86400);
 
         // Build a plain, already-filtered snapshot of the visible messages instead
         // of relying on the eager-loaded `items` relation constraint: once this

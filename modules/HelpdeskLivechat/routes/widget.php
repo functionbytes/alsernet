@@ -105,7 +105,7 @@ Route::middleware('throttle:60,1,widget-triggers')->group(function () {
 });
 
 // Heartbeat — 120 per minute (frequent polling)
-Route::middleware('throttle:120,1,widget-heartbeat')->group(function () {
+Route::middleware(['throttle:120,1,widget-heartbeat', ThrottleByWebsiteToken::class.':heartbeat'])->group(function () {
     Route::post('/session/heartbeat', [WidgetSessionController::class, 'heartbeat'])->name('session.heartbeat');
 });
 
