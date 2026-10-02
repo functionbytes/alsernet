@@ -17,6 +17,7 @@ class ArticleVoteController extends Controller
         $article = HelpCenterArticle::query()
             ->where('slug', $slug)
             ->where('is_published', true)
+            ->visibleToRole($request->user())
             ->first();
 
         if (! $article) {

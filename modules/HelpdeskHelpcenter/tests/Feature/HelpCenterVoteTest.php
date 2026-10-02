@@ -4,6 +4,7 @@ namespace Modules\HelpdeskHelpcenter\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
+use Modules\HelpdeskHelpcenter\Models\HelpCenterCategory;
 use Tests\TestCase;
 
 class HelpCenterVoteTest extends TestCase
@@ -36,6 +37,18 @@ class HelpCenterVoteTest extends TestCase
 
         $this->postJson(route('api.helpcenter.articles.vote', $article->slug), ['vote' => 1])
             ->assertNotFound();
+    }
+
+    public function test_cannot_vote_on_article_restricted_to_a_role_the_visitor_lacks(): void
+    {
+        $category = HelpCenterCategory::factory()->create(['visible_to_role' => 'super-settings']);
+        $article = HelpCenterArticle::factory()->published()->create();
+        $article->categories()->attach($category->id, ['position' => 0]);
+
+        $this->postJson(route('api.helpcenter.articles.vote', $article->slug), ['vote' => 1])
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('helpdesk_helpcenter_article_votes', 0, 'helpdesk');
     }
 
     // ─── validation ───────────────────────────────────────────────────────────

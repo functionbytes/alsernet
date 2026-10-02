@@ -19,12 +19,17 @@ trait BuildsFulltextSearch
      */
     protected function buildBooleanTerm(string $term): ?string
     {
+        // Los operadores de modo booleano (- " ( ) @ ~ < > *) se eliminan: sin
+        // ello "abc -def" generaba "+-def*", sintaxis inválida que daba 500.
         $tokens = array_filter(
-            explode(' ', $term),
-            fn (string $t) => strlen($t) >= 3
+            array_map(
+                fn (string $t): string => (string) preg_replace('/[^\p{L}\p{N}]/u', '', $t),
+                preg_split('/\s+/u', $term, -1, PREG_SPLIT_NO_EMPTY) ?: []
+            ),
+            fn (string $t): bool => mb_strlen($t) >= 3
         );
 
-        if (empty($tokens)) {
+        if ($tokens === []) {
             return null;
         }
 
