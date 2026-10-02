@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Http\Responses\ApiResponse;
-use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
-use Modules\HelpdeskSocial\Events\SocialCommentReplied;
+use Modules\HelpdeskSocial\Exceptions\SocialReplyException;
 use Modules\HelpdeskSocial\Http\Requests\AssignSocialCommentRequest;
 use Modules\HelpdeskSocial\Http\Requests\BulkSocialCommentRequest;
 use Modules\HelpdeskSocial\Http\Requests\ReplySocialCommentRequest;
@@ -16,11 +15,12 @@ use Modules\HelpdeskSocial\Http\Resources\SocialCommentResource;
 use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Models\SocialTag;
 use Modules\HelpdeskSocial\Services\AuditLogService;
+use Modules\HelpdeskSocial\Services\SocialCommentReplyService;
 
 class SocialInboxController extends Controller
 {
     public function __construct(
-        private readonly SocialApiClientInterface $apiClient,
+        private readonly SocialCommentReplyService $replyService,
         private readonly AuditLogService $auditLog,
     ) {}
 
@@ -80,27 +80,13 @@ class SocialInboxController extends Controller
         abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
         $validated = $request->validated();
 
-        if ($comment->status === 'replied') {
-            return ApiResponse::error('Este comentario ya tiene una respuesta', 422);
+        try {
+            $comment = $this->replyService->reply($comment, $validated['body'], auth()->id());
+        } catch (SocialReplyException $e) {
+            return ApiResponse::error($e->getMessage(), $e->status);
         }
 
-        $account = $comment->socialAccount;
-        $replyId = $this->apiClient->replyToComment(
-            $comment->external_comment_id,
-            $validated['body'],
-            $account->page_access_token,
-            $comment->platform
-        );
-
-        if (! $replyId) {
-            return ApiResponse::error('Error al enviar la respuesta a la red social', 500);
-        }
-
-        $comment->markAsReplied($validated['body'], auth()->id(), $replyId, 'manual');
-        $this->auditLog->log('reply', $comment, null, ['reply_body' => $validated['body']]);
-        SocialCommentReplied::dispatch($comment->fresh());
-
-        return ApiResponse::success(new SocialCommentResource($comment->fresh()), 'Respuesta enviada correctamente.');
+        return ApiResponse::success(new SocialCommentResource($comment), 'Respuesta enviada correctamente.');
     }
 
     public function markAsSpam(SocialComment $comment): JsonResponse

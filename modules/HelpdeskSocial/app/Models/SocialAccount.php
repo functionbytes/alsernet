@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskSocial\Models;
 
 use App\Models\User;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +46,11 @@ class SocialAccount extends Model
         'connected_by_user_id',
     ];
 
+    protected $hidden = [
+        'page_access_token',
+        'user_access_token',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -65,7 +71,7 @@ class SocialAccount extends Model
     protected function pageAccessToken(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? Crypt::decryptString($value) : null,
+            get: fn (?string $value) => $this->decryptToken($value, 'page_access_token'),
             set: fn (?string $value) => $value ? Crypt::encryptString($value) : null,
         );
     }
@@ -73,9 +79,27 @@ class SocialAccount extends Model
     protected function userAccessToken(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? Crypt::decryptString($value) : null,
+            get: fn (?string $value) => $this->decryptToken($value, 'user_access_token'),
             set: fn (?string $value) => $value ? Crypt::encryptString($value) : null,
         );
+    }
+
+    private function decryptToken(?string $value, string $attribute): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException $e) {
+            Log::warning('SocialAccount: could not decrypt token', [
+                'account_id' => $this->getKey(),
+                'attribute' => $attribute,
+            ]);
+
+            return null;
+        }
     }
 
     public function comments(): HasMany

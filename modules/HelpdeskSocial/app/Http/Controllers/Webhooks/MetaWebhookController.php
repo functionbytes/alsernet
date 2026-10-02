@@ -11,6 +11,7 @@ use Modules\Helpdesk\Jobs\ProcessSocialWebhookJob;
 use Modules\HelpdeskSocial\Contracts\WebhookParserInterface;
 use Modules\HelpdeskSocial\Contracts\WebhookVerifierInterface;
 use Modules\HelpdeskSocial\Jobs\ProcessSocialCommentJob;
+use Modules\HelpdeskSocial\Models\SocialComment;
 
 class MetaWebhookController extends Controller
 {
@@ -86,8 +87,13 @@ class MetaWebhookController extends Controller
                 continue;
             }
 
-            // Process comments and mentions
-            if (in_array($event['type'] ?? '', ['comment', 'mention'], true)) {
+            if (($event['type'] ?? '') === 'comment') {
+                $this->handleCommentEvent($event);
+
+                continue;
+            }
+
+            if (($event['type'] ?? '') === 'mention') {
                 ProcessSocialCommentJob::dispatch($event);
 
                 continue;
@@ -109,5 +115,32 @@ class MetaWebhookController extends Controller
         }
 
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Meta envía el mismo evento "comment" para altas, ediciones, borrados y
+     * ocultaciones; solo las altas (o un verb ausente) entran al pipeline de
+     * comentarios nuevos.
+     *
+     * @param  array<string, mixed>  $event
+     */
+    private function handleCommentEvent(array $event): void
+    {
+        $verb = $event['metadata']['verb'] ?? 'add';
+
+        if ($verb === 'add') {
+            ProcessSocialCommentJob::dispatch($event);
+
+            return;
+        }
+
+        if ($verb !== 'edited' || empty($event['external_comment_id']) || ! isset($event['body'])) {
+            return;
+        }
+
+        SocialComment::query()
+            ->where('platform', $event['platform'])
+            ->where('external_comment_id', $event['external_comment_id'])
+            ->update(['body' => $event['body']]);
     }
 }

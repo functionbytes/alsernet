@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
+use Modules\HelpdeskSocial\Exceptions\MetaTokenInvalidException;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Models\SocialComment;
 
@@ -63,20 +64,29 @@ class SyncSocialCommentsJob implements ShouldQueue
                 'last_error_at' => null,
                 'last_error_message' => null,
             ]);
+        } catch (MetaTokenInvalidException $e) {
+            // Token inválido: reintentar no sirve, se registra un único fallo y se descarta el job.
+            $this->recordSyncFailure($account, $e);
+            $this->fail($e);
         } catch (\Throwable $e) {
-            $account->recordFailure();
-            $account->update([
-                'last_error_at' => now(),
-                'last_error_message' => $e->getMessage(),
-            ]);
-
-            Log::error('SyncSocialCommentsJob failed', [
-                'account_id' => $this->accountId,
-                'error' => $e->getMessage(),
-            ]);
+            $this->recordSyncFailure($account, $e);
 
             throw $e;
         }
+    }
+
+    private function recordSyncFailure(SocialAccount $account, \Throwable $e): void
+    {
+        $account->recordFailure();
+        $account->update([
+            'last_error_at' => now(),
+            'last_error_message' => $e->getMessage(),
+        ]);
+
+        Log::error('SyncSocialCommentsJob failed', [
+            'account_id' => $this->accountId,
+            'error' => $e->getMessage(),
+        ]);
     }
 
     private function syncPostComments(SocialAccount $account, string $postId, SocialApiClientInterface $apiClient): void

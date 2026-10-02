@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Services\Channels\MetaApiClient;
+use RuntimeException;
 
 /**
  * Renueva el token de larga duración de una cuenta social antes de que
@@ -43,7 +44,7 @@ class RenewSocialAccountTokenJob implements ShouldQueue
             return;
         }
 
-        $currentToken = $account->page_access_token ?? $account->user_access_token;
+        $currentToken = $account->user_access_token ?? $account->page_access_token;
 
         if (! $currentToken) {
             return;
@@ -63,17 +64,13 @@ class RenewSocialAccountTokenJob implements ShouldQueue
         $newUserToken = $client->exchangeToken($currentToken, $appId, $appSecret);
 
         if (! $newUserToken) {
-            Log::warning('RenewSocialAccountTokenJob: token exchange failed', ['account_id' => $account->id]);
-
-            return;
+            throw new RuntimeException("Token exchange failed for social account {$account->id}.");
         }
 
         $newPageToken = $client->getPageAccessToken($account->external_id, $newUserToken);
 
         if (! $newPageToken) {
-            Log::warning('RenewSocialAccountTokenJob: could not derive page access token', ['account_id' => $account->id]);
-
-            return;
+            throw new RuntimeException("Could not derive page access token for social account {$account->id}.");
         }
 
         $account->update([
@@ -90,6 +87,8 @@ class RenewSocialAccountTokenJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
+        SocialAccount::find($this->accountId)?->recordFailure();
+
         Log::error('RenewSocialAccountTokenJob failed permanently', [
             'account_id' => $this->accountId,
             'error' => $exception->getMessage(),

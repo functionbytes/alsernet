@@ -144,4 +144,41 @@ class SyncSocialCommentsJobTest extends TestCase
 
         Http::assertNothingSent();
     }
+
+    public function test_token_error_records_failure_not_success_and_is_not_cached(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::response(['error' => ['code' => 190, 'message' => 'Expired']], 400),
+        ]);
+
+        $account = SocialAccount::factory()->create([
+            'platform' => 'facebook',
+            'page_access_token' => 'fake_token',
+            'is_active' => true,
+            'comments_enabled' => true,
+            'consecutive_failures' => 0,
+        ]);
+
+        (new SyncSocialCommentsJob($account->id, 'post_190'))->handle(app(SocialApiClientInterface::class));
+
+        $account->refresh();
+        $this->assertSame(1, $account->consecutive_failures);
+        $this->assertNull($account->last_synced_at);
+        $this->assertNotNull($account->last_error_at);
+        $this->assertFalse(Cache::has('meta_comments:post_190:100'));
+    }
+
+    public function test_failed_api_response_is_not_cached(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::sequence()
+                ->push(['error' => ['code' => 2]], 500)
+                ->push(['data' => [['id' => 'c_ok', 'message' => 'hi']]], 200),
+        ]);
+
+        $client = app(SocialApiClientInterface::class);
+
+        $this->assertSame([], $client->getComments('post_x', 'tok'));
+        $this->assertCount(1, $client->getComments('post_x', 'tok'));
+    }
 }

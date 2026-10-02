@@ -3,10 +3,12 @@
 namespace Modules\HelpdeskSocial\Services\Channels;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
+use Modules\HelpdeskSocial\Exceptions\MetaTokenInvalidException;
 
 class MetaApiClient implements SocialApiClientInterface
 {
@@ -59,27 +61,17 @@ class MetaApiClient implements SocialApiClientInterface
 
     public function getComments(string $postId, string $accessToken, int $limit = 100): array
     {
-        $cacheKey = "meta_comments:{$postId}:{$limit}";
-
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($postId, $accessToken, $limit) {
-            $response = $this->request($accessToken)
-                ->get("/{$postId}/comments", [
-                    'fields' => 'id,message,created_time,from{id,name},parent{id},attachment,comment_count',
-                    'limit' => $limit,
-                    'order' => 'reverse_chronological',
-                ]);
-
-            if ($response->failed()) {
-                Log::warning('MetaApiClient: getComments failed', [
-                    'post_id' => $postId,
-                    'error' => $response->json(),
-                ]);
-
-                return [];
-            }
-
-            return $response->json('data', []);
-        });
+        return $this->fetchCommentsCached(
+            "meta_comments:{$postId}:{$limit}",
+            "/{$postId}/comments",
+            [
+                'fields' => 'id,message,created_time,from{id,name},parent{id},attachment,comment_count',
+                'limit' => $limit,
+                'order' => 'reverse_chronological',
+            ],
+            $accessToken,
+            'getComments',
+        );
     }
 
     /**
@@ -89,26 +81,63 @@ class MetaApiClient implements SocialApiClientInterface
      */
     public function getInstagramMediaComments(string $mediaId, string $accessToken, int $limit = 100): array
     {
-        $cacheKey = "meta_ig_comments:{$mediaId}:{$limit}";
+        return $this->fetchCommentsCached(
+            "meta_ig_comments:{$mediaId}:{$limit}",
+            "/{$mediaId}/comments",
+            [
+                'fields' => 'id,text,timestamp,user{id,username},replies{id,text,timestamp}',
+                'limit' => $limit,
+            ],
+            $accessToken,
+            'getInstagramMediaComments',
+        );
+    }
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($mediaId, $accessToken, $limit) {
-            $response = $this->request($accessToken)
-                ->get("/{$mediaId}/comments", [
-                    'fields' => 'id,text,timestamp,user{id,username},replies{id,text,timestamp}',
-                    'limit' => $limit,
-                ]);
+    /**
+     * Solo cachea respuestas correctas: cachear [] ante un fallo ocultaría
+     * 5 minutos los comentarios reales y haría pasar el fallo por éxito.
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws MetaTokenInvalidException
+     */
+    private function fetchCommentsCached(string $cacheKey, string $endpoint, array $query, string $accessToken, string $operation): array
+    {
+        $cached = Cache::get($cacheKey);
 
-            if ($response->failed()) {
-                Log::warning('MetaApiClient: getInstagramMediaComments failed', [
-                    'media_id' => $mediaId,
-                    'error' => $response->json(),
-                ]);
+        if (is_array($cached)) {
+            return $cached;
+        }
 
-                return [];
-            }
+        $response = $this->request($accessToken)->get($endpoint, $query);
 
-            return $response->json('data', []);
-        });
+        if ($response->failed()) {
+            $this->throwIfTokenInvalid($response);
+
+            Log::warning("MetaApiClient: {$operation} failed", [
+                'endpoint' => $endpoint,
+                'error' => $response->json(),
+            ]);
+
+            return [];
+        }
+
+        $data = $response->json('data', []);
+        Cache::put($cacheKey, $data, now()->addMinutes(5));
+
+        return $data;
+    }
+
+    private function throwIfTokenInvalid(Response $response): void
+    {
+        if ($response->status() !== 401 && (int) $response->json('error.code') !== 190) {
+            return;
+        }
+
+        throw new MetaTokenInvalidException(
+            (string) ($response->json('error.message') ?? 'Meta access token is invalid or expired.')
+        );
     }
 
     public function sendMessage(string $recipientId, array $message, string $accessToken): ?string
@@ -135,17 +164,23 @@ class MetaApiClient implements SocialApiClientInterface
     public function getUserProfile(string $userId, string $accessToken): array
     {
         $cacheKey = "meta_profile:{$userId}";
+        $cached = Cache::get($cacheKey);
 
-        return Cache::remember($cacheKey, now()->addHours(24), function () use ($userId, $accessToken) {
-            $response = $this->request($accessToken)
-                ->get("/{$userId}", ['fields' => 'id,name,profile_pic']);
+        if (is_array($cached)) {
+            return $cached;
+        }
 
-            if ($response->failed()) {
-                return [];
-            }
+        $response = $this->request($accessToken)
+            ->get("/{$userId}", ['fields' => 'id,name,profile_pic']);
 
-            return $response->json();
-        });
+        if ($response->failed()) {
+            return [];
+        }
+
+        $profile = $response->json();
+        Cache::put($cacheKey, $profile, now()->addHours(24));
+
+        return $profile;
     }
 
     public function exchangeToken(string $shortLivedToken, string $appId, string $appSecret): ?string

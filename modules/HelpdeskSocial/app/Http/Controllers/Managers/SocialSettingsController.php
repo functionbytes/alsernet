@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Redirect;
-use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
+use Modules\HelpdeskSocial\Exceptions\SocialReplyException;
 use Modules\HelpdeskSocial\Http\Requests\AssignSocialCommentRequest;
 use Modules\HelpdeskSocial\Http\Requests\Managers\StoreSocialAssignmentRuleRequest;
 use Modules\HelpdeskSocial\Http\Requests\Managers\StoreSocialCompetitorRequest;
@@ -36,11 +36,12 @@ use Modules\HelpdeskSocial\Models\SocialRule;
 use Modules\HelpdeskSocial\Models\SocialSlaPolicy;
 use Modules\HelpdeskSocial\Models\SocialTag;
 use Modules\HelpdeskSocial\Models\SocialTemplate;
+use Modules\HelpdeskSocial\Services\SocialCommentReplyService;
 
 class SocialSettingsController extends Controller
 {
     public function __construct(
-        private readonly SocialApiClientInterface $apiClient,
+        private readonly SocialCommentReplyService $replyService,
     ) {}
 
     public function accounts(Request $request)
@@ -128,21 +129,11 @@ class SocialSettingsController extends Controller
 
     public function replyComment(ReplySocialCommentRequest $request, SocialComment $comment)
     {
-        $validated = $request->validated();
-        $account = $comment->socialAccount;
-
-        $replyId = $this->apiClient->replyToComment(
-            $comment->external_comment_id,
-            $validated['body'],
-            $account->page_access_token,
-            $comment->platform
-        );
-
-        if (! $replyId) {
-            return Redirect::back()->withErrors(['body' => 'Error al enviar la respuesta a la red social.']);
+        try {
+            $this->replyService->reply($comment, $request->validated()['body'], auth()->id());
+        } catch (SocialReplyException $e) {
+            return Redirect::back()->withErrors(['body' => $e->getMessage()]);
         }
-
-        $comment->markAsReplied($validated['body'], auth()->id(), $replyId, 'manual');
 
         return Redirect::route('helpdesksocial.inbox.index')
             ->with('success', 'Respuesta enviada correctamente.');
