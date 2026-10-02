@@ -54,7 +54,10 @@ class ChatFlowHttpRequester
                 default => $request->get($url, $this->buildBody($data['body'] ?? [], $context)),
             };
         } catch (\Throwable $e) {
-            Log::warning('ChatFlowHttpRequester: request failed', ['url' => $url, 'error' => $e->getMessage()]);
+            Log::warning('ChatFlowHttpRequester: request failed', [
+                'url' => $this->loggableUrl($url),
+                'error' => str_replace($url, $this->loggableUrl($url), $e->getMessage()),
+            ]);
 
             return $this->fail($e->getMessage());
         }
@@ -150,6 +153,21 @@ class ChatFlowHttpRequester
             },
             $text
         );
+    }
+
+    /**
+     * Solo scheme+host+path: la query y las credenciales de la URL
+     * interpolada pueden llevar PII o API keys.
+     */
+    private function loggableUrl(string $url): string
+    {
+        $parts = parse_url($url);
+
+        if ($parts === false || ! isset($parts['host'])) {
+            return '[invalid-url]';
+        }
+
+        return ($parts['scheme'] ?? 'http').'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '').($parts['path'] ?? '');
     }
 
     private function fail(string $error): array

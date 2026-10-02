@@ -39,9 +39,19 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
 
     public const MODE_TRIGGER = 'trigger';
 
-    public int $tries = 3;
+    /**
+     * Sin tope de $tries: cada release() de WithoutOverlapping (conversación
+     * ocupada) contaba como intento y el job se descartaba al agotarlos. La
+     * ventana de reintento se acota por tiempo y los fallos reales por
+     * maxExceptions.
+     */
+    public int $maxExceptions = 3;
 
-    public int $timeout = 120;
+    /**
+     * Cubre el presupuesto de un nodo ai_agent: MAX_STEPS (6) x 40 s por
+     * llamada = 240 s en ChatFlowAgentService, más margen.
+     */
+    public int $timeout = 300;
 
     public int $backoff = 10;
 
@@ -51,6 +61,11 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
         private readonly string $mode = self::MODE_PROCESS,
     ) {
         $this->onQueue('chatflow');
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addMinutes(15);
     }
 
     /**
@@ -66,7 +81,7 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
         return [
             (new WithoutOverlapping('chatflow-conversation:'.$this->conversationId))
                 ->releaseAfter(30)
-                ->expireAfter(180),
+                ->expireAfter(360),
         ];
     }
 
