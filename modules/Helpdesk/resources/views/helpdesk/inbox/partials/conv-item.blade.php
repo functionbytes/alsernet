@@ -51,33 +51,33 @@
             </span>
         </div>
         <div class="row3">
-            <div class="bv-chips">
+            <div class="bv-cchips">
                 @if(!empty($chipStatus['name']))
                     @php($statusColor = $safeColor($chipStatus['color'] ?? null))
-                    <span class="bv-chip bv-chip-status" data-bv-chip="status">
-                        @if($statusColor)<span class="bv-chip-dot" style="--bv-chip-dot: {{ $statusColor }}"></span>@endif{{ $chipStatus['name'] }}
+                    <span class="bv-cchip bv-cchip-status" data-bv-chip="status">
+                        @if($statusColor)<span class="bv-cchip-dot" style="--bv-cchip-dot: {{ $statusColor }}"></span>@endif{{ $chipStatus['name'] }}
                     </span>
                 @endif
                 @if($chipChannel)
-                    <span class="bv-chip outline" data-bv-chip="channel">{{ $chipChannel }}</span>
+                    <span class="bv-cchip outline" data-bv-chip="channel">{{ $chipChannel }}</span>
                 @endif
                 @if($chipPriority)
-                    <span class="bv-chip prio {{ $chipPriority }}" data-bv-chip="priority">{{ __('helpdesk::helpdesk.inbox.thread.card_priority_' . $chipPriority) }}</span>
+                    <span class="bv-cchip prio {{ $chipPriority }}" data-bv-chip="priority">{{ __('helpdesk::helpdesk.inbox.thread.card_priority_' . $chipPriority) }}</span>
                 @endif
                 @if($chipUnanswered)
-                    <span class="bv-chip attn" data-bv-chip="unanswered">{{ __('helpdesk::helpdesk.inbox.thread.card_unanswered') }}</span>
+                    <span class="bv-cchip attn" data-bv-chip="unanswered">{{ __('helpdesk::helpdesk.inbox.thread.card_unanswered') }}</span>
                 @endif
                 @if(!empty($chipSla['text']))
-                    <span class="bv-chip sla-{{ in_array($chipSla['kind'] ?? '', ['breach', 'warn', 'ok'], true) ? $chipSla['kind'] : 'ok' }}" data-bv-chip="sla">{{ ($chipSla['label'] ?? '') !== '' ? $chipSla['label'] . ': ' : '' }}{{ $chipSla['text'] }}</span>
+                    <span class="bv-cchip sla-{{ in_array($chipSla['kind'] ?? '', ['breach', 'warn', 'ok'], true) ? $chipSla['kind'] : 'ok' }}" data-bv-chip="sla">{{ ($chipSla['label'] ?? '') !== '' ? $chipSla['label'] . ': ' : '' }}{{ $chipSla['text'] }}</span>
                 @endif
                 @foreach($chipTags as $chipTag)
                     @php($tagColor = $safeColor($chipTag['color'] ?? null))
-                    <span class="bv-chip tag" data-bv-chip="tag">
-                        @if($tagColor)<span class="bv-chip-dot" style="--bv-chip-dot: {{ $tagColor }}"></span>@endif{{ $chipTag['name'] ?? '' }}
+                    <span class="bv-cchip tag" data-bv-chip="tag">
+                        @if($tagColor)<span class="bv-cchip-dot" style="--bv-cchip-dot: {{ $tagColor }}"></span>@endif{{ $chipTag['name'] ?? '' }}
                     </span>
                 @endforeach
                 @if($chipTagsMore > 0)
-                    <span class="bv-chip tag" data-bv-chip="tags-more" title="{{ __('helpdesk::helpdesk.inbox.thread.card_more_tags') }}">+{{ $chipTagsMore }}</span>
+                    <span class="bv-cchip tag" data-bv-chip="tags-more" title="{{ __('helpdesk::helpdesk.inbox.thread.card_more_tags') }}">+{{ $chipTagsMore }}</span>
                 @endif
             </div>
             @if($chipAssignee)

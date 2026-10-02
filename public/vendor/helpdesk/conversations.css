@@ -2369,6 +2369,146 @@ body:has(.conversations) .mc-content {
     font-variant-numeric: tabular-nums;
 }
 
+/* Fila 3 de la tarjeta: chips + avatar del asignado, calcados de la fila de
+   tickets (.tkt-rchip / .tkt-avatar / .tkt-presence-dot en tickets-app.css).
+   .bv-cchip y no .bv-chip: ese nombre ya es el de los chips de filtro.
+   Escala zinc sin rojos, como tickets: solo Urgente va en negro sólido; el
+   resto se distingue por forma (filete oscuro, discontinuo o trama). */
+.bv-conv .row3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin-top: 4px;
+}
+.bv-cchips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    /* Hasta dos líneas: en una sola, el SLA y las etiquetas (los últimos)
+       quedaban ocultos en cuanto había estado + canal + "Sin responder". */
+    max-height: 40px;
+    overflow: hidden;
+}
+.bv-cchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: var(--bv-bg-subtle);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text-soft);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.bv-cchip.outline {
+    background: var(--bv-bg-panel);
+    font-family: var(--bv-font-mono, ui-monospace, monospace);
+    font-weight: 600;
+}
+.bv-cchip.prio.high {
+    background: var(--bv-bg-panel);
+    border-color: var(--bv-text);
+    color: var(--bv-text);
+}
+.bv-cchip.prio.urgent {
+    background: var(--bv-text);
+    border-color: var(--bv-text);
+    color: var(--bv-bg-panel);
+}
+.bv-cchip.attn {
+    background: var(--bv-bg-panel);
+    border: 1px dashed var(--bv-text-soft);
+    color: var(--bv-text);
+}
+.bv-cchip.sla-ok {
+    background: rgba(144, 187, 19, .12);
+    border-color: rgba(144, 187, 19, .4);
+    color: var(--bv-primary-strong, #5e7a0d);
+}
+.bv-cchip.sla-warn {
+    background: rgba(144, 187, 19, .06);
+    border-color: rgba(144, 187, 19, .4);
+    color: var(--bv-text-soft);
+}
+.bv-cchip.sla-breach {
+    border-color: var(--bv-text-muted);
+    color: var(--bv-text);
+    background-color: var(--bv-bg-subtle);
+    background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, .06) 0 4px, transparent 4px 8px);
+}
+.bv-cchip.tag {
+    background: var(--bv-bg-panel);
+    color: var(--bv-text-muted);
+    font-weight: 600;
+    max-width: 108px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.bv-cchip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--bv-cchip-dot, var(--bv-text-muted));
+}
+
+.bv-assignee {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: var(--bv-bg-subtle);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text-soft);
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+}
+.bv-assignee.unassigned {
+    border-style: dashed;
+    background: var(--bv-bg-panel);
+    color: var(--bv-text-muted);
+    font-size: 10px;
+}
+/* "Alguien está viendo esta conversación AHORA" (sondeo en conversations-list.js). */
+.bv-presence-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--bv-primary-strong, #5e7a0d);
+    border: 1.5px solid var(--bv-bg-panel);
+}
+.bv-presence-dot::after {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    background: var(--bv-primary-strong, #5e7a0d);
+    opacity: .5;
+    animation: bv-presence-ping 1.8s ease-out infinite;
+}
+@keyframes bv-presence-ping {
+    0% { transform: scale(1); opacity: .5; }
+    100% { transform: scale(2.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bv-presence-dot::after { animation: none; }
+}
+
 /* ── Thread more menu ────────────────────────────────────────────── */
 .bv-th-more-wrap {
     position: relative;

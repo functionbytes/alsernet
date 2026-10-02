@@ -964,14 +964,14 @@
             }
 
             // Chip de prioridad (fila 3): solo high/urgent, igual que el render servidor.
-            const $chips = $item.find('.row3 .bv-chips').first();
+            const $chips = $item.find('.row3 .bv-cchips').first();
             const $pill = $chips.find('[data-bv-chip="priority"]').first();
             if (e.priority === 'high' || e.priority === 'urgent') {
                 const label = priorityLabels[e.priority] || e.priority;
                 if ($pill.length) {
-                    $pill.attr('class', 'bv-chip prio ' + e.priority).text(label);
+                    $pill.attr('class', 'bv-cchip prio ' + e.priority).text(label);
                 } else if ($chips.length) {
-                    const $newPill = $('<span class="bv-chip prio" data-bv-chip="priority"></span>')
+                    const $newPill = $('<span class="bv-cchip prio" data-bv-chip="priority"></span>')
                         .addClass(e.priority).text(label);
                     const $anchor = $chips.find('[data-bv-chip="channel"], [data-bv-chip="status"]').last();
                     if ($anchor.length) $anchor.after($newPill); else $chips.prepend($newPill);
