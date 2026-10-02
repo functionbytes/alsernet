@@ -820,7 +820,7 @@ class Conversation extends Model
     }
 
     /**
-     * @return array{kind: string, label: string, text: string}|null
+     * @return array{kind: string, type: string, label: string, text: string}|null
      */
     protected function slaChipForInbox(): ?array
     {
@@ -835,10 +835,11 @@ class Conversation extends Model
             return null;
         }
 
+        $type = $awaitingFirstResponse ? 'first_response' : 'resolution';
         $label = $awaitingFirstResponse ? '1ª respuesta' : 'Resolución';
 
         if ($this->sla_paused_at !== null) {
-            return ['kind' => 'ok', 'label' => $label, 'text' => 'en pausa'];
+            return ['kind' => 'ok', 'type' => $type, 'label' => $label, 'text' => 'en pausa'];
         }
 
         $breached = $awaitingFirstResponse ? $this->sla_first_response_breached : $this->sla_resolution_breached;
@@ -854,7 +855,7 @@ class Conversation extends Model
             ? self::humanizeSlaMinutes(abs($minutes)).' vencido'
             : self::humanizeSlaMinutes($minutes);
 
-        return ['kind' => $kind, 'label' => $label, 'text' => $text];
+        return ['kind' => $kind, 'type' => $type, 'label' => $label, 'text' => $text];
     }
 
     private static function humanizeSlaMinutes(int $minutes): string

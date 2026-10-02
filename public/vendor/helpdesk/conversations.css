@@ -2369,17 +2369,16 @@ body:has(.conversations) .mc-content {
     font-variant-numeric: tabular-nums;
 }
 
-/* Fila 3 de la tarjeta: chips + avatar del asignado, calcados de la fila de
-   tickets (.tkt-rchip / .tkt-avatar / .tkt-presence-dot en tickets-app.css).
+/* Fila 3 de la tarjeta: metadatos + avatar del asignado.
    .bv-cchip y no .bv-chip: ese nombre ya es el de los chips de filtro.
-   Escala zinc sin rojos, como tickets: solo Urgente va en negro sólido; el
-   resto se distingue por forma (filete oscuro, discontinuo o trama). */
+   Sobrio a propósito: borde fino, peso medio y color solo donde aporta
+   (plazo vencido, urgente). Escala zinc sin rojos, como la fila de tickets. */
 .bv-conv .row3 {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
-    margin-top: 4px;
+    margin-top: 6px;
 }
 .bv-cchips {
     display: flex;
@@ -2388,67 +2387,85 @@ body:has(.conversations) .mc-content {
     gap: 4px;
     flex: 1;
     min-width: 0;
-    /* Hasta dos líneas: en una sola, el SLA y las etiquetas (los últimos)
-       quedaban ocultos en cuanto había estado + canal + "Sin responder". */
-    max-height: 40px;
+    /* Hasta dos líneas: en una sola, lo que va al final (etiquetas, canal)
+       quedaba oculto en cuanto había plazo + sin responder + estado. */
+    max-height: 44px;
     overflow: hidden;
 }
 .bv-cchip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 1px 7px;
-    border-radius: 4px;
-    background: var(--bv-bg-subtle);
-    border: 1px solid var(--bv-border);
+    gap: 5px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 6px;
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border-soft, var(--bv-border));
     color: var(--bv-text-soft);
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 14px;
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -.005em;
     white-space: nowrap;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
 }
-.bv-cchip.outline {
-    background: var(--bv-bg-panel);
-    font-family: var(--bv-font-mono, ui-monospace, monospace);
-    font-weight: 600;
+.bv-cchip i {
+    font-size: 9.5px;
+    opacity: .7;
+}
+/* Estado: solo punto + nombre, sin caja — es el dato menos accionable. */
+.bv-cchip-status {
+    border-color: transparent;
+    background: transparent;
+    padding: 0 3px;
+    color: var(--bv-text-muted);
+}
+.bv-cchip.channel {
+    border-color: transparent;
+    background: transparent;
+    padding: 0 3px;
+    color: var(--bv-text-muted);
+}
+.bv-cchip.attn {
+    border-style: dashed;
+    border-color: var(--bv-text-muted);
+    color: var(--bv-text);
 }
 .bv-cchip.prio.high {
-    background: var(--bv-bg-panel);
-    border-color: var(--bv-text);
+    border-color: var(--bv-text-soft);
     color: var(--bv-text);
+    font-weight: 600;
 }
 .bv-cchip.prio.urgent {
     background: var(--bv-text);
     border-color: var(--bv-text);
     color: var(--bv-bg-panel);
-}
-.bv-cchip.attn {
-    background: var(--bv-bg-panel);
-    border: 1px dashed var(--bv-text-soft);
-    color: var(--bv-text);
+    font-weight: 600;
 }
 .bv-cchip.sla-ok {
-    background: rgba(144, 187, 19, .12);
-    border-color: rgba(144, 187, 19, .4);
+    background: rgba(144, 187, 19, .1);
+    border-color: transparent;
     color: var(--bv-primary-strong, #5e7a0d);
 }
 .bv-cchip.sla-warn {
-    background: rgba(144, 187, 19, .06);
-    border-color: rgba(144, 187, 19, .4);
-    color: var(--bv-text-soft);
+    background: var(--bv-bg-subtle);
+    border-color: var(--bv-border);
+    color: var(--bv-text);
+    font-weight: 600;
 }
 .bv-cchip.sla-breach {
+    background: var(--bv-bg-subtle);
     border-color: var(--bv-text-muted);
     color: var(--bv-text);
-    background-color: var(--bv-bg-subtle);
-    background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, .06) 0 4px, transparent 4px 8px);
+    font-weight: 600;
+}
+.bv-cchip.sla-breach i {
+    opacity: 1;
 }
 .bv-cchip.tag {
-    background: var(--bv-bg-panel);
     color: var(--bv-text-muted);
-    font-weight: 600;
-    max-width: 108px;
+    max-width: 110px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -2462,22 +2479,24 @@ body:has(.conversations) .mc-content {
 
 .bv-assignee {
     position: relative;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: inline-grid;
     place-items: center;
     flex-shrink: 0;
     background: var(--bv-bg-subtle);
-    border: 1px solid var(--bv-border);
+    border: 1px solid var(--bv-border-soft, var(--bv-border));
     color: var(--bv-text-soft);
-    font-size: 8px;
-    font-weight: 800;
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: .02em;
     line-height: 1;
 }
 .bv-assignee.unassigned {
     border-style: dashed;
-    background: var(--bv-bg-panel);
+    border-color: var(--bv-border);
+    background: transparent;
     color: var(--bv-text-muted);
     font-size: 10px;
 }

@@ -79,6 +79,7 @@ class ConversationCardChipsAndPresenceTest extends HelpdeskTestCase
 
         $this->assertSame('breach', $chip['kind']);
         $this->assertSame('1ª respuesta', $chip['label']);
+        $this->assertSame('first_response', $chip['type']);
         $this->assertStringEndsWith('vencido', $chip['text']);
     }
 
@@ -106,6 +107,7 @@ class ConversationCardChipsAndPresenceTest extends HelpdeskTestCase
         $chip = $this->card($conversation)['slaChip'];
 
         $this->assertSame('Resolución', $chip['label']);
+        $this->assertSame('resolution', $chip['type']);
         $this->assertSame('ok', $chip['kind']);
         $this->assertSame('12d 12h', $chip['text']);
     }

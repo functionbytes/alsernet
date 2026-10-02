@@ -51,15 +51,16 @@
             </span>
         </div>
         <div class="row3">
+            {{-- Orden por importancia: plazo (accionable) → prioridad → sin responder
+                 → estado → etiquetas → canal (ya visible en el icono del avatar). --}}
             <div class="bv-cchips">
-                @if(!empty($chipStatus['name']))
-                    @php($statusColor = $safeColor($chipStatus['color'] ?? null))
-                    <span class="bv-cchip bv-cchip-status" data-bv-chip="status">
-                        @if($statusColor)<span class="bv-cchip-dot" style="--bv-cchip-dot: {{ $statusColor }}"></span>@endif{{ $chipStatus['name'] }}
+                @if(!empty($chipSla['text']))
+                    {{-- Solo el tiempo a la vista; qué plazo es (1ª respuesta / resolución)
+                         lo dice el icono y, completo, el tooltip. --}}
+                    @php($slaTitle = (($chipSla['label'] ?? '') !== '' ? $chipSla['label'] . ': ' : '') . $chipSla['text'])
+                    <span class="bv-cchip sla sla-{{ in_array($chipSla['kind'] ?? '', ['breach', 'warn', 'ok'], true) ? $chipSla['kind'] : 'ok' }}" data-bv-chip="sla" title="{{ $slaTitle }}" aria-label="{{ $slaTitle }}">
+                        <i class="{{ ($chipSla['type'] ?? '') === 'first_response' ? 'fas fa-reply' : 'far fa-clock' }}" aria-hidden="true"></i>{{ $chipSla['text'] }}
                     </span>
-                @endif
-                @if($chipChannel)
-                    <span class="bv-cchip outline" data-bv-chip="channel">{{ $chipChannel }}</span>
                 @endif
                 @if($chipPriority)
                     <span class="bv-cchip prio {{ $chipPriority }}" data-bv-chip="priority">{{ __('helpdesk::helpdesk.inbox.thread.card_priority_' . $chipPriority) }}</span>
@@ -67,8 +68,11 @@
                 @if($chipUnanswered)
                     <span class="bv-cchip attn" data-bv-chip="unanswered">{{ __('helpdesk::helpdesk.inbox.thread.card_unanswered') }}</span>
                 @endif
-                @if(!empty($chipSla['text']))
-                    <span class="bv-cchip sla-{{ in_array($chipSla['kind'] ?? '', ['breach', 'warn', 'ok'], true) ? $chipSla['kind'] : 'ok' }}" data-bv-chip="sla">{{ ($chipSla['label'] ?? '') !== '' ? $chipSla['label'] . ': ' : '' }}{{ $chipSla['text'] }}</span>
+                @if(!empty($chipStatus['name']))
+                    @php($statusColor = $safeColor($chipStatus['color'] ?? null))
+                    <span class="bv-cchip bv-cchip-status" data-bv-chip="status">
+                        <span class="bv-cchip-dot" @if($statusColor) style="--bv-cchip-dot: {{ $statusColor }}" @endif></span>{{ $chipStatus['name'] }}
+                    </span>
                 @endif
                 @foreach($chipTags as $chipTag)
                     @php($tagColor = $safeColor($chipTag['color'] ?? null))
@@ -79,6 +83,9 @@
                 @if($chipTagsMore > 0)
                     <span class="bv-cchip tag" data-bv-chip="tags-more" title="{{ __('helpdesk::helpdesk.inbox.thread.card_more_tags') }}">+{{ $chipTagsMore }}</span>
                 @endif
+                @if($chipChannel)
+                    <span class="bv-cchip channel" data-bv-chip="channel">{{ $chipChannel }}</span>
+                @endif
             </div>
             @if($chipAssignee)
                 <span class="bv-assignee" data-bv-assignee-id="{{ $chipAssignee['id'] ?? '' }}" data-bv-base-title="{{ __('helpdesk::helpdesk.inbox.thread.card_assigned_to', ['name' => $chipAssignee['name'] ?? '']) }}" title="{{ __('helpdesk::helpdesk.inbox.thread.card_assigned_to', ['name' => $chipAssignee['name'] ?? '']) }}">{{ $chipAssignee['initials'] ?? '?' }}</span>
@@ -87,7 +94,9 @@
             @endif
         </div>
     </div>
-    {{-- Acciones rápidas al hover --}}
+    {{-- Acciones rápidas al hover: ocultas por ahora (tapaban los chips y el
+         asignado). Se reactivan con helpdesk.inbox.card_quick_actions = true. --}}
+    @if(config('helpdesk.inbox.card_quick_actions', false))
     <div class="bv-conv-hactions">
         @if(request('view') === 'deleted')
             <button title="{{ __('helpdesk::helpdesk.inbox.thread.restore') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.restore_conversation') }}"
@@ -114,4 +123,5 @@
             <button title="{{ __('helpdesk::helpdesk.inbox.thread.snooze') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.snooze_conversation') }}" data-bv-modal="snooze"><i class="far fa-clock" aria-hidden="true"></i></button>
         @endif
     </div>
+    @endif
 </div>
