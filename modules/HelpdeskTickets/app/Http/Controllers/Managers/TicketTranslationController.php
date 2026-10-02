@@ -23,6 +23,8 @@ class TicketTranslationController extends Controller
 
     public function translate(TranslateTicketTextRequest $request, Ticket $ticket): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         $data = $request->validated();
 
         if (! helpdesk_translate_enabled() || ! class_exists(CachedTranslator::class)) {

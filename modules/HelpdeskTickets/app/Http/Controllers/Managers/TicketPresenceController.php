@@ -26,6 +26,8 @@ class TicketPresenceController extends Controller
 
     public function heartbeat(Request $request, Ticket $ticket): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         $action = $request->input('action') === 'replying' ? 'replying' : 'viewing';
         $user = $request->user();
         $name = $this->displayName($user);
@@ -71,6 +73,8 @@ class TicketPresenceController extends Controller
 
     public function leave(Request $request, Ticket $ticket): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         $user = $request->user();
 
         $this->presence->leave($ticket->id, $user->id, now()->timestamp);
@@ -89,6 +93,8 @@ class TicketPresenceController extends Controller
      */
     public function nudge(Request $request, Ticket $ticket): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         $to = User::find((int) $request->input('to_user_id'));
         $from = $request->user();
 

@@ -203,7 +203,11 @@ trait HasTicketSla
             }
         }
 
-        return $current;
+        // $current vive en la zona de la política; Eloquent guarda la hora de
+        // pared del Carbon, así que sin volver a la zona de entrada el
+        // vencimiento se desplazaba el offset de la política (mismo cierre
+        // que BusinessHoursCalculator::addBusinessMinutes()).
+        return $current->setTimezone($start->getTimezone());
     }
 
     /**

@@ -2,8 +2,12 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature\Console;
 
+use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Setting;
+use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketSlaBreach;
+use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\TestCase;
 
@@ -92,7 +96,10 @@ class MarkOverdueTicketsCommandTest extends TestCase
         // insert. A raw query-builder update (no model events) is required
         // here to get back to the "no SLA policy applies" case this test
         // means to cover, without fighting that auto-assignment.
-        Ticket::query()->whereKey($ticket->id)->update(['sla_resolution_due_at' => null]);
+        Ticket::query()->whereKey($ticket->id)->update([
+            'sla_resolution_due_at' => null,
+            'sla_policy_id' => TicketSlaPolicy::factory()->create()->id,
+        ]);
         Ticket::withoutTimestamps(fn () => $ticket->forceFill(['created_at' => now()->subDays(10)])->save());
 
         $this->artisan('ticket:autooverdue')->assertSuccessful();
@@ -100,64 +107,70 @@ class MarkOverdueTicketsCommandTest extends TestCase
         $this->assertTrue($ticket->fresh()->sla_resolution_breached);
     }
 
-    public function test_marks_first_response_breach_when_due_date_passed_and_unanswered(): void
+    public function test_fallback_days_do_not_flag_tickets_without_sla_policy(): void
     {
-        $ticket = Ticket::factory()->create([
-            'first_response_at' => null,
-            'sla_first_response_due_at' => now()->subHour(),
-            'sla_first_response_breached' => false,
+        $ticket = Ticket::factory()->create(['sla_resolution_breached' => false]);
+
+        Ticket::query()->whereKey($ticket->id)->update([
+            'sla_resolution_due_at' => null,
+            'sla_policy_id' => null,
         ]);
+        Ticket::withoutTimestamps(fn () => $ticket->forceFill(['created_at' => now()->subDays(10)])->save());
 
         $this->artisan('ticket:autooverdue')->assertSuccessful();
 
-        $this->assertTrue($ticket->fresh()->sla_first_response_breached);
+        $this->assertFalse($ticket->fresh()->sla_resolution_breached);
     }
 
-    public function test_does_not_mark_first_response_breach_when_already_answered(): void
+    public function test_resolution_breach_goes_through_sla_breach_path_once(): void
     {
+        Event::fake([SlaBreached::class]);
+
         $ticket = Ticket::factory()->create([
-            'first_response_at' => now()->subMinutes(10),
-            'sla_first_response_due_at' => now()->subHour(),
-            'sla_first_response_breached' => false,
+            'sla_resolution_due_at' => now()->subHour(),
+            'sla_resolution_breached' => false,
         ]);
 
         $this->artisan('ticket:autooverdue')->assertSuccessful();
+        $this->artisan('ticket:autooverdue')->assertSuccessful();
 
-        $this->assertFalse($ticket->fresh()->sla_first_response_breached);
+        $this->assertCount(
+            1,
+            Event::dispatched(SlaBreached::class, fn (SlaBreached $e) => $e->ticket->id === $ticket->id)
+        );
+        $this->assertSame(
+            1,
+            TicketSlaBreach::query()->where('ticket_id', $ticket->id)->count()
+        );
     }
 
-    public function test_does_not_mark_first_response_breach_for_closed_ticket(): void
+    public function test_marks_both_due_date_and_fallback_branches_and_skips_the_rest_in_one_run(): void
     {
-        $ticket = Ticket::factory()->create([
-            'closed_at' => now()->subMinute(),
-            'first_response_at' => null,
-            'sla_first_response_due_at' => now()->subHour(),
-            'sla_first_response_breached' => false,
-        ]);
+        $duePassed = Ticket::factory()->create(['sla_resolution_due_at' => now()->subHour(), 'sla_resolution_breached' => false]);
+        $dueFuture = Ticket::factory()->create(['sla_resolution_due_at' => now()->addHour(), 'sla_resolution_breached' => false]);
+        $fallback = Ticket::factory()->create(['sla_resolution_breached' => false]);
+        $recentNoDue = Ticket::factory()->create(['sla_resolution_breached' => false]);
+
+        // Ver test_marks_resolution_breach_via_fallback_days_when_no_due_date_set:
+        // update crudo para esquivar la política que el observer asigna al crear.
+        Ticket::query()->whereKey([$fallback->id, $recentNoDue->id])->update(['sla_resolution_due_at' => null]);
+        Ticket::withoutTimestamps(fn () => $fallback->forceFill(['created_at' => now()->subDays(10)])->save());
 
         $this->artisan('ticket:autooverdue')->assertSuccessful();
 
-        $this->assertFalse($ticket->fresh()->sla_first_response_breached);
+        $this->assertTrue($duePassed->fresh()->sla_resolution_breached);
+        $this->assertFalse($dueFuture->fresh()->sla_resolution_breached);
+        $this->assertTrue($fallback->fresh()->sla_resolution_breached);
+        $this->assertFalse($recentNoDue->fresh()->sla_resolution_breached);
     }
 
-    public function test_marks_next_response_breach_when_due_date_passed(): void
+    public function test_null_next_response_due_is_not_a_breach(): void
     {
         $ticket = Ticket::factory()->create([
-            'sla_next_response_due_at' => now()->subHour(),
+            'sla_next_response_due_at' => null,
             'sla_next_response_breached' => false,
-        ]);
-
-        $this->artisan('ticket:autooverdue')->assertSuccessful();
-
-        $this->assertTrue($ticket->fresh()->sla_next_response_breached);
-    }
-
-    public function test_does_not_mark_next_response_breach_for_closed_ticket(): void
-    {
-        $ticket = Ticket::factory()->create([
-            'closed_at' => now()->subMinute(),
-            'sla_next_response_due_at' => now()->subHour(),
-            'sla_next_response_breached' => false,
+            'last_message_at' => now()->subDays(30),
+            'created_at' => now()->subDays(30),
         ]);
 
         $this->artisan('ticket:autooverdue')->assertSuccessful();

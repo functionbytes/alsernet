@@ -14,9 +14,12 @@ use Modules\HelpdeskTickets\Http\Requests\Api\UpdateTicketApiRequest;
 use Modules\HelpdeskTickets\Http\Resources\TicketResource;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
+use Modules\HelpdeskTickets\Services\TicketUpdateService;
 
 class TicketsController extends Controller
 {
+    public function __construct(private readonly TicketUpdateService $ticketUpdateService) {}
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('helpdesk.tickets.view');
@@ -43,7 +46,7 @@ class TicketsController extends Controller
                     ->orWhere('subject', 'like', "%{$term}%"));
             })
             ->latest()
-            ->paginate($request->input('per_page', 15));
+            ->paginate(min(max($request->integer('per_page', 15), 1), 100));
 
         return ApiResponse::success(TicketResource::collection($tickets));
     }
@@ -117,7 +120,12 @@ class TicketsController extends Controller
         // bastaba para modificar cualquier ticket ajeno vía la API.
         $this->authorize('update', $ticket);
 
-        $ticket->update($request->validated());
+        // Estado, prioridad, categoría y asignación pasan por el mismo
+        // servicio que el panel: pausa/reanudación del SLA, historial,
+        // notificaciones y eventos. Un update() directo se los saltaba.
+        $this->ticketUpdateService->applyChanges($ticket, $request->validated(), $request->user());
+
+        $ticket->refresh();
 
         $ticket->load(['customer:id,name,email', 'status:id,name,color,slug', 'category:id,name,slug', 'assignee:id,firstname,lastname']);
 

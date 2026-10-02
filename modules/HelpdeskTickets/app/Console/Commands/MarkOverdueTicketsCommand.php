@@ -3,8 +3,10 @@
 namespace Modules\HelpdeskTickets\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketSettings;
 
 class MarkOverdueTicketsCommand extends Command
@@ -26,16 +28,13 @@ class MarkOverdueTicketsCommand extends Command
 
             $days = $settings->integer('auto_overdue_ticket_time', 5);
             $resolutionBreached = $this->markResolutionBreaches($days);
-            $firstResponseBreached = $this->markFirstResponseBreaches($days);
-            $nextResponseBreached = $this->markNextResponseBreaches($days);
 
-            $total = $resolutionBreached + $firstResponseBreached + $nextResponseBreached;
-
-            $this->info("Marked {$total} SLA breach(es): {$resolutionBreached} resolution, {$firstResponseBreached} first response, {$nextResponseBreached} next response.");
+            // Primera y siguiente respuesta ya no se marcan aquí: las barre
+            // SlaService::checkBreaches() (job CheckSlaBreaches) sin depender
+            // de este toggle; mantenerlas en los dos sitios las duplicaba.
+            $this->info("Marked {$resolutionBreached} SLA resolution breach(es).");
             Log::info('AutoOverdueTickets: SLA breaches marked.', [
                 'resolution' => $resolutionBreached,
-                'first_response' => $firstResponseBreached,
-                'next_response' => $nextResponseBreached,
                 'fallback_days' => $days,
             ]);
 
@@ -50,56 +49,42 @@ class MarkOverdueTicketsCommand extends Command
 
     private function markResolutionBreaches(int $fallbackDays): int
     {
-        return Ticket::query()
-            ->whereNull('closed_at')
-            ->whereNull('sla_paused_at')
-            ->where('sla_resolution_breached', false)
-            ->where(function ($query) use ($fallbackDays): void {
-                $query->where('sla_resolution_due_at', '<', now())
-                    ->orWhere(function ($fallback) use ($fallbackDays): void {
-                        $fallback->whereNull('sla_resolution_due_at')
-                            ->where('created_at', '<', now()->subDays($fallbackDays));
-                    });
-            })
-            ->update(['sla_resolution_breached' => true]);
+        $count = 0;
+        $sla = app(SlaService::class);
+
+        // Dos consultas disjuntas en lugar de un OR entre sla_resolution_due_at
+        // y created_at: el OR impedía usar índice. Ambas arrancan por
+        // tickets_sla_check_idx (flag, due_at, closed_at): la primera con un
+        // rango sobre due_at y la segunda con due_at IS NULL.
+        $queries = [
+            $this->openUnbreachedTickets()->where('sla_resolution_due_at', '<', now()),
+            // Sin política de SLA no hay plazo que incumplir.
+            $this->openUnbreachedTickets()
+                ->whereNull('sla_resolution_due_at')
+                ->whereNotNull('sla_policy_id')
+                ->where('created_at', '<', now()->subDays($fallbackDays)),
+        ];
+
+        // Por el mismo camino que CheckSlaBreaches (evento + TicketSlaBreach):
+        // un UPDATE masivo dejaba el flag puesto y CheckSlaBreaches, que solo
+        // mira tickets sin flag, nunca llegaba a notificar. lazyById y no
+        // cursor(): el flag se escribe mientras se recorre.
+        foreach ($queries as $query) {
+            $query->lazyById(500)->each(function (Ticket $ticket) use ($sla, &$count): void {
+                if ($sla->registerResolutionBreach($ticket)) {
+                    $count++;
+                }
+            });
+        }
+
+        return $count;
     }
 
-    private function markFirstResponseBreaches(int $fallbackDays): int
+    private function openUnbreachedTickets(): Builder
     {
         return Ticket::query()
             ->whereNull('closed_at')
-            ->whereNull('first_response_at')
             ->whereNull('sla_paused_at')
-            ->where('sla_first_response_breached', false)
-            ->where(function ($query) use ($fallbackDays): void {
-                $query->where('sla_first_response_due_at', '<', now())
-                    ->orWhere(function ($fallback) use ($fallbackDays): void {
-                        $fallback->whereNull('sla_first_response_due_at')
-                            ->where('created_at', '<', now()->subDays($fallbackDays));
-                    });
-            })
-            ->update(['sla_first_response_breached' => true]);
-    }
-
-    private function markNextResponseBreaches(int $fallbackDays): int
-    {
-        return Ticket::query()
-            ->whereNull('closed_at')
-            ->whereNull('sla_paused_at')
-            ->where('sla_next_response_breached', false)
-            ->where(function ($query) use ($fallbackDays): void {
-                $query->where('sla_next_response_due_at', '<', now())
-                    ->orWhere(function ($fallback) use ($fallbackDays): void {
-                        $fallback->whereNull('sla_next_response_due_at')
-                            ->where(function ($activity) use ($fallbackDays): void {
-                                $activity->where('last_message_at', '<', now()->subDays($fallbackDays))
-                                    ->orWhere(function ($noActivity) use ($fallbackDays): void {
-                                        $noActivity->whereNull('last_message_at')
-                                            ->where('created_at', '<', now()->subDays($fallbackDays));
-                                    });
-                            });
-                    });
-            })
-            ->update(['sla_next_response_breached' => true]);
+            ->where('sla_resolution_breached', false);
     }
 }

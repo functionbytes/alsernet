@@ -66,14 +66,14 @@ class TicketUpdateService
             $ticket->items()->create([
                 'type' => 'status_change',
                 'user_id' => $actor->id,
-                'body' => "Estado cambiado de '{$oldStatus->name}' a '{$newStatus->name}'",
+                'body' => "Estado cambiado de '".($oldStatus?->name ?? 'Sin estado')."' a '{$newStatus->name}'",
                 'metadata' => [
-                    'old_status_id' => $oldStatus->id,
+                    'old_status_id' => $oldStatus?->id,
                     'new_status_id' => $newStatus->id,
                 ],
             ]);
 
-            if ($newStatus->stops_sla_timer && ! $oldStatus->stops_sla_timer) {
+            if ($newStatus->stops_sla_timer && ! $oldStatus?->stops_sla_timer) {
                 // Bug real: Ticket::pauseSla() re-checks $this->status->stops_sla_timer
                 // as a guard, but $ticket->status was already cached above (as
                 // $oldStatus) before the status_id update, so without refreshing
@@ -81,7 +81,7 @@ class TicketUpdateService
                 // pauseSla() never actually paused the SLA clock.
                 $ticket->setRelation('status', $newStatus);
                 $ticket->pauseSla();
-            } elseif (! $newStatus->stops_sla_timer && $oldStatus->stops_sla_timer) {
+            } elseif (! $newStatus->stops_sla_timer && $oldStatus?->stops_sla_timer) {
                 $ticket->resumeSla();
             }
 
@@ -95,7 +95,11 @@ class TicketUpdateService
             // evento implementa ShouldBroadcast + Dispatchable, así que
             // ::dispatch() sigue emitiendo por websocket exactamente igual Y
             // además dispara esos 4 listeners.
-            TicketStatusChanged::dispatch($ticket, $oldStatus, $newStatus);
+            // Igual que TicketLifecycleController/BulkTicketsController: sin
+            // estado previo el evento (que exige uno) no se emite.
+            if ($oldStatus) {
+                TicketStatusChanged::dispatch($ticket, $oldStatus, $newStatus);
+            }
             $changed[] = 'status_id';
             $changeDetails['status_id'] = ['old' => $oldStatusId, 'new' => $newStatus->id];
             unset($data['status_id']);

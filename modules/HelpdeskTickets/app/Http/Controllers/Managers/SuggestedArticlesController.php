@@ -22,6 +22,8 @@ class SuggestedArticlesController extends Controller
 
     public function index(Ticket $ticket): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         $articles = $this->suggest($ticket);
 
         return response()->json([

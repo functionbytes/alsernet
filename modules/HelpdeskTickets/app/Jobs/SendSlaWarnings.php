@@ -10,6 +10,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Modules\HelpdeskTickets\Events\SlaWarning;
 use Modules\HelpdeskTickets\Events\TicketSlaNearBreach;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -77,8 +78,17 @@ class SendSlaWarnings implements ShouldQueue
                         continue;
                     }
 
-                    $totalTime = $ticket->created_at->diffInSeconds($ticket->sla_resolution_due_at);
-                    $usedTime = $ticket->created_at->diffInSeconds(now());
+                    // Política de horas hábiles: el consumo se mide en minutos
+                    // hábiles (como ConversationSlaService::percentUsed), para
+                    // que fines de semana y festivos no gasten el plazo.
+                    if ($ticket->slaPolicy?->business_hours_only && class_exists(BusinessHoursCalculator::class)) {
+                        $calculator = app(BusinessHoursCalculator::class);
+                        $totalTime = $calculator->businessMinutesBetween($ticket->created_at, $ticket->sla_resolution_due_at);
+                        $usedTime = $calculator->businessMinutesBetween($ticket->created_at, now());
+                    } else {
+                        $totalTime = $ticket->created_at->diffInSeconds($ticket->sla_resolution_due_at);
+                        $usedTime = $ticket->created_at->diffInSeconds(now());
+                    }
                     $percentUsed = $totalTime > 0 ? ($usedTime / $totalTime) * 100 : 0;
 
                     if ($percentUsed >= $thresholdPercent) {

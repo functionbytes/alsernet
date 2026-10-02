@@ -253,6 +253,59 @@ class TicketApiTest extends TestCase
             ]);
     }
 
+    public function test_update_status_goes_through_update_service_and_pauses_sla(): void
+    {
+        $waiting = TicketStatus::firstOrCreate(
+            ['slug' => 'waiting-customer-api-test'],
+            ['name' => 'Waiting', 'color' => '#999999', 'is_open' => true, 'stops_sla_timer' => true, 'order' => 9]
+        );
+        $waiting->forceFill(['stops_sla_timer' => true])->save();
+
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->agent)
+            ->putJson("/api/v1/helpdesk/tickets/{$ticket->ticket_number}", ['status_id' => $waiting->id])
+            ->assertOk();
+
+        $ticket->refresh();
+        $this->assertSame($waiting->id, $ticket->status_id);
+        $this->assertNotNull($ticket->sla_paused_at);
+        $this->assertTrue($ticket->items()->where('type', 'status_change')->exists());
+    }
+
+    public function test_update_status_works_when_ticket_has_no_previous_status(): void
+    {
+        $ticket = $this->createTicket();
+        Ticket::query()->whereKey($ticket->id)->update(['status_id' => null]);
+
+        $this->actingAs($this->agent)
+            ->putJson("/api/v1/helpdesk/tickets/{$ticket->ticket_number}", ['status_id' => $this->status->id])
+            ->assertOk();
+
+        $this->assertSame($this->status->id, $ticket->fresh()->status_id);
+    }
+
+    public function test_index_caps_per_page_at_100(): void
+    {
+        $this->createTicket();
+
+        // ApiResponse::success() envuelve la colección sin los metadatos de
+        // paginación, así que el tope se comprueba en el LIMIT de la consulta.
+        $limits = [];
+        DB::connection('helpdesk')->listen(function ($query) use (&$limits) {
+            if (str_contains($query->sql, 'from `helpdesk_tickets`') && preg_match('/limit (\d+)/i', $query->sql, $m)) {
+                $limits[] = (int) $m[1];
+            }
+        });
+
+        $this->actingAs($this->agent)
+            ->getJson('/api/v1/helpdesk/tickets?per_page=100000')
+            ->assertOk();
+
+        $this->assertContains(100, $limits);
+        $this->assertLessThanOrEqual(100, max($limits));
+    }
+
     public function test_update_returns_422_on_invalid_priority(): void
     {
         $ticket = $this->createTicket();
