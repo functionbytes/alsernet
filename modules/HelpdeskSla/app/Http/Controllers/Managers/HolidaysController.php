@@ -5,8 +5,8 @@ namespace Modules\HelpdeskSla\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskSla\Http\Requests\Managers\ImportHolidaysRequest;
 use Modules\HelpdeskSla\Http\Requests\Managers\StoreHolidayRequest;
 use Modules\HelpdeskSla\Models\Holiday;
 use Modules\HelpdeskSla\Services\ACorunaHolidayCalendar;
@@ -87,17 +87,9 @@ class HolidaysController extends Controller
      * recurrente existente (mismo mes-día, comparación igual que
      * BusinessHoursCalculator::isHoliday()).
      */
-    public function import(Request $request): RedirectResponse
+    public function import(ImportHolidaysRequest $request): RedirectResponse
     {
-        $years = ACorunaHolidayCalendar::availableYears();
-
-        $request->validate([
-            'year' => ['required', 'integer', 'in:'.implode(',', $years)],
-        ], [
-            'year.in' => 'Solo hay calendario verificado para: '.implode(', ', $years).'.',
-        ]);
-
-        $year = (int) $request->input('year');
+        $year = $request->integer('year');
 
         $recurringMonthDays = Holiday::query()
             ->where('is_recurring', true)
