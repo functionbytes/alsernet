@@ -35,9 +35,20 @@ class EndExpiredCampaignsJob implements ShouldQueue
             ->limit(100)
             ->get();
 
+        $expiredEnded = 0;
+
         foreach ($expired as $campaign) {
-            $campaign->update(['status' => 'ended']);
-            CampaignEnded::dispatch($campaign);
+            $transitioned = Campaign::query()
+                ->whereKey($campaign->id)
+                ->whereIn('status', ['active', 'paused'])
+                ->update(['status' => 'ended']);
+
+            if ($transitioned !== 1) {
+                continue;
+            }
+
+            $expiredEnded++;
+            CampaignEnded::dispatch($campaign->refresh());
         }
 
         // Goal-based auto-end — comparison done in SQL using denormalized counters
@@ -53,19 +64,30 @@ class EndExpiredCampaignsJob implements ShouldQueue
             ->limit(100)
             ->get();
 
+        $goalEnded = 0;
+
         foreach ($goalReached as $campaign) {
-            $campaign->update([
-                'status' => 'ended',
-                'ends_at' => now(),
-            ]);
-            CampaignEnded::dispatch($campaign);
+            $transitioned = Campaign::query()
+                ->whereKey($campaign->id)
+                ->where('status', 'active')
+                ->update([
+                    'status' => 'ended',
+                    'ends_at' => now(),
+                ]);
+
+            if ($transitioned !== 1) {
+                continue;
+            }
+
+            $goalEnded++;
+            CampaignEnded::dispatch($campaign->refresh());
         }
 
-        $total = $expired->count() + $goalReached->count();
+        $total = $expiredEnded + $goalEnded;
         if ($total > 0) {
             Log::info('Auto-ended campaigns', [
-                'time_based' => $expired->count(),
-                'goal_based' => $goalReached->count(),
+                'time_based' => $expiredEnded,
+                'goal_based' => $goalEnded,
             ]);
         }
 

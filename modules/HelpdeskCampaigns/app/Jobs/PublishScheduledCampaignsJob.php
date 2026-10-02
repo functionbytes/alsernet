@@ -40,8 +40,16 @@ class PublishScheduledCampaignsJob implements ShouldQueue
             ->get();
 
         foreach ($due as $campaign) {
-            $campaign->update(['status' => 'active']);
-            CampaignPublished::dispatch($campaign);
+            $transitioned = Campaign::query()
+                ->whereKey($campaign->id)
+                ->where('status', 'scheduled')
+                ->update(['status' => 'active']);
+
+            if ($transitioned !== 1) {
+                continue;
+            }
+
+            CampaignPublished::dispatch($campaign->refresh());
         }
 
         if ($due->isNotEmpty()) {

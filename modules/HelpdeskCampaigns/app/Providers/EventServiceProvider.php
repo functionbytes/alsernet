@@ -3,11 +3,13 @@
 namespace Modules\HelpdeskCampaigns\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Helpdesk\Events\CustomerGdprDeleted;
 use Modules\HelpdeskCampaigns\Events\CampaignEnded;
 use Modules\HelpdeskCampaigns\Events\CampaignImpressionRecorded;
 use Modules\HelpdeskCampaigns\Events\CampaignPaused;
 use Modules\HelpdeskCampaigns\Events\CampaignPublished;
 use Modules\HelpdeskCampaigns\Events\CampaignResumed;
+use Modules\HelpdeskCampaigns\Listeners\AnonymizeCampaignImpressions;
 use Modules\HelpdeskCampaigns\Listeners\DispatchCampaignWebhooks;
 use Modules\HelpdeskCampaigns\Listeners\LogCampaignActivity;
 use Modules\HelpdeskCampaigns\Listeners\SendCampaignStatusNotification;
@@ -36,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         CampaignImpressionRecorded::class => [
             UpdateCampaignImpressionCounters::class,
+        ],
+        CustomerGdprDeleted::class => [
+            AnonymizeCampaignImpressions::class,
         ],
     ];
 
