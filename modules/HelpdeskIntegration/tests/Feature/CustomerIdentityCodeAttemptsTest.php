@@ -66,6 +66,16 @@ class CustomerIdentityCodeAttemptsTest extends HelpdeskTestCase
         $this->assertFalse($this->service->isVerified($this->customer));
     }
 
+    public function test_correct_code_is_rejected_when_attempts_already_exhausted(): void
+    {
+        $verification = $this->createPendingCode('123456');
+        $verification->forceFill(['attempts' => 5])->save();
+
+        $this->assertFalse($this->service->confirmCode($this->customer, '123456'));
+        $this->assertSame(5, $verification->fresh()->attempts);
+        $this->assertFalse($this->service->isVerified($this->customer));
+    }
+
     public function test_correct_code_within_attempt_budget_verifies(): void
     {
         $this->createPendingCode('123456');

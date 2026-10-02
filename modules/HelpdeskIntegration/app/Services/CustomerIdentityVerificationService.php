@@ -65,16 +65,25 @@ class CustomerIdentityVerificationService
             ->latest('id')
             ->first();
 
-        if (! $verification || $verification->attempts >= self::MAX_CODE_ATTEMPTS) {
+        if (! $verification) {
+            return false;
+        }
+
+        // Reserva atómica del intento ANTES de comparar: peticiones paralelas
+        // no pueden superar el máximo (el UPDATE condicional es el único gate).
+        $reserved = CustomerIdentityVerification::query()
+            ->whereKey($verification->id)
+            ->where('attempts', '<', self::MAX_CODE_ATTEMPTS)
+            ->increment('attempts');
+
+        if ($reserved === 0) {
             return false;
         }
 
         if (! Hash::check($code, $verification->code_hash)) {
-            $verification->increment('attempts');
-
             // Al agotar los intentos el código se quema: deja de ser "activo"
             // para futuras confirmaciones y el agente debe solicitar uno nuevo.
-            if ($verification->attempts >= self::MAX_CODE_ATTEMPTS) {
+            if ($verification->attempts + 1 >= self::MAX_CODE_ATTEMPTS) {
                 $verification->update(['expires_at' => now()->subSecond()]);
             }
 
