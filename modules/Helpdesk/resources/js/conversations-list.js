@@ -752,12 +752,23 @@
         // página. Mismo endpoint que la lista (ya cacheado server-side); se
         // ignora resp.html porque aquí no hace falta reemplazar la lista.
         let sidebarCountersTimer = null;
+        // Contadores de los chips rápidos (Todas / Sin leer / Mías / Urgentes).
+        function patchQuickCounters(counts) {
+            if (!counts) return;
+            ['total', 'unread', 'mine', 'urgent'].forEach(function (k) {
+                if (counts[k] !== undefined) {
+                    $('[data-counter="' + k + '"]').text(counts[k]);
+                }
+            });
+        }
+
         function scheduleSidebarCountersRefresh() {
             clearTimeout(sidebarCountersTimer);
             sidebarCountersTimer = setTimeout(function () {
                 $.get('/panel/helpdesk/conversations/list', Object.fromEntries(new URLSearchParams(window.location.search)))
                     .done(function (resp) {
                         if (resp && resp.sidebar) patchSidebarStructureCounts(resp.sidebar);
+                        if (resp) patchQuickCounters(resp.counts);
                     })
                     .fail(function (xhr) {
                         console.error('[Inbox] Sidebar counters refresh failed:', xhr.status);
@@ -784,13 +795,7 @@
                     $list.replaceWith(resp.html);
                     $('#bv-conv-list').scrollTop(scrollTop);
                 }
-                if (resp && resp.counts) {
-                    ['total', 'unread', 'mine', 'urgent'].forEach(function (k) {
-                        if (resp.counts[k] !== undefined) {
-                            $('[data-counter="' + k + '"]').text(resp.counts[k]);
-                        }
-                    });
-                }
+                if (resp) patchQuickCounters(resp.counts);
                 if (resp && resp.sidebar) {
                     patchSidebarStructureCounts(resp.sidebar);
                 }
@@ -951,16 +956,25 @@
             const $item = $('.bv-conv[data-bv-conv-id="' + e.conversation_id + '"]');
             if (!$item.length) return;
 
-            const $meta = $item.find('.row2 .meta').first();
-            const $pill = $item.find('.bv-tag').first();
-            if (e.priority && e.priority !== 'normal') {
+            // El leído es compartido: si otro agente acaba de abrirla, deja de
+            // mostrarse como no leída también en esta bandeja.
+            if (e.read) {
+                $item.removeClass('unread');
+                $item.find('.bv-ucount').remove();
+            }
+
+            // Chip de prioridad (fila 3): solo high/urgent, igual que el render servidor.
+            const $chips = $item.find('.row3 .bv-chips').first();
+            const $pill = $chips.find('[data-bv-chip="priority"]').first();
+            if (e.priority === 'high' || e.priority === 'urgent') {
                 const label = priorityLabels[e.priority] || e.priority;
                 if ($pill.length) {
-                    $pill.attr('class', 'bv-tag ' + e.priority).text(label);
-                } else {
-                    const $sla = $meta.find('.bv-sla').first();
-                    const $newPill = $('<span class="bv-tag ' + e.priority + '">' + label + '</span>');
-                    if ($sla.length) $sla.after($newPill); else $meta.prepend($newPill);
+                    $pill.attr('class', 'bv-chip prio ' + e.priority).text(label);
+                } else if ($chips.length) {
+                    const $newPill = $('<span class="bv-chip prio" data-bv-chip="priority"></span>')
+                        .addClass(e.priority).text(label);
+                    const $anchor = $chips.find('[data-bv-chip="channel"], [data-bv-chip="status"]').last();
+                    if ($anchor.length) $anchor.after($newPill); else $chips.prepend($newPill);
                 }
             } else {
                 $pill.remove();
@@ -1053,3 +1067,107 @@
         setupInboxListener();
     }
 })();
+
+/**
+ * Presencia en la lista: marca con un punto verde las filas cuya conversación
+ * están viendo ahora otros agentes. Sondea /presence/overview con los ids de
+ * las filas presentes en el DOM.
+ */
+(function ($) {
+    'use strict';
+
+    var BASE_DELAY_MS = 15000;
+    var MAX_DELAY_MS = 120000;
+    var MAX_IDS = 100;
+    var OVERVIEW_URL = '/panel/helpdesk/conversations/presence/overview';
+    var delay = BASE_DELAY_MS;
+    var timer = null;
+    var inflight = false;
+    var lastSignature = '';
+    var viewingLabel = 'Viendo ahora: ';
+
+    function visibleIds() {
+        var ids = [];
+        $('.bv-conv[data-bv-conv-id]').each(function () {
+            if (ids.length < MAX_IDS) ids.push($(this).attr('data-bv-conv-id'));
+        });
+        return ids;
+    }
+
+    function applyViewers($row, viewers) {
+        var names = (viewers || []).map(function (v) { return String(v.name || ''); }).filter(Boolean);
+        var key = names.join('|');
+        if ($row.attr('data-bv-viewers') === key) return;
+        $row.attr('data-bv-viewers', key);
+
+        var $avatar = $row.find('.bv-assignee').first();
+        if (!$avatar.length) return;
+        $avatar.find('.bv-presence-dot').remove();
+        var baseTitle = $avatar.attr('data-bv-base-title') || '';
+        if (!names.length) {
+            $avatar.attr('title', baseTitle);
+            return;
+        }
+        $avatar.append('<span class="bv-presence-dot"></span>');
+        var title = viewingLabel + names.join(', ');
+        $avatar.attr('title', baseTitle ? baseTitle + ' · ' + title : title);
+    }
+
+    function schedule() {
+        clearTimeout(timer);
+        timer = setTimeout(poll, delay);
+    }
+
+    function poll() {
+        if (document.hidden) { schedule(); return; }
+        var ids = visibleIds();
+        if (!ids.length || inflight) { schedule(); return; }
+        inflight = true;
+        $.ajax({
+            url: OVERVIEW_URL,
+            method: 'GET',
+            data: { ids: ids.join(',') },
+            dataType: 'json',
+            headers: { 'Accept': 'application/json' },
+        }).done(function (resp) {
+            var data = (resp && resp.data) || {};
+            ids.forEach(function (id) {
+                var $row = $('.bv-conv[data-bv-conv-id="' + id + '"]');
+                if ($row.length) applyViewers($row, data[id]);
+            });
+            delay = BASE_DELAY_MS;
+        }).fail(function () {
+            delay = Math.min(delay * 2, MAX_DELAY_MS);
+        }).always(function () {
+            inflight = false;
+            schedule();
+        });
+    }
+
+    function pollSoon() {
+        clearTimeout(timer);
+        timer = setTimeout(poll, 300);
+    }
+
+    // La lista se reemplaza desde varios sitios (refresh, filtros, scroll infinito):
+    // si cambia el conjunto de ids, se sondea de nuevo enseguida.
+    var debounce = null;
+    function watchList() {
+        clearTimeout(debounce);
+        debounce = setTimeout(function () {
+            var signature = visibleIds().join(',');
+            if (signature === lastSignature) return;
+            lastSignature = signature;
+            pollSoon();
+        }, 400);
+    }
+
+    $(function () {
+        if (!$('.bv-conv').length && !$('#bv-conv-list').length) return;
+        new MutationObserver(watchList).observe(document.body, { childList: true, subtree: true });
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) pollSoon();
+        });
+        watchList();
+    });
+})(jQuery);

@@ -193,7 +193,9 @@ class Conversation extends Model
     }
 
     /**
-     * Per-user read receipts. Used by ?unread=1 inbox filter.
+     * Read receipts: una fila por agente (user_id > 0) y la del visitante del
+     * widget (user_id = 0). El "leído" del inbox es compartido entre agentes:
+     * ver scopeNotReadSinceLastMessage().
      */
     public function reads(): HasMany
     {
@@ -321,12 +323,31 @@ class Conversation extends Model
     }
 
     /**
-     * Scope: conversations counted as "unread" for a given agent.
+     * Scope: conversations counted as "unread" in the inbox.
+     *
+     * El leído es compartido por el equipo: en cuanto un agente abre la
+     * conversación deja de contar como "sin leer" para todos. $userId se
+     * mantiene por compatibilidad con los llamadores, pero ya no filtra.
      */
-    public function scopeUnreadFor(Builder $query, int $userId): Builder
+    public function scopeUnreadFor(Builder $query, ?int $userId = null): Builder
     {
-        return $query->defaultViewVisible()
-            ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId));
+        return $query->defaultViewVisible()->notReadSinceLastMessage();
+    }
+
+    /**
+     * Scope: ningún agente ha abierto la conversación desde su último mensaje.
+     *
+     * Mismo criterio que unreadCountForInbox() (read_at >= last_message_at):
+     * antes el filtro "Sin leer" solo miraba si había alguna lectura, así que
+     * una conversación leída una vez no volvía a "Sin leer" aunque el cliente
+     * escribiera de nuevo, mientras la tarjeta sí mostraba el contador.
+     * user_id = 0 es la lectura del visitante del widget: no cuenta.
+     */
+    public function scopeNotReadSinceLastMessage(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('reads', fn ($r) => $r
+            ->where('helpdesk_conversation_reads.user_id', '>', 0)
+            ->whereRaw('helpdesk_conversation_reads.read_at >= COALESCE(helpdesk_conversations.last_message_at, helpdesk_conversations.updated_at)'));
     }
 
     /**
@@ -738,6 +759,10 @@ class Conversation extends Model
         $preview = $cleanBody !== '' ? $cleanBody : ($this->subject ?? '');
         $preview = mb_strimwidth($preview, 0, 90, '…');
 
+        $inboxTags = $this->conversationTags
+            ->map(fn ($tag) => ['name' => $tag->name, 'color' => $tag->color])
+            ->values();
+
         return [
             'id' => $this->id,
             'name' => mb_strtoupper(mb_substr($name, 0, 1)).mb_substr($name, 1),
@@ -754,6 +779,117 @@ class Conversation extends Model
             'on' => $selectedId !== null && $this->id === $selectedId,
             'is_snoozed' => $this->snoozed_until !== null && $this->snoozed_until->isFuture(),
             'snoozed_until' => $this->snoozed_until?->toIso8601String(),
+            'status' => $this->status
+                ? ['name' => $this->status->name, 'slug' => $this->status->slug, 'color' => $this->status->color]
+                : null,
+            'channelLabel' => $this->channelLabelForInbox(),
+            'unanswered' => $this->isUnansweredForInbox(),
+            'slaChip' => $this->slaChipForInbox(),
+            'assignee' => $this->assigneeForInbox(),
+            'tags' => $inboxTags->take(3)->values()->all(),
+            'tagsMore' => max(0, $inboxTags->count() - 3),
+        ];
+    }
+
+    protected function channelLabelForInbox(): string
+    {
+        return match ($this->channel ?? 'web') {
+            'whatsapp' => 'WhatsApp',
+            'facebook' => 'Messenger',
+            'instagram' => 'Instagram',
+            'email' => 'Email',
+            default => 'Web',
+        };
+    }
+
+    protected function isOpenForInbox(): bool
+    {
+        return $this->status !== null && $this->status->is_open;
+    }
+
+    protected function isUnansweredForInbox(): bool
+    {
+        if ($this->first_response_at !== null || ! $this->isOpenForInbox()) {
+            return false;
+        }
+
+        $incoming = $this->incoming_messages_count
+            ?? $this->items()->where('type', 'message')->whereNull('user_id')->count();
+
+        return $incoming > 0;
+    }
+
+    /**
+     * @return array{kind: string, label: string, text: string}|null
+     */
+    protected function slaChipForInbox(): ?array
+    {
+        if (! $this->isOpenForInbox()) {
+            return null;
+        }
+
+        $awaitingFirstResponse = $this->first_response_at === null && $this->sla_first_response_due_at !== null;
+        $due = $awaitingFirstResponse ? $this->sla_first_response_due_at : $this->sla_resolution_due_at;
+
+        if ($due === null) {
+            return null;
+        }
+
+        $label = $awaitingFirstResponse ? '1ª respuesta' : 'Resolución';
+
+        if ($this->sla_paused_at !== null) {
+            return ['kind' => 'ok', 'label' => $label, 'text' => 'en pausa'];
+        }
+
+        $breached = $awaitingFirstResponse ? $this->sla_first_response_breached : $this->sla_resolution_breached;
+        $minutes = (int) now()->diffInMinutes($due, false);
+
+        $kind = match (true) {
+            $breached, $minutes < 0 => 'breach',
+            $minutes < 60 => 'warn',
+            default => 'ok',
+        };
+
+        $text = $minutes < 0
+            ? self::humanizeSlaMinutes(abs($minutes)).' vencido'
+            : self::humanizeSlaMinutes($minutes);
+
+        return ['kind' => $kind, 'label' => $label, 'text' => $text];
+    }
+
+    private static function humanizeSlaMinutes(int $minutes): string
+    {
+        if ($minutes < 60) {
+            return $minutes.'m';
+        }
+
+        $hours = intdiv($minutes, 60);
+        if ($hours < 24) {
+            return $hours.'h '.($minutes % 60).'m';
+        }
+
+        return intdiv($hours, 24).'d '.($hours % 24).'h';
+    }
+
+    /**
+     * @return array{id: int, name: string, initials: string}|null
+     */
+    protected function assigneeForInbox(): ?array
+    {
+        $assignee = $this->assignee;
+        if (! $assignee) {
+            return null;
+        }
+
+        $first = trim((string) $assignee->firstname);
+        $last = trim((string) $assignee->lastname);
+        $name = trim($first.' '.$last);
+        $initials = mb_strtoupper(mb_substr($first, 0, 1).mb_substr($last, 0, 1));
+
+        return [
+            'id' => $assignee->id,
+            'name' => $name !== '' ? $name : 'Agente #'.$assignee->id,
+            'initials' => $initials !== '' ? $initials : '?',
         ];
     }
 
@@ -764,12 +900,6 @@ class Conversation extends Model
      */
     protected function unreadCountForInbox(): int
     {
-        $userId = auth()->id();
-
-        if (! $userId) {
-            return 0;
-        }
-
         // 28-sep-2026: una conversación cerrada no tiene nada pendiente de
         // leer. Cerrar no marca "leído" (solo abrirla lo hace), así que en la
         // vista "Cerradas" la fila seguía mostrando el número de mensajes
@@ -780,15 +910,19 @@ class Conversation extends Model
             return 0;
         }
 
-        // Prefiere el read precargado (with('reads')) para evitar una query por fila.
-        if ($this->relationLoaded('reads')) {
-            $read = $this->reads->firstWhere('user_id', $userId)?->read_at;
+        // Leído compartido: cuenta la lectura más reciente de cualquier agente
+        // (user_id > 0; 0 es el visitante del widget). Prefiere el valor
+        // precargado (withMax / with('reads')) para evitar una query por fila.
+        if (array_key_exists('agent_last_read_at', $this->attributes)) {
+            $read = $this->attributes['agent_last_read_at'];
+        } elseif ($this->relationLoaded('reads')) {
+            $read = $this->reads->where('user_id', '>', 0)->max('read_at');
         } else {
             $read = \DB::connection($this->connection)
                 ->table('helpdesk_conversation_reads')
                 ->where('conversation_id', $this->id)
-                ->where('user_id', $userId)
-                ->value('read_at');
+                ->where('user_id', '>', 0)
+                ->max('read_at');
         }
 
         $lastAt = $this->last_message_at ?? $this->updated_at;

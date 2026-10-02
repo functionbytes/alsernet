@@ -26,7 +26,7 @@ class ConversationListNPlusOneTest extends HelpdeskTestCase
         // Mismo eager loading que ConversationsController::index / listJson.
         $loaded = Conversation::query()
             ->with([
-                'customer', 'status', 'assignee', 'inbox', 'lastMessage',
+                'customer', 'status', 'assignee', 'inbox', 'lastMessage', 'conversationTags',
                 'reads' => fn ($q) => $q->where('user_id', $this->manager->id),
             ])
             ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])

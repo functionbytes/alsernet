@@ -18,6 +18,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\ConversationExportController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationMacrosController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationMessagesController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationPresenceController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController as HelpdeskConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationViewsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CsatReportController;
@@ -126,6 +127,10 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/macros-picker', [ConversationMacrosController::class, 'macrosForPicker'])
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.macros-picker');
+    // Presencia de VARIAS conversaciones a la vez (tarjetas del inbox). Antes del {conversation} catch-all.
+    Route::get('/conversations/presence/overview', [ConversationPresenceController::class, 'overview'])
+        ->middleware(['can:helpdesk.conversations.view', 'throttle:120,1'])
+        ->name('manager.helpdesk.conversations.presence.overview');
     Route::get('/conversations/{conversation}', [HelpdeskConversationsController::class, 'show'])->name('manager.helpdesk.conversations.show');
     Route::put('/conversations/{conversation}', [HelpdeskConversationsController::class, 'update'])->name('manager.helpdesk.conversations.update');
     Route::delete('/conversations/{conversation}', [HelpdeskConversationsController::class, 'destroy'])->name('manager.helpdesk.conversations.destroy');
@@ -168,6 +173,12 @@ Route::group(['prefix' => ''], function () {
     Route::get('/simulator/orders', [HelpdeskSimulatorController::class, 'orders'])->middleware('throttle:60,1')->name('manager.helpdesk.simulator.orders');
     Route::post('/simulator/simulate', [HelpdeskSimulatorController::class, 'simulate'])->middleware('throttle:30,1')->name('manager.helpdesk.simulator.simulate');
     Route::post('/conversations/{conversation}/mark-read', [ConversationMessagesController::class, 'markConversationRead'])->name('manager.helpdesk.conversations.mark-read');
+    Route::post('/conversations/{conversation}/presence', [ConversationPresenceController::class, 'heartbeat'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.presence.heartbeat');
+    Route::delete('/conversations/{conversation}/presence', [ConversationPresenceController::class, 'leave'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.presence.leave');
     Route::post('/conversations/{conversation}/typing', [ConversationMessagesController::class, 'broadcastTyping'])->name('manager.helpdesk.conversations.typing');
 
     // WebRTC signaling — agent side (answer + ICE candidates back to widget)

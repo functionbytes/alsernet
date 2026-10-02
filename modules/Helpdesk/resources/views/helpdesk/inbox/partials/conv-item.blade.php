@@ -8,7 +8,16 @@
     );
 
     // Same map used in thread.blade.php / kanban.blade.php / right-panel.blade.php.
-    $priorityLabels = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
+    $chipStatus = $conv['status'] ?? null;
+    $chipChannel = $conv['channelLabel'] ?? null;
+    $chipPriority = in_array($conv['priority'] ?? null, ['high', 'urgent'], true) ? $conv['priority'] : null;
+    $chipUnanswered = (bool) ($conv['unanswered'] ?? false);
+    $chipSla = $conv['slaChip'] ?? null;
+    $chipTags = $conv['tags'] ?? [];
+    $chipTagsMore = (int) ($conv['tagsMore'] ?? 0);
+    $chipAssignee = $conv['assignee'] ?? null;
+    // El color llega de la BD y se inyecta como variable CSS: solo se admiten hex/rgb/hsl/nombres simples.
+    $safeColor = fn ($c) => is_string($c) && preg_match('/^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|(rgb|hsl)a?\([0-9 ,.%]+\))$/', $c) ? $c : null;
 @endphp
 <div class="bv-conv {{ ($conv['on'] ?? false) ? 'on' : '' }} {{ ($conv['unread'] ?? 0) > 0 ? 'unread' : '' }} {{ ($conv['urgent'] ?? false) ? 'urgent' : '' }}"
      draggable="true"
@@ -29,20 +38,53 @@
             <span class="time">{{ $conv['time'] }}</span>
         </div>
         <div class="row2">
-            <span class="preview">{!! $conv['preview'] !!}</span>
+            <span class="preview">{{ $conv['preview'] }}</span>
             <span class="meta">
-                @if(!empty($conv['sla']))
+                @if(empty($chipSla) && !empty($conv['sla']))
                     <span class="bv-sla {{ $conv['sla'][0] }}">
                         <i class="far fa-clock bv-sla-icon"></i>{{ $conv['sla'][1] }}
                     </span>
-                @endif
-                @if(!empty($conv['priority']) && $conv['priority'] !== 'normal')
-                    <span class="bv-tag {{ $conv['priority'] }}">{{ $priorityLabels[$conv['priority']] ?? $conv['priority'] }}</span>
                 @endif
                 @if(($conv['unread'] ?? 0) > 0)
                     <span class="bv-ucount">{{ ($conv['unread'] ?? 0) > 9 ? '9+' : $conv['unread'] }}</span>
                 @endif
             </span>
+        </div>
+        <div class="row3">
+            <div class="bv-chips">
+                @if(!empty($chipStatus['name']))
+                    @php($statusColor = $safeColor($chipStatus['color'] ?? null))
+                    <span class="bv-chip bv-chip-status" data-bv-chip="status">
+                        @if($statusColor)<span class="bv-chip-dot" style="--bv-chip-dot: {{ $statusColor }}"></span>@endif{{ $chipStatus['name'] }}
+                    </span>
+                @endif
+                @if($chipChannel)
+                    <span class="bv-chip outline" data-bv-chip="channel">{{ $chipChannel }}</span>
+                @endif
+                @if($chipPriority)
+                    <span class="bv-chip prio {{ $chipPriority }}" data-bv-chip="priority">{{ __('helpdesk::helpdesk.inbox.thread.card_priority_' . $chipPriority) }}</span>
+                @endif
+                @if($chipUnanswered)
+                    <span class="bv-chip attn" data-bv-chip="unanswered">{{ __('helpdesk::helpdesk.inbox.thread.card_unanswered') }}</span>
+                @endif
+                @if(!empty($chipSla['text']))
+                    <span class="bv-chip sla-{{ in_array($chipSla['kind'] ?? '', ['breach', 'warn', 'ok'], true) ? $chipSla['kind'] : 'ok' }}" data-bv-chip="sla">{{ ($chipSla['label'] ?? '') !== '' ? $chipSla['label'] . ': ' : '' }}{{ $chipSla['text'] }}</span>
+                @endif
+                @foreach($chipTags as $chipTag)
+                    @php($tagColor = $safeColor($chipTag['color'] ?? null))
+                    <span class="bv-chip tag" data-bv-chip="tag">
+                        @if($tagColor)<span class="bv-chip-dot" style="--bv-chip-dot: {{ $tagColor }}"></span>@endif{{ $chipTag['name'] ?? '' }}
+                    </span>
+                @endforeach
+                @if($chipTagsMore > 0)
+                    <span class="bv-chip tag" data-bv-chip="tags-more" title="{{ __('helpdesk::helpdesk.inbox.thread.card_more_tags') }}">+{{ $chipTagsMore }}</span>
+                @endif
+            </div>
+            @if($chipAssignee)
+                <span class="bv-assignee" data-bv-assignee-id="{{ $chipAssignee['id'] ?? '' }}" data-bv-base-title="{{ __('helpdesk::helpdesk.inbox.thread.card_assigned_to', ['name' => $chipAssignee['name'] ?? '']) }}" title="{{ __('helpdesk::helpdesk.inbox.thread.card_assigned_to', ['name' => $chipAssignee['name'] ?? '']) }}">{{ $chipAssignee['initials'] ?? '?' }}</span>
+            @elseif(array_key_exists('assignee', $conv))
+                <span class="bv-assignee unassigned" data-bv-assignee-id="" data-bv-base-title="{{ __('helpdesk::helpdesk.inbox.thread.card_unassigned') }}" title="{{ __('helpdesk::helpdesk.inbox.thread.card_unassigned') }}">&ndash;</span>
+            @endif
         </div>
     </div>
     {{-- Acciones rápidas al hover --}}

@@ -3996,7 +3996,68 @@
     }
 
     // Abandona los canales y handlers de la conversación previa.
+    // ─── Presencia ("quién está viendo"): heartbeat mientras hay una conversación abierta ───
+    var PRESENCE_INTERVAL_MS = 20000;
+    var presenceTimer = null;
+    var presenceConvId = null;
+    var presenceAction = 'viewing';
+
+    function presenceUrl(convId) {
+        return '/panel/helpdesk/conversations/' + convId + '/presence';
+    }
+
+    function sendPresence() {
+        if (!presenceConvId || document.hidden) return;
+        $.ajax({
+            url: presenceUrl(presenceConvId),
+            method: 'POST',
+            data: { action: presenceAction },
+            headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },
+        });
+    }
+
+    function startPresence(convId) {
+        stopPresence();
+        presenceConvId = convId;
+        presenceAction = 'viewing';
+        sendPresence();
+        presenceTimer = setInterval(sendPresence, PRESENCE_INTERVAL_MS);
+    }
+
+    function stopPresence() {
+        clearInterval(presenceTimer);
+        presenceTimer = null;
+        if (!presenceConvId) return;
+        var id = presenceConvId;
+        presenceConvId = null;
+        try {
+            fetch(presenceUrl(id), {
+                method: 'DELETE',
+                keepalive: true,
+                credentials: 'same-origin',
+                headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' },
+            }).catch(function () {});
+        } catch (_) {}
+    }
+
+    // 'replying' cuando el agente escribe en el composer; vuelve a 'viewing' en el siguiente latido.
+    $(document).on('input.bvpresence', '.bv-composer-input', function () {
+        if (!presenceConvId || presenceAction === 'replying') return;
+        presenceAction = 'replying';
+        sendPresence();
+        setTimeout(function () { presenceAction = 'viewing'; }, PRESENCE_INTERVAL_MS);
+    });
+
+    if (!window.__bvPresenceHooksRegistered) {
+        window.__bvPresenceHooksRegistered = true;
+        window.addEventListener('pagehide', function () { stopPresence(); });
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) sendPresence();
+        });
+    }
+
     window.bvUnbindConversation = function () {
+        stopPresence();
         if (typeof window.Echo !== 'undefined' && window.Echo && currentConvId) {
             try { window.Echo.leave('helpdesk.conversation.' + currentConvId); } catch (_) {}
             try { window.Echo.leave('helpdesk.conversation.' + currentConvId + '.typing'); } catch (_) {}
@@ -4123,6 +4184,7 @@
         // (o estaba caído) el click en la conversación nunca la marcaba como
         // leída ni limpiaba el contador de no leídos en el listado.
         markConversationRead(convId);
+        startPresence(convId);
 
         if (typeof window.Echo === 'undefined' || !window.Echo) return;
 
